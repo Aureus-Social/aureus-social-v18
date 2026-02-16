@@ -7674,51 +7674,171 @@ function EnvoiMod({s,d}){
 function DRSMod({s,d}){
   const ae=s.emps||[];const [tab,setTab]=useState('generate');
   const [sector,setSector]=useState('chomage');
-  const sectors=[{v:"chomage",l:"Chômage (C1)",d:"Situation familiale, historique emploi"},{v:"inami",l:"INAMI (L1)",d:"Incapacité travail, maternité"},{v:"pension",l:"Pension (P1)",d:"Carrière, droits pension"},{v:"vacances",l:"Vacances annuelles",d:"Attestation de vacances"},{v:"allocations",l:"Allocations familiales",d:"Composition ménage"}];
+  const [drsEid,setDrsEid]=useState(ae[0]?.id||'');
+  const [drsDate,setDrsDate]=useState(new Date().toISOString().split('T')[0]);
+  const [drsScenario,setDrsScenario]=useState('5');
+  const [drsType,setDrsType]=useState('incap');
+  const [drsHistory,setDrsHistory]=useState([]);
+  const sectors=[{v:"chomage",l:"Chomage (C1)",d:"Situation familiale, historique emploi",icon:"C1"},{v:"inami",l:"INAMI (L1)",d:"Incapacite travail, maternite",icon:"L1"},{v:"pension",l:"Pension (P1)",d:"Carriere, droits pension",icon:"P1"},{v:"vacances",l:"Vacances annuelles",d:"Attestation de vacances",icon:"VA"},{v:"allocations",l:"Allocations familiales",d:"Composition menage",icon:"AF"}];
+  
+  const genDrsXml=()=>{
+    const emp=ae.find(e=>e.id===drsEid);if(!emp)return alert('Selectionnez un travailleur');
+    const p=calc(emp,DPER,s.co);
+    const sectorLabel=sectors.find(x=>x.v===sector)?.l||sector;
+    const scenLabel=sector==='chomage'?{1:'Chomage complet',2:'Chomage temporaire',3:'RCC/Prepension',5:'Mensuel CT',6:'Mensuel CT eco'}[drsScenario]||'':'';
+    const xml=`<?xml version="1.0" encoding="UTF-8"?>
+<!-- DRS - Declaration Risque Social -->
+<!-- Genere par: Aureus Social Pro -->
+<DRS xmlns="urn:drs:onss">
+  <Envoi>
+    <Reference>DRS${Date.now().toString(36).toUpperCase()}</Reference>
+    <DateGeneration>${new Date().toISOString().split('T')[0]}</DateGeneration>
+    <Secteur>${sectorLabel}</Secteur>
+    ${sector==='chomage'?`<Scenario>${drsScenario}</Scenario>`:''}
+    ${sector==='inami'?`<TypeIncapacite>${drsType}</TypeIncapacite>`:''}
+  </Envoi>
+  <Employeur>
+    <KBO>${(s.co.bce||s.co.vat||'').replace(/[^0-9]/g,"")}</KBO>
+    <ONSS>${(s.co.onss||'').replace(/[^0-9]/g,"")}</ONSS>
+    <Nom>${s.co.name}</Nom>
+    <Adresse>${s.co.addr||''}</Adresse>
+  </Employeur>
+  <Travailleur>
+    <NISS>${(emp.niss||'').replace(/[\.-\s]/g,"")}</NISS>
+    <Nom>${emp.last||''}</Nom>
+    <Prenom>${emp.first||''}</Prenom>
+    <DateNaissance>${emp.birth||''}</DateNaissance>
+    <DateEvenement>${drsDate}</DateEvenement>
+    <CommissionParitaire>${emp.cp||'200'}</CommissionParitaire>
+    <Fonction>${emp.fn||''}</Fonction>
+    <RegimeTravail>${emp.whWeek||38}h/sem</RegimeTravail>
+    <DateEntree>${emp.startD||''}</DateEntree>
+    <SalaireMensuel>${(emp.monthlySalary||0).toFixed(2)}</SalaireMensuel>
+    <SalaireBrut>${p.gross.toFixed(2)}</SalaireBrut>
+    <ONSSTravailleur>${p.onssNet.toFixed(2)}</ONSSTravailleur>
+  </Travailleur>
+</DRS>`;
+    const entry={id:Date.now(),emp:`${emp.first} ${emp.last}`,sector:sectorLabel,scenario:scenLabel,date:drsDate,xml,at:new Date().toISOString()};
+    setDrsHistory(h=>[entry,...h]);
+    d({type:"MODAL",m:{w:800,c:<div>
+      <h3 style={{color:'#e8e6e0',margin:'0 0 10px'}}>DRS - {sectorLabel} {scenLabel?'- '+scenLabel:''}</h3>
+      <div style={{display:'flex',gap:8,marginBottom:12}}>
+        <span style={{fontSize:10,padding:'3px 10px',borderRadius:4,background:"rgba(74,222,128,.1)",color:'#4ade80',fontWeight:600}}>XML genere</span>
+        <span style={{fontSize:10,padding:'3px 10px',borderRadius:4,background:"rgba(198,163,78,.1)",color:'#c6a34e'}}>{emp.first} {emp.last}</span>
+      </div>
+      <pre style={{background:"#060810",border:'1px solid rgba(139,115,60,.15)',borderRadius:8,padding:14,fontSize:10,color:'#9e9b93',whiteSpace:'pre-wrap',maxHeight:400,overflowY:'auto'}}>{xml}</pre>
+      <div style={{display:'flex',gap:10,marginTop:12,justifyContent:'flex-end'}}>
+        <B v="outline" onClick={()=>d({type:"MODAL",m:null})}>Fermer</B>
+        <B onClick={()=>{navigator.clipboard?.writeText(xml);alert('XML DRS copie !')}}>Copier XML</B>
+      </div>
+    </div>}});
+  };
+
+  // Validation
+  const empSel=ae.find(e=>e.id===drsEid);
+  const warnings=[];
+  if(empSel){
+    if(!empSel.niss)warnings.push('NISS manquant');
+    if(!empSel.startD)warnings.push("Date entree manquante");
+    if(!empSel.birth)warnings.push("Date naissance manquante");
+  }
   
   return <div>
-    <PH title="DRS — Déclarations Risques Sociaux" sub="Flux électroniques ONSS — Chômage, INAMI, Pension"/>
+    <PH title="DRS - Declarations Risques Sociaux" sub="Flux electroniques ONSS - Chomage, INAMI, Pension, Vacances, Allocations"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"DRS generees",v:drsHistory.length,c:'#c6a34e'},{l:"Chomage",v:drsHistory.filter(x=>x.sector.includes('hom')).length,c:'#f87171'},{l:"INAMI",v:drsHistory.filter(x=>x.sector.includes('INAMI')).length,c:'#60a5fa'},{l:"Pension",v:drsHistory.filter(x=>x.sector.includes('Pension')).length,c:'#a78bfa'},{l:"Travailleurs",v:ae.length,c:'#4ade80'}].map((k,i)=>
+        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
+        </div>
+      )}
+    </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:18}}>
       {sectors.map((sec,i)=>
         <div key={i} onClick={()=>setSector(sec.v)} style={{padding:'14px 12px',background:sector===sec.v?'rgba(198,163,78,.12)':'rgba(198,163,78,.04)',borderRadius:10,border:sector===sec.v?'2px solid rgba(198,163,78,.4)':'1px solid rgba(198,163,78,.08)',cursor:'pointer',textAlign:'center'}}>
+          <div style={{fontSize:16,fontWeight:700,color:sector===sec.v?'#c6a34e':'#5e5c56',marginBottom:4}}>{sec.icon}</div>
           <div style={{fontSize:12,fontWeight:600,color:sector===sec.v?'#c6a34e':'#e8e6e0'}}>{sec.l}</div>
           <div style={{fontSize:10,color:'#5e5c56',marginTop:2}}>{sec.d}</div>
         </div>
       )}
     </div>
     <div style={{display:'flex',gap:6,marginBottom:16}}>
-      {[{v:"generate",l:"Générer DRS"},{v:"history",l:"Historique"},{v:"scenarios",l:"Scénarios ASR"}].map(t=>
+      {[{v:"generate",l:"Generer DRS"},{v:"history",l:"Historique ("+drsHistory.length+")"},{v:"scenarios",l:"Scenarios ASR"},{v:"guide",l:"Guide & Delais"}].map(t=>
         <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',
           background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>
       )}
     </div>
     {tab==='generate'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
-      <C><ST>Déclaration {sectors.find(s2=>s2.v===sector)?.l}</ST>
-        <I label="Travailleur" value="" onChange={()=>{}} options={ae.map(e=>({v:e.id,l:`${e.first||e.fn||'Emp'} ${e.last||''}`}))}/>
-        <I label="Date événement" type="date" value="" onChange={()=>{}} style={{marginTop:9}}/>
-        {sector==='chomage'&&<I label="Scénario" value="5" onChange={()=>{}} style={{marginTop:9}} options={[{v:"1",l:"Scénario 1 — Chômage complet"},{v:"2",l:"Scénario 2 — Chômage temporaire"},{v:"3",l:"Scénario 3 — Prépension/RCC"},{v:"5",l:"Scénario 5 — Mensuel CT"},{v:"6",l:"Scénario 6 — Mensuel CT éco"}]}/>}
-        {sector==='inami'&&<I label="Type" value="incap" onChange={()=>{}} style={{marginTop:9}} options={[{v:"incap",l:"Incapacité de travail"},{v:"mat",l:"Repos de maternité"},{v:"pat",l:"Congé de paternité"},{v:"adop",l:"Congé d\'adoption"}]}/>}
-        <B style={{width:'100%',marginTop:14}}>Générer flux DRS</B>
+      <C><ST>Declaration {sectors.find(s2=>s2.v===sector)?.l}</ST>
+        <I label="Travailleur" value={drsEid} onChange={setDrsEid} options={ae.map(e=>({v:e.id,l:`${e.first||e.fn||'Emp'} ${e.last||''}`}))}/>
+        <I label="Date evenement" type="date" value={drsDate} onChange={setDrsDate} style={{marginTop:9}}/>
+        {sector==='chomage'&&<I label="Scenario" value={drsScenario} onChange={setDrsScenario} style={{marginTop:9}} options={[{v:"1",l:"Scenario 1 - Chomage complet"},{v:"2",l:"Scenario 2 - Chomage temporaire"},{v:"3",l:"Scenario 3 - Prepension/RCC"},{v:"5",l:"Scenario 5 - Mensuel CT"},{v:"6",l:"Scenario 6 - Mensuel CT eco"}]}/>}
+        {sector==='inami'&&<I label="Type" value={drsType} onChange={setDrsType} style={{marginTop:9}} options={[{v:"incap",l:"Incapacite de travail"},{v:"mat",l:"Repos de maternite"},{v:"pat",l:"Conge de paternite"},{v:"adop",l:"Conge d'adoption"}]}/>}
+        {warnings.length>0&&<div style={{marginTop:10,padding:8,background:"rgba(239,68,68,.08)",borderRadius:6,fontSize:10.5,color:'#f87171'}}>{warnings.map((w,i)=><div key={i}>* {w}</div>)}</div>}
+        <B onClick={genDrsXml} style={{width:'100%',marginTop:14}}>Generer flux DRS XML</B>
       </C>
-      <C><ST>Informations</ST>
+      <C><ST>Informations {sectors.find(s2=>s2.v===sector)?.l}</ST>
         <div style={{fontSize:11,color:'#9e9b93',lineHeight:1.8}}>
-          {[{l:"Canal",v:"Batch ou portail sécurité sociale"},{l:"Format",v:"XML structuré (schéma ONSS)"},{l:"Délai",v:"Dans les 5 jours ouvrables"},{l:"Accusé",v:"Ticket de réception automatique"},{l:"Correction",v:"Annulation + nouvelle déclaration"}].map((r,i)=>
+          {sector==='chomage'?[{l:"Canal",v:"Batch ou portail securite sociale"},{l:"Document C4",v:"Obligatoire pour scenario 1"},{l:"Delai",v:"Dans les 2 mois de la fin de contrat"},{l:"Mensuel (S5/S6)",v:"Avant le 5 du mois suivant"},{l:"Rectification",v:"Annulation + nouvelle declaration"}]
+          :sector==='inami'?[{l:"Type L1",v:"Declaration electronique INAMI"},{l:"Delai incapacite",v:"14 jours calendrier"},{l:"Delai maternite",v:"8 semaines avant date presumee"},{l:"Salaire garanti",v:"30 jours (employes) / 14j+14j (ouvriers)"},{l:"Mutuelle",v:"Prend le relais apres salaire garanti"}]
+          :sector==='pension'?[{l:"Type P1",v:"Carriere et droits pension"},{l:"Pension legale",v:"66 ans (2026) ou 45 ans carriere"},{l:"Delai",v:"12 mois avant la prise de pension"},{l:"Bonus pension",v:"Si carriere > 45 ans (supprime depuis 2015)"},{l:"2eme pilier",v:"Pension complementaire employeur"}]
+          :[{l:"Canal",v:"Batch ou portail securite sociale"},{l:"Format",v:"XML structure (schema ONSS)"},{l:"Delai",v:"Dans les 5 jours ouvrables"},{l:"Accuse",v:"Ticket de reception automatique"},{l:"Correction",v:"Annulation + nouvelle declaration"}]}.map((r,i)=>
             <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
               <span>{r.l}</span><span style={{fontWeight:600,color:'#e8e6e0'}}>{r.v}</span>
             </div>
           )}
         </div>
+        <div style={{marginTop:12,padding:10,background:"rgba(96,165,250,.06)",borderRadius:8,fontSize:10.5,color:'#60a5fa'}}>
+          <b>Portail:</b> www.socialsecurity.be - Application DRS<br/>
+          <b>Helpdesk ONSS:</b> 02/509 59 59
+        </div>
       </C>
     </div>}
-    {tab==='history'&&<C><div style={{padding:20,textAlign:'center',color:'#5e5c56'}}>Aucune DRS générée dans cette session</div></C>}
-    {tab==='scenarios'&&<C><ST>Scénarios ASR (Application Sociale Risque)</ST>
-      {[{s:'Scénario 1',d:"Début chômage complet après fin de contrat",t:'C4 obligatoire'},{s:'Scénario 2',d:"Chômage temporaire — déclaration initiale",t:'Notification ONEM'},{s:'Scénario 3',d:"RCC/Prépension — début période",t:'C4-RCC'},{s:'Scénario 5',d:"Déclaration mensuelle chômage temporaire",t:'Mensuel'},{s:'Scénario 6',d:"Déclaration mensuelle CT économique",t:'Mensuel'},{s:'Scénario 10',d:"Incapacité de travail > 28 jours",t:'Mutuelle/INAMI'}].map((r,i)=>
-        <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12}}>
-          <div><b style={{color:'#c6a34e'}}>{r.s}</b><div style={{fontSize:10.5,color:'#9e9b93'}}>{r.d}</div></div>
-          <span style={{fontSize:10,padding:'2px 8px',borderRadius:4,background:"rgba(96,165,250,.1)",color:'#60a5fa'}}>{r.t}</span>
+    {tab==='history'&&<C>
+      {drsHistory.length>0?<Tbl cols={[
+        {k:'d',l:"Date",r:r=>new Date(r.at).toLocaleDateString('fr-BE')},
+        {k:'e',l:"Travailleur",b:1,r:r=>r.emp},
+        {k:'s',l:"Secteur",r:r=><span style={{fontSize:10,padding:'2px 6px',borderRadius:4,background:'rgba(198,163,78,.1)',color:'#c6a34e'}}>{r.sector}</span>},
+        {k:'sc',l:"Scenario",r:r=>r.scenario||'—'},
+        {k:'ev',l:"Date evt.",r:r=>r.date},
+        {k:'x',l:"",a:'right',r:r=><B v="ghost" style={{padding:'3px 8px',fontSize:10}} onClick={()=>d({type:"MODAL",m:{w:800,c:<div><h3 style={{color:'#e8e6e0',margin:'0 0 10px'}}>DRS - {r.sector}</h3><pre style={{background:"#060810",border:'1px solid rgba(139,115,60,.15)',borderRadius:8,padding:14,fontSize:10,color:'#9e9b93',whiteSpace:'pre-wrap',maxHeight:400,overflowY:'auto'}}>{r.xml}</pre><div style={{display:'flex',gap:10,marginTop:12,justifyContent:'flex-end'}}><B v="outline" onClick={()=>d({type:"MODAL",m:null})}>Fermer</B><B onClick={()=>{navigator.clipboard?.writeText(r.xml);alert('Copie !')}}>Copier</B></div></div>}})}>XML</B>},
+      ]} data={drsHistory}/>:<div style={{padding:30,textAlign:'center',color:'#5e5c56'}}>Aucune DRS generee. Utilisez l'onglet "Generer DRS".</div>}
+    </C>}
+    {tab==='scenarios'&&<C><ST>Scenarios ASR (Application Sociale Risque)</ST>
+      {[{s:'Scenario 1',d:"Debut chomage complet apres fin de contrat",t:'C4 obligatoire',dl:'2 mois',color:'#f87171'},{s:'Scenario 2',d:"Chomage temporaire - declaration initiale",t:'Notification ONEM',dl:'Le jour meme',color:'#fb923c'},{s:'Scenario 3',d:"RCC/Prepension - debut periode",t:'C4-RCC',dl:'2 mois',color:'#f87171'},{s:'Scenario 5',d:"Declaration mensuelle chomage temporaire",t:'Mensuel',dl:'5 du mois suivant',color:'#c6a34e'},{s:'Scenario 6',d:"Declaration mensuelle CT economique",t:'Mensuel',dl:'5 du mois suivant',color:'#c6a34e'},{s:'Scenario 10',d:"Incapacite de travail > 28 jours",t:'Mutuelle/INAMI',dl:'14 jours',color:'#60a5fa'},{s:'Scenario 12',d:"Repos de maternite",t:'INAMI',dl:'8 sem. avant',color:'#a78bfa'},{s:'Scenario 50',d:"Vacances annuelles ouvriers",t:'ONVA',dl:'Annuel',color:'#4ade80'}].map((r,i)=>
+        <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12}}>
+          <div style={{flex:1}}><b style={{color:'#c6a34e'}}>{r.s}</b><div style={{fontSize:10.5,color:'#9e9b93'}}>{r.d}</div></div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <span style={{fontSize:10,padding:'2px 8px',borderRadius:4,background:r.color+'15',color:r.color}}>{r.t}</span>
+            <span style={{fontSize:10,padding:'2px 8px',borderRadius:4,background:'rgba(198,163,78,.1)',color:'#c6a34e',fontWeight:600}}>{r.dl}</span>
+          </div>
         </div>
       )}
     </C>}
+    {tab==='guide'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Delais legaux DRS</ST>
+        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
+          <div><b style={{color:'#f87171'}}>Chomage complet (S1):</b> 2 mois apres fin contrat</div>
+          <div><b style={{color:'#fb923c'}}>Chomage temporaire (S2):</b> Le jour meme du debut CT</div>
+          <div><b style={{color:'#c6a34e'}}>CT mensuel (S5/S6):</b> Avant le 5 du mois suivant</div>
+          <div><b style={{color:'#60a5fa'}}>Incapacite (S10):</b> 14 jours calendrier</div>
+          <div><b style={{color:'#a78bfa'}}>Maternite (S12):</b> 8 semaines avant accouchement</div>
+          <div><b style={{color:'#4ade80'}}>Vacances (S50):</b> Annuellement via ONSS</div>
+        </div>
+      </C>
+      <C><ST>Documents requis par scenario</ST>
+        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
+          <div><b style={{color:'#c6a34e'}}>S1:</b> C4 + DRS electronique + formulaire C3.2</div>
+          <div><b style={{color:'#c6a34e'}}>S2:</b> Notification ONEM + formulaire C3.2 travailleur</div>
+          <div><b style={{color:'#c6a34e'}}>S3:</b> C4-RCC + convention collective + DRS</div>
+          <div><b style={{color:'#c6a34e'}}>S10:</b> Certificat medical + DRS INAMI</div>
+          <div><b style={{color:'#c6a34e'}}>S12:</b> Certificat grossesse + DRS INAMI</div>
+        </div>
+        <div style={{marginTop:10,padding:10,background:"rgba(74,222,128,.06)",borderRadius:8,fontSize:11,color:'#4ade80'}}>
+          Tous les flux DRS sont a envoyer via le portail de la securite sociale (www.socialsecurity.be) ou en batch via un mandataire social.
+        </div>
+      </C>
+    </div>}
   </div>;
 }
 
