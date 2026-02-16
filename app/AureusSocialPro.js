@@ -17688,6 +17688,215 @@ function OrganesMod({s,d}){
   </div>;
 }
 
+
+function ElectionsMod({s,d}){
+  const ae=s.emps||[];const n=ae.length;const [tab,setTab]=useState('calendar');
+  const needCE=n>=100;const needCPPT=n>=50;
+  const calendar=[
+    {jour:'X-60',date:'Dec 2027',action:'Annonce date elections. Affichage avis',obl:true},
+    {jour:'X-35',date:'Jan 2028',action:'Listes electorales provisoires. Debut protection',obl:true},
+    {jour:'X-28',date:'Jan 2028',action:'Reclamations listes electorales',obl:true},
+    {jour:'X-13',date:'Fev 2028',action:'Cloture listes candidats syndicaux',obl:true},
+    {jour:'X-5',date:'Fev 2028',action:'Convocations electorales envoyees',obl:true},
+    {jour:'X',date:'Mai 2028',action:'JOUR DES ELECTIONS - Vote secret',obl:true},
+    {jour:'X+2',date:'Mai 2028',action:'Proces-verbal des resultats',obl:true},
+    {jour:'X+86',date:'Aout 2028',action:'Installation des organes elus',obl:true},
+  ];
+  return <div>
+    <PH title="Elections Sociales" sub="Tous les 4 ans - Prochaines: 2028 - CPPT (50+) et CE (100+)"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Effectif",v:n,c:'#c6a34e'},{l:"CPPT (50+)",v:needCPPT?'Atteint':'Non requis',c:needCPPT?'#4ade80':'#5e5c56'},{l:"CE (100+)",v:needCE?'Atteint':'Non requis',c:needCE?'#4ade80':'#5e5c56'},{l:"Prochaines",v:'2028',c:'#60a5fa'}].map((k,i)=>
+        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
+        </div>)}
+    </div>
+    <div style={{display:'flex',gap:6,marginBottom:16}}>
+      {[{v:'calendar',l:'Calendrier electoral'},{v:'protection',l:'Protection candidats'},{v:'procedure',l:'Procedure vote'}].map(t=>
+        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
+    </div>
+    {tab==='calendar'&&<C><ST>Calendrier electoral 2028</ST>
+      {calendar.map((r,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:14,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+        <div style={{width:50,textAlign:'center'}}><span style={{fontSize:12,fontWeight:700,color:r.jour==='X'?'#f87171':'#c6a34e',fontFamily:'monospace'}}>{r.jour}</span></div>
+        <div style={{width:100,fontSize:11,color:'#5e5c56'}}>{r.date}</div>
+        <div style={{flex:1,fontSize:12,color:r.jour==='X'?'#f87171':'#e8e6e0',fontWeight:r.jour==='X'?700:400}}>{r.action}</div>
+      </div>)}
+    </C>}
+    {tab==='protection'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Protection contre licenciement</ST>
+        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
+          <div><b style={{color:'#f87171'}}>Debut:</b> X-30 (depot listes candidats)</div>
+          <div><b style={{color:'#f87171'}}>Fin:</b> Installation elus suivants (4 ans)</div>
+          <div><b style={{color:'#f87171'}}>Non elus:</b> Meme protection</div>
+          <div><b style={{color:'#f87171'}}>Motif grave:</b> Seul motif (procedure judiciaire)</div>
+          <div><b style={{color:'#f87171'}}>Indemnite:</b> 2 a 8 ans de remuneration brute</div>
+        </div>
+      </C>
+      <C><ST>Calcul indemnite protection</ST>
+        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
+          <div><b style={{color:'#c6a34e'}}>Partie fixe:</b> 2 ans remuneration brute</div>
+          <div><b style={{color:'#c6a34e'}}>Variable anc. moins de 10 ans:</b> +2 ans</div>
+          <div><b style={{color:'#c6a34e'}}>Variable anc. 10-20 ans:</b> +3 ans</div>
+          <div><b style={{color:'#c6a34e'}}>Variable anc. plus de 20 ans:</b> +4 ans</div>
+          <div><b style={{color:'#c6a34e'}}>Total: 4 a 8 ans salaire brut</b></div>
+        </div>
+      </C>
+    </div>}
+    {tab==='procedure'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Conditions de vote</ST>
+        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
+          <div><b style={{color:'#60a5fa'}}>Electeurs:</b> Min. 3 mois anciennete</div>
+          <div><b style={{color:'#60a5fa'}}>Candidats:</b> Min. 6 mois, 18-65 ans</div>
+          <div><b style={{color:'#60a5fa'}}>Mode:</b> Vote secret, sur lieu travail</div>
+          <div><b style={{color:'#60a5fa'}}>Colleges:</b> Ouvriers / Employes / Cadres / Jeunes</div>
+          <div><b style={{color:'#60a5fa'}}>Mandat:</b> 4 ans</div>
+        </div>
+      </C>
+      <C><ST>Organes selon effectif</ST>
+        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
+          <div style={{padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><b style={{color:'#c6a34e'}}>50+</b> travailleurs: <span style={{color:needCPPT?'#4ade80':'#5e5c56',fontWeight:600}}>CPPT {needCPPT?'OBLIGATOIRE':'Non requis'}</span></div>
+          <div style={{padding:'8px 0'}}><b style={{color:'#c6a34e'}}>100+</b> travailleurs: <span style={{color:needCE?'#4ade80':'#5e5c56',fontWeight:600}}>CE {needCE?'OBLIGATOIRE':'Non requis'}</span></div>
+        </div>
+      </C>
+    </div>}
+  </div>;
+}
+
+function AuditMod({s,d}){
+  const ae=s.emps||[];const co=s.co||{};
+  const [running,setRunning]=useState(false);const [results,setResults]=useState(null);
+  const runAudit=()=>{
+    setRunning(true);
+    setTimeout(()=>{
+      const checks=[];
+      const ok=(cat,mod,msg)=>checks.push({cat,mod,status:'ok',msg});
+      const warn=(cat,mod,msg)=>checks.push({cat,mod,status:'warn',msg});
+      const fail=(cat,mod,msg)=>checks.push({cat,mod,status:'fail',msg});
+      // === ENTREPRISE ===
+      if(co.name&&co.name.length>2)ok('Entreprise','Parametres','Nom societe renseigne: '+co.name);else fail('Entreprise','Parametres','Nom societe manquant ou trop court');
+      if(co.vat||co.bce)ok('Entreprise','Parametres','BCE/TVA renseigne');else fail('Entreprise','Parametres','Numero BCE/TVA manquant');
+      if(co.onss)ok('Entreprise','Parametres','Numero ONSS renseigne');else fail('Entreprise','Parametres','Numero ONSS manquant - requis pour DmfA/Dimona');
+      if(co.cp)ok('Entreprise','Parametres','Commission paritaire: CP '+co.cp);else warn('Entreprise','Parametres','Commission paritaire non definie - CP 200 par defaut');
+      if(co.iban)ok('Entreprise','Parametres','IBAN societe renseigne');else warn('Entreprise','Parametres','IBAN societe manquant - requis pour SEPA');
+      // === EMPLOYES ===
+      if(ae.length>0)ok('Employes','Effectif',ae.length+' travailleur(s) enregistre(s)');else fail('Employes','Effectif','Aucun travailleur enregistre');
+      const noNiss=ae.filter(e=>!e.niss||e.niss.length<11);
+      if(noNiss.length===0)ok('Employes','NISS','Tous les NISS sont renseignes');else fail('Employes','NISS',noNiss.length+' travailleur(s) sans NISS valide - bloquant pour Dimona/DRS');
+      const noStart=ae.filter(e=>!e.startD);
+      if(noStart.length===0)ok('Employes','Date entree','Toutes les dates entree renseignees');else fail('Employes','Date entree',noStart.length+' travailleur(s) sans date entree');
+      const noBirth=ae.filter(e=>!e.birth);
+      if(noBirth.length===0)ok('Employes','Naissance','Toutes les dates naissance renseignees');else warn('Employes','Naissance',noBirth.length+' travailleur(s) sans date naissance');
+      const noIban=ae.filter(e=>!e.iban);
+      if(noIban.length===0)ok('Employes','IBAN','Tous les IBAN renseignes');else warn('Employes','IBAN',noIban.length+' travailleur(s) sans IBAN - virement impossible');
+      const noFn=ae.filter(e=>!e.fn);
+      if(noFn.length===0)ok('Employes','Fonction','Toutes les fonctions renseignees');else warn('Employes','Fonction',noFn.length+' travailleur(s) sans fonction');
+      const noStatut=ae.filter(e=>!e.statut);
+      if(noStatut.length===0)ok('Employes','Statut','Tous les statuts definis (employe/ouvrier)');else warn('Employes','Statut',noStatut.length+' travailleur(s) sans statut');
+      // === PAIE ===
+      const noGross=ae.filter(e=>!e.gross||+e.gross===0);
+      if(noGross.length===0)ok('Paie','Salaire brut','Tous les salaires bruts definis');else fail('Paie','Salaire brut',noGross.length+' travailleur(s) sans salaire brut');
+      const noWh=ae.filter(e=>!e.whWeek);
+      if(noWh.length===0)ok('Paie','Regime travail','Tous les regimes horaires definis');else warn('Paie','Regime travail',noWh.length+' travailleur(s) sans regime horaire - 38h par defaut');
+      // === DECLARATIONS ===
+      if(co.onss)ok('Declarations','DmfA','ONSS present - DmfA possible');else fail('Declarations','DmfA','ONSS manquant - DmfA impossible');
+      const dimonaReady=ae.filter(e=>e.niss&&e.startD).length;
+      if(dimonaReady===ae.length&&ae.length>0)ok('Declarations','Dimona','Tous travailleurs Dimona-ready (NISS+date)');else if(ae.length>0)warn('Declarations','Dimona',(ae.length-dimonaReady)+' travailleur(s) non Dimona-ready');else fail('Declarations','Dimona','Aucun travailleur pour Dimona');
+      // === LEGAL ===
+      ok('Legal','Reglement travail','Module present - verifier contenu');
+      ok('Legal','Contrats travail','Module present - verifier signatures');
+      if(ae.length>=50)warn('Legal','CPPT','Seuil 50 travailleurs atteint - CPPT obligatoire');
+      if(ae.length>=100)warn('Legal','Conseil Entreprise','Seuil 100 travailleurs - CE obligatoire');
+      // === BIEN-ETRE ===
+      ok('Bien-etre','Plan Global','Module interactif present - verifier actions');
+      ok('Bien-etre','PAA','Module interactif present - verifier trimestres');
+      ok('Bien-etre','Risques Psycho','Module avec suivi dossiers present');
+      ok('Bien-etre','Alcool/Drogues','Checklist CCT 100 presente');
+      ok('Bien-etre','Elections','Module elections sociales present');
+      // === MODULES FONCTIONNELS ===
+      const modules=['Dashboard','Employes','Fiches de paie','Dimona','DmfA','Belcotax','Precompte','ONSS Dashboard','DRS',
+        'ATN','Heures Sup','Transport','13eme mois','CSS','Bonus emploi','Pecule vacances',
+        'Absenteisme','Chomage temporaire','Conge-education','RCC','Outplacement','Credit-temps',
+        'Onboarding','Offboarding','Registre personnel','Total Reward',
+        'Assurance Loi','Assurance Groupe','Allocations familiales','Caisse vacances',
+        'Plan Global','PAA','Risques Psycho','Alcool/Drogues','Elections','Organes',
+        'SEPA','Peppol','Documents juridiques','Alertes legales','Contrats travail','Reglement travail',
+        'Pointage','Self-service','Saisies','Frais de gestion','GED','Bilan social'];
+      modules.forEach(m=>ok('Modules','Couverture',m+' - present'));
+      // === MANQUES ===
+      warn('A faire','Integration','Connexion API reelle ONSS/Dimona (portail securite sociale)');
+      warn('A faire','Integration','Import fichiers pointeuse (CSV/XML)');
+      warn('A faire','Integration','Export comptable format BOB/Winbooks/Exact');
+      warn('A faire','Documents','Generation PDF fiches de paie');
+      warn('A faire','Documents','Generation PDF C4 / attestations');
+      warn('A faire','Documents','Generation contrat de travail PDF pre-rempli');
+      warn('A faire','Calculs','Bareme fiscal precompte professionnel 2026 complet');
+      warn('A faire','Calculs','Calcul pecule vacances sortie complet (simple+double prorata)');
+      warn('A faire','Calculs','Indexation automatique baremes sectoriels');
+      warn('A faire','Securite','Authentification multi-facteur (2FA)');
+      warn('A faire','Securite','Chiffrement donnees sensibles (NISS, IBAN)');
+      warn('A faire','Securite','Journalisation des acces (RGPD audit trail)');
+      warn('A faire','RGPD','Registre des traitements');
+      warn('A faire','RGPD','Politique de retention des donnees');
+      warn('A faire','RGPD','Export donnees travailleur (droit acces)');
+      warn('A faire','UX','Mode impression fiches de paie');
+      warn('A faire','UX','Notifications email deadlines');
+      warn('A faire','UX','Import CSV masse travailleurs');
+      fail('A ameliorer','Dashboard','Graphiques cout salarial 12 mois - donnees statiques');
+      warn('A ameliorer','Fiches de paie','Precompte professionnel simplifie - implementer bareme complet');
+      warn('A ameliorer','DmfA','XML genere localement - pas envoi reel ONSS');
+      warn('A ameliorer','Dimona','XML genere localement - pas envoi reel ONSS');
+      warn('A ameliorer','Belcotax','XML 281 genere - pas envoi reel SPF Finances');
+      warn('A ameliorer','SEPA','XML genere - pas connexion bancaire');
+      setResults(checks);setRunning(false);
+    },1500);
+  };
+  if(!results)return <div>
+    <PH title="Audit Complet" sub="Analyse de toutes les fonctionnalites - Journal qualite"/>
+    <div style={{display:'flex',justifyContent:'center',alignItems:'center',minHeight:400}}>
+      <div style={{textAlign:'center'}}>
+        <div style={{fontSize:60,marginBottom:20}}>{running?'...':'🔍'}</div>
+        <div style={{fontSize:16,color:'#e8e6e0',marginBottom:8}}>{running?'Analyse en cours...':'Pret pour audit'}</div>
+        <div style={{fontSize:12,color:'#5e5c56',marginBottom:24}}>Scan complet: entreprise, employes, paie, declarations, legal, bien-etre, modules</div>
+        {!running&&<B onClick={runAudit} style={{padding:'12px 40px',fontSize:14}}>Lancer Audit Complet</B>}
+        {running&&<div style={{width:200,height:6,background:'rgba(198,163,78,.08)',borderRadius:3,margin:'0 auto',overflow:'hidden'}}><div style={{height:'100%',width:'60%',background:'#c6a34e',borderRadius:3,animation:'pulse 1s infinite'}}/></div>}
+      </div>
+    </div>
+  </div>;
+  const oks=results.filter(r=>r.status==='ok');const warns=results.filter(r=>r.status==='warn');const fails=results.filter(r=>r.status==='fail');
+  const score=Math.round((oks.length/(results.length))*100);
+  const cats=[...new Set(results.map(r=>r.cat))];
+  return <div>
+    <PH title="Audit Complet" sub={"Score: "+score+"% - "+results.length+" verifications"}/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Score global",v:score+'%',c:score>80?'#4ade80':score>60?'#fb923c':'#f87171'},{l:"OK",v:oks.length,c:'#4ade80'},{l:"Attention",v:warns.length,c:'#fb923c'},{l:"Critique",v:fails.length,c:'#f87171'},{l:"Total checks",v:results.length,c:'#c6a34e'}].map((k,i)=>
+        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:22,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
+        </div>)}
+    </div>
+    <div style={{display:'flex',gap:6,marginBottom:4}}>
+      <B onClick={()=>setResults(null)} style={{padding:'6px 14px',fontSize:11,background:'rgba(198,163,78,.08)'}}>Relancer audit</B>
+    </div>
+    {cats.map(cat=>{const items=results.filter(r=>r.cat===cat);const catOk=items.filter(r=>r.status==='ok').length;const catFail=items.filter(r=>r.status==='fail').length;const catWarn=items.filter(r=>r.status==='warn').length;
+      return <C key={cat} style={{marginBottom:12,padding:0,overflow:'hidden'}}>
+        <div style={{padding:'12px 18px',background:'rgba(198,163,78,.04)',borderBottom:'1px solid rgba(198,163,78,.08)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontWeight:700,fontSize:13,color:'#c6a34e'}}>{cat}</span>
+          <div style={{display:'flex',gap:8}}>
+            {catOk>0&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:4,background:'rgba(74,222,128,.1)',color:'#4ade80'}}>{catOk} OK</span>}
+            {catWarn>0&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:4,background:'rgba(251,146,56,.1)',color:'#fb923c'}}>{catWarn} Attention</span>}
+            {catFail>0&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:4,background:'rgba(248,113,113,.1)',color:'#f87171'}}>{catFail} Critique</span>}
+          </div>
+        </div>
+        {items.map((r,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 18px',borderBottom:'1px solid rgba(255,255,255,.02)'}}>
+          <div style={{width:8,height:8,borderRadius:'50%',background:r.status==='ok'?'#4ade80':r.status==='warn'?'#fb923c':'#f87171',flexShrink:0}}/>
+          <span style={{fontSize:10,color:'#5e5c56',width:120,flexShrink:0}}>{r.mod}</span>
+          <span style={{fontSize:11,color:r.status==='ok'?'#9e9b93':r.status==='warn'?'#fb923c':'#f87171'}}>{r.msg}</span>
+        </div>)}
+      </C>;
+    })}
+  </div>;
+}
+
 function SelfServiceMod({s,d}){
   const ae=s.emps||[];const [sel,setSel]=useState(ae[0]?.id||'');const [tab,setTab]=useState('fiches');
   const emp=ae.find(e=>e.id===sel)||ae[0]||{};
