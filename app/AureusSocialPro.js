@@ -17419,234 +17419,270 @@ function BienEtreDash({s}){
 }
 
 function PlanGlobalMod({s,d}){
+  const [tab,setTab]=useState('checklist');
+  const [actions,setActions]=useState([
+    {id:1,dom:'Securite',action:'Analyse des risques par poste',resp:'SIPP/SEPP',dl:'30/06/2026',status:'todo'},
+    {id:2,dom:'Sante',action:'Planning surveillance medicale',resp:'Medecin travail',dl:'31/03/2026',status:'done'},
+    {id:3,dom:'Psychosocial',action:'Enquete bien-etre travailleurs',resp:'Pers. confiance',dl:'30/09/2026',status:'todo'},
+    {id:4,dom:'Ergonomie',action:'Audit postes ecran (DSE)',resp:'Conseiller prev.',dl:'31/12/2026',status:'progress'},
+    {id:5,dom:'Hygiene',action:'Mesures bruit / qualite air',resp:'SEPP',dl:'30/06/2026',status:'todo'},
+    {id:6,dom:'Securite',action:'Mise a jour plan evacuation',resp:'SIPPT',dl:'31/03/2026',status:'done'},
+    {id:7,dom:'Formation',action:'Formation secouristes recyclage',resp:'RH',dl:'30/09/2026',status:'todo'},
+    {id:8,dom:'EPI',action:'Inventaire et renouvellement EPI',resp:'Ligne hier.',dl:'31/12/2026',status:'todo'},
+  ]);
+  const toggle=(id)=>setActions(p=>p.map(a=>a.id===id?{...a,status:a.status==='done'?'todo':a.status==='progress'?'done':'progress'}:a));
+  const done=actions.filter(a=>a.status==='done').length;const prog=actions.filter(a=>a.status==='progress').length;const pct=Math.round(done/actions.length*100);
   return <div>
-    <PH title="Plan Global de Prévention" sub="Obligatoire — Durée 5 ans — Code bien-être Livre I Titre 2"/>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
-      <C><ST>Structure du Plan Global</ST>
-        {[{s:'1. Résultats analyse des risques',d:"Identification de tous les dangers et risques par poste/activité"},{s:'2. Mesures de prévention prioritaires',d:"Hiérarchie: élimination > protection collective > protection individuelle"},{s:'3. Objectifs prioritaires',d:"Par domaine du bien-être — indicateurs mesurables"},{s:'4. Moyens et ressources',d:"Budget prévention, formation, équipements"},{s:'5. Missions et obligations',d:"Ligne hiérarchique, conseillers, travailleurs"},{s:"6. Critères d'évaluation",d:"Indicateurs de suivi annuel"}].map((r,i)=>
-          <div key={i} style={{padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-            <b style={{color:'#c6a34e',fontSize:12}}>{r.s}</b>
-            <div style={{fontSize:10.5,color:'#9e9b93',marginTop:1}}>{r.d}</div>
-          </div>
-        )}
-      </C>
-      <C><ST>Calendrier</ST>
-        {[{p:'Année 1 (2025)',a:'Analyse complète des risques + rédaction plan'},{p:'Année 2',a:'Mise en oeuvre priorités 1 + évaluation'},{p:'Année 3',a:'Mise en oeuvre priorités 2 + révision'},{p:'Année 4',a:'Évaluation intermédiaire'},{p:'Année 5 (2029)',a:'Évaluation finale + nouveau plan'}].map((r,i)=>
-          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12}}>
-            <b style={{color:'#e8e6e0'}}>{r.p}</b><span style={{color:'#9e9b93'}}>{r.a}</span>
-          </div>
-        )}
-        <div style={{marginTop:10,padding:8,background:"rgba(248,113,113,.06)",borderRadius:6,fontSize:10.5,color:'#f87171'}}>
-          <b>Avis CPPT:</b> Le plan doit être soumis au CPPT (ou à la DS, ou aux travailleurs).
-        </div>
-      </C>
+    <PH title="Plan Global de Prevention" sub="Obligatoire - Duree 5 ans - Code bien-etre Livre I Titre 2"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Actions",v:actions.length,c:'#c6a34e'},{l:"Terminees",v:done,c:'#4ade80'},{l:"En cours",v:prog,c:'#fb923c'},{l:"A faire",v:actions.length-done-prog,c:'#f87171'},{l:"Progression",v:pct+'%',c:pct>60?'#4ade80':'#fb923c'}].map((k,i)=>
+        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
+        </div>)}
     </div>
+    <div style={{display:'flex',gap:6,marginBottom:16}}>
+      {[{v:'checklist',l:'Plan actions'},{v:'calendar',l:'Calendrier 5 ans'},{v:'structure',l:'7 domaines'},{v:'docs',l:'Documents obligatoires'}].map(t=>
+        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
+    </div>
+    {tab==='checklist'&&<C>
+      <div style={{marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}><ST>Actions de prevention</ST><div style={{width:200,height:8,background:'rgba(198,163,78,.08)',borderRadius:4,overflow:'hidden'}}><div style={{height:'100%',width:pct+'%',background:pct>60?'#4ade80':'#fb923c',borderRadius:4}}/></div></div>
+      {['Securite','Sante','Psychosocial','Ergonomie','Hygiene','Formation','EPI'].map(dom=>{const items=actions.filter(a=>a.dom===dom);if(!items.length)return null;
+        return <div key={dom} style={{marginBottom:14}}>
+          <div style={{fontSize:11,fontWeight:600,color:'#c6a34e',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:6}}>{dom}</div>
+          {items.map(a=><div key={a.id} onClick={()=>toggle(a.id)} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',marginBottom:3,background:a.status==='done'?'rgba(74,222,128,.06)':a.status==='progress'?'rgba(251,146,56,.06)':'rgba(198,163,78,.03)',borderRadius:6,cursor:'pointer'}}>
+            <div style={{width:20,height:20,borderRadius:5,border:a.status==='done'?'2px solid #4ade80':a.status==='progress'?'2px solid #fb923c':'2px solid #5e5c56',background:a.status==='done'?'rgba(74,222,128,.15)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:a.status==='done'?'#4ade80':'#fb923c'}}>{a.status==='done'?'V':a.status==='progress'?'~':''}</div>
+            <div style={{flex:1}}><div style={{fontSize:12,color:a.status==='done'?'#4ade80':'#e8e6e0',textDecoration:a.status==='done'?'line-through':'none'}}>{a.action}</div><div style={{fontSize:10,color:'#5e5c56'}}>{a.resp} - Echeance: {a.dl}</div></div>
+            <span style={{fontSize:9,padding:'2px 8px',borderRadius:4,background:a.status==='done'?'rgba(74,222,128,.1)':a.status==='progress'?'rgba(251,146,56,.1)':'rgba(198,163,78,.06)',color:a.status==='done'?'#4ade80':a.status==='progress'?'#fb923c':'#9e9b93'}}>{a.status==='done'?'Termine':a.status==='progress'?'En cours':'A faire'}</span>
+          </div>)}</div>;})}
+    </C>}
+    {tab==='calendar'&&<C><ST>Calendrier quinquennal</ST>
+      {[{p:'Annee 1 (2025)',a:'Analyse complete des risques + redaction plan',pct:100,c:'#4ade80'},{p:'Annee 2 (2026)',a:'Mise en oeuvre priorites 1 + evaluation',pct:35,c:'#fb923c'},{p:'Annee 3 (2027)',a:'Mise en oeuvre priorites 2 + revision',pct:0,c:'#5e5c56'},{p:'Annee 4 (2028)',a:'Evaluation intermediaire',pct:0,c:'#5e5c56'},{p:'Annee 5 (2029)',a:'Evaluation finale + nouveau plan',pct:0,c:'#5e5c56'}].map((r,i)=>
+        <div key={i} style={{padding:'12px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}><b style={{color:'#e8e6e0',fontSize:13}}>{r.p}</b><span style={{fontWeight:600,color:r.c}}>{r.pct}%</span></div>
+          <div style={{fontSize:11,color:'#9e9b93',marginBottom:6}}>{r.a}</div>
+          <div style={{height:6,background:'rgba(198,163,78,.08)',borderRadius:3,overflow:'hidden'}}><div style={{height:'100%',width:r.pct+'%',background:r.c,borderRadius:3}}/></div>
+        </div>)}
+    </C>}
+    {tab==='structure'&&<C><ST>7 domaines du bien-etre (Art. 4 Loi 4/8/1996)</ST>
+      {[{d:'Securite au travail',ex:'Risques machines, incendie, electrique',c:'#f87171'},{d:'Protection de la sante',ex:'Surveillance medicale, agents chimiques',c:'#4ade80'},{d:'Risques psychosociaux',ex:'Stress, harcelement, violence, burnout',c:'#a78bfa'},{d:'Ergonomie',ex:'Postes ecran, manutention, TMS',c:'#60a5fa'},{d:'Hygiene du travail',ex:'Bruit, temperature, qualite air',c:'#fb923c'},{d:'Embellissement lieux',ex:'Amenagement, proprete, confort',c:'#c6a34e'},{d:'Environnement',ex:'Impact sur travailleurs',c:'#4ade80'}].map((r,i)=>
+        <div key={i} style={{display:'flex',gap:10,alignItems:'center',padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><div style={{width:8,height:8,borderRadius:'50%',background:r.c}}/><div><b style={{color:r.c,fontSize:12}}>{r.d}</b><div style={{fontSize:10,color:'#5e5c56'}}>{r.ex}</div></div></div>)}
+    </C>}
+    {tab==='docs'&&<C><ST>Documents obligatoires</ST>
+      {[{d:'Plan global de prevention (5 ans)',f:'Tous les 5 ans'},{d:'Plan annuel action (PAA)',f:'Annuel'},{d:'Rapport annuel SIPP',f:'Avant le 1er avril'},{d:'Document identification',f:'Permanent'},{d:'Registre faits de tiers',f:'Permanent'},{d:'Analyse risques par poste',f:'A chaque changement'},{d:'Fiches de poste de travail',f:'Par poste'}].map((r,i)=>
+        <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{fontSize:12,color:'#e8e6e0'}}>{r.d}</span><span style={{fontSize:10,padding:'2px 6px',borderRadius:4,background:'rgba(248,113,113,.1)',color:'#f87171'}}>{r.f}</span></div>)}
+    </C>}
   </div>;
 }
 
 function PAAMod({s,d}){
+  const [tab,setTab]=useState('actions');
+  const [paa,setPaa]=useState([
+    {id:1,obj:'Formation secouristes recyclage',dom:'Securite',budget:1200,resp:'RH',trim:'T1',status:'done'},
+    {id:2,obj:'Audit ergonomique postes ecran',dom:'Ergonomie',budget:2500,resp:'SEPP',trim:'T2',status:'progress'},
+    {id:3,obj:'Enquete risques psychosociaux',dom:'Psychosocial',budget:800,resp:'Pers. confiance',trim:'T2',status:'todo'},
+    {id:4,obj:'Mise a jour plan evacuation',dom:'Securite',budget:500,resp:'SIPPT',trim:'T1',status:'done'},
+    {id:5,obj:'Controle qualite air',dom:'Hygiene',budget:1500,resp:'SEPP',trim:'T3',status:'todo'},
+    {id:6,obj:'Renouvellement EPI',dom:'EPI',budget:3000,resp:'Achat',trim:'T2',status:'progress'},
+    {id:7,obj:'Exercice evacuation incendie',dom:'Securite',budget:0,resp:'Cons. prev.',trim:'T4',status:'todo'},
+    {id:8,obj:'Formation harcelement hierarchie',dom:'Psychosocial',budget:900,resp:'RH',trim:'T3',status:'todo'},
+  ]);
+  const toggleP=(id)=>setPaa(p=>p.map(a=>a.id===id?{...a,status:a.status==='done'?'todo':a.status==='progress'?'done':'progress'}:a));
+  const done=paa.filter(a=>a.status==='done').length;const totB=paa.reduce((a,c)=>a+c.budget,0);const spentB=paa.filter(a=>a.status==='done').reduce((a,c)=>a+c.budget,0);
   return <div>
-    <PH title="Plan Annuel d'Action" sub="Concrétisation du Plan Global — Objectifs de l'année"/>
-    <C><ST>Contenu obligatoire du PAA</ST>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18,fontSize:11,color:'#9e9b93'}}>
-        <div>
-          {[{t:"Objectifs prioritaires de l'année",d:"Actions concrètes par domaine"},{t:'Moyens et délais',d:"Budget, calendrier, responsables"},{t:"Modifications d'installations",d:"Nouvelles machines, aménagements, produits"},{t:'Formations planifiées',d:"Secouristes, incendie, ergonomie, risques psycho"}].map((r,i)=>
-            <div key={i} style={{padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-              <b style={{color:'#c6a34e'}}>{r.t}</b><div style={{marginTop:1}}>{r.d}</div>
-            </div>
-          )}
-        </div>
-        <div>
-          {[{t:"Mesures d'urgence",d:"Plan d'évacuation, premiers secours"},{t:'EPI — Équipements protection',d:"Inventaire, renouvellement, formations"},{t:'Surveillance santé',d:"Planning examens médicaux, postes à risque"},{t:'Évaluation N-1',d:"Bilan des actions réalisées l'année précédente"}].map((r,i)=>
-            <div key={i} style={{padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-              <b style={{color:'#c6a34e'}}>{r.t}</b><div style={{marginTop:1}}>{r.d}</div>
-            </div>
-          )}
-        </div>
-      </div>
-    </C>
+    <PH title="Plan Annuel Action 2026" sub="Concretisation du Plan Global - Objectifs annee"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Actions",v:paa.length,c:'#c6a34e'},{l:"Terminees",v:done,c:'#4ade80'},{l:"Budget total",v:fmt(totB),c:'#60a5fa'},{l:"Budget engage",v:fmt(spentB),c:'#fb923c'},{l:"Progression",v:Math.round(done/paa.length*100)+'%',c:'#4ade80'}].map((k,i)=>
+        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
+        </div>)}
+    </div>
+    <div style={{display:'flex',gap:6,marginBottom:16}}>
+      {[{v:'actions',l:'Actions PAA'},{v:'trim',l:'Par trimestre'},{v:'echeances',l:'Echeances'}].map(t=>
+        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
+    </div>
+    {tab==='actions'&&<C style={{padding:0,overflow:'hidden'}}>
+      <Tbl cols={[
+        {k:'s',l:"",w:40,r:r=><div onClick={(e)=>{e.stopPropagation();toggleP(r.id)}} style={{width:20,height:20,borderRadius:5,border:r.status==='done'?'2px solid #4ade80':r.status==='progress'?'2px solid #fb923c':'2px solid #5e5c56',background:r.status==='done'?'rgba(74,222,128,.15)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:r.status==='done'?'#4ade80':'#fb923c',cursor:'pointer'}}>{r.status==='done'?'V':r.status==='progress'?'~':''}</div>},
+        {k:'o',l:"Action",b:1,r:r=><span style={{textDecoration:r.status==='done'?'line-through':'none',color:r.status==='done'?'#4ade80':'#e8e6e0'}}>{r.obj}</span>},
+        {k:'d',l:"Domaine",r:r=><span style={{fontSize:10,padding:'2px 6px',borderRadius:4,background:'rgba(198,163,78,.08)',color:'#c6a34e'}}>{r.dom}</span>},
+        {k:'r',l:"Resp.",r:r=>r.resp},
+        {k:'t',l:"Trim.",r:r=><span style={{fontWeight:600,color:'#60a5fa'}}>{r.trim}</span>},
+        {k:'b',l:"Budget",a:'right',r:r=><span style={{color:'#c6a34e'}}>{r.budget?fmt(r.budget):'-'}</span>},
+      ]} data={paa}/>
+    </C>}
+    {tab==='trim'&&<div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}}>
+      {['T1','T2','T3','T4'].map(t=>{const items=paa.filter(a=>a.trim===t);const d2=items.filter(a=>a.status==='done').length;
+        return <C key={t}><div style={{textAlign:'center',marginBottom:10}}><div style={{fontSize:16,fontWeight:700,color:'#c6a34e'}}>{t} 2026</div><div style={{fontSize:10,color:'#5e5c56'}}>{d2}/{items.length}</div></div>
+          {items.map((a,i)=><div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><div style={{width:8,height:8,borderRadius:'50%',background:a.status==='done'?'#4ade80':a.status==='progress'?'#fb923c':'#5e5c56'}}/><span style={{fontSize:11,color:a.status==='done'?'#4ade80':'#e8e6e0'}}>{a.obj}</span></div>)}</C>;})}
+    </div>}
+    {tab==='echeances'&&<C><ST>Echeances PAA</ST>
+      {[{l:'Redaction PAA',dl:'Novembre N-1',c:'#fb923c'},{l:'Avis CPPT',dl:'Avant le 1er novembre',c:'#f87171'},{l:'Rapport annuel SIPP',dl:'Avant le 1er avril',c:'#f87171'},{l:'Transmission rapport SPF',dl:'Avant le 30 juin',c:'#f87171'}].map((r,i)=>
+        <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{fontSize:12,color:'#e8e6e0'}}>{r.l}</span><span style={{fontSize:11,fontWeight:600,color:r.c}}>{r.dl}</span></div>)}
+    </C>}
   </div>;
 }
 
 function RisquesPsychoMod({s,d}){
+  const [tab,setTab]=useState('suivi');
+  const [dossiers,setDossiers]=useState([]);
+  const [rf,setRf]=useState({type:'informelle',motif:'stress',date:new Date().toISOString().split('T')[0]});
+  const addD=()=>{setDossiers(p=>[{...rf,id:Date.now(),status:'ouvert',at:new Date().toISOString()},...p]);};
   return <div>
-    <PH title="Risques Psychosociaux" sub="Loi du 28/2/2014 — Stress, harcèlement, violence, burnout"/>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
-      <C><ST>Procédure interne obligatoire</ST>
-        {[{e:'Procédure informelle',d:"Demande d'intervention auprès de la personne de confiance ou du conseiller en prévention psychosocial. Entretien, médiation, conciliation.",c:'#60a5fa'},
-          {e:'Procédure formelle',d:"Demande écrite motivée. Analyse par le conseiller en prévention. Rapport avec propositions. L'employeur doit agir.",c:'#fb923c'},
-          {e:'Procédure externe',d:"Si procédure interne échouée: Contrôle du bien-être au travail (CBE) ou tribunal du travail.",c:'#f87171'},
-        ].map((r,i)=><div key={i} style={{padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-          <div style={{fontWeight:600,color:r.c}}>{r.e}</div>
-          <div style={{fontSize:10.5,color:'#9e9b93',marginTop:2}}>{r.d}</div>
+    <PH title="Risques Psychosociaux" sub="Loi du 28/2/2014 - Stress, harcelement, violence, burnout"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Dossiers ouverts",v:dossiers.filter(x=>x.status==='ouvert').length,c:'#fb923c'},{l:"Dossiers clos",v:dossiers.filter(x=>x.status==='clos').length,c:'#4ade80'},{l:"Informelles",v:dossiers.filter(x=>x.type==='informelle').length,c:'#60a5fa'},{l:"Formelles",v:dossiers.filter(x=>x.type==='formelle').length,c:'#f87171'}].map((k,i)=>
+        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:22,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
         </div>)}
-      </C>
-      <div>
-        <C><ST>Facteurs de risque (5A)</ST>
-          {[{f:'Organisation du travail',ex:'Charge, horaires, autonomie'},{f:'Contenu du travail',ex:'Complexité, monotonie, responsabilité'},{f:'Conditions de travail',ex:'Contrat, rémunération, évaluation'},{f:'Conditions de vie au travail',ex:'Bruit, espace, équipement'},{f:'Relations interpersonnelles',ex:'Hiérarchie, collègues, tiers'}].map((r,i)=>
-            <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12}}>
-              <b style={{color:'#e8e6e0'}}>{r.f}</b><span style={{color:'#9e9b93',fontSize:10.5}}>{r.ex}</span>
-            </div>
-          )}
-        </C>
-        <C style={{marginTop:12}}><ST>Personnes de confiance</ST>
-          <div style={{fontSize:11,color:'#9e9b93',lineHeight:1.8}}>
-            <div>Désignation: <b style={{color:'#e8e6e0'}}>Accord préalable des travailleurs</b></div>
-            <div>Formation: <b style={{color:'#e8e6e0'}}>Min. 5 jours + supervision annuelle</b></div>
-            <div>Rôle: <b style={{color:'#e8e6e0'}}>Écoute, médiation, pas de pouvoir disciplinaire</b></div>
-            <div>Protection: <b style={{color:'#e8e6e0'}}>Contre le licenciement</b></div>
-          </div>
-        </C>
-      </div>
     </div>
+    <div style={{display:'flex',gap:6,marginBottom:16}}>
+      {[{v:'suivi',l:'Suivi dossiers'},{v:'procedure',l:'Procedures'},{v:'facteurs',l:'5 facteurs'},{v:'personnes',l:'Personnes confiance'}].map(t=>
+        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
+    </div>
+    {tab==='suivi'&&<div style={{display:'grid',gridTemplateColumns:'320px 1fr',gap:18}}>
+      <C><ST>Nouveau dossier</ST>
+        <I label="Type" value={rf.type} onChange={v=>setRf({...rf,type:v})} options={[{v:'informelle',l:'Demande informelle'},{v:'formelle',l:'Demande formelle'}]}/>
+        <I label="Motif" value={rf.motif} onChange={v=>setRf({...rf,motif:v})} style={{marginTop:9}} options={[{v:'stress',l:'Stress / charge travail'},{v:'harcelement',l:'Harcelement moral'},{v:'harcelement_sex',l:'Harcelement sexuel'},{v:'violence',l:'Violence au travail'},{v:'conflit',l:'Conflit interpersonnel'},{v:'burnout',l:'Burnout / epuisement'}]}/>
+        <I label="Date" type="date" value={rf.date} onChange={v=>setRf({...rf,date:v})} style={{marginTop:9}}/>
+        <B onClick={addD} style={{width:'100%',marginTop:14}}>Creer dossier</B>
+      </C>
+      <C>{dossiers.length>0?<Tbl cols={[
+        {k:'d',l:"Date",r:r=>r.date},{k:'t',l:"Type",r:r=><span style={{fontSize:10,padding:'2px 6px',borderRadius:4,background:r.type==='formelle'?'rgba(248,113,113,.1)':'rgba(96,165,250,.1)',color:r.type==='formelle'?'#f87171':'#60a5fa'}}>{r.type}</span>},
+        {k:'m',l:"Motif",r:r=>r.motif},{k:'s',l:"Statut",r:r=><span style={{fontSize:10,padding:'2px 6px',borderRadius:4,background:'rgba(251,146,56,.1)',color:'#fb923c'}}>{r.status}</span>},
+      ]} data={dossiers}/>:<div style={{padding:30,textAlign:'center',color:'#5e5c56'}}>Aucun dossier. Creez un suivi via le formulaire.</div>}</C>
+    </div>}
+    {tab==='procedure'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Procedure informelle</ST>
+        {[{e:'1. Demande du travailleur',d:"Aupres personne de confiance OU conseiller prevention",c:'#60a5fa'},{e:'2. Entretien',d:"Ecoute, clarification, information",c:'#60a5fa'},{e:'3. Intervention',d:"Mediation, conciliation, intervention hierarchie",c:'#60a5fa'},{e:'4. Resultat',d:"Suivi. Si echec: procedure formelle possible.",c:'#60a5fa'}].map((r,i)=>
+          <div key={i} style={{padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><b style={{color:r.c}}>{r.e}</b><div style={{fontSize:10.5,color:'#9e9b93',marginTop:2}}>{r.d}</div></div>)}
+      </C>
+      <C><ST>Procedure formelle</ST>
+        {[{e:'1. Demande ecrite motivee',d:"Au conseiller prevention aspects psychosociaux",c:'#f87171'},{e:'2. Analyse (3 mois max)',d:"Entretiens, enquete, rapport avec mesures",c:'#f87171'},{e:'3. Decision employeur',d:"Employeur DOIT agir. Communication au travailleur.",c:'#f87171'},{e:'4. Recours externe',d:"CBE (SPF ETCS) ou tribunal du travail",c:'#f87171'}].map((r,i)=>
+          <div key={i} style={{padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><b style={{color:r.c}}>{r.e}</b><div style={{fontSize:10.5,color:'#9e9b93',marginTop:2}}>{r.d}</div></div>)}
+      </C>
+    </div>}
+    {tab==='facteurs'&&<C><ST>5 facteurs de risque (5A)</ST>
+      {[{f:'Organisation du travail',ex:'Charge, horaires, autonomie',ind:'Heures sup, absenteisme, turnover',c:'#f87171'},{f:'Contenu du travail',ex:'Complexite, monotonie, sens',ind:'Plaintes, erreurs',c:'#fb923c'},{f:'Conditions de travail',ex:'Contrat, remuneration, carriere',ind:'Ecart salarial, satisfaction',c:'#c6a34e'},{f:'Conditions de vie au travail',ex:'Bruit, espace, equipement',ind:'Mesures physiques, plaintes',c:'#60a5fa'},{f:'Relations interpersonnelles',ex:'Hierarchie, collegues, tiers',ind:'Conflits, mediations',c:'#a78bfa'}].map((r,i)=>
+        <div key={i} style={{padding:'12px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><b style={{color:r.c,fontSize:13}}>{r.f}</b><div style={{fontSize:11,color:'#9e9b93',marginTop:3}}>{r.ex}</div><div style={{fontSize:10,color:'#5e5c56',marginTop:2}}>Indicateurs: {r.ind}</div></div>)}
+    </C>}
+    {tab==='personnes'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Personne de confiance</ST>
+        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
+          <div><b style={{color:'#c6a34e'}}>Designation:</b> Accord prealable travailleurs (CPPT)</div>
+          <div><b style={{color:'#c6a34e'}}>Formation:</b> Min. 5 jours + supervision annuelle</div>
+          <div><b style={{color:'#c6a34e'}}>Role:</b> Ecoute, mediation, PAS de pouvoir disciplinaire</div>
+          <div><b style={{color:'#c6a34e'}}>Protection:</b> Contre le licenciement</div>
+        </div>
+      </C>
+      <C><ST>Conseiller prevention psychosocial</ST>
+        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
+          <div><b style={{color:'#60a5fa'}}>Statut:</b> Obligatoire (interne ou via SEPP)</div>
+          <div><b style={{color:'#60a5fa'}}>Formation:</b> Master + specialisation</div>
+          <div><b style={{color:'#60a5fa'}}>Independance:</b> Ne peut etre licencie pour ses avis</div>
+          <div><b style={{color:'#60a5fa'}}>Delai analyse:</b> 3 mois maximum</div>
+        </div>
+      </C>
+    </div>}
   </div>;
 }
 
 function AlcoolMod({s,d}){
+  const [tab,setTab]=useState('checklist');
+  const [steps,setSteps]=useState([
+    {id:1,ph:'Phase 1',action:'Declaration intention redigee',done:false,obl:true},
+    {id:2,ph:'Phase 1',action:'Principes valides (prevention, sante)',done:false,obl:true},
+    {id:3,ph:'Phase 2',action:'Integration reglement de travail',done:false,obl:true},
+    {id:4,ph:'Phase 2',action:'Procedures dysfonctionnement definies',done:false,obl:true},
+    {id:5,ph:'Phase 2',action:'Avis CPPT obtenu',done:false,obl:true},
+    {id:6,ph:'Phase 3',action:'Sensibilisation travailleurs realisee',done:false,obl:true},
+    {id:7,ph:'Phase 3',action:'Formation ligne hierarchique',done:false,obl:true},
+    {id:8,ph:'Phase 4',action:'Tests definis (si fonctions securite)',done:false,obl:false},
+    {id:9,ph:'Phase 4',action:'Modalites tests dans reglement travail',done:false,obl:false},
+  ]);
+  const toggleA=(id)=>setSteps(p=>p.map(s2=>s2.id===id?{...s2,done:!s2.done}:s2));
+  const done=steps.filter(s2=>s2.done).length;const oblDone=steps.filter(s2=>s2.obl&&s2.done).length;const oblTot=steps.filter(s2=>s2.obl).length;
   return <div>
-    <PH title="Politique Alcool & Drogues" sub="CCT n° 100 du 1/4/2009 — Obligation pour tout employeur"/>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
-      <C><ST>4 phases obligatoires</ST>
-        {[{p:"Phase 1 — Déclaration d'intention",d:"L'employeur fixe les principes: prévention, pas de tolérance zéro, approche santé.",c:'#4ade80'},
-          {p:'Phase 2 — Cadre règlementaire',d:"Intégrer dans le règlement de travail. Procédures en cas de dysfonctionnement.",c:'#60a5fa'},
-          {p:'Phase 3 — Information et formation',d:"Sensibiliser les travailleurs et la ligne hiérarchique.",c:'#a78bfa'},
-          {p:'Phase 4 — Tests (facultatif)',d:"Tests de dépistage possibles UNIQUEMENT si prévus dans règlement et si fonctions de sécurité.",c:'#fb923c'},
-        ].map((r,i)=><div key={i} style={{padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-          <b style={{color:r.c}}>{r.p}</b>
-          <div style={{fontSize:10.5,color:'#9e9b93',marginTop:2}}>{r.d}</div>
+    <PH title="Politique Alcool et Drogues" sub="CCT n. 100 du 1/4/2009 - Obligation tout employeur"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Etapes",v:steps.length,c:'#c6a34e'},{l:"Completees",v:done,c:'#4ade80'},{l:"Obligatoires",v:oblDone+'/'+oblTot,c:oblDone===oblTot?'#4ade80':'#f87171'},{l:"Conformite",v:oblDone===oblTot?'Conforme':'Non conforme',c:oblDone===oblTot?'#4ade80':'#f87171'}].map((k,i)=>
+        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
         </div>)}
-      </C>
-      <C><ST>Points clés</ST>
-        <div style={{fontSize:11,color:'#9e9b93',lineHeight:1.8}}>
-          {[{l:"Base légale",v:"CCT 100 (CNT) — étendue par AR"},{l:"Champ",v:"Tous les employeurs du secteur privé"},{l:"Objectif",v:"Prévention, pas répression"},{l:"Tests",v:"Facultatifs — uniquement fonctions sécurité"},{l:"Sanctions",v:"Proportionnées, après entretien"},{l:"CPPT",v:"Doit être consulté sur la politique"},{l:"Confidentialité",v:"Données médicales = strictement confidentielles"}].map((r,i)=>
-            <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-              <span>{r.l}</span><span style={{fontWeight:600,color:'#e8e6e0'}}>{r.v}</span>
-            </div>
-          )}
-        </div>
-      </C>
     </div>
+    <div style={{display:'flex',gap:6,marginBottom:16}}>
+      {[{v:'checklist',l:'Checklist conformite'},{v:'phases',l:'4 phases CCT 100'},{v:'regles',l:'Points cles'}].map(t=>
+        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
+    </div>
+    {tab==='checklist'&&<C>
+      {['Phase 1','Phase 2','Phase 3','Phase 4'].map(ph=>{const items=steps.filter(s2=>s2.ph===ph);
+        return <div key={ph} style={{marginBottom:14}}>
+          <div style={{fontSize:11,fontWeight:600,color:'#c6a34e',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:6}}>{ph} {ph==='Phase 4'?'(Facultatif)':''}</div>
+          {items.map(st=><div key={st.id} onClick={()=>toggleA(st.id)} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',marginBottom:3,background:st.done?'rgba(74,222,128,.06)':'rgba(198,163,78,.03)',borderRadius:6,cursor:'pointer',border:st.obl&&!st.done?'1px solid rgba(248,113,113,.2)':'1px solid transparent'}}>
+            <div style={{width:20,height:20,borderRadius:5,border:st.done?'2px solid #4ade80':'2px solid #5e5c56',background:st.done?'rgba(74,222,128,.15)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#4ade80'}}>{st.done?'V':''}</div>
+            <span style={{fontSize:12,color:st.done?'#4ade80':'#e8e6e0',textDecoration:st.done?'line-through':'none'}}>{st.action}{st.obl?<span style={{color:'#f87171',fontSize:9,marginLeft:4}}>*</span>:null}</span>
+          </div>)}</div>;})}
+    </C>}
+    {tab==='phases'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      {[{p:"Phase 1 - Declaration intention",d:"Fixer les principes: prevention, pas de tolerance zero, approche sante.",c:'#4ade80'},{p:'Phase 2 - Cadre reglementaire',d:"Integrer dans reglement travail. Procedures dysfonctionnement. Avis CPPT.",c:'#60a5fa'},{p:'Phase 3 - Information formation',d:"Sensibiliser travailleurs et ligne hierarchique.",c:'#a78bfa'},{p:'Phase 4 - Tests (facultatif)',d:"Tests possibles UNIQUEMENT si prevus dans reglement ET fonctions securite.",c:'#fb923c'}].map((r,i)=>
+        <C key={i}><div style={{fontWeight:700,color:r.c,fontSize:13,marginBottom:8}}>{r.p}</div><div style={{fontSize:11,color:'#9e9b93',lineHeight:1.6}}>{r.d}</div></C>)}
+    </div>}
+    {tab==='regles'&&<C><ST>Points cles CCT 100</ST>
+      {[{l:"Base legale",v:"CCT 100 (CNT) - etendue par AR"},{l:"Champ",v:"Tous employeurs secteur prive"},{l:"Objectif",v:"Prevention, pas repression"},{l:"Tests",v:"Facultatifs - fonctions securite uniquement"},{l:"Sanctions",v:"Proportionnees, apres entretien"},{l:"CPPT",v:"Doit etre consulte"},{l:"Confidentialite",v:"Donnees medicales strictement confidentielles"}].map((r,i)=>
+        <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{color:'#9e9b93'}}>{r.l}</span><span style={{fontWeight:600,color:'#e8e6e0'}}>{r.v}</span></div>)}
+    </C>}
   </div>;
 }
 
 function OrganesMod({s,d}){
-  const n=(s.emps||[]).length;
+  const n=(s.emps||[]).length;const [tab,setTab]=useState('organes');
   return <div>
-    <PH title="Organes de Concertation Sociale" sub="CPPT, CE, DS — Seuils et obligations"/>
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14}}>
-      {[{o:"CPPT",full:"Comité pour la Prévention et la Protection au Travail",seuil:50,freq:'Min. 1×/mois',comp:"Paritaire: employeur + représentants travailleurs",miss:"Bien-être, sécurité, santé, plan global, analyse risques",active:n>=50},
-        {o:"CE",full:"Conseil d\'Entreprise",seuil:100,freq:'Min. 1×/mois',comp:"Chef d'entreprise + délégués élus",miss:"Info économique/financière, règlement travail, emploi",active:n>=100},
-        {o:"DS",full:"Délégation Syndicale",seuil:0,freq:'Selon nécessité',comp:"Délégués syndicaux désignés",miss:"Réclamations, négociation conditions travail, CCT",active:true},
+    <PH title="Organes de Concertation Sociale" sub="CPPT, CE, DS - Seuils et obligations"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Effectif",v:n,c:'#c6a34e'},{l:"CPPT (50+)",v:n>=50?'Obligatoire':'Non requis',c:n>=50?'#4ade80':'#5e5c56'},{l:"CE (100+)",v:n>=100?'Obligatoire':'Non requis',c:n>=100?'#4ade80':'#5e5c56'},{l:"DS",v:'Selon CCT',c:'#60a5fa'}].map((k,i)=>
+        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
+        </div>)}
+    </div>
+    <div style={{display:'flex',gap:6,marginBottom:16}}>
+      {[{v:'organes',l:'Organes'},{v:'reunions',l:'Reunions CPPT'},{v:'obligations',l:'Obligations'}].map(t=>
+        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
+    </div>
+    {tab==='organes'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14}}>
+      {[{o:"CPPT",full:"Comite Prevention Protection Travail",seuil:50,freq:'Min. 1x/mois',comp:"Paritaire: employeur + representants",miss:"Bien-etre, securite, sante, plan global",active:n>=50,color:'#4ade80'},
+        {o:"CE",full:"Conseil Entreprise",seuil:100,freq:'Min. 1x/mois',comp:"Chef entreprise + delegues elus",miss:"Info eco/financiere, reglement travail, emploi",active:n>=100,color:'#60a5fa'},
+        {o:"DS",full:"Delegation Syndicale",seuil:0,freq:'Selon necessite',comp:"Delegues syndicaux designes",miss:"Reclamations, negociation conditions, CCT",active:true,color:'#a78bfa'},
       ].map((r,i)=><C key={i}>
-        <div style={{textAlign:'center',marginBottom:10}}>
-          <div style={{fontSize:18,fontWeight:700,color:r.active?'#c6a34e':'#5e5c56'}}>{r.o}</div>
-          <div style={{fontSize:10,color:'#5e5c56'}}>{r.full}</div>
-          {r.seuil>0&&<div style={{fontSize:10,marginTop:4,padding:'2px 8px',borderRadius:4,display:'inline-block',background:n>=r.seuil?'rgba(74,222,128,.1)':'rgba(158,155,147,.1)',color:n>=r.seuil?'#4ade80':'#5e5c56'}}>Seuil: {r.seuil} trav. {n>=r.seuil?'✓ Atteint':'✗ Non atteint'}</div>}
+        <div style={{textAlign:'center',marginBottom:12}}>
+          <div style={{width:50,height:50,borderRadius:'50%',background:r.active?r.color+'20':'rgba(94,92,86,.1)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',fontSize:16,fontWeight:700,color:r.active?r.color:'#5e5c56'}}>{r.o}</div>
+          <div style={{fontSize:10,color:'#5e5c56',marginTop:6}}>{r.full}</div>
+          {r.seuil>0&&<div style={{fontSize:10,marginTop:4,padding:'2px 8px',borderRadius:4,display:'inline-block',background:n>=r.seuil?'rgba(74,222,128,.1)':'rgba(158,155,147,.1)',color:n>=r.seuil?'#4ade80':'#5e5c56'}}>Seuil: {r.seuil} trav.</div>}
         </div>
         <div style={{fontSize:11,color:'#9e9b93',lineHeight:1.8}}>
-          <div>Fréquence: <b style={{color:'#e8e6e0'}}>{r.freq}</b></div>
+          <div>Frequence: <b style={{color:'#e8e6e0'}}>{r.freq}</b></div>
           <div>Composition: <b style={{color:'#e8e6e0'}}>{r.comp}</b></div>
           <div>Missions: <b style={{color:'#e8e6e0'}}>{r.miss}</b></div>
         </div>
       </C>)}
-    </div>
-  </div>;
-}
-// =====================================================
-//  ELECTIONS SOCIALES
-// =====================================================
-function ElectionsMod({s,d}){
-  const ae=s.emps||[];const n=ae.length;
-  const [tab,setTab]=useState('calendar');
-  const needCE=n>=100;const needCPPT=n>=50;
-  const nextElection=2028; // elections sociales tous les 4 ans
-  
-  // Calendrier electoral 2028 (X = jour elections, Y = jour de reference)
-  const calendar=[
-    {jour:'X-60',date:'Decembre 2027',action:'Annonce date elections (X). Affichage avis',obligatoire:true},
-    {jour:'X-35',date:'Janvier 2028',action:'Listes electorales provisoires. Debut protection candidats',obligatoire:true},
-    {jour:'X-28',date:'Janvier 2028',action:'Reclamations listes electorales',obligatoire:true},
-    {jour:'X-13',date:'Fevrier 2028',action:'Cloture listes de candidats syndicaux',obligatoire:true},
-    {jour:'X-5',date:'Fevrier 2028',action:'Convocations electorales envoyees',obligatoire:true},
-    {jour:'X',date:'Mai 2028',action:'JOUR DES ELECTIONS — Vote secret',obligatoire:true},
-    {jour:'X+2',date:'Mai 2028',action:'Proces-verbal des resultats',obligatoire:true},
-    {jour:'X+86',date:'Aout 2028',action:'Installation des organes elus',obligatoire:true},
-  ];
-
-  return <div>
-    <PH title="Elections Sociales" sub="Tous les 4 ans - Prochaines: 2028 - CPPT (50+) et CE (100+)"/>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
-      {[{l:"Effectif actuel",v:n,c:'#c6a34e'},{l:"Seuil CPPT (50)",v:needCPPT?'Atteint':'Non atteint',c:needCPPT?'#4ade80':'#5e5c56'},{l:"Seuil CE (100)",v:needCE?'Atteint':'Non atteint',c:needCE?'#4ade80':'#5e5c56'},{l:"Prochaines elections",v:nextElection,c:'#60a5fa'}].map((k,i)=>
-        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
-          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
-          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
-        </div>
-      )}
-    </div>
-    <div style={{display:'flex',gap:6,marginBottom:16}}>
-      {[{v:'calendar',l:'Calendrier electoral'},{v:'protection',l:'Protection candidats'},{v:'procedure',l:'Procedure de vote'}].map(t=>
-        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',
-          background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>
-      )}
-    </div>
-    {tab==='calendar'&&<C><ST>Calendrier electoral {nextElection}</ST>
-      {calendar.map((r,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:14,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-        <div style={{width:50,textAlign:'center'}}><span style={{fontSize:12,fontWeight:700,color:r.jour==='X'?'#f87171':'#c6a34e',fontFamily:'monospace'}}>{r.jour}</span></div>
-        <div style={{width:120,fontSize:11,color:'#5e5c56'}}>{r.date}</div>
-        <div style={{flex:1,fontSize:12,color:r.jour==='X'?'#f87171':'#e8e6e0',fontWeight:r.jour==='X'?700:400}}>{r.action}</div>
-        {r.obligatoire&&<span style={{fontSize:9,padding:'2px 6px',borderRadius:4,background:'rgba(248,113,113,.1)',color:'#f87171'}}>Obligatoire</span>}
+    </div>}
+    {tab==='reunions'&&<C><ST>Calendrier reunions CPPT {new Date().getFullYear()}</ST>
+      {Array.from({length:12},(_,i)=>i).map(m=><div key={m} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+        <span style={{fontSize:12,color:'#e8e6e0'}}>{['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'][m]}</span>
+        <span style={{fontSize:10,padding:'2px 8px',borderRadius:4,background:m<new Date().getMonth()?'rgba(74,222,128,.1)':'rgba(198,163,78,.06)',color:m<new Date().getMonth()?'#4ade80':'#c6a34e'}}>{m<new Date().getMonth()?'Tenue':'Planifiee'}</span>
       </div>)}
     </C>}
-    {tab==='protection'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
-      <C><ST>Protection contre le licenciement</ST>
-        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
-          <div><b style={{color:'#f87171'}}>Debut:</b> X-30 (depot listes de candidats)</div>
-          <div><b style={{color:'#f87171'}}>Fin:</b> Installation des elus suivants (4 ans plus tard)</div>
-          <div><b style={{color:'#f87171'}}>Candidats non elus:</b> Meme protection</div>
-          <div><b style={{color:'#f87171'}}>Motif grave:</b> Seul motif possible (procedure judiciaire prealable)</div>
-          <div><b style={{color:'#f87171'}}>Indemnite protection:</b> 2 a 8 ans de remuneration brute</div>
-        </div>
-        <div style={{marginTop:10,padding:10,background:'rgba(248,113,113,.06)',borderRadius:8,fontSize:11,color:'#f87171'}}>
-          <b>Attention:</b> Le licenciement d'un candidat/elu sans respect de la procedure = indemnite de protection pouvant atteindre 8 ans de salaire brut.
-        </div>
+    {tab==='obligations'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Obligations employeur</ST>
+        {[{o:'Convoquer min. 1x/mois'},{o:'Fournir tous les moyens necessaires'},{o:'Transmettre plan global + PAA pour avis'},{o:'Communiquer rapport annuel SIPP'},{o:'Informer de tout accident/incident'},{o:'Permettre formations delegues'},{o:'Local de reunion a disposition'}].map((r,i)=>
+          <div key={i} style={{padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12,color:'#e8e6e0'}}><span style={{color:'#f87171',marginRight:6}}>*</span>{r.o}</div>)}
       </C>
-      <C><ST>Calcul indemnite de protection</ST>
-        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
-          <div><b style={{color:'#c6a34e'}}>Partie fixe:</b> 2 ans de remuneration brute</div>
-          <div><b style={{color:'#c6a34e'}}>Partie variable:</b> 2 a 4 ans selon anciennete</div>
-          <div style={{marginTop:6,fontSize:11,color:'#9e9b93'}}>Anciennete &lt; 10 ans: +2 ans</div>
-          <div style={{fontSize:11,color:'#9e9b93'}}>Anciennete 10-20 ans: +3 ans</div>
-          <div style={{fontSize:11,color:'#9e9b93'}}>Anciennete &gt; 20 ans: +4 ans</div>
-          <div style={{marginTop:6}}><b style={{color:'#c6a34e'}}>= Total: 4 a 8 ans de salaire brut</b></div>
-        </div>
-      </C>
-    </div>}
-    {tab==='procedure'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
-      <C><ST>Conditions de vote</ST>
-        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
-          <div><b style={{color:'#60a5fa'}}>Electeurs:</b> Tous les travailleurs avec min. 3 mois d'anciennete</div>
-          <div><b style={{color:'#60a5fa'}}>Candidats:</b> Min. 6 mois anciennete, 18-65 ans</div>
-          <div><b style={{color:'#60a5fa'}}>Mode:</b> Vote secret, sur le lieu de travail</div>
-          <div><b style={{color:'#60a5fa'}}>Colleges:</b> Ouvriers / Employes / Cadres (CE) / Jeunes</div>
-          <div><b style={{color:'#60a5fa'}}>Duree mandat:</b> 4 ans</div>
-          <div><b style={{color:'#60a5fa'}}>Vote electronique:</b> Possible si accord syndical</div>
-        </div>
-      </C>
-      <C><ST>Organes a elire selon effectif</ST>
-        <div style={{fontSize:12,color:'#c8c5bb',lineHeight:2}}>
-          <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-            <span><b style={{color:'#c6a34e'}}>50+</b> travailleurs</span>
-            <span style={{color:needCPPT?'#4ade80':'#5e5c56',fontWeight:600}}>CPPT {needCPPT?'- OBLIGATOIRE':'- Non requis'}</span>
-          </div>
-          <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-            <span><b style={{color:'#c6a34e'}}>100+</b> travailleurs</span>
-            <span style={{color:needCE?'#4ade80':'#5e5c56',fontWeight:600}}>CE {needCE?'- OBLIGATOIRE':'- Non requis'}</span>
-          </div>
-        </div>
-        <div style={{marginTop:12,padding:10,background:'rgba(96,165,250,.06)',borderRadius:8,fontSize:11,color:'#60a5fa'}}>
-          <b>SPF ETCS:</b> emploisocial.belgique.be - Elections sociales<br/>
-          <b>Application web:</b> webdev.socialeverkiezingen.be
-        </div>
+      <C><ST>Sanctions non-conformite</ST>
+        {[{s:'Pas de CPPT (seuil atteint)',m:'800 - 8.000 EUR'},{s:'Pas de reunion mensuelle',m:'400 - 4.000 EUR'},{s:'Refus info au CPPT',m:'800 - 8.000 EUR'},{s:'Pas de plan global',m:'400 - 4.000 EUR'}].map((r,i)=>
+          <div key={i} style={{padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><div style={{fontSize:12,color:'#e8e6e0'}}>{r.s}</div><div style={{fontSize:10,color:'#f87171'}}>{r.m}</div></div>)}
       </C>
     </div>}
   </div>;
