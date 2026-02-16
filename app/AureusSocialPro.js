@@ -14704,69 +14704,90 @@ function CreditTempsMod({s,d}){
 }
 
 function IndexAutoMod({s,d}){
-  const ae=s.emps||[];const [tab,setTab]=useState('sim');
-  const [tauxIndex,setTauxIndex]=useState(2.0);
-  const data=ae.map(e=>{const p=calc(e,DPER,s.co);const augm=p.gross*tauxIndex/100;return{e,p,augm,newGross:p.gross+augm};});
-  const totAugm=data.reduce((a,r)=>a+r.augm,0);const totCout=totAugm*1.35*12;
-  
+  const ae=s.emps||[];const [tab,setTab]=useState('index');
+  const [indexActuel,setIndexActuel]=useState(2.0399);const [indexPrec,setIndexPrec]=useState(2.0000);
+  const pctHausse=((indexActuel/indexPrec-1)*100).toFixed(2);
+  const historique=[
+    {annee:'2020',index:1.8183,hausse:'0.00%'},{annee:'2021',index:1.8783,hausse:'+3.30%'},
+    {annee:'2022',index:2.0399,hausse:'+8.60%'},{annee:'2023',index:2.0399,hausse:'+0.00%'},
+    {annee:'2024',index:2.0399,hausse:'+0.00%'},{annee:'2025',index:2.0399,hausse:'+0.00%'},
+    {annee:'2026',index:indexActuel,hausse:pctHausse+'%'},
+  ];
+  const impactMensuel=ae.reduce((a,e)=>a+(+e.gross||0)*(indexActuel/indexPrec-1),0);
+  const impactAnnuel=impactMensuel*13.92;
   return <div>
-    <PH title="Indexation Automatique" sub="Index-pivot — Simulation impact salarial"/>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
-      {[{l:"Taux indexation",v:tauxIndex.toFixed(2)+'%',c:'#c6a34e'},{l:"Augmentation mensuelle",v:fmt(totAugm),c:'#fb923c'},{l:"Surcoût annuel (charges)",v:fmt(totCout),c:'#f87171'},{l:"Travailleurs impactés",v:ae.length,c:'#60a5fa'}].map((k,i)=>
+    <PH title="Indexation Automatique" sub="Indice-sante lisse - Mecanisme belge unique - Impact sur masse salariale"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Indice actuel",v:indexActuel.toFixed(4),c:'#c6a34e'},{l:"Indice precedent",v:indexPrec.toFixed(4),c:'#5e5c56'},{l:"Hausse",v:pctHausse+'%',c:+pctHausse>0?'#f87171':'#4ade80'},{l:"Impact mensuel",v:fmt(impactMensuel),c:'#f87171'},{l:"Impact annuel",v:fmt(impactAnnuel),c:'#f87171'}].map((k,i)=>
         <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
           <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
-          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
-        </div>
-      )}
+          <div style={{fontSize:18,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
+        </div>)}
     </div>
     <div style={{display:'flex',gap:6,marginBottom:16}}>
-      {[{v:"sim",l:"Simulation"},{v:"history",l:"Historique index"},{v:"rules",l:"Mécanisme"}].map(t=>
-        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',
-          background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>
-      )}
+      {[{v:'index',l:'Indice et historique'},{v:'mecanisme',l:'Mecanisme'},{v:'impact',l:'Impact salaries'},{v:'cp',l:'Par commission paritaire'}].map(t=>
+        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
     </div>
-    {tab==='sim'&&<div style={{display:'grid',gridTemplateColumns:'250px 1fr',gap:18}}>
-      <C><ST>Paramètres</ST>
-        <I label="Taux indexation (%)" type="number" value={tauxIndex} onChange={v=>setTauxIndex(+v)}/>
-        <div style={{marginTop:14,padding:14,background:"rgba(198,163,78,.06)",borderRadius:8,textAlign:'center'}}>
-          <div style={{fontSize:10,color:'#5e5c56'}}>SURCOÛT ANNUEL TOTAL</div>
-          <div style={{fontSize:24,fontWeight:700,color:'#f87171',marginTop:4}}>{fmt(totCout)}</div>
-          <div style={{fontSize:10,color:'#5e5c56'}}>charges comprises (×1,35)</div>
+    {tab==='index'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Parametres indice</ST>
+        <I label="Indice-sante lisse actuel" type="number" value={indexActuel} onChange={v=>setIndexActuel(+v)} style={{marginBottom:9}}/>
+        <I label="Indice-sante lisse precedent" type="number" value={indexPrec} onChange={v=>setIndexPrec(+v)}/>
+        <div style={{marginTop:12,padding:10,background:'rgba(198,163,78,.04)',borderRadius:8}}>
+          <div style={{fontSize:11,color:'#c6a34e',fontWeight:600}}>Hausse calculee: {pctHausse}%</div>
+          <div style={{fontSize:10,color:'#5e5c56',marginTop:2}}>Appliquee automatiquement aux salaires baremes</div>
         </div>
       </C>
-      <C style={{padding:0,overflow:'hidden'}}>
-        <div style={{padding:'14px 18px',borderBottom:'1px solid rgba(139,115,60,.1)'}}><div style={{fontSize:13,fontWeight:600,color:'#e8e6e0'}}>Impact par travailleur</div></div>
+      <C><ST>Historique indice-sante</ST>
         <Tbl cols={[
-          {k:'n',l:"Travailleur",b:1,r:r=>`${r.e.first||r.e.fn||'Emp'} ${r.e.last||''}`},
-          {k:'g',l:"Brut actuel",a:'right',r:r=>fmt(r.p.gross)},
-          {k:'a',l:"Augmentation",a:'right',r:r=><span style={{color:'#fb923c'}}>+{fmt(r.augm)}</span>},
-          {k:'ng',l:"Nouveau brut",a:'right',r:r=><span style={{fontWeight:600,color:'#4ade80'}}>{fmt(r.newGross)}</span>},
-        ]} data={data}/>
+          {k:'a',l:"Annee",b:1,r:r=>r.annee},
+          {k:'i',l:"Indice",a:'right',r:r=><span style={{color:'#c6a34e',fontFamily:'monospace'}}>{r.index.toFixed(4)}</span>},
+          {k:'h',l:"Variation",a:'right',r:r=><span style={{color:r.hausse.startsWith('+')?'#f87171':'#4ade80'}}>{r.hausse}</span>},
+        ]} data={historique}/>
       </C>
     </div>}
-    {tab==='history'&&<C><ST>Dépassements d'index-pivot récents</ST>
-      {[{d:"Octobre 2025",t:'2,00%',s:'CP 200, 218, 226'},{d:"Janvier 2025",t:'2,00%',s:'CP 124 (construction)'},{d:"Novembre 2024",t:'2,00%',s:'CP 200'},{d:"Janvier 2024",t:'2,00%',s:'Tous secteurs'}].map((r,i)=>
-        <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12}}>
-          <b style={{color:'#e8e6e0'}}>{r.d}</b><span style={{color:'#c6a34e'}}>{r.t}</span><span style={{color:'#9e9b93',fontSize:10}}>{r.s}</span>
-        </div>
-      )}
+    {tab==='mecanisme'&&<C><ST>Mecanisme indexation belge</ST>
+      {[{n:1,t:'Indice des prix a la consommation',d:'Mesure par Statbel chaque mois. Base = panier de biens et services.',c:'#c6a34e'},
+        {n:2,t:'Indice-sante',d:'= Indice prix hors tabac, alcool, essence, diesel. Moins volatile.',c:'#60a5fa'},
+        {n:3,t:'Indice-sante lisse',d:'Moyenne des 4 derniers mois de indice-sante. Evite les pics.',c:'#a78bfa'},
+        {n:4,t:'Indice-pivot',d:'Seuil fixe par le gouvernement. Quand lisse depasse pivot: declenchement.',c:'#f87171'},
+        {n:5,t:'Indexation declenchee',d:'Secteur prive: selon CP (annuel, mensuel, semestriel). Secteur public: +2%.',c:'#4ade80'},
+        {n:6,t:'Application baremes',d:'Les baremes sectoriels sont multiplies par le coefficient. Automatique.',c:'#fb923c'},
+      ].map((r,i)=><div key={i} style={{display:'flex',gap:12,alignItems:'center',padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+        <div style={{width:32,height:32,borderRadius:'50%',background:r.c+'20',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700,color:r.c,flexShrink:0}}>{r.n}</div>
+        <div><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:'#9e9b93',marginTop:2}}>{r.d}</div></div>
+      </div>)}
     </C>}
-    {tab==='rules'&&<C><ST>Mécanisme d'indexation belge</ST>
-      <div style={{fontSize:11,color:'#9e9b93',lineHeight:1.8}}>
-        {[{l:"Indice de base",v:"Indice santé lissé (sans tabac, alcool, carburant)"},{l:"Pivot",v:"Déclenchement quand indice dépasse le pivot"},{l:"Taux",v:"2% à chaque dépassement"},{l:"Moment",v:"Varie selon CP (mensuel ou fixe janvier)"},{l:"Secteur public",v:"Automatique au mois de dépassement"},{l:"Secteur privé",v:"Selon convention sectorielle"}].map((r,i)=>
-          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-            <span>{r.l}</span><span style={{fontWeight:600,color:'#e8e6e0'}}>{r.v}</span>
-          </div>
-        )}
+    {tab==='impact'&&<C><ST>Impact sur les salaries</ST>
+      {ae.length===0?<div style={{color:'#5e5c56',textAlign:'center',padding:40}}>Aucun travailleur enregistre</div>:
+      <Tbl cols={[
+        {k:'n',l:"Travailleur",b:1,r:r=>r.fn+' '+(r.ln||'')},
+        {k:'g',l:"Brut actuel",a:'right',r:r=><span style={{color:'#e8e6e0'}}>{fmt(+r.gross||0)}</span>},
+        {k:'i',l:"Apres index.",a:'right',r:r=><span style={{color:'#4ade80'}}>{fmt((+r.gross||0)*(indexActuel/indexPrec))}</span>},
+        {k:'d',l:"Difference",a:'right',r:r=><span style={{color:'#f87171'}}>+{fmt((+r.gross||0)*(indexActuel/indexPrec-1))}</span>},
+      ]} data={ae}/>}
+      <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderTop:'2px solid rgba(198,163,78,.3)',marginTop:8}}>
+        <span style={{fontWeight:700,color:'#e8e6e0'}}>Impact mensuel total</span>
+        <span style={{fontWeight:700,color:'#f87171',fontSize:16}}>+{fmt(impactMensuel)}</span>
       </div>
+    </C>}
+    {tab==='cp'&&<C><ST>Indexation par commission paritaire</ST>
+      <Tbl cols={[
+        {k:'c',l:"CP",b:1,r:r=>r.cp},
+        {k:'m',l:"Moment",r:r=><span style={{color:'#60a5fa'}}>{r.moment}</span>},
+        {k:'b',l:"Base",r:r=>r.base},
+        {k:'d',l:"Derniere",r:r=><span style={{color:'#c6a34e'}}>{r.dern}</span>},
+      ]} data={[
+        {cp:'CP 200 (CPNAE)',moment:'Janvier',base:'Indice-sante lisse',dern:'Jan 2026'},
+        {cp:'CP 124 (Construction)',moment:'Janvier',base:'Indice-sante lisse',dern:'Jan 2026'},
+        {cp:'CP 302 (Horeca)',moment:'Janvier',base:'Indice-sante',dern:'Jan 2026'},
+        {cp:'CP 140 (Transport)',moment:'Trimestriel',base:'Indice-sante lisse',dern:'Jan 2026'},
+        {cp:'CP 218 (CPNAE)',moment:'Janvier',base:'Convention CP',dern:'Jan 2026'},
+        {cp:'CP 111 (Metal)',moment:'Indexation pivot',base:'Indice-pivot depasse',dern:'Variable'},
+        {cp:'CP 209 (Metal employes)',moment:'Indexation pivot',base:'Indice-pivot',dern:'Variable'},
+      ]}/>
     </C>}
   </div>;
 }
-
-
-// ═══════════════════════════════════════════════════════════════
-//  PLAN CAFÉTÉRIA / FLEXIBLE REWARD
-// ═══════════════════════════════════════════════════════════════
 function CafeteriaMod({s,d}){
   const [tab,setTab]=useState('sim');const [budget,setBudget]=useState(5000);
   const [choix,setChoix]=useState({mobilite:0,it:0,formation:0,pension:0,sante:0,conge:0});
@@ -14834,117 +14855,169 @@ function CafeteriaMod({s,d}){
   </div>;
 }
 function CCT90Mod({s,d}){
-  const ae=s.emps||[];const [montant,setMontant]=useState(2000);const [type,setType]=useState('collectif');
-  const n=ae.length;const totBrut=montant*n;
-  const cotSpec=totBrut*0.3313;// 33,13% cotisation patronale spéciale
-  const impot=0;// exonéré PP si conditions respectées
-  const cotW=totBrut*0.1307;
-  const netTrav=totBrut-cotW;
-  
+  const ae=s.emps||[];const n=ae.length;
+  const [tab,setTab]=useState('sim');const [montant,setMontant]=useState(3000);const [objectif,setObjectif]=useState('CA +10%');
+  const onssE=+montant*0.3307;const onssT=+montant*0.1307;const impot=0;
+  const netT=+montant-onssT;const coutE=+montant+onssE;
+  const brutEquiv=netT/(1-0.1307)/(1-0.35);const coutBrut=brutEquiv*1.2507;
+  const gain=coutBrut-coutE;
   return <div>
-    <PH title="CCT 90 — Bonus Salarial" sub="Avantages non récurrents liés aux résultats — Plan bonus"/>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
-      {[{l:"Bonus/trav.",v:fmt(montant),c:'#c6a34e'},{l:"Coût total employeur",v:fmt(totBrut+cotSpec),c:'#f87171',s:'bonus + 33,13%'},{l:"Net travailleur",v:fmt(netTrav/n),c:'#4ade80',s:'après ONSS 13,07%'},{l:"Plafond 2026",v:"€ 4.020",c:'#a78bfa',s:'par travailleur'}].map((k,i)=>
+    <PH title="Bonus CCT 90" sub="Bonus non-recurrent lie aux resultats - Max 4.020 EUR (2026)"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Montant bonus",v:fmt(+montant),c:'#c6a34e'},{l:"Cout employeur",v:fmt(coutE),c:'#f87171'},{l:"Net travailleur",v:fmt(netT),c:'#4ade80'},{l:"Equiv. brut classique",v:fmt(brutEquiv),c:'#fb923c'},{l:"Economie",v:fmt(gain),c:'#60a5fa'}].map((k,i)=>
         <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
           <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
-          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
-          {k.s&&<div style={{fontSize:10,color:'#5e5c56',marginTop:2}}>{k.s}</div>}
-        </div>
-      )}
+          <div style={{fontSize:18,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
+        </div>)}
     </div>
-    <div style={{display:'grid',gridTemplateColumns:'300px 1fr',gap:18}}>
-      <div>
-        <C><ST>Paramètres plan bonus</ST>
-          <I label="Montant par travailleur (€)" type="number" value={montant} onChange={v=>setMontant(+v)}/>
-          <I label="Type" value={type} onChange={v=>setType(v)} style={{marginTop:9}} options={[{v:"collectif",l:"Collectif (tous les travailleurs)"},{v:"categorie",l:"Par catégorie objective"},{v:"entreprise",l:"Objectif d\'entreprise"}]}/>
-          <div style={{marginTop:14,padding:14,background:"rgba(198,163,78,.06)",borderRadius:8}}>
-            <div style={{fontSize:11,color:'#9e9b93',lineHeight:2}}>
-              {[{l:"Bonus brut total",v:fmt(totBrut)},{l:"Cotis. patronale 33,13%",v:fmt(cotSpec)},{l:"Coût total employeur",v:fmt(totBrut+cotSpec)},{l:"ONSS trav. 13,07%",v:fmt(cotW)},{l:"PP travailleur",v:"€ 0 (exonéré)"},{l:"Net total travailleurs",v:fmt(netTrav)}].map((r,i)=>
-                <div key={i} style={{display:'flex',justifyContent:'space-between',borderBottom:'1px solid rgba(255,255,255,.03)',padding:'2px 0'}}>
-                  <span>{r.l}</span><span style={{fontWeight:600,color:r.l.includes('Coût')?'#f87171':r.l.includes('Net')?'#4ade80':'#e8e6e0'}}>{r.v}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </C>
-      </div>
-      <C><ST>Procédure CCT 90</ST>
-        <div style={{fontSize:11,color:'#9e9b93',lineHeight:1.8}}>
-          {['1. Rédaction de l\'acte d\'adhésion (< 50 trav.) ou CCT d\'entreprise (≥ 50)',"2. Objectifs mesurables, vérifiables, incertains","3. Période de référence: min. 3 mois","4. Dépôt au SPF ETCS (greffe)","5. Évaluation des résultats à la fin de la période","6. Paiement si objectifs atteints","7. Mention sur fiche de paie (code spécifique)"].map((step,i)=>
-            <div key={i} style={{padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>{step}</div>
-          )}
-        </div>
-        <div style={{marginTop:12,display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-          {[{t:'Avantages employeur',items:['Cotis. 33,13% (vs ~35% salaire)',"Déductible fiscalement","Motivation équipe"]},{t:'Avantages travailleur',items:['Exonéré précompte prof.',"Seul 13,07% ONSS","Jusqu'à €4.020/an net"]}].map((col,ci)=>
-            <div key={ci} style={{padding:10,background:"rgba(74,222,128,.04)",borderRadius:8}}>
-              <div style={{fontWeight:600,color:'#4ade80',fontSize:11,marginBottom:4}}>{col.t}</div>
-              {col.items.map((it,ii)=><div key={ii} style={{fontSize:10.5,color:'#9e9b93',padding:'2px 0'}}>✓ {it}</div>)}
-            </div>
-          )}
+    <div style={{display:'flex',gap:6,marginBottom:16}}>
+      {[{v:'sim',l:'Simulateur'},{v:'procedure',l:'Procedure'},{v:'objectifs',l:'Types objectifs'},{v:'fiscal',l:'Regime fiscal'}].map(t=>
+        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
+    </div>
+    {tab==='sim'&&<div style={{display:'grid',gridTemplateColumns:'320px 1fr',gap:18}}>
+      <C><ST>Parametres</ST>
+        <I label="Montant bonus" type="number" value={montant} onChange={setMontant}/>
+        <I label="Objectif collectif" value={objectif} onChange={setObjectif} style={{marginTop:9}}/>
+        <div style={{marginTop:12,padding:10,background:'rgba(248,113,113,.05)',borderRadius:8,border:'1px solid rgba(248,113,113,.15)'}}>
+          <div style={{fontSize:11,color:'#f87171',fontWeight:600}}>Plafond 2026: 4.020 EUR</div>
+          <div style={{fontSize:10,color:'#9e9b93',marginTop:2}}>{+montant>4020?'ATTENTION: depasse le plafond!':'Dans les limites'}</div>
         </div>
       </C>
-    </div>
+      <C><ST>Comparatif CCT 90 vs brut</ST>
+        <Tbl cols={[
+          {k:'e',l:"",b:1,r:r=>r.el},
+          {k:'c',l:"CCT 90",a:'right',r:r=><span style={{color:'#4ade80'}}>{r.cct}</span>},
+          {k:'b',l:"Brut classique",a:'right',r:r=><span style={{color:'#f87171'}}>{r.brut}</span>},
+        ]} data={[
+          {el:'Montant',cct:fmt(+montant),brut:fmt(brutEquiv)},
+          {el:'ONSS employeur',cct:fmt(onssE)+' (33.07%)',brut:fmt(brutEquiv*0.2507)+' (25.07%)'},
+          {el:'ONSS travailleur',cct:fmt(onssT)+' (13.07%)',brut:fmt(brutEquiv*0.1307)+' (13.07%)'},
+          {el:'Precompte prof.',cct:'0 (exonere)',brut:fmt((brutEquiv-brutEquiv*0.1307)*0.35)},
+          {el:'Net travailleur',cct:fmt(netT),brut:fmt(netT)},
+          {el:'Cout total employeur',cct:fmt(coutE),brut:fmt(coutBrut)},
+          {el:'ECONOMIE EMPLOYEUR',cct:'',brut:fmt(gain)},
+        ]}/>
+      </C>
+    </div>}
+    {tab==='procedure'&&<C><ST>Procedure en 6 etapes</ST>
+      {[{n:1,t:'Redaction plan bonus',d:'Definir objectifs mesurables, periode reference, groupe beneficiaires.',c:'#c6a34e'},
+        {n:2,t:'Consultation organes',d:'CE ou DS: negociation CCT entreprise. Sans organe: acte adhesion.',c:'#60a5fa'},
+        {n:3,t:'Depot SPF Emploi',d:'Formulaire standard via www.bonusplannen.be. Delai: tiers de la periode.',c:'#f87171'},
+        {n:4,t:'Verification SPF',d:'Le SPF verifie le plan. Silence = approbation apres evaluation.',c:'#fb923c'},
+        {n:5,t:'Realisation objectifs',d:'Evaluation en fin de periode. Atteint = paiement.',c:'#4ade80'},
+        {n:6,t:'Paiement',d:'Via fiche de paie. ONSS 33.07% empl + 13.07% trav. Pas de precompte.',c:'#a78bfa'},
+      ].map((r,i)=><div key={i} style={{display:'flex',gap:12,alignItems:'center',padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+        <div style={{width:32,height:32,borderRadius:'50%',background:r.c+'20',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700,color:r.c,flexShrink:0}}>{r.n}</div>
+        <div><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:'#9e9b93',marginTop:2}}>{r.d}</div></div>
+      </div>)}
+    </C>}
+    {tab==='objectifs'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Objectifs autorises</ST>
+        {[{t:'Chiffre affaires',ex:'+10% CA vs N-1',ok:true},{t:'Rentabilite',ex:'EBITDA cible atteint',ok:true},{t:'Productivite',ex:'Nombre unites produites',ok:true},{t:'Absenteisme',ex:'Taux absence moins de 5%',ok:true},{t:'Qualite',ex:'Taux defauts moins de 2%',ok:true},{t:'Securite',ex:'Zero accident grave',ok:true},{t:'Satisfaction client',ex:'NPS cible',ok:true}].map((r,i)=>
+          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><div><b style={{color:'#e8e6e0',fontSize:12}}>{r.t}</b><div style={{fontSize:10,color:'#5e5c56'}}>{r.ex}</div></div><span style={{color:'#4ade80'}}>OK</span></div>)}
+      </C>
+      <C><ST>Objectifs interdits</ST>
+        {[{t:'Objectifs individuels',d:'Le bonus doit etre collectif (equipe, departement, entreprise)'},{t:'Cours de bourse',d:'Interdit comme objectif'},{t:'Criteres subjectifs',d:'Doivent etre objectivement mesurables'},{t:'Conditions presence',d:'Ne peut exclure les absences justifiees'}].map((r,i)=>
+          <div key={i} style={{padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><b style={{color:'#f87171',fontSize:12}}>{r.t}</b><div style={{fontSize:10,color:'#5e5c56'}}>{r.d}</div></div>)}
+      </C>
+    </div>}
+    {tab==='fiscal'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Regime social et fiscal</ST>
+        {[{l:'ONSS employeur',v:'33.07% (cotisation speciale)',c:'#f87171'},{l:'ONSS travailleur',v:'13.07%',c:'#f87171'},{l:'Precompte professionnel',v:'EXONERE',c:'#4ade80'},{l:'Impot',v:'EXONERE (sous plafond)',c:'#4ade80'},{l:'Plafond 2026',v:'4.020 EUR / travailleur / an',c:'#c6a34e'},{l:'Base vacances',v:'Non',c:'#4ade80'},{l:'Base preavis',v:'Non',c:'#4ade80'}].map((r,i)=>
+          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{color:'#9e9b93'}}>{r.l}</span><span style={{fontWeight:600,color:r.c}}>{r.v}</span></div>)}
+      </C>
+      <C><ST>Base legale</ST>
+        {[{l:'Loi',v:'Loi 21/12/2007'},{l:'CCT',v:'CCT n 90 du 20/12/2007'},{l:'AR execution',v:'AR 25/08/2012'},{l:'Depot',v:'www.bonusplannen.be'},{l:'Formulaire',v:'Modele obligatoire SPF'},{l:'Delai depot',v:'1/3 de la periode de reference'}].map((r,i)=>
+          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{color:'#9e9b93'}}>{r.l}</span><span style={{fontWeight:600,color:'#e8e6e0'}}>{r.v}</span></div>)}
+      </C>
+    </div>}
   </div>;
 }
-
-
-// ═══════════════════════════════════════════════════════════════
-//  BUDGET MOBILITÉ — 3 Piliers (Loi 17/03/2019)
-// ═══════════════════════════════════════════════════════════════
 function BudgetMobiliteMod({s,d}){
-  const [eid,setEid]=useState(s.emps[0]?.id||'');
-  const [budgetAn,setBudgetAn]=useState(6000);
-  const [p1,setP1]=useState(0);
-  const [p2,setP2]=useState(0);
-  const ae=s.emps.filter(e=>e.status==='active');
-  const p3=Math.max(0,budgetAn-p1-p2);
-  const cotP3=p3*0.3807; // 38,07% cotisation spéciale sur pilier 3
-  const netP3=p3-cotP3;
-  
+  const [tab,setTab]=useState('sim');const [brut,setBrut]=useState(4000);const [voitRef,setVoitRef]=useState(600);
+  const [p1,setP1]=useState(350);const [p2,setP2]=useState({velo:80,transport:60,logement:0,elec:0});const [showCalc,setShowCalc]=useState(false);
+  const budgetAn=+voitRef*12;const p1An=+p1*12;
+  const p2Tot=Object.values(p2).reduce((a,c)=>a+(+c),0)*12;
+  const p3=Math.max(0,budgetAn-p1An-p2Tot);
+  const p3Net=p3*0.6162;
   return <div>
-    <PH title="Budget mobilité" sub="Loi du 17/03/2019 — Alternative voiture de société"/>
-    <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:18}}>
-      <C>
-        <ST>Configuration</ST>
-        <I label="Travailleur" value={eid} onChange={setEid} options={ae.map(e=>({v:e.id,l:`${e.first||e.fn||'Emp'} ${e.last||''}`}))}/>
-        <I label="Budget annuel (€)" type="number" value={budgetAn} onChange={v=>setBudgetAn(parseFloat(v)||0)}/>
-        <I label="Pilier 1 — Voiture éco (€/an)" type="number" value={p1} onChange={v=>setP1(parseFloat(v)||0)}/>
-        <I label="Pilier 2 — Mobilité durable (€/an)" type="number" value={p2} onChange={v=>setP2(parseFloat(v)||0)}/>
-        <div style={{marginTop:14,padding:12,background:"rgba(198,163,78,.06)",borderRadius:8,textAlign:'center'}}>
-          <div style={{fontSize:11,color:'#5e5c56'}}>Pilier 3 — Solde en cash</div>
-          <div style={{fontSize:22,fontWeight:700,color:'#c6a34e'}}>{fmt(p3)}</div>
-          <div style={{fontSize:11,color:'#9e9b93'}}>Net après cotisation: {fmt(netP3)}</div>
-        </div>
-      </C>
-      <C>
-        <div style={{fontSize:14,fontWeight:600,color:'#e8e6e0',marginBottom:16}}>Répartition des 3 piliers</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14,marginBottom:20}}>
-          {[
-            {l:"Pilier 1",sub:'Voiture écologique',v:p1,c:'#fb923c',desc:"Voiture + émissions CO2 ≤ seuil. ATN calculé sur la nouvelle voiture."},
-            {l:"Pilier 2",sub:'Mobilité durable',v:p2,c:'#60a5fa',desc:"Transports en commun, vélo, trottinette, logement (max 400€/mois si < 10km travail). Exonéré ONSS et IPP."},
-            {l:"Pilier 3",sub:'Solde en cash',v:p3,c:'#4ade80',desc:`Cotisation spéciale: 38,07%. Net: ${fmt(netP3)}. Pas de PP ni d'ONSS ordinaire.`},
-          ].map((x,i)=>
-            <div key={i} style={{padding:16,background:"rgba(198,163,78,.04)",borderRadius:8,border:'1px solid rgba(198,163,78,.08)'}}>
-              <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>{x.l}</div>
-              <div style={{fontSize:11,color:x.c,fontWeight:600}}>{x.sub}</div>
-              <div style={{fontSize:22,fontWeight:700,color:x.c,marginTop:8}}>{fmt(x.v)}</div>
-              <div style={{fontSize:10,color:'#9e9b93',marginTop:6,lineHeight:1.5}}>{x.desc}</div>
-            </div>
-          )}
-        </div>
-        <div style={{height:24,borderRadius:8,overflow:'hidden',display:'flex',marginBottom:10}}>
-          <div style={{width:`${budgetAn>0?p1/budgetAn*100:0}%`,background:"#fb923c",transition:'width .3s'}}/>
-          <div style={{width:`${budgetAn>0?p2/budgetAn*100:0}%`,background:"#60a5fa",transition:'width .3s'}}/>
-          <div style={{flex:1,background:"#4ade80"}}/>
-        </div>
-      </C>
+    <PH title="Budget Mobilite" sub="Loi 17/03/2019 modifiee 20/12/2023 - 3 piliers - Cash for Car"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Budget annuel",v:fmt(budgetAn),c:'#c6a34e'},{l:"Pilier 1 (voiture eco)",v:fmt(p1An),c:'#4ade80'},{l:"Pilier 2 (mobilite)",v:fmt(p2Tot),c:'#60a5fa'},{l:"Pilier 3 (cash)",v:fmt(p3),c:'#fb923c'},{l:"P3 net (+/-)",v:fmt(p3Net),c:'#a78bfa'}].map((k,i)=>
+        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:18,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
+        </div>)}
     </div>
+    <div style={{display:'flex',gap:6,marginBottom:16}}>
+      {[{v:'sim',l:'Simulateur'},{v:'piliers',l:'3 Piliers detail'},{v:'fiscal',l:'Regime fiscal'},{v:'conditions',l:'Conditions'}].map(t=>
+        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
+    </div>
+    {tab==='sim'&&<div style={{display:'grid',gridTemplateColumns:'320px 1fr',gap:18}}>
+      <C><ST>Parametres</ST>
+        <I label="Salaire brut mensuel" type="number" value={brut} onChange={setBrut}/>
+        <I label="Cout voiture reference/mois" type="number" value={voitRef} onChange={setVoitRef} style={{marginTop:9}}/>
+        <div style={{marginTop:14,fontWeight:700,color:'#c6a34e',fontSize:13}}>Budget: {fmt(budgetAn)}/an</div>
+        <div style={{marginTop:12}}><b style={{color:'#4ade80',fontSize:11}}>PILIER 1 - Voiture ecologique</b></div>
+        <I label="Leasing voiture eco/mois" type="number" value={p1} onChange={setP1} style={{marginTop:6}}/>
+        <div style={{marginTop:12}}><b style={{color:'#60a5fa',fontSize:11}}>PILIER 2 - Mobilite durable</b></div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:6}}>
+          <I label="Velo/mois" type="number" value={p2.velo} onChange={v=>setP2({...p2,velo:v})}/>
+          <I label="Transport/mois" type="number" value={p2.transport} onChange={v=>setP2({...p2,transport:v})}/>
+          <I label="Logement/mois" type="number" value={p2.logement} onChange={v=>setP2({...p2,logement:v})}/>
+          <I label="Borne elec/mois" type="number" value={p2.elec} onChange={v=>setP2({...p2,elec:v})}/>
+        </div>
+      </C>
+      <C><ST>Repartition budget</ST>
+        <div style={{height:24,display:'flex',borderRadius:8,overflow:'hidden',marginBottom:16}}>
+          {p1An>0&&<div style={{width:(p1An/budgetAn*100)+'%',background:'#4ade80',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#000',fontWeight:700}}>P1</div>}
+          {p2Tot>0&&<div style={{width:(p2Tot/budgetAn*100)+'%',background:'#60a5fa',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#000',fontWeight:700}}>P2</div>}
+          {p3>0&&<div style={{width:(p3/budgetAn*100)+'%',background:'#fb923c',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#000',fontWeight:700}}>P3</div>}
+        </div>
+        {[{l:'Pilier 1 - Voiture ecologique',v:p1An,c:'#4ade80',items:[{l:'Leasing mensuel',v:+p1*12}]},
+          {l:'Pilier 2 - Mobilite durable',v:p2Tot,c:'#60a5fa',items:[{l:'Velo (achat/leasing)',v:+p2.velo*12},{l:'Transport en commun',v:+p2.transport*12},{l:'Logement (max 10km)',v:+p2.logement*12},{l:'Borne electrique',v:+p2.elec*12}]},
+          {l:'Pilier 3 - Solde cash',v:p3,c:'#fb923c',items:[{l:'Brut verse',v:p3},{l:'ONSS special 38.07%',v:-(p3*0.3807)},{l:'Net estime',v:p3Net}]}
+        ].map((s2,i)=><div key={i} style={{marginBottom:16}}>
+          <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'2px solid '+s2.c+'33'}}><b style={{color:s2.c}}>{s2.l}</b><b style={{color:s2.c}}>{fmt(s2.v)}</b></div>
+          {s2.items.filter(x=>x.v!==0).map((x,j)=><div key={j} style={{display:'flex',justifyContent:'space-between',padding:'4px 12px',fontSize:11,color:'#9e9b93'}}><span>{x.l}</span><span style={{color:x.v<0?'#f87171':'#e8e6e0'}}>{x.v<0?'- '+fmt(Math.abs(x.v)):fmt(x.v)}</span></div>)}
+        </div>)}
+      </C>
+    </div>}
+    {tab==='piliers'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14}}>
+      {[{p:'Pilier 1',t:'Voiture ecologique',items:['Voiture CO2 max 50g/km','Full electrique ou hybride PHEV','Leasing ou achat','TCO ne depasse pas voiture reference','ATN selon formule classique'],c:'#4ade80'},
+        {p:'Pilier 2',t:'Mobilite durable',items:['Velo (achat, leasing, entretien)','Transport en commun (abonnement)','Trottinette, scooter electrique','Covoiturage, autopartage','Logement (max 10km du travail)','Loyer ou interets hypothecaires','Borne electrique domicile','Parking hors voiture societe'],c:'#60a5fa'},
+        {p:'Pilier 3',t:'Solde en cash',items:['Solde non utilise en P1+P2','Verse une fois par an','ONSS speciale 38.07% (employeur)','Pas de precompte professionnel','Pas dans base vacances','Pas dans base preavis'],c:'#fb923c'},
+      ].map((r,i)=><C key={i}><div style={{textAlign:'center',marginBottom:12}}><div style={{width:50,height:50,borderRadius:'50%',background:r.c+'20',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',fontSize:18,fontWeight:700,color:r.c}}>{r.p.split(' ')[1]}</div><div style={{fontSize:14,fontWeight:700,color:r.c,marginTop:6}}>{r.p}</div><div style={{fontSize:11,color:'#5e5c56'}}>{r.t}</div></div>
+        {r.items.map((x,j)=><div key={j} style={{padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,color:'#c8c5bb'}}>{x}</div>)}
+      </C>)}
+    </div>}
+    {tab==='fiscal'&&<C><ST>Regime fiscal</ST>
+      <Tbl cols={[
+        {k:'e',l:"Element",b:1,r:r=>r.el},
+        {k:'p1',l:"Pilier 1",r:r=><span style={{color:'#4ade80'}}>{r.p1}</span>},
+        {k:'p2',l:"Pilier 2",r:r=><span style={{color:'#60a5fa'}}>{r.p2}</span>},
+        {k:'p3',l:"Pilier 3",r:r=><span style={{color:'#fb923c'}}>{r.p3}</span>},
+      ]} data={[
+        {el:'ONSS employeur',p1:'Cotisation CO2',p2:'Exonere',p3:'38.07%'},
+        {el:'ONSS travailleur',p1:'13.07% sur ATN',p2:'Exonere',p3:'Exonere'},
+        {el:'Precompte prof.',p1:'Sur ATN',p2:'Exonere',p3:'Exonere'},
+        {el:'Impot',p1:'ATN forfaitaire',p2:'Exonere',p3:'Exonere'},
+        {el:'Base vacances',p1:'Oui',p2:'Non',p3:'Non'},
+        {el:'Base preavis',p1:'Oui',p2:'Non',p3:'Non'},
+      ]}/>
+    </C>}
+    {tab==='conditions'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Conditions employeur</ST>
+        {['Proposer voiture societe depuis min. 36 mois','Ou avoir voiture dans politique salariale','Policy mobilite adoptee','Budget = TCO voiture reference','Budget min. 3.000 EUR / max 1/5 remuneration'].map((r,i)=>
+          <div key={i} style={{padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12,color:'#e8e6e0'}}><span style={{color:'#c6a34e',marginRight:6}}>*</span>{r}</div>)}
+      </C>
+      <C><ST>Conditions travailleur</ST>
+        {['Avoir/avoir eu droit a voiture societe','Min. 12 mois dans les 36 derniers mois','Min. 3 mois chez employeur actuel','Demande volontaire','Choix annuel modifiable'].map((r,i)=>
+          <div key={i} style={{padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12,color:'#e8e6e0'}}><span style={{color:'#60a5fa',marginRight:6}}>*</span>{r}</div>)}
+      </C>
+    </div>}
   </div>;
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  STATISTIQUES INS — Structure des rémunérations
-// ═══════════════════════════════════════════════════════════════
 function StatsINSMod({s,d}){
   const ae=s.emps||[];const n=ae.length;
   const [yr,setYr]=useState(new Date().getFullYear());
@@ -15014,60 +15087,75 @@ function StatsINSMod({s,d}){
 //  WARRANTS — Stock options / Optimisation fiscale
 // ═══════════════════════════════════════════════════════════════
 function WarrantsMod({s,d}){
-  const [montant,setMontant]=useState(3000);
-  const [type,setType]=useState('warrant');
-  const ae=s.emps.filter(e=>e.status==='active');
-  const onssW=montant*0.1307;
-  const onssE=montant*0.25;
-  const avFiscal=type==='warrant'?montant*0.18:montant*0.165;
-  const ppWarrant=avFiscal*0.535;
-  const netTrav=montant-onssW-ppWarrant;
-  const coutEmpl=montant+onssE;
-  const netClassique=montant*(1-0.1307)*(1-0.45);
-  const gain=netTrav-netClassique;
-  
+  const [tab,setTab]=useState('sim');const [brut,setBrut]=useState(4000);const [montant,setMontant]=useState(500);
+  const coutEmpl=+montant;const onssW=0;const ppW=0;
+  const netClass=+montant*(1-0.1307)*(1-0.35);const gain=+montant-netClass;
   return <div>
-    <PH title="Warrants / Stock Options" sub="Optimisation fiscale — Loi 26/03/1999"/>
-    <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:18}}>
-      <C>
-        <ST>Configuration</ST>
-        <I label="Montant brut (€)" type="number" value={montant} onChange={v=>setMontant(parseFloat(v)||0)}/>
-        <I label="Type" value={type} onChange={setType} options={[{v:"warrant",l:"Warrants (18%)"},{v:"options",l:"Stock options (16,5%)"}]}/>
-        <div style={{marginTop:14,padding:12,background:"rgba(198,163,78,.06)",borderRadius:8,fontSize:12,color:'#9e9b93',lineHeight:2}}>
-          <div style={{fontWeight:600,color:'#c6a34e',marginBottom:4}}>Comparaison</div>
-          <div>Net warrant: <b style={{color:'#4ade80'}}>{fmt(netTrav)}</b></div>
-          <div>Net classique: <b style={{color:'#e8e6e0'}}>{fmt(netClassique)}</b></div>
-          <div>Gain net: <b style={{color:'#4ade80'}}>+{fmt(gain)}</b></div>
-        </div>
-      </C>
-      <C>
-        <div style={{fontSize:14,fontWeight:600,color:'#e8e6e0',marginBottom:16}}>Simulation — {ae.length} travailleur(s)</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:20}}>
-          <div style={{padding:16,background:"rgba(74,222,128,.06)",borderRadius:8,border:'1px solid rgba(74,222,128,.15)'}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#4ade80',marginBottom:8}}>Via Warrants</div>
-            <div style={{fontSize:11,color:'#9e9b93',lineHeight:2}}>
-              Brut: {fmt(montant)}<br/>ONSS (13,07%): -{fmt(onssW)}<br/>
-              Base imposable (18%): {fmt(avFiscal)}<br/>PP (~53,5%): -{fmt(ppWarrant)}<br/>
-              <b style={{color:'#4ade80',fontSize:14}}>Net: {fmt(netTrav)}</b>
-            </div>
-          </div>
-          <div style={{padding:16,background:"rgba(248,113,113,.06)",borderRadius:8,border:'1px solid rgba(248,113,113,.15)'}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#f87171',marginBottom:8}}>Via Brut classique</div>
-            <div style={{fontSize:11,color:'#9e9b93',lineHeight:2}}>
-              Brut: {fmt(montant)}<br/>ONSS (13,07%): -{fmt(onssW)}<br/>
-              PP (~45%): -{fmt((montant-onssW)*0.45)}<br/>
-              <b style={{color:'#f87171',fontSize:14}}>Net: {fmt(netClassique)}</b>
-            </div>
-          </div>
-        </div>
-      </C>
+    <PH title="Warrants / Stock Options" sub="Plan warrants - Optimisation remuneration variable"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Montant warrant",v:fmt(+montant),c:'#c6a34e'},{l:"Cout employeur",v:fmt(coutEmpl),c:'#f87171'},{l:"Net travailleur",v:fmt(+montant*0.65),c:'#4ade80'},{l:"Gain vs brut",v:fmt(gain),c:'#60a5fa'}].map((k,i)=>
+        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
+        </div>)}
     </div>
+    <div style={{display:'flex',gap:6,marginBottom:16}}>
+      {[{v:'sim',l:'Simulateur'},{v:'meca',l:'Mecanisme'},{v:'fiscal',l:'Regime fiscal'},{v:'risques',l:'Points attention'}].map(t=>
+        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
+    </div>
+    {tab==='sim'&&<div style={{display:'grid',gridTemplateColumns:'320px 1fr',gap:18}}>
+      <C><ST>Parametres</ST>
+        <I label="Salaire brut mensuel" type="number" value={brut} onChange={setBrut}/>
+        <I label="Montant warrant mensuel" type="number" value={montant} onChange={setMontant} style={{marginTop:9}}/>
+      </C>
+      <C><ST>Comparatif brut vs warrant</ST>
+        <Tbl cols={[
+          {k:'e',l:"",b:1,r:r=>r.el},
+          {k:'b',l:"En brut classique",a:'right',r:r=><span style={{color:'#f87171'}}>{r.brut}</span>},
+          {k:'w',l:"En warrants",a:'right',r:r=><span style={{color:'#4ade80'}}>{r.warrant}</span>},
+        ]} data={[
+          {el:'Montant',brut:fmt(+montant),warrant:fmt(+montant)},
+          {el:'ONSS employeur (25.07%)',brut:fmt(+montant*0.2507),warrant:'0'},
+          {el:'ONSS travailleur (13.07%)',brut:fmt(+montant*0.1307),warrant:'0'},
+          {el:'Precompte ~35%',brut:fmt((+montant-+montant*0.1307)*0.35),warrant:'Taxe ~35% sur ATN fictif'},
+          {el:'ATN fiscal (Loi 26/03/1999)',brut:'-',warrant:fmt(+montant*0.18)},
+          {el:'Impot sur ATN',brut:'-',warrant:fmt(+montant*0.18*0.5)},
+          {el:'Net approximatif',brut:fmt(netClass),warrant:fmt(+montant*0.65)},
+          {el:'Cout total employeur',brut:fmt(+montant*1.2507),warrant:fmt(+montant*1.03)},
+        ]}/>
+      </C>
+    </div>}
+    {tab==='meca'&&<C><ST>Mecanisme des warrants</ST>
+      {[{n:1,t:'Employeur souscrit un plan warrants',d:'Via un emetteur (ex: Easyvest, Banque). Plan collectif ou individuel.',c:'#c6a34e'},
+        {n:2,t:'Attribution au travailleur',d:'Le travailleur recoit des warrants (options sur panier de fonds).',c:'#60a5fa'},
+        {n:3,t:'Acceptation dans les 60 jours',d:'Si accepte dans les 60 jours: taxation forfaitaire avantageuse. Sinon: requalifie.',c:'#f87171'},
+        {n:4,t:'Taxation ATN forfaitaire',d:'ATN = 18% de la valeur du sous-jacent (6% si lock-up). Taxe au taux marginal.',c:'#fb923c'},
+        {n:5,t:'Exercice ou revente',d:'Le travailleur exerce les warrants ou les revend immediatement (cashless).',c:'#4ade80'},
+      ].map((r,i)=><div key={i} style={{display:'flex',gap:12,alignItems:'center',padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+        <div style={{width:32,height:32,borderRadius:'50%',background:r.c+'20',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700,color:r.c,flexShrink:0}}>{r.n}</div>
+        <div><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:'#9e9b93',marginTop:2}}>{r.d}</div></div>
+      </div>)}
+    </C>}
+    {tab==='fiscal'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Avantages fiscaux</ST>
+        {[{l:'ONSS employeur',v:'Pas de cotisation ONSS',c:'#4ade80'},{l:'ONSS travailleur',v:'Pas de cotisation 13.07%',c:'#4ade80'},{l:'Base vacances',v:'Non inclus',c:'#4ade80'},{l:'Base preavis',v:'Non inclus',c:'#4ade80'},{l:'Taxation',v:'ATN forfaitaire uniquement',c:'#60a5fa'},{l:'Moment taxation',v:'A attribution (pas a exercice)',c:'#60a5fa'}].map((r,i)=>
+          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{color:'#9e9b93'}}>{r.l}</span><span style={{fontWeight:600,color:r.c}}>{r.v}</span></div>)}
+      </C>
+      <C><ST>Base legale</ST>
+        {[{l:'Loi stock options',v:'Loi 26/03/1999'},{l:'ATN forfaitaire',v:'18% (ou 9% si lock-up 2 ans)'},{l:'Delai acceptation',v:'60 jours calendrier'},{l:'Ruling SDA',v:'Recommande mais pas obligatoire'},{l:'Fiche fiscale',v:'281.10 mention obligatoire'}].map((r,i)=>
+          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{color:'#9e9b93'}}>{r.l}</span><span style={{fontWeight:600,color:'#e8e6e0'}}>{r.v}</span></div>)}
+      </C>
+    </div>}
+    {tab==='risques'&&<C><ST>Points attention</ST>
+      {[{t:'Requalification ONSS',d:'Si le plan ne respecte pas la Loi 26/03/1999, risque de requalification en remuneration ordinaire + arrieres ONSS.',c:'#f87171'},
+        {t:'Acceptation 60 jours',d:'Si le travailleur ne refuse pas dans les 60 jours, il est presume avoir accepte. Attention au timing.',c:'#fb923c'},
+        {t:'Cashless = revente immediate',d:'La plupart des plans sont cashless: le travailleur ne garde pas les warrants, il les revend pour du cash.',c:'#60a5fa'},
+        {t:'Frais emetteur',d:'Commission de la banque/emetteur: 3-5% du montant. A integrer dans le calcul du cout.',c:'#fb923c'},
+        {t:'Communication',d:'Bien expliquer au travailleur: le net est inferieur au montant car il y a la taxe ATN.',c:'#c6a34e'},
+      ].map((r,i)=><div key={i} style={{padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:'#9e9b93',marginTop:2}}>{r.d}</div></div>)}
+    </C>}
   </div>;
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  PLAN DE FORMATION — Obligation légale (Loi 3/10/2022)
-// ═══════════════════════════════════════════════════════════════
 function PlanFormationMod({s,d}){
   const ae=s.emps||[];const n=ae.length;
   const [tab,setTab]=useState('plan');
@@ -15133,63 +15221,81 @@ function PlanFormationMod({s,d}){
   </div>;
 }
 function NoteFraisMod({s,d}){
-  const [eid,setEid]=useState(s.emps[0]?.id||'');
-  const [notes,setNotes]=useState([]);
-  const ae=s.emps.filter(e=>e.status==='active');
-  const addNote=()=>setNotes(p=>[...p,{id:Date.now(),date:'',desc:"",cat:"deplacement",montant:0,justif:false}]);
-  const updN=(id,k,v)=>setNotes(p=>p.map(n=>n.id===id?{...n,[k]:v}:n));
-  const remN=(id)=>setNotes(p=>p.filter(n=>n.id!==id));
-  const cats=[
-    {id:"deplacement",l:"🚗 Déplacement",forfait:'0,4280€/km (2026)'},
-    {id:"repas",l:"🍽️ Repas d\'affaires",forfait:'Max raisonnable + justificatif'},
-    {id:"logement",l:"🏨 Logement",forfait:'Facture originale'},
-    {id:"telecom",l:"📱 Télécom/Internet",forfait:'Forfait ou réel'},
-    {id:"bureau",l:"🏠 Bureau à domicile",forfait:'Forfait 148,73€/mois (2026)'},
-    {id:"materiel",l:"📦 Matériel/Fournitures",forfait:'Facture originale'},
-    {id:"parking",l:"🅿️ Parking",forfait:'Ticket/reçu'},
-    {id:"divers",l:"📋 Autres",forfait:'Justificatif obligatoire'},
-  ];
-  const total=notes.reduce((a,n)=>a+parseFloat(n.montant||0),0);
-  
+  const ae=s.emps||[];const [tab,setTab]=useState('notes');
+  const [eid,setEid]=useState(ae[0]?.id||'');
+  const [notes,setNotes]=useState([
+    {id:1,date:'2026-01-15',cat:'Transport',desc:'Taxi client Bruxelles-Anvers',montant:85,status:'approuve',justif:true},
+    {id:2,date:'2026-01-20',cat:'Repas',desc:'Dejeuner client prospect',montant:62.50,status:'approuve',justif:true},
+    {id:3,date:'2026-02-03',cat:'Fournitures',desc:'Cartouches imprimante bureau',montant:45,status:'pending',justif:true},
+    {id:4,date:'2026-02-10',cat:'Transport',desc:'Parking aeroport Zaventem',montant:28,status:'pending',justif:false},
+    {id:5,date:'2026-02-14',cat:'Telecom',desc:'Forfait data supplementaire',montant:15,status:'refuse',justif:true},
+  ]);
+  const toggleStatus=(id)=>setNotes(p=>p.map(n2=>n2.id===id?{...n2,status:n2.status==='pending'?'approuve':n2.status==='approuve'?'refuse':'pending'}:n2));
+  const total=notes.reduce((a,c)=>a+c.montant,0);
+  const approved=notes.filter(n2=>n2.status==='approuve');const pending=notes.filter(n2=>n2.status==='pending');
+  const totApp=approved.reduce((a,c)=>a+c.montant,0);const totPend=pending.reduce((a,c)=>a+c.montant,0);
+  const byCat={};notes.forEach(n2=>{if(!byCat[n2.cat])byCat[n2.cat]=0;byCat[n2.cat]+=n2.montant;});
   return <div>
-    <PH title="Notes de frais" sub="Frais propres à l'employeur — Exonéré ONSS et IPP" actions={<B onClick={addNote}>+ Note de frais</B>}/>
-    <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:18}}>
-      <C>
-        <ST>Travailleur</ST>
-        <I label="Employé" value={eid} onChange={setEid} options={ae.map(e=>({v:e.id,l:`${e.first||e.fn||'Emp'} ${e.last||''}`}))}/>
-        <div style={{marginTop:14,padding:12,background:"rgba(198,163,78,.06)",borderRadius:8,fontSize:12,color:'#9e9b93',lineHeight:2}}>
-          <div style={{fontWeight:600,color:'#c6a34e',marginBottom:4}}>Total</div>
-          <div>Notes: <b style={{color:'#e8e6e0'}}>{notes.length}</b></div>
-          <div>Montant total: <b style={{color:'#4ade80'}}>{fmt(total)}</b></div>
-        </div>
-        <div style={{marginTop:12,padding:10,background:"rgba(96,165,250,.06)",borderRadius:8,fontSize:10.5,color:'#60a5fa',lineHeight:1.5}}>
-          <b>Forfait km 2026:</b> 0,4280€/km<br/>
-          <b>Bureau domicile:</b> max 148,73€/mois<br/>
-          Exonéré ONSS et IPP si frais réels ou forfait accepté par le fisc.
-        </div>
-      </C>
-      <C style={{padding:'14px 18px',maxHeight:600,overflowY:'auto'}}>
-        {notes.length===0&&<div style={{textAlign:'center',padding:40,color:'#5e5c56'}}>Aucune note de frais</div>}
-        {notes.map((n,i)=><div key={n.id} style={{padding:14,marginBottom:10,background:"rgba(198,163,78,.03)",border:'1px solid rgba(198,163,78,.08)',borderRadius:10}}>
-          <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
-            <span style={{fontSize:12,fontWeight:600,color:'#e8e6e0'}}>Note {i+1}</span>
-            <button onClick={()=>remN(n.id)} style={{background:"rgba(248,113,113,.1)",border:'1px solid rgba(248,113,113,.2)',borderRadius:6,color:'#f87171',padding:'3px 10px',cursor:'pointer',fontSize:11,fontFamily:'inherit'}}>✕</button>
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:10}}>
-            <I label="Date" type="date" value={n.date} onChange={v=>updN(n.id,"date",v)}/>
-            <I label="Catégorie" value={n.cat} onChange={v=>updN(n.id,"cat",v)} options={cats.map(c=>({v:c.id,l:c.l}))}/>
-            <I label="Montant (€)" type="number" value={n.montant} onChange={v=>updN(n.id,"montant",v)}/>
-            <I label="Description" value={n.desc} onChange={v=>updN(n.id,"desc",v)}/>
-          </div>
+    <PH title="Notes de Frais" sub="Gestion des frais professionnels - Remboursement et forfaits"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:18}}>
+      {[{l:"Total soumis",v:fmt(total),c:'#c6a34e'},{l:"Approuve",v:fmt(totApp),c:'#4ade80'},{l:"En attente",v:fmt(totPend),c:'#fb923c'},{l:"Notes",v:notes.length,c:'#60a5fa'},{l:"Sans justif.",v:notes.filter(n2=>!n2.justif).length,c:'#f87171'}].map((k,i)=>
+        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
         </div>)}
-      </C>
     </div>
+    <div style={{display:'flex',gap:6,marginBottom:16}}>
+      {[{v:'notes',l:'Notes de frais'},{v:'categories',l:'Par categorie'},{v:'forfaits',l:'Forfaits ONSS'},{v:'regles',l:'Regles fiscales'}].map(t=>
+        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
+    </div>
+    {tab==='notes'&&<C style={{padding:0,overflow:'hidden'}}>
+      <Tbl cols={[
+        {k:'st',l:"",w:40,r:r=><div onClick={(e)=>{e.stopPropagation();toggleStatus(r.id)}} style={{width:20,height:20,borderRadius:5,border:r.status==='approuve'?'2px solid #4ade80':r.status==='pending'?'2px solid #fb923c':'2px solid #f87171',background:r.status==='approuve'?'rgba(74,222,128,.15)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:r.status==='approuve'?'#4ade80':r.status==='pending'?'#fb923c':'#f87171',cursor:'pointer'}}>{r.status==='approuve'?'V':r.status==='pending'?'?':'X'}</div>},
+        {k:'d',l:"Date",r:r=>r.date},
+        {k:'c',l:"Categorie",r:r=><span style={{fontSize:10,padding:'2px 6px',borderRadius:4,background:'rgba(198,163,78,.08)',color:'#c6a34e'}}>{r.cat}</span>},
+        {k:'de',l:"Description",b:1,r:r=>r.desc},
+        {k:'j',l:"Justif.",r:r=><span style={{color:r.justif?'#4ade80':'#f87171'}}>{r.justif?'Oui':'NON'}</span>},
+        {k:'m',l:"Montant",a:'right',r:r=><span style={{fontWeight:600,color:'#e8e6e0'}}>{fmt(r.montant)}</span>},
+        {k:'s',l:"Statut",r:r=><span style={{fontSize:10,padding:'2px 6px',borderRadius:4,background:r.status==='approuve'?'rgba(74,222,128,.1)':r.status==='pending'?'rgba(251,146,56,.1)':'rgba(248,113,113,.1)',color:r.status==='approuve'?'#4ade80':r.status==='pending'?'#fb923c':'#f87171'}}>{r.status}</span>},
+      ]} data={notes}/>
+    </C>}
+    {tab==='categories'&&<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+      {Object.entries(byCat).map(([cat,tot],i)=>{
+        const items=notes.filter(n2=>n2.cat===cat);
+        return <C key={i}><div style={{textAlign:'center',marginBottom:10}}><div style={{fontSize:14,fontWeight:700,color:'#c6a34e'}}>{cat}</div><div style={{fontSize:18,fontWeight:700,color:'#e8e6e0'}}>{fmt(tot)}</div><div style={{fontSize:10,color:'#5e5c56'}}>{items.length} notes</div></div>
+          {items.map((n2,j)=><div key={j} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}><span style={{color:'#9e9b93'}}>{n2.desc}</span><span style={{color:'#e8e6e0'}}>{fmt(n2.montant)}</span></div>)}
+        </C>;
+      })}
+    </div>}
+    {tab==='forfaits'&&<C><ST>Forfaits ONSS acceptes (frais propres employeur)</ST>
+      <Tbl cols={[
+        {k:'f',l:"Type de frais",b:1,r:r=>r.type},
+        {k:'m',l:"Forfait max",a:'right',r:r=><span style={{color:'#4ade80',fontWeight:600}}>{r.max}</span>},
+        {k:'c',l:"Conditions",r:r=><span style={{fontSize:10,color:'#9e9b93'}}>{r.cond}</span>},
+      ]} data={[
+        {type:'Bureau a domicile (teletravail)',max:'148.73 EUR/mois',cond:'Min. 5j/mois teletravail'},
+        {type:'Frais de bureau (materiel)',max:'20 EUR/mois',cond:'Cumulable avec teletravail'},
+        {type:'Internet domicile',max:'20 EUR/mois',cond:'Usage professionnel'},
+        {type:'PC prive usage pro',max:'20 EUR/mois',cond:'PC personnel du travailleur'},
+        {type:'Frais deplacement (voiture)',max:'0.4415 EUR/km',cond:'Indemnite km 2026'},
+        {type:'Frais deplacement (velo)',max:'0.35 EUR/km',cond:'Plafond 3.500 EUR/an'},
+        {type:'Frais de sejour Belgique',max:'Forfait ou reel',cond:'Justificatifs si reel'},
+        {type:'Frais de sejour etranger',max:'Bareme SPF/jour/pays',cond:'Selon destination'},
+        {type:'Vetements de travail',max:'Frais reels',cond:'Specifiques a la fonction'},
+      ]}/>
+    </C>}
+    {tab==='regles'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
+      <C><ST>Regles fiscales</ST>
+        {[{l:'Frais propres employeur',v:'Exoneres ONSS + PP si justifies',c:'#4ade80'},{l:'Forfait sans justificatif',v:'Accepte dans limites ONSS',c:'#4ade80'},{l:'Au-dela forfait',v:'Justificatifs obligatoires',c:'#fb923c'},{l:'TVA deductible',v:'Si facture au nom de employeur',c:'#60a5fa'},{l:'Frais non justifies',v:'Requalifies en remuneration',c:'#f87171'},{l:'Delai introduction',v:'Selon policy interne (recommande: 3 mois)',c:'#c6a34e'}].map((r,i)=>
+          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{color:'#9e9b93'}}>{r.l}</span><span style={{fontWeight:600,color:r.c}}>{r.v}</span></div>)}
+      </C>
+      <C><ST>Bonnes pratiques</ST>
+        {['Politique de frais ecrite et signee','Justificatif pour tout montant reel','Approbation hierarchique obligatoire','Delai de remboursement max 1 mois','Conservation justificatifs 7 ans','Separation frais pro / prive','Controle anti-abus periodique'].map((r,i)=>
+          <div key={i} style={{padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12,color:'#e8e6e0'}}><span style={{color:'#c6a34e',marginRight:6}}>*</span>{r}</div>)}
+      </C>
+    </div>}
   </div>;
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  HEURES SUPPLÉMENTAIRES — Calcul majorations & récupération
-// ═══════════════════════════════════════════════════════════════
 function HeuresSupMod({s,d}){
   const [eid,setEid]=useState(s.emps[0]?.id||'');
   const [heures,setHeures]=useState([]);
