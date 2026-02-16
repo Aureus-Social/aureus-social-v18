@@ -1,4 +1,4 @@
-﻿// Aureus Social Pro v20.2
+// Aureus Social Pro v20.2
 "use client";
 import { useState, useReducer, useRef, useMemo, useEffect, createContext, useContext } from "react";
 
@@ -18862,5 +18862,4 @@ function FloatingLegalAgent({onAction}){
 
 export default function AureusSocialPro({ supabase, user, onLogout }) {
   return <LangProvider><AppInner supabase={supabase} user={user} onLogout={onLogout}/></LangProvider>;
-}/ /   c l e a n  
- 
+}// clean
