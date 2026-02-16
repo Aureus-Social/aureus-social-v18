@@ -10476,153 +10476,34 @@ const CONTRAT_TYPES=[
   {id:"frontalier",cat:"special",l:"Travailleur frontalier",desc:"Domicile FR/NL/LU/DE, travail en BE. Convention préventive double imposition. Sécurité sociale = pays de travail."},
 ];
 
-function ContratsTravailMod({s,d}){
-  const [type,setType]=useState('cdi');
-  const [form,setForm]=useState({
-    empNom:'',empPrenom:"",empNN:'',empAdresse:'',empNationalite:'Belge',
-    fonction:'',salaireBrut:'',debut:'',fin:'',essai:'',
-    regime:'38h/semaine',horaire:'Lundi-Vendredi 09:00-17:30',
-    lieuTravail:s.co.address||'',
-    avantages:'Chèques-repas, Eco-chèques (si applicable)',
-    clauseNonConcurrence:'Non',clauseEcolage:'Non',
-  });
-  const upd=(k,v)=>setForm(p=>({...p,[k]:v}));
-  const sel=CONTRAT_TYPES.find(x=>x.id===type);
-  
-  const generate=()=>{
-    const now=new Date().toLocaleDateString('fr-BE');
-    let doc=`CONTRAT DE TRAVAIL\n`;
-    doc+=`${sel.l}\n`;
-    doc+=`═══════════════════════════════════════════════════\n\n`;
-    doc+=`ENTRE:\n`;
-    doc+=`L'employeur: ${s.co.name}\nSiège: ${s.co.address}\nN° BCE: ${s.co.bce||'[BCE]'}\nN° ONSS: ${s.co.onss||'[ONSS]'}\nCP: ${s.co.cp||'200'}\n`;
-    doc+=`Représenté par: [Nom du responsable]\n\n`;
-    doc+=`ET:\n`;
-    doc+=`Le travailleur: ${form.empPrenom} ${form.empNom}\nNN: ${form.empNN}\nDomicile: ${form.empAdresse}\nNationalité: ${form.empNationalite}\n\n`;
-    doc+=`IL EST CONVENU CE QUI SUIT:\n\n`;
-    doc+=`Art. 1 — OBJET\nLe travailleur est engagé en qualité de: ${form.fonction}\n\n`;
-    doc+=`Art. 2 — DURÉE\n`;
-    if(type==='cdi')doc+=`Le présent contrat est conclu pour une durée indéterminée.\n`;
-    else if(type==='cdd')doc+=`Le présent contrat prend cours le ${form.debut} et se termine le ${form.fin}.\n`;
-    else if(type==='etudiant')doc+=`Convention étudiante du ${form.debut} au ${form.fin}.\nDans le cadre du contingent de 650h/an (art. 17bis AR 28/11/1969).\n`;
-    else if(type==='trav_det')doc+=`Le présent contrat est conclu pour un travail nettement défini.\nDescription: [à compléter]\nLe contrat prendra fin à l'achèvement du travail convenu.\n`;
-    else if(type==='remplacement')doc+=`Le présent contrat est conclu en remplacement de [nom travailleur absent]\nabsent(e) pour cause de [motif].\nDurée maximale: 2 ans (art. 11ter loi 03/07/1978).\n`;
-    else if(type==='saisonnier')doc+=`Travail saisonnier du ${form.debut} au ${form.fin}.\nMax 65 jours/an (100 jours pour fruits/légumes). Dimona « DWD ».\n`;
-    else if(type==='occas_horeca')doc+=`Travail occasionnel Horeca du ${form.debut} au ${form.fin}.\nMax 50 jours/an. Forfait ONSS: 8,86€/heure.\n`;
-    else if(type==='insertion')doc+=`Convention d'immersion professionnelle (CIP) du ${form.debut} au ${form.fin}.\nDurée: max 6 mois, renouvelable 1 fois. Indemnité mensuelle: ${form.salaireBrut}€.\nCette convention n'est PAS un contrat de travail.\n`;
-    else if(type==='formation_alternance')doc+=`Contrat de formation en alternance du ${form.debut} au ${form.fin}.\n20% formation / 80% entreprise. Allocation selon année de formation.\n`;
-    else if(type==='teletravail_struct')doc+=`Le présent contrat inclut un avenant de télétravail structurel (CCT n°85).\nLieu de télétravail: domicile du travailleur.\nIndemnité forfaitaire de bureau: max 151,70€/mois.\n`;
-    else if(sel.cat==='independant'){
-      doc=`CONVENTION DE COLLABORATION INDÉPENDANTE\n${sel.l}\n═══════════════════════════════════════════════════\n\n`;
-      doc+=`ENTRE:\nLe donneur d'ordre: ${s.co.name}\nSiège: ${s.co.address}\nN° BCE: ${s.co.bce||'[BCE]'}\n\n`;
-      doc+=`ET:\nLe prestataire indépendant: ${form.empPrenom} ${form.empNom}\nN° BCE: [BCE prestataire]\nN° TVA: [TVA prestataire]\nCaisse sociale: [nom caisse]\n\n`;
-      doc+=`Art. 1 — OBJET\nLe prestataire s'engage à fournir les services suivants: ${form.fonction}\nEn qualité de: ${sel.l}\n\n`;
-      doc+=`Art. 2 — ABSENCE DE LIEN DE SUBORDINATION\nLe prestataire exerce son activité en toute indépendance.\nIl organise librement son travail, détermine ses horaires et méthodes.\nAucun lien de subordination n'existe entre les parties (Loi 27/12/2006).\n\n`;
-      doc+=`Art. 3 — RÉMUNÉRATION\nHonoraires: ${form.salaireBrut}€ [par mois/prestation/heure]\nFacturation: mensuelle, TVA 21%.\nPaiement: 30 jours fin de mois.\n\n`;
-      doc+=`Art. 4 — DURÉE\nDébut: ${form.debut}${form.fin?`\nFin: ${form.fin}`:'\nDurée indéterminée avec préavis raisonnable.'}\n\n`;
-      doc+=`Art. 5 — CRITÈRES D'INDÉPENDANCE (Loi 27/12/2006)\n- Liberté d'organisation du travail\n- Liberté d'organisation du temps de travail\n- Possibilité de travailler pour d'autres donneurs d'ordre\n- Pas de contrôle hiérarchique\n\n`;
-      if(type==='indep_mandataire')doc+=`Art. 6 — MANDAT SOCIAL\nLe prestataire exerce un mandat de [gérant/administrateur] au sein de la société.\nConformément au Code des sociétés et des associations (CSA).\nRévocable [ad nutum / moyennant préavis].\n\n`;
-      if(type==='indep_conjoint_aidant')doc+=`Art. 6 — STATUT CONJOINT AIDANT\nLe prestataire aide régulièrement son conjoint dans l'exercice de son activité indépendante.\nStatut social: [maxi-statut / mini-statut].\nAffiliation caisse sociale obligatoire.\n\n`;
-      doc+=`Art. ${type==='indep_mandataire'||type==='indep_conjoint_aidant'?7:6} — OBLIGATIONS SOCIALES\n`;
-      doc+=`Le prestataire déclare être en règle de:\n- Affiliation à une caisse d'assurances sociales\n- Cotisations sociales trimestrielles\n- Assurance maladie-invalidité\n- Assurance responsabilité professionnelle\n\n`;
-      doc+=`Fait en double exemplaire à ${s.co.address?.split(',').pop()?.trim()||'Bruxelles'}, le ${now}\n\n`;
-      doc+=`Le donneur d'ordre:\t\t\tLe prestataire:\n[Signature]\t\t\t\t[Signature]\n`;
-    }
-    else if(sel.cat==='special'){
-      if(type==='volontariat'){
-        doc=`CONVENTION DE VOLONTARIAT\n(Loi du 03/07/2005 relative aux droits des volontaires)\n═══════════════════════════════════════════════════\n\n`;
-        doc+=`ENTRE:\nL'organisation: ${s.co.name}\nSiège: ${s.co.address}\n\n`;
-        doc+=`ET:\nLe/la volontaire: ${form.empPrenom} ${form.empNom}\n\n`;
-        doc+=`Art. 1 — Le volontariat est exercé sans rémunération ni obligation.\n`;
-        doc+=`Art. 2 — Défraiement: forfait max 40,67€/jour, 1.626,77€/an (2026).\n`;
-        doc+=`Art. 3 — Aucune cotisation ONSS, aucun précompte professionnel.\n`;
-        doc+=`Art. 4 — Assurance responsabilité civile souscrite par l'organisation.\n\n`;
-      }
-      else if(type==='smart_sme'){
-        doc=`NOTE D'INFORMATION — PORTAGE SALARIAL (Smart)\n═══════════════════════════════════════════════════\n\n`;
-        doc+=`Prestataire: ${form.empPrenom} ${form.empNom}\nMission: ${form.fonction}\nClient: ${s.co.name}\n\n`;
-        doc+=`Smart établit le contrat de travail, facture le client, et reverse:\n- Montant facturé HT\n- Moins commission Smart (~6,5%)\n- Moins cotisations sociales employeur + travailleur\n- Moins précompte professionnel\n= Net versé au prestataire\n\n`;
-        doc+=`Avantages: couverture sociale complète, chômage, mutuelle, pension.\n`;
-      }
-      else{
-        doc+=`Le présent contrat est de type: ${sel.l}\n${sel.desc}\n`;
-        doc+=`Début: ${form.debut}${form.fin?` — Fin: ${form.fin}`:''}\n`;
-      }
-      doc+=`\nFait à ${s.co.address?.split(',').pop()?.trim()||'Bruxelles'}, le ${now}\n\n`;
-      doc+=`Signature 1:\t\t\t\tSignature 2:\n[Signature]\t\t\t\t[Signature]\n`;
-    }
-    else doc+=`Début: ${form.debut}${form.fin?` — Fin: ${form.fin}`:''}\n`;
-    if(sel.cat==='salarie'){
-    doc+=`\nArt. 3 — LIEU DE TRAVAIL\n${form.lieuTravail}\n`;
-    doc+=`\nArt. 4 — RÉMUNÉRATION\nSalaire brut mensuel: ${form.salaireBrut}€\nMode de paiement: virement bancaire\n`;
-    doc+=`\nArt. 5 — DURÉE DU TRAVAIL\nRégime: ${form.regime}\nHoraire: ${form.horaire}\n`;
-    doc+=`\nArt. 6 — AVANTAGES EXTRA-LÉGAUX\n${form.avantages}\n`;
-    if(form.clauseNonConcurrence==='Oui')doc+=`\nArt. 7 — CLAUSE DE NON-CONCURRENCE\nConformément à l'art. 65 de la loi du 03/07/1978.\n`;
-    if(form.clauseEcolage==='Oui')doc+=`\nArt. 8 — CLAUSE D'ÉCOLAGE\nConformément à l'art. 22bis de la loi du 03/07/1978.\n`;
-    doc+=`\nArt. 9 — DISPOSITIONS GÉNÉRALES\nLe règlement de travail fait partie intégrante du présent contrat.\nLe contrat est régi par la loi du 03/07/1978 relative aux contrats de travail.\n`;
-    doc+=`\nFait en double exemplaire à ${s.co.address?.split(',').pop()?.trim()||'Bruxelles'}, le ${now}\n\n`;
-    doc+=`L'employeur:\t\t\t\tLe travailleur:\n[Signature]\t\t\t\t[Signature]\n`;
-    doc+=`Précédé de la mention\t\t\tPrécédé de la mention\n"Lu et approuvé"\t\t\t\t"Lu et approuvé"\n`;
-    }
-    return doc;
-  };
-  
-  return <div>
-    <PH title="Contrats de travail & conventions" sub="Salariés, indépendants, formes spéciales — 40 types de contrats belges"/>
-    <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:18}}>
-      <C>
-        <ST>Type de contrat</ST>
-        <div style={{fontSize:10,color:'#c6a34e',fontWeight:600,marginBottom:6}}>📋 SALARIÉS (Loi 03/07/1978)</div>
-        {CONTRAT_TYPES.filter(ct=>ct.cat==='salarie').map(ct=><button key={ct.id} onClick={()=>setType(ct.id)} style={{display:'block',width:'100%',padding:'8px 10px',marginBottom:3,border:type===ct.id?'1px solid rgba(198,163,78,.3)':'1px solid rgba(198,163,78,.04)',borderRadius:6,background:type===ct.id?'rgba(198,163,78,.1)':'transparent',color:type===ct.id?'#c6a34e':'#9e9b93',cursor:'pointer',fontSize:11,textAlign:'left',fontFamily:'inherit',fontWeight:type===ct.id?600:400}}>
-          {ct.l.split('—')[0]}
-        </button>)}
-        <div style={{fontSize:10,color:'#a78bfa',fontWeight:600,marginTop:12,marginBottom:6}}>🏢 INDÉPENDANTS (AR n°38)</div>
-        {CONTRAT_TYPES.filter(ct=>ct.cat==='independant').map(ct=><button key={ct.id} onClick={()=>setType(ct.id)} style={{display:'block',width:'100%',padding:'8px 10px',marginBottom:3,border:type===ct.id?'1px solid rgba(167,139,250,.3)':'1px solid rgba(167,139,250,.04)',borderRadius:6,background:type===ct.id?'rgba(167,139,250,.1)':'transparent',color:type===ct.id?'#a78bfa':'#9e9b93',cursor:'pointer',fontSize:11,textAlign:'left',fontFamily:'inherit',fontWeight:type===ct.id?600:400}}>
-          {ct.l.split('—')[0]}
-        </button>)}
-        <div style={{fontSize:10,color:'#60a5fa',fontWeight:600,marginTop:12,marginBottom:6}}>⚡ FORMES SPÉCIALES / HYBRIDES</div>
-        {CONTRAT_TYPES.filter(ct=>ct.cat==='special').map(ct=><button key={ct.id} onClick={()=>setType(ct.id)} style={{display:'block',width:'100%',padding:'8px 10px',marginBottom:3,border:type===ct.id?'1px solid rgba(96,165,250,.3)':'1px solid rgba(96,165,250,.04)',borderRadius:6,background:type===ct.id?'rgba(96,165,250,.1)':'transparent',color:type===ct.id?'#60a5fa':'#9e9b93',cursor:'pointer',fontSize:11,textAlign:'left',fontFamily:'inherit',fontWeight:type===ct.id?600:400}}>
-          {ct.l.split('—')[0]}
-        </button>)}
-        <div style={{marginTop:14,padding:10,background:"rgba(96,165,250,.06)",borderRadius:8,fontSize:10.5,color:'#60a5fa',lineHeight:1.5}}>
-          Équivalent LegalSmart de Partena. Contrats générés selon la loi du 03/07/1978 et les CCT applicables.
-        </div>
-      </C>
-      <C>
-        <div style={{fontSize:14,fontWeight:600,color:'#e8e6e0',marginBottom:16}}>{sel?.l}</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-          <I label="Nom" value={form.empNom} onChange={v=>upd('empNom',v)}/>
-          <I label="Prénom" value={form.empPrenom} onChange={v=>upd('empPrenom',v)}/>
-          <I label="N° National" value={form.empNN} onChange={v=>upd('empNN',v)}/>
-          <I label="Adresse" value={form.empAdresse} onChange={v=>upd('empAdresse',v)}/>
-          <I label="Fonction" value={form.fonction} onChange={v=>upd('fonction',v)}/>
-          <I label="Salaire brut mensuel (€)" value={form.salaireBrut} onChange={v=>upd('salaireBrut',v)}/>
-          <I label="Date début" value={form.debut} onChange={v=>upd('debut',v)}/>
-          {(type==='cdd'||type==='interim'||type==='etudiant')&&<I label="Date fin" value={form.fin} onChange={v=>upd('fin',v)}/>}
-          <I label="Régime" value={form.regime} onChange={v=>upd('regime',v)}/>
-          <I label="Horaire" value={form.horaire} onChange={v=>upd('horaire',v)}/>
-          <I label="Clause non-concurrence" value={form.clauseNonConcurrence} onChange={v=>upd('clauseNonConcurrence',v)} options={[{v:"Non",l:"Non"},{v:"Oui",l:"Oui"}]}/>
-          <I label="Clause d'écolage" value={form.clauseEcolage} onChange={v=>upd('clauseEcolage',v)} options={[{v:"Non",l:"Non"},{v:"Oui",l:"Oui"}]}/>
-        </div>
-        <B style={{marginTop:16}} onClick={()=>{
-          const doc=generate();
-          d({type:"MODAL",m:{w:900,c:<div>
-            <h2 style={{fontSize:17,fontWeight:600,color:'#e8e6e0',margin:'0 0 12px',fontFamily:"'Cormorant Garamond',serif"}}>{sel.l}</h2>
-            <pre style={{background:"#060810",border:'1px solid rgba(139,115,60,.15)',borderRadius:8,padding:14,fontSize:10.5,color:'#9e9b93',whiteSpace:'pre-wrap',maxHeight:450,overflowY:'auto'}}>{doc}</pre>
-            <div style={{display:'flex',gap:10,marginTop:14,justifyContent:'flex-end'}}>
-              <B v="outline" onClick={()=>d({type:"MODAL",m:null})}>Fermer</B>
-              <B onClick={()=>{navigator.clipboard?.writeText(doc);alert('Copié !')}}>Copier</B>
-            </div>
-          </div>}});
-        }}>Générer le contrat</B>
-      </C>
-    </div>
-  </div>;
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  COMPTE INDIVIDUEL — Annuel par travailleur
-// ═══════════════════════════════════════════════════════════════
+function ContratsTravailMod({s,d}){const ae=s.emps||[];const n=ae.length;const [tab,setTab]=useState("types");
+const cdi=ae.filter(e=>(e.contractType||"CDI")==="CDI").length;const cdd=ae.filter(e=>(e.contractType||"")==="CDD").length;const interim=ae.filter(e=>(e.contractType||"")==="Interim").length;const tp=ae.filter(e=>(+e.regime||100)<100).length;
+return <div><PH title="Contrats de Travail" sub={"Gestion des contrats - "+n+" travailleurs - "+cdi+" CDI / "+cdd+" CDD"}/>
+<div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:10,marginBottom:18}}>{[{l:"CDI",v:cdi,c:"#4ade80"},{l:"CDD",v:cdd,c:"#fb923c"},{l:"Interim",v:interim,c:"#a78bfa"},{l:"Temps partiel",v:tp,c:"#60a5fa"},{l:"Temps plein",v:n-tp,c:"#c6a34e"},{l:"Total",v:n,c:"#c6a34e"}].map((k,i)=><div key={i} style={{padding:"12px 14px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid rgba(198,163,78,.08)"}}><div style={{fontSize:9,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div style={{fontSize:17,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div>
+<div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"types",l:"Types contrats"},{v:"clauses",l:"Clauses essentielles"},{v:"equipe",l:"Contrats equipe"},{v:"modeles",l:"Modeles"},{v:"risques",l:"Risques juridiques"},{v:"legal",l:"Base legale"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>
+{tab==="types"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}}><C><ST>Contrats a duree indeterminee</ST>
+{[{t:"CDI temps plein",d:"Contrat par defaut. Ecrit non obligatoire mais recommande. 38h/sem (CP 200). Pas de terme.",c:"#4ade80"},{t:"CDI temps partiel",d:"ECRIT OBLIGATOIRE avant debut. Minimum 1/3 temps plein (12h40/sem). Horaire fixe ou variable dans contrat.",c:"#60a5fa"},{t:"CDI clause essai",d:"Supprimee depuis 01/01/2014 (Loi Statut Unique). Mais possibilite clause ecolage et non-concurrence.",c:"#a78bfa"},{t:"CDI travail a domicile",d:"Teletravail structurel. CCT 85. Ecrit obligatoire. Indemnites bureau 148,73 EUR/mois.",c:"#c6a34e"}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C><C><ST>Contrats a duree determinee et autres</ST>
+{[{t:"CDD",d:"ECRIT OBLIGATOIRE avant debut. Max 4 CDD successifs sur max 2 ans (sinon requalification CDI). Possibilite 6 CDD sur 3 ans si min 3 mois chacun.",c:"#fb923c"},{t:"Contrat remplacement",d:"Remplacement travailleur dont contrat suspendu. Ecrit obligatoire. Fin = retour titulaire ou max 2 ans.",c:"#f87171"},{t:"Interim (travail temporaire)",d:"Via agence. Motif obligatoire: surcroit, remplacement, travail exceptionnel. Max 4 contrats/semaine.",c:"#a78bfa"},{t:"Contrat etudiant",d:"Max 600h/an (cotisations solidarite). Ecrit obligatoire. Evaluation avant debut. Dimona student.",c:"#c6a34e"},{t:"Contrat formation en alternance",d:"Combinaison formation/travail. Remuneration progressive. Protection sociale specifique.",c:"#60a5fa"},{t:"Flexi-job",d:"Travailleur avec emploi principal 4/5. Secteurs autorises. ONSS 28% employeur. Brut = net.",c:"#4ade80"}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C></div>}
+{tab==="clauses"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}}><C><ST>Clauses obligatoires</ST>
+{[{c:"Identite parties",d:"Nom, adresse, numero entreprise employeur + nom, adresse, NISS travailleur"},{c:"Date debut",d:"Date entree en service. Indispensable pour calcul anciennete et preavis."},{c:"Lieu de travail",d:"Adresse(s) execution travail. Si variable: mention sieges possibles."},{c:"Fonction et description",d:"Titre et description des taches principales."},{c:"Remuneration",d:"Salaire brut mensuel ou horaire. References baremiques (CP, echelon)."},{c:"Duree du travail",d:"Temps plein: reference sectorielle. Temps partiel: horaire exact obligatoire."},{c:"Commission paritaire",d:"Numero CP applicable (ex: 200, 124, 302). Determine bareme et avantages."}].map((r,i)=><div key={i} style={{padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.c}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C><C><ST>Clauses facultatives</ST>
+{[{c:"Clause non-concurrence",d:"Si brut > 38.665 EUR/an. Max 12 mois apres fin contrat. Indemnite 50% brut x duree. Geographiquement limitee.",v:"#f87171"},{c:"Clause ecolage",d:"Remboursement frais formation si depart < 3 ans. Min 38.665 EUR brut. Max 30% brut annuel. Formation > 80h.",v:"#fb923c"},{c:"Clause confidentialite",d:"Protection secrets affaires et donnees. Duree illimitee. Pas indemnite specifique requise.",v:"#a78bfa"},{c:"Clause propriete intellectuelle",d:"Cession creations du travailleur a employeur. Art. XI.335 CDE. Portee et remuneration.",v:"#60a5fa"},{c:"Clause teletravail",d:"CCT 85 (structurel) ou CCT 149 (occasionnel). Horaires, indemnites, materiel, assurance.",v:"#4ade80"},{c:"Clause voiture societe",d:"Car policy separee. ATN CO2. Regles utilisation privee. Restitution a la sortie.",v:"#c6a34e"}].map((r,i)=><div key={i} style={{padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:r.v,fontSize:12}}>{r.c}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C></div>}
+{tab==="equipe"&&<C><ST>Contrats equipe</ST>
+<Tbl cols={[{k:"n",l:"Travailleur",b:1,r:r=>(r.fn||"")+" "+(r.ln||"")},{k:"t",l:"Type",r:r=><span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:(r.contractType||"CDI")==="CDI"?"rgba(74,222,128,.1)":"rgba(251,146,56,.1)",color:(r.contractType||"CDI")==="CDI"?"#4ade80":"#fb923c"}}>{r.contractType||"CDI"}</span>},{k:"d",l:"Debut",r:r=><span style={{color:"#9e9b93"}}>{r.startDate||"MANQUANT"}</span>},{k:"r",l:"Regime",a:"right",r:r=><span style={{color:"#60a5fa"}}>{(+r.regime||100)+"%"}</span>},{k:"a",l:"Anciennete",a:"right",r:r=>{const a2=r.startDate?((Date.now()-new Date(r.startDate))/(365.25*24*3600*1000)).toFixed(1):"?";return <span style={{color:"#c6a34e"}}>{a2} ans</span>}},{k:"g",l:"Brut",a:"right",r:r=><span style={{color:"#c6a34e",fontWeight:600}}>{fmt(+r.gross||0)}</span>}]} data={ae}/>
+</C>}
+{tab==="modeles"&&<C><ST>Modeles de contrat disponibles</ST>
+{[{m:"CDI Employe temps plein",cp:"CP 200",p:"Standard",c:"#4ade80"},{m:"CDI Employe temps partiel",cp:"CP 200",p:"Horaire obligatoire",c:"#60a5fa"},{m:"CDD Employe",cp:"Toute CP",p:"Terme + motif",c:"#fb923c"},{m:"Contrat remplacement",cp:"Toute CP",p:"Nom remplace + motif",c:"#f87171"},{m:"Contrat etudiant",cp:"Toute CP",p:"Max 600h",c:"#a78bfa"},{m:"Avenant teletravail",cp:"CCT 85",p:"Horaires + indemnites",c:"#c6a34e"},{m:"Avenant temps partiel",cp:"Toute CP",p:"Nouvel horaire",c:"#60a5fa"},{m:"Convention rupture amiable",cp:"N/A",p:"Indemnite negociee",c:"#f87171"},{m:"Clause non-concurrence",cp:"Si > 38.665 EUR",p:"Duree + zone + indemnite",c:"#fb923c"},{m:"Clause ecolage",cp:"Si > 38.665 EUR",p:"Formation + duree + montant",c:"#a78bfa"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div><b style={{color:r.c,fontSize:12}}>{r.m}</b><div style={{fontSize:10,color:"#5e5c56"}}>{r.cp} - {r.p}</div></div><span style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:"rgba(198,163,78,.08)",color:"#c6a34e"}}>A generer</span></div>)}
+</C>}
+{tab==="risques"&&<C><ST>Risques juridiques contrats</ST>
+{[{r:"CDD sans ecrit",impact:"Requalification CDI automatique",sanction:"Le CDD est repute CDI avec toutes consequences",c:"#f87171"},{r:"CDD > 2 ans / > 4 successifs",impact:"Requalification CDI",sanction:"Art. 10 Loi contrats de travail. CDI avec anciennete cumulee.",c:"#f87171"},{r:"Temps partiel sans horaire",impact:"Presomption temps plein",sanction:"ONSS sur base temps plein. Regularisation retroactive.",c:"#fb923c"},{r:"Absence reglement travail",impact:"Amende administrative",sanction:"Niveau 2: 200-2.000 EUR. Sanctions disciplinaires inapplicables.",c:"#fb923c"},{r:"Clause non-concurrence invalide",impact:"Clause reputee nulle",sanction:"Si conditions non remplies (brut, duree, zone, indemnite).",c:"#a78bfa"},{r:"Travail non declare",impact:"Sanctions penales",sanction:"Niveau 4: 4.800-48.000 EUR. Fermeture possible.",c:"#f87171"},{r:"Discrimination embauche",impact:"Indemnite 6 mois brut",sanction:"Loi anti-discrimination 10/05/2007. Charge preuve partagee.",c:"#f87171"}].map((r2,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:r2.c,fontSize:12}}>{r2.r}</b><div style={{fontSize:10.5,color:"#e8e6e0",marginTop:2}}>Impact: {r2.impact}</div><div style={{fontSize:10,color:"#9e9b93",marginTop:1}}>{r2.sanction}</div></div>)}
+</C>}
+{tab==="legal"&&<C><ST>Base legale</ST>
+{[{t:"Loi 03/07/1978",d:"Loi relative aux contrats de travail. Base de tout le droit du travail belge."},{t:"Loi Statut Unique 26/12/2013",d:"Harmonisation ouvriers/employes. Preavis, jour de carence, motivation licenciement."},{t:"CCT 109 (12/02/2014)",d:"Licenciement manifestement deraisonnable. Indemnite 3-17 semaines."},{t:"AR 20/09/1963",d:"Protection remuneration. Paiement salaire, retenues, saisies."},{t:"Loi 08/04/1965",d:"Reglements de travail. Contenu obligatoire, procedure modification."},{t:"Loi 12/04/1965",d:"Protection remuneration. Modalites paiement."},{t:"CCT 12bis et 13bis",d:"Fermeture entreprise. Indemnites complementaires."},{t:"Code penal social",d:"Sanctions infractions droit social. 4 niveaux (amende a prison)."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C>}
+</div>;}
 function CompteIndividuelMod({s,d}){
   const [yr,setYr]=useState(new Date().getFullYear());
   const ae=s.emps.filter(e=>e.status==='active');
@@ -13479,117 +13360,37 @@ function EcoCommandeMod({s,d}){
 // ═══════════════════════════════════════════════════════════════
 //  PRÉAVIS LÉGAL — Calculateur durée & coût (Loi statut unique 26/12/2013)
 // ═══════════════════════════════════════════════════════════════
-function PreavisMod({s,d}){
-  const [eid,setEid]=useState(s.emps[0]?.id||'');
-  const [motif,setMotif]=useState('licenciement');
-  const [dateNotif,setDateNotif]=useState('');
-  const ae=s.emps.filter(e=>e.status==='active');
-  const emp=ae.find(e=>e.id===eid);
-  
-  const calcPreavis=(emp)=>{
-    if(!emp)return null;
-    const start=new Date(emp.startD||'2020-01-01');
-    const now=new Date();
-    const ancMois=Math.max(0,Math.round((now-start)/(1000*60*60*24*30.44)));
-    const ancAns=ancMois/12;
-    // Loi statut unique 26/12/2013 — barème employeur
-    let semaines=0;
-    if(motif==='licenciement'){
-      // Tranche 1: 0-5 ans → formule progressive
-      if(ancAns<0.25)semaines=1;
-      else if(ancAns<0.5)semaines=3;
-      else if(ancAns<0.75)semaines=4;
-      else if(ancAns<1)semaines=5;
-      else if(ancAns<2)semaines=6;
-      else if(ancAns<3)semaines=8;
-      else if(ancAns<4)semaines=9;
-      else if(ancAns<5)semaines=12;
-      else if(ancAns<6)semaines=15;
-      else if(ancAns<7)semaines=18;
-      else if(ancAns<8)semaines=21;
-      else if(ancAns<9)semaines=24;
-      else if(ancAns<10)semaines=27;
-      else if(ancAns<11)semaines=30;
-      else if(ancAns<12)semaines=33;
-      else if(ancAns<13)semaines=36;
-      else if(ancAns<14)semaines=39;
-      else if(ancAns<15)semaines=42;
-      else if(ancAns<16)semaines=45;
-      else if(ancAns<17)semaines=48;
-      else if(ancAns<18)semaines=51;
-      else if(ancAns<19)semaines=54;
-      else if(ancAns<20)semaines=57;
-      else if(ancAns<21)semaines=60;
-      else semaines=60+Math.floor((ancAns-20))*3;
-    } else {
-      // Démission — environ 1/2 du préavis licenciement, max 13 sem
-      if(ancAns<0.25)semaines=1;
-      else if(ancAns<0.5)semaines=2;
-      else if(ancAns<1)semaines=2;
-      else if(ancAns<2)semaines=3;
-      else if(ancAns<3)semaines=4;
-      else if(ancAns<4)semaines=5;
-      else if(ancAns<5)semaines=6;
-      else if(ancAns<6)semaines=7;
-      else if(ancAns<7)semaines=9;
-      else if(ancAns<8)semaines=10;
-      else semaines=13;
-    }
-    const jours=semaines*7;
-    const joursCal=semaines*5;
-    const p=calc(emp,{days:21,overtimeH:0,sundayH:0,nightH:0,sickG:0,bonus:0,y13:0,advance:0,garnish:0,otherDed:0,month:now.getMonth()+1,year:now.getFullYear()},s.co);
-    const coutSemaine=p.costTotal/4.33;
-    const indemnite=coutSemaine*semaines;
-    return{ancMois,ancAns:ancAns.toFixed(1),semaines,jours,joursCal,indemnite,coutSemaine,brut:emp.monthlySalary,cost:p.costTotal};
-  };
-  
-  const r=calcPreavis(emp);
-  
-  return <div>
-    <PH title="Préavis légal" sub="Loi du 26/12/2013 — Statut unique"/>
-    <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:18}}>
-      <C>
-        <ST>Paramètres</ST>
-        <I label="Travailleur" value={eid} onChange={setEid} options={ae.map(e=>({v:e.id,l:`${e.first||e.fn||'Emp'} ${e.last||''}`}))}/>
-        <I label="Type" value={motif} onChange={setMotif} options={[{v:"licenciement",l:"Licenciement (par employeur)"},{v:"demission",l:"Démission (par travailleur)"}]}/>
-        <I label="Date notification" type="date" value={dateNotif} onChange={setDateNotif}/>
-        {r&&<div style={{marginTop:14,padding:12,background:motif==='licenciement'?'rgba(248,113,113,.08)':'rgba(96,165,250,.08)',borderRadius:8,border:`1px solid ${motif==='licenciement'?'rgba(248,113,113,.2)':'rgba(96,165,250,.2)'}`,textAlign:'center'}}>
-          <div style={{fontSize:11,color:'#5e5c56'}}>Durée du préavis</div>
-          <div style={{fontSize:28,fontWeight:700,color:motif==='licenciement'?'#f87171':'#60a5fa'}}>{r.semaines} sem.</div>
-          <div style={{fontSize:12,color:'#9e9b93'}}>{r.joursCal} jours ouvrables · {r.jours} jours calendrier</div>
-        </div>}
-        {r&&motif==='licenciement'&&<div style={{marginTop:10,padding:12,background:"rgba(248,113,113,.06)",borderRadius:8,fontSize:12,color:'#9e9b93',lineHeight:2}}>
-          <div style={{fontWeight:600,color:'#f87171',marginBottom:4}}>Coût indemnité de rupture</div>
-          <div>Coût/semaine: <b style={{color:'#e8e6e0'}}>{r?fmt(r.coutSemaine):'-'}</b></div>
-          <div>Indemnité totale: <b style={{color:'#f87171',fontSize:14}}>{r?fmt(r.indemnite):'-'}</b></div>
-        </div>}
-      </C>
-      <C>
-        {emp&&r&&<div>
-          <div style={{fontSize:14,fontWeight:600,color:'#e8e6e0',marginBottom:16}}>{emp.first} {emp.last} — {motif==='licenciement'?'Licenciement':'Démission'}</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:12,marginBottom:20}}>
-            {[{l:"Ancienneté",v:`${r.ancAns} ans`,c:'#c6a34e'},{l:"Brut mensuel",v:fmt(r.brut),c:'#e8e6e0'},{l:"Coût mensuel",v:fmt(r.cost),c:'#a78bfa'},{l:"Préavis",v:`${r.semaines} sem.`,c:motif==='licenciement'?'#f87171':'#60a5fa'}].map((x,i)=>
-              <div key={i} style={{padding:14,background:"rgba(198,163,78,.04)",borderRadius:8,textAlign:'center',border:'1px solid rgba(198,163,78,.08)'}}>
-                <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>{x.l}</div>
-                <div style={{fontSize:18,fontWeight:700,color:x.c,marginTop:4}}>{x.v}</div>
-              </div>
-            )}
-          </div>
-          <div style={{padding:14,background:"rgba(96,165,250,.04)",borderRadius:8,fontSize:11.5,color:'#60a5fa',lineHeight:1.8}}>
-            <b>Art. 37/2 Loi 03/07/1978</b> — Le préavis prend cours le lundi suivant la semaine de notification.<br/>
-            <b>Contre-préavis</b> (si licenciement) — Le travailleur peut donner un contre-préavis réduit pendant le préavis.<br/>
-            <b>Outplacement</b> — Obligatoire si préavis ≥ 30 semaines (= ancienneté ≥ ~10 ans). Valeur: min. 1.800€ sur 12 mois.<br/>
-            <b>Dispense C4</b> — Si motif grave (art. 35), pas de préavis. Notification dans les 3 jours ouvrables.
-          </div>
-        </div>}
-      </C>
-    </div>
-  </div>;
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  PÉCULE DE SORTIE — Solde tout compte
-// ═══════════════════════════════════════════════════════════════
+function PreavisMod({s,d}){const ae=s.emps||[];const [tab,setTab]=useState("calcul");const [selEmp,setSelEmp]=useState(ae[0]?.id||"");const [ancManuelle,setAncManuelle]=useState(5);const [initPar,setInitPar]=useState("employeur");
+const emp=ae.find(e=>e.id===selEmp)||ae[0]||{};const anc=emp.startDate?Math.max(0.25,((Date.now()-new Date(emp.startDate))/(365.25*24*3600*1000))):+ancManuelle;const brut=+emp.gross||3000;
+const calcPreavisEmpl=(a)=>{if(a<0.25)return 1;if(a<0.5)return 3;if(a<1)return 5;if(a<2)return 7;if(a<3)return 9;if(a<4)return 12;if(a<5)return 13;if(a<6)return 15;if(a<7)return 18;if(a<8)return 21;if(a<9)return 24;if(a<10)return 27;if(a<11)return 30;if(a<12)return 33;if(a<13)return 36;if(a<14)return 39;if(a<15)return 42;if(a<16)return 45;if(a<17)return 48;if(a<18)return 51;if(a<19)return 54;if(a<20)return 57;if(a<21)return 60;return Math.min(62,60+Math.ceil((a-20)*1));};
+const calcPreavisTrav=(a)=>{if(a<0.25)return 1;if(a<0.5)return 2;if(a<1)return 3;if(a<2)return 4;if(a<4)return 6;if(a<5)return 7;if(a<6)return 9;if(a<8)return 10;return 13;};
+const semEmpl=calcPreavisEmpl(anc);const semTrav=calcPreavisTrav(anc);const sem=initPar==="employeur"?semEmpl:semTrav;const indemnite=brut*sem/4.33;const coutTotal=indemnite*1.2507;
+return <div><PH title="Calcul de Preavis" sub="Loi Statut Unique 01/01/2014 - Simulation delais et indemnites"/>
+<div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:18}}>{[{l:"Anciennete",v:anc.toFixed(1)+" ans",c:"#60a5fa"},{l:"Preavis employeur",v:semEmpl+" sem.",c:"#f87171"},{l:"Preavis travailleur",v:semTrav+" sem.",c:"#4ade80"},{l:"Indemnite empl.",v:fmt(indemnite),c:"#f87171"},{l:"Cout total",v:fmt(coutTotal),c:"#fb923c"}].map((k,i)=><div key={i} style={{padding:"12px 14px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid rgba(198,163,78,.08)"}}><div style={{fontSize:9,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div style={{fontSize:17,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div>
+<div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"calcul",l:"Calcul"},{v:"tableau",l:"Tableau complet"},{v:"equipe",l:"Par travailleur"},{v:"contrepreavis",l:"Contre-preavis"},{v:"protection",l:"Protections"},{v:"legal",l:"Base legale"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>
+{tab==="calcul"&&<div style={{display:"grid",gridTemplateColumns:"340px 1fr",gap:18}}><C><ST>Parametres</ST>
+{ae.length>0&&<div style={{marginBottom:8}}><div style={{fontSize:10,color:"#5e5c56",marginBottom:3}}>Travailleur</div><select value={selEmp} onChange={e2=>setSelEmp(e2.target.value)} style={{width:"100%",padding:"8px 10px",borderRadius:6,border:"1px solid rgba(198,163,78,.15)",background:"rgba(198,163,78,.04)",color:"#e8e6e0",fontSize:12,fontFamily:"inherit"}}>{ae.map(e2=><option key={e2.id} value={e2.id}>{(e2.fn||"")+" "+(e2.ln||"")}</option>)}</select></div>}
+<I label="Anciennete manuelle (annees)" type="number" value={ancManuelle} onChange={setAncManuelle}/>
+<div style={{marginTop:8}}><div style={{fontSize:10,color:"#5e5c56",marginBottom:3}}>Initiative</div><select value={initPar} onChange={e2=>setInitPar(e2.target.value)} style={{width:"100%",padding:"8px 10px",borderRadius:6,border:"1px solid rgba(198,163,78,.15)",background:"rgba(198,163,78,.04)",color:"#e8e6e0",fontSize:12,fontFamily:"inherit"}}><option value="employeur">Licenciement (employeur)</option><option value="travailleur">Demission (travailleur)</option></select></div>
+</C><C><ST>Resultat</ST>
+{[{l:"Anciennete",v:anc.toFixed(1)+" ans"},{l:"Initiative",v:initPar==="employeur"?"Licenciement par employeur":"Demission par travailleur"},{l:"Delai de preavis",v:sem+" semaines ("+sem*7+" jours calendrier)"},{l:"Debut preavis",v:"Lundi suivant notification"},{l:"Fin estimee",v:new Date(Date.now()+sem*7*86400000).toLocaleDateString("fr-BE")},{l:"Indemnite compensatoire",v:fmt(indemnite)},{l:"ONSS sur indemnite",v:fmt(indemnite*0.3814)},{l:"Cout total employeur",v:fmt(coutTotal)}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:i===7?"2px solid rgba(198,163,78,.3)":"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#9e9b93"}}>{r.l}</span><span style={{fontWeight:i>=5?700:600,color:i>=5?"#f87171":"#e8e6e0"}}>{r.v}</span></div>)}
+</C></div>}
+{tab==="tableau"&&<C><ST>Tableau preavis complet (Loi Statut Unique)</ST>
+<Tbl cols={[{k:"a",l:"Anciennete",b:1,r:r=>r.anc},{k:"e",l:"Employeur (sem.)",a:"right",r:r=><span style={{color:"#f87171",fontWeight:700}}>{r.empl}</span>},{k:"t",l:"Travailleur (sem.)",a:"right",r:r=><span style={{color:"#4ade80",fontWeight:700}}>{r.trav}</span>},{k:"j",l:"Jours empl.",a:"right",r:r=><span style={{color:"#9e9b93"}}>{r.empl*7}j</span>},{k:"i",l:"Indemnite (3.500 brut)",a:"right",r:r=><span style={{color:"#fb923c"}}>{fmt(3500*r.empl/4.33)}</span>}]} data={[{anc:"0-3 mois",empl:1,trav:1},{anc:"3-6 mois",empl:3,trav:2},{anc:"6-9 mois",empl:4,trav:3},{anc:"9-12 mois",empl:5,trav:3},{anc:"12-15 mois",empl:6,trav:3},{anc:"15-18 mois",empl:7,trav:4},{anc:"18-21 mois",empl:7,trav:4},{anc:"21-24 mois",empl:7,trav:4},{anc:"2-3 ans",empl:9,trav:6},{anc:"3-4 ans",empl:12,trav:6},{anc:"4-5 ans",empl:13,trav:7},{anc:"5-6 ans",empl:15,trav:9},{anc:"6-7 ans",empl:18,trav:10},{anc:"7-8 ans",empl:21,trav:10},{anc:"8-9 ans",empl:24,trav:10},{anc:"9-10 ans",empl:27,trav:13},{anc:"10-15 ans",empl:"30-42",trav:13},{anc:"15-20 ans",empl:"45-57",trav:13},{anc:"20-25 ans",empl:"60-62",trav:13}]}/>
+</C>}
+{tab==="equipe"&&<C><ST>Preavis par travailleur</ST>
+<Tbl cols={[{k:"n",l:"Nom",b:1,r:r=>(r.fn||"")+" "+(r.ln||"")},{k:"a",l:"Anciennete",a:"right",r:r=>{const a2=r.startDate?((Date.now()-new Date(r.startDate))/(365.25*24*3600*1000)).toFixed(1):"?";return <span style={{color:"#60a5fa"}}>{a2} ans</span>}},{k:"e",l:"Preavis empl.",a:"right",r:r=>{const a2=r.startDate?Math.max(0.25,(Date.now()-new Date(r.startDate))/(365.25*24*3600*1000)):1;return <span style={{color:"#f87171",fontWeight:700}}>{calcPreavisEmpl(a2)} sem.</span>}},{k:"t",l:"Preavis trav.",a:"right",r:r=>{const a2=r.startDate?Math.max(0.25,(Date.now()-new Date(r.startDate))/(365.25*24*3600*1000)):1;return <span style={{color:"#4ade80"}}>{calcPreavisTrav(a2)} sem.</span>}},{k:"i",l:"Indemnite",a:"right",r:r=>{const a2=r.startDate?Math.max(0.25,(Date.now()-new Date(r.startDate))/(365.25*24*3600*1000)):1;return <span style={{color:"#fb923c"}}>{fmt((+r.gross||0)*calcPreavisEmpl(a2)/4.33)}</span>}}]} data={ae}/>
+</C>}
+{tab==="contrepreavis"&&<C><ST>Contre-preavis travailleur</ST>
+{[{t:"Principe",d:"Travailleur licencie peut donner un contre-preavis pour partir plus tot (nouvel emploi)."},{t:"Delai contre-preavis",d:"Depend de anciennete: 0-3 mois = 1 sem, 3-6 mois = 2 sem, 6-12 mois = 3 sem, 1+ ans = 4 sem, max 4 sem."},{t:"Effet",d:"Fin contrat a echeance du contre-preavis. Pas indemnite de rupture a payer."},{t:"Forme",d:"Lettre recommandee ou remise en main propre. Debut: lundi suivant."},{t:"Pendant preavis preste",d:"Le travailleur a droit a 1 jour/semaine (ou 2 demi-jours) de conge sollicitation."},{t:"Conge sollicitation",d:"Remunere. Pour chercher un nouvel emploi. Pendant les 26 dernieres semaines de preavis: 2j/sem."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C>}
+{tab==="protection"&&<C><ST>Protections contre licenciement</ST>
+{[{p:"Femme enceinte",d:"Du moment ou employeur est informe jusqu a 1 mois apres conge maternite. Indemnite: 6 mois brut.",c:"#f87171"},{p:"Credit-temps / Conge parental",d:"Pendant demande + duree + 2 mois apres. Indemnite forfaitaire 6 mois.",c:"#fb923c"},{p:"Delegue syndical",d:"Protection forte. Indemnites specifiques selon mandat et anciennete (2-8 ans remuneration).",c:"#a78bfa"},{p:"Membre CPPT",d:"Protection identique delegue syndical pendant mandat + 4 ans.",c:"#a78bfa"},{p:"Maladie / Accident travail",d:"Interdiction pendant incapacite (sauf motif grave ou force majeure medicale > 6 mois).",c:"#60a5fa"},{p:"Plainte harcelement",d:"12 mois apres depot plainte. Indemnite 6 mois brut si violation.",c:"#f87171"},{p:"Conge education paye",d:"Pendant formation + 1 mois apres. Indemnite forfaitaire.",c:"#c6a34e"},{p:"CCT 109 - Motivation",d:"Tout licenciement doit etre motive. Si manifestement deraisonnable: 3-17 semaines indemnite.",c:"#fb923c"}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{display:"flex",justifyContent:"space-between"}}><b style={{color:r.c,fontSize:12}}>{r.p}</b></div><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C>}
+{tab==="legal"&&<C><ST>Base legale preavis</ST>
+{[{t:"Loi Statut Unique 26/12/2013",d:"Harmonisation ouvriers/employes depuis 01/01/2014. Preavis unique base anciennete."},{t:"Art. 37 Loi contrats travail",d:"Delais de preavis. Tableau legal semaines par anciennete."},{t:"Art. 39 Loi contrats travail",d:"Indemnite compensatoire de preavis. Remuneration courante x duree preavis."},{t:"CCT 109 (12/02/2014)",d:"Motivation licenciement. Tout employeur doit pouvoir justifier le licenciement."},{t:"Art. 37/2 - Contre-preavis",d:"Droit du travailleur licencie de donner un contre-preavis reduit."},{t:"Outplacement (30+ sem.)",d:"Obligatoire si preavis 30+ semaines. 60h accompagnement. Deductible du preavis (4 semaines)."},{t:"Loi 19/03/1991 - Delegues",d:"Protection speciale representants personnel. Procedures specifiques."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C>}
+</div>;}
 function PeculeSortieMod({s,d}){
   const [eid,setEid]=useState(s.emps[0]?.id||'');
   const [dateSortie,setDateSortie]=useState('');
@@ -13683,71 +13484,36 @@ function PeculeSortieMod({s,d}){
 // ═══════════════════════════════════════════════════════════════
 //  CRÉDIT-TEMPS / INTERRUPTION DE CARRIÈRE
 // ═══════════════════════════════════════════════════════════════
-function CreditTempsMod({s,d}){
-  const [eid,setEid]=useState(s.emps[0]?.id||'');
-  const [regime,setRegime]=useState('mi_temps');
-  const [motif,setMotif]=useState('soins');
-  const [debut,setDebut]=useState('');
-  const [duree,setDuree]=useState(12);
-  const ae=s.emps.filter(e=>e.status==='active');
-  const emp=ae.find(e=>e.id===eid);
-  
-  const regimes=[
-    {id:"complet",l:"Crédit-temps complet",pct:100,alloc:564.34,desc:"Suspension totale du contrat"},
-    {id:"mi_temps",l:"Crédit-temps mi-temps",pct:50,alloc:282.17,desc:"Réduction à mi-temps"},
-    {id:"1_5",l:"Crédit-temps 1/5",pct:20,alloc:152.50,desc:"Réduction d'1 jour/semaine (TP uniquement)"},
-    {id:"conge_parent",l:"Congé parental",pct:100,alloc:926.29,desc:"Par enfant < 12 ans. Max 4 mois complet"},
-    {id:"assist_med",l:"Assistance médicale",pct:100,alloc:926.29,desc:"Membre famille gravement malade"},
-    {id:"soins_pall",l:"Soins palliatifs",pct:100,alloc:926.29,desc:"1 mois renouvelable 1×"},
-    {id:"fin_carriere",l:"Emploi fin de carrière",pct:20,alloc:262.64,desc:"Réduction 1/5 dès 55 ans (exceptions: 50 ans)"},
-  ];
-  const motifs=[
-    {id:"soins",l:"Soins enfant ≤ 8 ans"},{id:"assist",l:"Assistance membre famille malade"},
-    {id:"formation",l:"Formation reconnue"},{id:"sans_motif",l:"Sans motif (si CCT sectorielle)"},
-  ];
-  const sel=regimes.find(r=>r.id===regime);
-  const salaire=emp?.monthlySalary||0;
-  const newSalaire=salaire*(1-sel.pct/100);
-  const allocONEM=sel.alloc;
-  const totalRevenu=newSalaire+allocONEM;
-  const pertePct=salaire>0?((salaire-totalRevenu)/salaire*100).toFixed(1):0;
-  
-  return <div>
-    <PH title="Crédit-temps / Interruption de carrière" sub="CCT 103 du CNT — Allocations ONEM"/>
-    <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:18}}>
-      <C>
-        <ST>Configuration</ST>
-        <I label="Travailleur" value={eid} onChange={setEid} options={ae.map(e=>({v:e.id,l:`${e.first||e.fn||'Emp'} ${e.last||''}`}))}/>
-        <I label="Régime" value={regime} onChange={setRegime} options={regimes.map(r=>({v:r.id,l:r.l}))}/>
-        <I label="Motif" value={motif} onChange={setMotif} options={motifs.map(m=>({v:m.id,l:m.l}))}/>
-        <I label="Date début" type="date" value={debut} onChange={setDebut}/>
-        <I label="Durée (mois)" type="number" value={duree} onChange={setDuree}/>
-        <div style={{marginTop:14,padding:12,background:"rgba(96,165,250,.08)",borderRadius:8,fontSize:11,color:'#60a5fa',lineHeight:1.6}}>
-          <b>{sel.l}</b><br/>{sel.desc}<br/>Formulaire ONEM: <b>C61</b> (à soumettre au bureau ONEM local)
-        </div>
-      </C>
-      <C>
-        {emp&&<div>
-          <div style={{fontSize:14,fontWeight:600,color:'#e8e6e0',marginBottom:16}}>{emp.first} {emp.last} — Simulation {sel.l}</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:12,marginBottom:20}}>
-            {[{l:"Salaire actuel",v:fmt(salaire),c:'#e8e6e0'},{l:"Nouveau salaire",v:fmt(newSalaire),c:'#fb923c'},{l:"Allocation ONEM",v:fmt(allocONEM),c:'#60a5fa'},{l:"Total revenu",v:fmt(totalRevenu),c:'#4ade80'}].map((x,i)=>
-              <div key={i} style={{padding:14,background:"rgba(198,163,78,.04)",borderRadius:8,textAlign:'center',border:'1px solid rgba(198,163,78,.08)'}}>
-                <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>{x.l}</div>
-                <div style={{fontSize:18,fontWeight:700,color:x.c,marginTop:4}}>{x.v}</div>
-              </div>
-            )}
-          </div>
-          <div style={{padding:14,background:"rgba(248,113,113,.06)",borderRadius:8,marginBottom:16}}>
-            <span style={{fontSize:12,color:'#9e9b93'}}>Perte de revenu mensuel: </span>
-            <span style={{fontSize:16,fontWeight:700,color:'#f87171'}}>{fmt(salaire-totalRevenu)} (-{pertePct}%)</span>
-          </div>
-          <Tbl cols={[{k:'r',l:"Régime",b:1,r:r=>r.l},{k:'p',l:"Réduction",a:'right',r:r=>r.pct+'%'},{k:'a',l:"Allocation ONEM/mois",a:'right',r:r=><span style={{color:'#60a5fa'}}>{fmt(r.alloc)}</span>},{k:'d',l:"Description",r:r=><span style={{fontSize:10.5,color:'#9e9b93'}}>{r.desc}</span>}]} data={regimes}/>
-        </div>}
-      </C>
-    </div>
-  </div>;
-}
-
+function CreditTempsMod({s,d}){const ae=s.emps||[];const n=ae.length;const [tab,setTab]=useState("types");const [age,setAge]=useState(55);const [anc,setAnc]=useState(10);const [motif,setMotif]=useState("soins");
+const allocs={soins:{mt:150.48,mp:75.24},formation:{mt:150.48,mp:75.24},enfant:{mt:167.76,mp:83.88},palliatif:{mt:901.72,mp:901.72}};
+const alloc=allocs[motif]||allocs.soins;
+return <div><PH title="Credit-temps et Conges Thematiques" sub="Droits, allocations, conditions - CCT 103 et Loi 22/01/1985"/>
+<div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:18}}>{[{l:"Effectif",v:n,c:"#c6a34e"},{l:"Allocation temps plein",v:fmt(alloc.mt)+"/mois",c:"#4ade80"},{l:"Allocation mi-temps",v:fmt(alloc.mp)+"/mois",c:"#60a5fa"},{l:"Age simulation",v:age+" ans",c:"#a78bfa"},{l:"Anciennete",v:anc+" ans",c:"#fb923c"}].map((k,i)=><div key={i} style={{padding:"12px 14px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid rgba(198,163,78,.08)"}}><div style={{fontSize:9,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div style={{fontSize:17,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div>
+<div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"types",l:"Types credit-temps"},{v:"thematiques",l:"Conges thematiques"},{v:"conditions",l:"Conditions"},{v:"allocations",l:"Allocations ONEM"},{v:"impact",l:"Impact paie"},{v:"legal",l:"Base legale"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>
+{tab==="types"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}}><C><ST>Credit-temps avec motif (CCT 103)</ST>
+{[{t:"Soins enfant < 8 ans",d:"Max 51 mois temps plein ou 102 mois mi-temps/1-5. Par parent. Allocation ONEM.",duree:"51 mois TP",c:"#4ade80"},{t:"Soins membre menage malade",d:"Maladie grave. Attestation medecin. Max 51 mois TP.",duree:"51 mois TP",c:"#60a5fa"},{t:"Formation reconnue",d:"Formation agreee Region/Communaute. Min 360h/an ou 27 credits. Max 36 mois TP.",duree:"36 mois TP",c:"#a78bfa"},{t:"Soins enfant handicape < 21 ans",d:"Reconnaissance 66% handicap. Max 51 mois TP.",duree:"51 mois TP",c:"#c6a34e"}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{display:"flex",justifyContent:"space-between"}}><b style={{color:r.c,fontSize:12}}>{r.t}</b><span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:r.c+"15",color:r.c}}>{r.duree}</span></div><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C><C><ST>Credit-temps fin de carriere</ST>
+{[{t:"1/5 des 55 ans",d:"Reduction 1 jour/semaine. Condition: 25 ans carriere + 24 mois anciennete. Jusqu a pension.",duree:"Jusqu a 65/66/67 ans",c:"#4ade80"},{t:"Mi-temps des 55 ans",d:"Passage mi-temps. Condition: 25 ans carriere + 24 mois anciennete.",duree:"Jusqu a pension",c:"#60a5fa"},{t:"1/5 des 50 ans (derogatoire)",d:"Si CCT sectorielle. Metiers lourds, 35 ans carriere, ou entreprise en restructuration.",duree:"Jusqu a pension",c:"#fb923c"},{t:"Mi-temps des 50 ans (derogatoire)",d:"Memes conditions derogatoires. Plus rare.",duree:"Jusqu a pension",c:"#f87171"}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{display:"flex",justifyContent:"space-between"}}><b style={{color:r.c,fontSize:12}}>{r.t}</b><span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:r.c+"15",color:r.c}}>{r.duree}</span></div><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C></div>}
+{tab==="thematiques"&&<C><ST>Conges thematiques (droit individuel)</ST>
+{[{t:"Conge parental",d:"Par enfant < 12 ans. 4 mois TP, 8 mois MT, 20 mois 1/10. Les 2 parents. Allocation ONEM.",duree:"4 mois TP",alloc:"167,76 EUR TP",c:"#4ade80"},{t:"Assistance medicale",d:"Membre menage ou famille 2e degre gravement malade. Attestation medecin traitant.",duree:"12 mois TP",alloc:"150,48 EUR TP",c:"#60a5fa"},{t:"Soins palliatifs",d:"Accompagnement fin de vie. Attestation medecin. Renouvelable par mois.",duree:"3 mois max",alloc:"901,72 EUR TP",c:"#f87171"},{t:"Conge aidant proche",d:"Reconnaissance aidant proche via mutuelle. Max 6 mois par patient.",duree:"6 mois TP",alloc:"150,48 EUR TP",c:"#a78bfa"},{t:"Conge naissance (co-parent)",d:"15 jours (20 jours des 2023). 3 premiers jours = salaire. Reste = mutuelle 82%.",duree:"20 jours",alloc:"82% salaire",c:"#c6a34e"},{t:"Conge maternite",d:"15 semaines (19 si jumeaux). 6 sem. prenatales (1 obligatoire) + 9 sem. postnatales.",duree:"15 semaines",alloc:"82% puis 75%",c:"#f87171"}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{display:"flex",justifyContent:"space-between"}}><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{display:"flex",gap:6}}><span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:r.c+"15",color:r.c}}>{r.duree}</span><span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:"rgba(198,163,78,.08)",color:"#c6a34e"}}>{r.alloc}</span></div></div><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C>}
+{tab==="conditions"&&<C><ST>Conditions acces</ST>
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}><I label="Age travailleur" type="number" value={age} onChange={setAge}/><I label="Anciennete (annees)" type="number" value={anc} onChange={setAnc}/></div>
+{[{cond:"Anciennete minimum",req:"24 mois chez employeur actuel",ok:anc>=2,c:"#4ade80"},{cond:"Carriere minimum (fin carriere)",req:"25 ans de carriere professionnelle",ok:anc>=25||age>=55,c:"#60a5fa"},{cond:"Age fin carriere standard",req:"55 ans minimum",ok:age>=55,c:"#a78bfa"},{cond:"Age fin carriere derogatoire",req:"50 ans (si CCT sectorielle)",ok:age>=50,c:"#fb923c"},{cond:"Effectif employeur",req:"Plus de 10 travailleurs (seuil CCT 103)",ok:n>10,c:"#c6a34e"},{cond:"Motif valable",req:"Soins, formation, enfant handicape",ok:true,c:"#4ade80"},{cond:"Demande prealable",req:"3 mois avant (6 mois si >20 trav.)",ok:true,c:"#e8e6e0"},{cond:"Report employeur",req:"Possible si 5% effectif deja en CT",ok:true,c:"#e8e6e0"}].map((r,i)=><div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{width:18,height:18,borderRadius:4,background:r.ok?"rgba(74,222,128,.1)":"rgba(248,113,113,.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:r.ok?"#4ade80":"#f87171"}}>{r.ok?"V":"X"}</div><div style={{flex:1}}><b style={{color:r.c,fontSize:12}}>{r.cond}</b><div style={{fontSize:10,color:"#5e5c56"}}>{r.req}</div></div></div>)}
+</C>}
+{tab==="allocations"&&<C><ST>Allocations ONEM {new Date().getFullYear()}</ST>
+<div style={{marginBottom:12}}><div style={{fontSize:10,color:"#5e5c56",marginBottom:3}}>Motif</div><select value={motif} onChange={e2=>setMotif(e2.target.value)} style={{width:"100%",padding:"8px 10px",borderRadius:6,border:"1px solid rgba(198,163,78,.15)",background:"rgba(198,163,78,.04)",color:"#e8e6e0",fontSize:12,fontFamily:"inherit"}}><option value="soins">Soins enfant/menage</option><option value="formation">Formation</option><option value="enfant">Conge parental</option><option value="palliatif">Soins palliatifs</option></select></div>
+<Tbl cols={[{k:"f",l:"Formule",b:1,r:r=>r.form},{k:"a",l:"Allocation brute/mois",a:"right",r:r=><span style={{color:"#4ade80",fontWeight:700}}>{fmt(r.alloc)}</span>},{k:"p",l:"Precompte",a:"right",r:r=><span style={{color:"#f87171"}}>{fmt(r.pp)}</span>},{k:"n",l:"Net/mois",a:"right",r:r=><span style={{color:"#4ade80",fontWeight:700}}>{fmt(r.net)}</span>}]} data={[{form:"Temps plein (suspension)",alloc:alloc.mt,pp:alloc.mt*0.1075,net:alloc.mt*0.8925},{form:"Mi-temps (reduction)",alloc:alloc.mp,pp:alloc.mp*0.1075,net:alloc.mp*0.8925},{form:"1/5 (reduction 1j/sem)",alloc:alloc.mp*0.8,pp:alloc.mp*0.8*0.1075,net:alloc.mp*0.8*0.8925}]}/>
+<div style={{marginTop:12,padding:10,background:"rgba(198,163,78,.04)",borderRadius:8}}><div style={{fontSize:11,color:"#c6a34e"}}>Note: montants indicatifs 2026. Indexation automatique. Majoration +50% si 5 ans anciennete.</div></div>
+</C>}
+{tab==="impact"&&<C><ST>Impact sur la paie</ST>
+{[{t:"Salaire pendant credit-temps",d:"Temps plein: pas de salaire, allocation ONEM uniquement. Mi-temps/1-5: salaire proportionnel + allocation."},{t:"ONSS",d:"Cotisations calculees sur salaire effectivement verse. Pas ONSS sur allocation ONEM."},{t:"Precompte professionnel",d:"PP sur salaire reduit. Allocation ONEM soumise a PP 10,75%."},{t:"13eme mois",d:"Prorata du temps preste. Base = remuneration effective."},{t:"Pecule vacances",d:"Annee suivante: base = remuneration effective. Jours vacances assimiles."},{t:"Assimilation pension",d:"Periodes credit-temps assimilees pour calcul pension (avec limites)."},{t:"Anciennete",d:"Periodes credit-temps comptent pour anciennete et preavis."},{t:"Protection contre licenciement",d:"Protection pendant demande + duree. Indemnite forfaitaire 6 mois si violation."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C>}
+{tab==="legal"&&<C><ST>Base legale</ST>
+{[{t:"Loi 22/01/1985",d:"Interruption carriere. Base du systeme credit-temps."},{t:"CCT 103 (27/06/2012)",d:"Credit-temps avec motif. Remplace CCT 77bis. Conditions et durees."},{t:"AR 12/12/2001",d:"Credit-temps. Modalites dexecution et allocations."},{t:"Loi 10/08/2001",d:"Conciliation vie professionnelle et familiale."},{t:"AR allocations ONEM",d:"Montants allocations. Indexation annuelle automatique."},{t:"CCT sectorielles",d:"Peuvent etendre droits (fin carriere des 50 ans, durees prolongees)."},{t:"Directive EU 2019/1158",d:"Work-life balance. Conge paternite, parental, aidant. Transposee en droit belge."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C>}
+</div>;}
 function IndexAutoMod({s,d}){
   const ae=s.emps||[];const [tab,setTab]=useState('index');
   const [indexActuel,setIndexActuel]=useState(2.0399);const [indexPrec,setIndexPrec]=useState(2.0000);
