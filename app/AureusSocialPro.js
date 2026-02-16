@@ -14201,70 +14201,31 @@ function WarrantsMod({s,d}){
     </C>}
   </div>;
 }
-function PlanFormationMod({s,d}){
-  const ae=s.emps||[];const n=ae.length;
-  const [tab,setTab]=useState('plan');
-  const [formations,setFormations]=useState([
-    {id:1,titre:'Securite incendie + evacuation',type:'Obligatoire',domaine:'Securite',duree:4,budget:400,trim:'T1',status:'done',part:n},
-    {id:2,titre:'Premiers secours (recyclage)',type:'Obligatoire',domaine:'Securite',duree:8,budget:600,trim:'T1',status:'done',part:Math.ceil(n/20)||1},
-    {id:3,titre:'Harcelement - Ligne hierarchique',type:'Obligatoire',domaine:'Psychosocial',duree:4,budget:500,trim:'T2',status:'progress',part:Math.ceil(n*0.2)||1},
-    {id:4,titre:'RGPD - Protection des donnees',type:'Obligatoire',domaine:'Legal',duree:2,budget:300,trim:'T2',status:'todo',part:n},
-    {id:5,titre:'Ergonomie poste ecran',type:'Recommande',domaine:'Ergonomie',duree:2,budget:250,trim:'T3',status:'todo',part:n},
-    {id:6,titre:'Excel avance / Power BI',type:'Dev',domaine:'Technique',duree:16,budget:1200,trim:'T3',status:'todo',part:5},
-    {id:7,titre:'Leadership et management',type:'Dev',domaine:'Soft skills',duree:16,budget:2000,trim:'T4',status:'todo',part:4},
-    {id:8,titre:'Langues - Neerlandais pro',type:'Dev',domaine:'Langues',duree:40,budget:1500,trim:'T1-T4',status:'progress',part:6},
-  ]);
-  const toggleF=(id)=>setFormations(p=>p.map(x=>x.id===id?{...x,status:x.status==='done'?'todo':x.status==='progress'?'done':'progress'}:x));
-  const done=formations.filter(x=>x.status==='done').length;
-  const totH=formations.reduce((a,c)=>a+c.duree*c.part,0);
-  const doneH=formations.filter(x=>x.status==='done').reduce((a,c)=>a+c.duree*c.part,0);
-  const totB=formations.reduce((a,c)=>a+c.budget,0);const spentB=formations.filter(x=>x.status==='done').reduce((a,c)=>a+c.budget,0);
-  return <div>
-    <PH title="Plan de Formation" sub={"Loi 05/03/2017 - Min. 4 jours/ETP/an (20+ trav.) - Effectif: "+n}/>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:18}}>
-      {[{l:"Formations",v:formations.length,c:'#c6a34e'},{l:"Heures plan.",v:totH+'h',c:'#60a5fa'},{l:"Heures faites",v:doneH+'h',c:'#4ade80'},{l:"Budget total",v:fmt(totB),c:'#fb923c'},{l:"Budget depense",v:fmt(spentB),c:'#f87171'}].map((k,i)=>
-        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
-          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
-          <div style={{fontSize:20,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
-        </div>)}
-    </div>
-    <div style={{display:'flex',gap:6,marginBottom:16}}>
-      {[{v:'plan',l:'Plan formations'},{v:'legal',l:'Obligations legales'},{v:'domaines',l:'Par domaine'}].map(t=>
-        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
-    </div>
-    {tab==='plan'&&<C style={{padding:0,overflow:'hidden'}}>
-      <Tbl cols={[
-        {k:'s',l:"",w:40,r:r=><div onClick={(e)=>{e.stopPropagation();toggleF(r.id)}} style={{width:20,height:20,borderRadius:5,border:r.status==='done'?'2px solid #4ade80':r.status==='progress'?'2px solid #fb923c':'2px solid #5e5c56',background:r.status==='done'?'rgba(74,222,128,.15)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:r.status==='done'?'#4ade80':'#fb923c',cursor:'pointer'}}>{r.status==='done'?'V':r.status==='progress'?'~':''}</div>},
-        {k:'t',l:"Formation",b:1,r:r=><span style={{textDecoration:r.status==='done'?'line-through':'none',color:r.status==='done'?'#4ade80':'#e8e6e0'}}>{r.titre}</span>},
-        {k:'y',l:"Type",r:r=><span style={{fontSize:10,padding:'2px 6px',borderRadius:4,background:r.type==='Obligatoire'?'rgba(248,113,113,.1)':'rgba(96,165,250,.1)',color:r.type==='Obligatoire'?'#f87171':'#60a5fa'}}>{r.type}</span>},
-        {k:'d',l:"Duree",a:'right',r:r=><span style={{color:'#60a5fa'}}>{r.duree}h</span>},
-        {k:'p',l:"Part.",a:'right',r:r=>r.part},
-        {k:'tr',l:"Trim.",r:r=><span style={{color:'#c6a34e'}}>{r.trim}</span>},
-        {k:'b',l:"Budget",a:'right',r:r=><span style={{color:'#fb923c'}}>{fmt(r.budget)}</span>},
-      ]} data={formations}/>
-    </C>}
-    {tab==='legal'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
-      <C><ST>Obligations legales</ST>
-        {[{l:'Droit individuel',v:n>=20?'4 jours/ETP/an':'Moins de 20 trav.',c:n>=20?'#f87171':'#5e5c56'},{l:'Plan formation',v:n>=20?'Obligatoire':'Recommande',c:n>=20?'#f87171':'#60a5fa'},{l:'Federal Learning Account',v:'Compte individuel obligatoire',c:'#60a5fa'},{l:'Conge-education paye',v:'Max 80-120h/an',c:'#60a5fa'}].map((r,i)=>
-          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{fontSize:12,color:'#9e9b93'}}>{r.l}</span><span style={{fontSize:11,fontWeight:600,color:r.c}}>{r.v}</span></div>)}
-      </C>
-      <C><ST>Formations obligatoires</ST>
-        {[{f:'Securite incendie + evacuation',base:'Code bien-etre',freq:'Annuel'},{f:'Premiers secours',base:'AR 15/12/2010',freq:'Recyclage annuel'},{f:'Harcelement',base:'Loi 28/2/2014',freq:'A la designation'},{f:'RGPD',base:'GDPR Art. 39',freq:'Annuel'},{f:'VCA/SCC (chantiers)',base:'Selon secteur',freq:'10 ans'}].map((r,i)=>
-          <div key={i} style={{padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><div style={{fontSize:12,color:'#e8e6e0'}}>{r.f}</div><div style={{fontSize:10,color:'#5e5c56'}}>{r.base} - {r.freq}</div></div>)}
-      </C>
-    </div>}
-    {tab==='domaines'&&<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
-      {['Securite','Psychosocial','Legal','Ergonomie','Technique','Soft skills','Langues'].map(dom=>{
-        const items=formations.filter(x=>x.domaine===dom);if(!items.length)return null;
-        const dD=items.filter(x=>x.status==='done').length;
-        return <C key={dom}>
-          <div style={{textAlign:'center',marginBottom:10}}><div style={{fontSize:14,fontWeight:700,color:'#c6a34e'}}>{dom}</div><div style={{fontSize:10,color:'#5e5c56'}}>{dD}/{items.length} terminees</div></div>
-          {items.map((x,i)=><div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><div style={{width:8,height:8,borderRadius:'50%',background:x.status==='done'?'#4ade80':x.status==='progress'?'#fb923c':'#5e5c56'}}/><span style={{fontSize:11,color:x.status==='done'?'#4ade80':'#e8e6e0'}}>{x.titre}</span></div>)}
-        </C>;
-      })}
-    </div>}
-  </div>;
-}
+function PlanFormationMod({s,d}){const ae=s.emps||[];const n=ae.length;const [tab,setTab]=useState("plan");const [budgetPct,setBudgetPct]=useState(2);const mb=ae.reduce((a,e)=>a+(+e.gross||0),0);const budgetAn=mb*12*(+budgetPct/100);const joursObl=n>=20?4:2;const totalJours=n*joursObl;
+const formations=[{id:1,nom:"Securite et incendie",cat:"Obligatoire",jours:0.5,cout:150,freq:"Annuel",target:"Tous"},{id:2,nom:"Premiers secours",cat:"Obligatoire",jours:2,cout:400,freq:"Recyclage 1an",target:"Secouristes"},{id:3,nom:"RGPD et protection donnees",cat:"Obligatoire",jours:0.5,cout:200,freq:"Initial + rappel",target:"Tous"},{id:4,nom:"Harcelement - prevention",cat:"Obligatoire",jours:1,cout:300,freq:"Initial",target:"Ligne hierarchique"},{id:5,nom:"Bien-etre au travail",cat:"Legal",jours:1,cout:250,freq:"Annuel",target:"Tous"},{id:6,nom:"Travail en hauteur",cat:"Legal",jours:2,cout:500,freq:"Recyclage 5ans",target:"Ouvriers"},{id:7,nom:"Leadership et management",cat:"Developpement",jours:3,cout:1500,freq:"Bisannuel",target:"Managers"},{id:8,nom:"Communication efficace",cat:"Soft skills",jours:2,cout:800,freq:"Sur demande",target:"Tous"},{id:9,nom:"Excel avance",cat:"Technique",jours:1,cout:350,freq:"Sur demande",target:"Admin"},{id:10,nom:"Langues (NL/EN/FR)",cat:"Developpement",jours:10,cout:2000,freq:"Continu",target:"Commercial"},{id:11,nom:"Gestion du stress",cat:"Bien-etre",jours:1,cout:400,freq:"Annuel",target:"Tous"},{id:12,nom:"Droit social update",cat:"Legal",jours:1,cout:500,freq:"Annuel",target:"RH/Direction"}];
+const coutTotal=formations.reduce((a,f2)=>a+f2.cout,0);const joursTotal=formations.reduce((a,f2)=>a+f2.jours,0);
+return <div><PH title="Plan de Formation" sub={"Obligation: "+joursObl+"j/ETP/an - Budget: "+fmt(budgetAn)+"/an ("+budgetPct+"% masse)"}/>
+<div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:18}}>{[{l:"Jours/ETP obliges",v:joursObl+"j/an",c:"#f87171"},{l:"Total jours equipe",v:totalJours+"j",c:"#c6a34e"},{l:"Formations dispo.",v:formations.length,c:"#60a5fa"},{l:"Budget formation",v:fmt(budgetAn),c:"#4ade80"},{l:"Cout catalogue",v:fmt(coutTotal),c:"#fb923c"}].map((k,i)=><div key={i} style={{padding:"12px 14px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid rgba(198,163,78,.08)"}}><div style={{fontSize:9,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div style={{fontSize:17,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div>
+<div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"plan",l:"Plan annuel"},{v:"catalogue",l:"Catalogue"},{v:"budget",l:"Budget"},{v:"suivi",l:"Suivi par travailleur"},{v:"legal",l:"Obligations legales"},{v:"subsides",l:"Subsides formation"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>
+{tab==="plan"&&<C><ST>Plan de formation {new Date().getFullYear()}</ST>
+<Tbl cols={[{k:"n",l:"Formation",b:1,r:r=>r.nom},{k:"c",l:"Categorie",r:r=><span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:r.cat==="Obligatoire"?"rgba(248,113,113,.1)":r.cat==="Legal"?"rgba(251,146,56,.1)":"rgba(96,165,250,.1)",color:r.cat==="Obligatoire"?"#f87171":r.cat==="Legal"?"#fb923c":"#60a5fa"}}>{r.cat}</span>},{k:"j",l:"Jours",a:"right",r:r=><span style={{color:"#c6a34e"}}>{r.jours}j</span>},{k:"co",l:"Cout",a:"right",r:r=><span style={{color:"#f87171"}}>{fmt(r.cout)}</span>},{k:"t",l:"Public",r:r=><span style={{color:"#9e9b93",fontSize:11}}>{r.target}</span>},{k:"f",l:"Frequence",r:r=><span style={{color:"#5e5c56",fontSize:10}}>{r.freq}</span>}]} data={formations}/>
+<div style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderTop:"2px solid rgba(198,163,78,.3)",marginTop:8}}><b style={{color:"#c6a34e"}}>TOTAL</b><div style={{display:"flex",gap:20}}><span style={{color:"#c6a34e",fontWeight:700}}>{joursTotal} jours</span><span style={{color:"#f87171",fontWeight:700}}>{fmt(coutTotal)}</span></div></div>
+</C>}
+{tab==="catalogue"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>{formations.map((f2,i)=><C key={i}><div style={{marginBottom:6}}><span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:f2.cat==="Obligatoire"?"rgba(248,113,113,.1)":"rgba(96,165,250,.1)",color:f2.cat==="Obligatoire"?"#f87171":"#60a5fa"}}>{f2.cat}</span></div><b style={{color:"#e8e6e0",fontSize:12}}>{f2.nom}</b><div style={{display:"flex",justifyContent:"space-between",marginTop:8}}><span style={{color:"#c6a34e",fontSize:11}}>{f2.jours}j</span><span style={{color:"#f87171",fontSize:11}}>{fmt(f2.cout)}</span></div><div style={{fontSize:10,color:"#5e5c56",marginTop:4}}>{f2.target} - {f2.freq}</div></C>)}</div>}
+{tab==="budget"&&<C><ST>Budget formation</ST>
+<I label={"Budget (% masse salariale)"} type="number" value={budgetPct} onChange={setBudgetPct}/>
+{[{l:"Masse salariale annuelle",v:mb*12},{l:"Budget "+budgetPct+"%",v:budgetAn},{l:"Cout catalogue total",v:coutTotal},{l:"Cout x effectif ("+n+")",v:coutTotal*Math.ceil(n/10)},{l:"Solde disponible",v:budgetAn-coutTotal*Math.ceil(n/10)}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#9e9b93"}}>{r.l}</span><span style={{fontWeight:600,color:r.v>=0?"#4ade80":"#f87171"}}>{fmt(r.v)}</span></div>)}
+</C>}
+{tab==="suivi"&&<C><ST>Suivi formations par travailleur</ST>
+<Tbl cols={[{k:"n",l:"Travailleur",b:1,r:r=>(r.fn||"")+" "+(r.ln||"")},{k:"o",l:"Objectif",a:"right",r:r=><span style={{color:"#c6a34e"}}>{joursObl}j</span>},{k:"r",l:"Realise",a:"right",r:r=><span style={{color:"#4ade80"}}>0j</span>},{k:"s",l:"Solde",a:"right",r:r=><span style={{color:"#f87171"}}>{joursObl}j</span>},{k:"p",l:"Progression",r:r=><div style={{width:80,height:6,background:"rgba(198,163,78,.1)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:"0%",background:"#4ade80",borderRadius:3}}/></div>}]} data={ae}/>
+</C>}
+{tab==="legal"&&<C><ST>Obligations legales formation</ST>
+{[{t:"Droit individuel formation",d:"Min 2j/an (2024), progressif vers 5j/an. Chaque travailleur temps plein."},{t:"Plan formation (20+ ETP)",d:"Plan annuel obligatoire. Consultation CE ou DS. Depot SPF Emploi."},{t:"Formations securite",d:"AR 25/01/2001. Formation accueil obligatoire. Recyclage periodique."},{t:"Compte formation federal",d:"Suivi digital des droits de formation individuels via FLA."},{t:"Credit-formation",d:"Droit de absence pour formation reconnue. Maintien salaire."},{t:"CongÃ©-education paye",d:"Max 80-120h/an selon formation. Remboursement par Region."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C>}
+{tab==="subsides"&&<C><ST>Subsides et aides formation</ST>
+{[{a:"Cheques-formation (Wallonie)",m:"15 EUR/h (50% employeur)",d:"Max 400 cheques/an. Formation agreee.",c:"#4ade80"},{a:"KMO-portefeuille (Flandre)",m:"20-30 EUR/h",d:"PME flamandes. Formation et conseil.",c:"#60a5fa"},{a:"Conge-education paye",m:"Remboursement regional",d:"Max 80-120h/an. Maintien salaire pendant formation.",c:"#c6a34e"},{a:"Fonds sectoriel formation",m:"Variable selon CP",d:"CP 200: Cevora. CP 124: Constructiv. CP 302: Horeca Forma.",c:"#a78bfa"},{a:"Plan formation PME",m:"Subvention federale",d:"Aide pour elaboration plan formation. Accompagnement gratuit.",c:"#fb923c"},{a:"ESF / FSE europeen",m:"Cofinancement projets",d:"Fonds social europeen. Projets formation innovants.",c:"#f87171"}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{display:"flex",justifyContent:"space-between"}}><b style={{color:r.c,fontSize:12}}>{r.a}</b><span style={{color:r.c,fontWeight:600,fontSize:11}}>{r.m}</span></div><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C>}
+</div>;}
 function NoteFraisMod({s,d}){
   const ae=s.emps||[];const [tab,setTab]=useState('notes');
   const [eid,setEid]=useState(ae[0]?.id||'');
@@ -14968,89 +14929,35 @@ function BonusEmploiMod({s,d}){
   </div>;
 }
 
-function SimCoutMod({s,d}){
-  const [brut,setBrut]=useState(3500);const [statut,setStatut]=useState('employe');const [regime,setRegime]=useState(38);
-  const [cp,setCp]=useState('200');const [cheques,setCheques]=useState(8);const [eco,setEco]=useState(250);
-  const [groupe,setGroupe]=useState(3);const [voiture,setVoiture]=useState(false);const [gsmPc,setGsmPc]=useState(false);
-  const [tab,setTab]=useState('sim');
-  const b=+brut;const whRatio=(+regime)/38;
-  const onssE=b*0.2507;const onssT=b*0.1307;
-  const imposable=b-onssT;const pp=imposable*0.35;
-  const net=imposable-pp;
-  const chequesAn=(+cheques)*220;const ecoAn=+eco;const groupeAn=b*12*(+groupe/100);
-  const assAT=b*12*0.01;const medTrav=91.50;
-  const voitAn=voiture?6000:0;const gsmAn=gsmPc?480:0;
-  const coutMensuel=b+onssE;
-  const coutAnnuel=coutMensuel*12+b+b*0.92+chequesAn+ecoAn+groupeAn+assAT+medTrav+voitAn+gsmAn;
-  const ratio=net>0?(coutAnnuel/(net*12)*100).toFixed(0):0;
-  return <div>
-    <PH title="Simulateur Cout Employeur" sub="Cout total vs net travailleur - Optimisation package"/>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:18}}>
-      {[{l:"Cout mensuel",v:fmt(coutMensuel),c:'#f87171'},{l:"Cout annuel total",v:fmt(coutAnnuel),c:'#f87171'},{l:"Net mensuel",v:fmt(net),c:'#4ade80'},{l:"Net annuel",v:fmt(net*13.92),c:'#4ade80'},{l:"Ratio cout/net",v:ratio+'%',c:+ratio>250?'#f87171':'#fb923c'}].map((k,i)=>
-        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
-          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
-          <div style={{fontSize:18,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
-        </div>)}
-    </div>
-    <div style={{display:'flex',gap:6,marginBottom:16}}>
-      {[{v:'sim',l:'Simulateur'},{v:'detail',l:'Decomposition'},{v:'compare',l:'Comparatif'}].map(t=>
-        <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}
-    </div>
-    {tab==='sim'&&<div style={{display:'grid',gridTemplateColumns:'320px 1fr',gap:18}}>
-      <C><ST>Parametres</ST>
-        <I label="Salaire brut mensuel" type="number" value={brut} onChange={setBrut}/>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9,marginTop:9}}>
-          <I label="Statut" value={statut} onChange={setStatut} options={[{v:'employe',l:'Employe'},{v:'ouvrier',l:'Ouvrier'}]}/>
-          <I label="CP" value={cp} onChange={setCp} options={[{v:'200',l:'CP 200'},{v:'124',l:'CP 124'},{v:'140',l:'CP 140'},{v:'218',l:'CP 218'},{v:'302',l:'CP 302'}]}/>
-        </div>
-        <I label="Regime (h/sem)" type="number" value={regime} onChange={setRegime} style={{marginTop:9}}/>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9,marginTop:9}}>
-          <I label="Cheques-repas/j" type="number" value={cheques} onChange={setCheques}/>
-          <I label="Eco-cheques/an" type="number" value={eco} onChange={setEco}/>
-        </div>
-        <I label="Assurance groupe %" type="number" value={groupe} onChange={setGroupe} style={{marginTop:9}}/>
-        <div style={{display:'flex',gap:14,marginTop:12}}>
-          <label style={{fontSize:12,color:'#9e9b93',cursor:'pointer'}}><input type="checkbox" checked={voiture} onChange={e=>setVoiture(e.target.checked)} style={{marginRight:6}}/>Voiture societe</label>
-          <label style={{fontSize:12,color:'#9e9b93',cursor:'pointer'}}><input type="checkbox" checked={gsmPc} onChange={e=>setGsmPc(e.target.checked)} style={{marginRight:6}}/>GSM + PC</label>
-        </div>
-      </C>
-      <C><ST>Repartition cout annuel</ST>
-        {[{l:'Salaire brut x12',v:b*12,c:'#e8e6e0'},{l:'13eme mois',v:b,c:'#e8e6e0'},{l:'Pecule vacances double',v:b*0.92,c:'#e8e6e0'},{l:'ONSS patronal (25.07%)',v:onssE*12,c:'#f87171'},{l:'Cheques-repas',v:chequesAn,c:'#60a5fa'},{l:'Eco-cheques',v:ecoAn,c:'#60a5fa'},{l:'Assurance groupe',v:groupeAn,c:'#a78bfa'},{l:'Assurance AT (1%)',v:assAT,c:'#a78bfa'},{l:'Medecine travail',v:medTrav,c:'#a78bfa'},{l:'Voiture societe',v:voitAn,c:'#fb923c'},{l:'GSM + PC',v:gsmAn,c:'#fb923c'}].filter(r=>r.v>0).map((r,i)=>
-          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-            <span style={{fontSize:12,color:'#9e9b93'}}>{r.l}</span>
-            <span style={{fontSize:12,fontWeight:600,color:r.c}}>{fmt(r.v)}</span>
-          </div>)}
-        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderTop:'2px solid rgba(198,163,78,.3)',marginTop:8}}>
-          <span style={{fontSize:14,fontWeight:700,color:'#e8e6e0'}}>COUT TOTAL ANNUEL</span>
-          <span style={{fontSize:18,fontWeight:700,color:'#f87171'}}>{fmt(coutAnnuel)}</span>
-        </div>
-      </C>
-    </div>}
-    {tab==='detail'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
-      <C><ST>Cote employeur (mensuel)</ST>
-        {[{l:'Salaire brut',v:b,c:'#e8e6e0'},{l:'ONSS patronal 25.07%',v:onssE,c:'#f87171'},{l:'Cout mensuel total',v:coutMensuel,c:'#f87171'}].map((r,i)=>
-          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-            <span style={{color:'#9e9b93'}}>{r.l}</span><span style={{fontWeight:600,color:r.c}}>{fmt(r.v)}</span>
-          </div>)}
-      </C>
-      <C><ST>Cote travailleur (mensuel)</ST>
-        {[{l:'Salaire brut',v:b,c:'#e8e6e0'},{l:'ONSS personnel -13.07%',v:-onssT,c:'#f87171'},{l:'Imposable',v:imposable,c:'#e8e6e0'},{l:'Precompte ~35%',v:-pp,c:'#f87171'},{l:'Net mensuel',v:net,c:'#4ade80'}].map((r,i)=>
-          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-            <span style={{color:'#9e9b93'}}>{r.l}</span><span style={{fontWeight:600,color:r.c}}>{r.v<0?'- '+fmt(Math.abs(r.v)):fmt(r.v)}</span>
-          </div>)}
-      </C>
-    </div>}
-    {tab==='compare'&&<C><ST>Comparatif packages</ST>
-      <Tbl cols={[
-        {k:'p',l:"Package",b:1,r:r=>r.pkg},
-        {k:'b',l:"Brut",a:'right',r:r=><span style={{color:'#e8e6e0'}}>{fmt(r.brut)}</span>},
-        {k:'c',l:"Cout empl.",a:'right',r:r=><span style={{color:'#f87171'}}>{fmt(r.cout)}</span>},
-        {k:'n',l:"Net trav.",a:'right',r:r=><span style={{color:'#4ade80'}}>{fmt(r.net)}</span>},
-        {k:'r',l:"Ratio",a:'right',r:r=><span style={{color:'#fb923c'}}>{r.ratio}%</span>},
-      ]} data={[2500,3000,3500,4000,4500,5000].map(br=>{const oe=br*0.2507;const ot=br*0.1307;const imp=br-ot;const p2=imp*0.35;const n2=imp-p2;const ct=(br+oe)*13.92;return{pkg:fmt(br)+' brut',brut:br,cout:ct,net:n2,ratio:(ct/(n2*12)*100).toFixed(0)};})}/>
-    </C>}
-  </div>;
-}
+function SimCoutMod({s,d}){const ae=s.emps||[];const n=ae.length;const [tab,setTab]=useState("sim");const [brut,setBrut]=useState(3500);const [nbNew,setNbNew]=useState(1);const [duree,setDuree]=useState(12);const mb=ae.reduce((a,e)=>a+(+e.gross||0),0);
+const coutMens=(b)=>({brut:b,onss:b*0.2507,at:b*0.01,med:7.63,chRep:5.91*22,total:b*1.2507+b*0.01+7.63+5.91*22});
+const cm=coutMens(+brut);const cmEquipe=coutMens(mb);
+return <div><PH title="Simulateur Cout Employeur" sub="Projection complete - Nouvel engagement ou equipe existante"/>
+<div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:18}}>{[{l:"Brut simulation",v:fmt(+brut),c:"#c6a34e"},{l:"Cout mensuel",v:fmt(cm.total),c:"#f87171"},{l:"Cout annuel",v:fmt(cm.total*13.92),c:"#f87171"},{l:"Equipe actuelle",v:fmt(cmEquipe.total)+"/mois",c:"#fb923c"},{l:"Ratio net/cout",v:(+brut*0.5645/cm.total*100).toFixed(0)+"%",c:"#60a5fa"}].map((k,i)=><div key={i} style={{padding:"12px 14px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid rgba(198,163,78,.08)"}}><div style={{fontSize:9,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div style={{fontSize:17,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div>
+<div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"sim",l:"Simulateur"},{v:"equipe",l:"Cout equipe"},{v:"projection",l:"Projection"},{v:"compare",l:"Comparatif statuts"},{v:"aides",l:"Aides a emploi"},{v:"optimisation",l:"Optimisation"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>
+{tab==="sim"&&<div style={{display:"grid",gridTemplateColumns:"340px 1fr",gap:18}}><C><ST>Parametres engagement</ST>
+<I label="Salaire brut mensuel" type="number" value={brut} onChange={setBrut}/>
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}><I label="Nombre personnes" type="number" value={nbNew} onChange={setNbNew}/><I label="Duree (mois)" type="number" value={duree} onChange={setDuree}/></div>
+</C><C><ST>Decomposition cout mensuel</ST>
+{[{l:"Salaire brut",v:cm.brut,c:"#c6a34e"},{l:"ONSS patronal (25.07%)",v:cm.onss,c:"#f87171"},{l:"Assurance AT (~1%)",v:cm.at,c:"#f87171"},{l:"Medecine travail",v:cm.med,c:"#f87171"},{l:"Cheques-repas patronal",v:cm.chRep,c:"#f87171"},{l:"COUT MENSUEL / pers.",v:cm.total,c:"#f87171"},{l:"COUT TOTAL "+nbNew+" pers.",v:cm.total*nbNew,c:"#f87171"},{l:"COUT sur "+duree+" mois",v:cm.total*nbNew*duree,c:"#fb923c"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i===5||i===7?"2px solid rgba(248,113,113,.3)":"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#9e9b93"}}>{r.l}</span><span style={{fontWeight:i>=5?700:600,color:r.c,fontSize:i>=5?14:12}}>{fmt(r.v)}</span></div>)}
+</C></div>}
+{tab==="equipe"&&<C><ST>Cout equipe actuelle</ST>
+<Tbl cols={[{k:"n",l:"Travailleur",b:1,r:r=>(r.fn||"")+" "+(r.ln||"")},{k:"b",l:"Brut",a:"right",r:r=><span style={{color:"#c6a34e"}}>{fmt(+r.gross||0)}</span>},{k:"o",l:"ONSS P",a:"right",r:r=><span style={{color:"#f87171"}}>{fmt((+r.gross||0)*0.2507)}</span>},{k:"t",l:"Cout total",a:"right",r:r=>{const c2=coutMens(+r.gross||0);return <span style={{fontWeight:700,color:"#f87171"}}>{fmt(c2.total)}</span>}},{k:"a",l:"Cout annuel",a:"right",r:r=>{const c2=coutMens(+r.gross||0);return <span style={{color:"#fb923c"}}>{fmt(c2.total*13.92)}</span>}}]} data={ae}/>
+<div style={{display:"flex",justifyContent:"space-between",padding:"12px 0",borderTop:"2px solid rgba(198,163,78,.3)",marginTop:8}}><b style={{color:"#c6a34e"}}>TOTAUX</b><div style={{display:"flex",gap:20}}><span style={{color:"#c6a34e",fontWeight:700}}>Brut: {fmt(mb)}</span><span style={{color:"#f87171",fontWeight:700}}>Cout/mois: {fmt(cmEquipe.total)}</span><span style={{color:"#fb923c",fontWeight:700}}>Cout/an: {fmt(cmEquipe.total*13.92)}</span></div></div>
+</C>}
+{tab==="projection"&&<C><ST>Projection budgetaire</ST>
+<Tbl cols={[{k:"p",l:"Periode",b:1,r:r=>r.per},{k:"m",l:"Masse brute",a:"right",r:r=><span style={{color:"#c6a34e"}}>{fmt(r.mb)}</span>},{k:"c",l:"Cout employeur",a:"right",r:r=><span style={{color:"#f87171"}}>{fmt(r.cout)}</span>},{k:"n",l:"Net estime",a:"right",r:r=><span style={{color:"#4ade80"}}>{fmt(r.net)}</span>}]} data={[{per:"Mois courant",mb:mb,cout:cmEquipe.total,net:mb*0.5645},{per:"Trimestre",mb:mb*3,cout:cmEquipe.total*3,net:mb*3*0.5645},{per:"Semestre",mb:mb*6,cout:cmEquipe.total*6,net:mb*6*0.5645},{per:"Annee (x12)",mb:mb*12,cout:cmEquipe.total*12,net:mb*12*0.5645},{per:"Annee (x13.92)",mb:mb*13.92,cout:cmEquipe.total*13.92,net:mb*13.92*0.5645},{per:"+"+nbNew+" engag. 12 mois",mb:mb*12+brut*nbNew*12,cout:cmEquipe.total*12+cm.total*nbNew*12,net:(mb+brut*nbNew)*12*0.5645}]}/>
+</C>}
+{tab==="compare"&&<C><ST>Comparatif statuts pour {fmt(+brut)} brut</ST>
+<Tbl cols={[{k:"s",l:"Statut",b:1,r:r=><b style={{color:r.c}}>{r.statut}</b>},{k:"o",l:"ONSS empl.",a:"right",r:r=>fmt(r.onssE)},{k:"c",l:"Cout empl.",a:"right",r:r=><span style={{color:"#f87171"}}>{fmt(r.cout)}</span>},{k:"n",l:"Net trav.",a:"right",r:r=><span style={{color:"#4ade80"}}>{fmt(r.net)}</span>},{k:"r",l:"Ratio",a:"right",r:r=><span style={{color:"#60a5fa"}}>{r.ratio}%</span>}]} data={[{statut:"Employe CDI",onssE:brut*0.2507,cout:brut*1.2507+brut*0.01+7.63+5.91*22,net:brut*0.5645,ratio:((brut*0.5645)/(brut*1.2507+brut*0.01+7.63+5.91*22)*100).toFixed(0),c:"#4ade80"},{statut:"Ouvrier CDI",onssE:brut*1.08*0.2507,cout:brut*1.08*1.2507+brut*0.01+7.63,net:brut*1.08*0.5645,ratio:((brut*1.08*0.5645)/(brut*1.08*1.2507+brut*0.01+7.63)*100).toFixed(0),c:"#60a5fa"},{statut:"Flexi-job",onssE:brut*0.28,cout:brut*1.28,net:brut,ratio:(brut/(brut*1.28)*100).toFixed(0),c:"#a78bfa"},{statut:"Etudiant (< 600h)",onssE:brut*0.0501,cout:brut*1.0501,net:brut*0.9727,ratio:((brut*0.9727)/(brut*1.0501)*100).toFixed(0),c:"#c6a34e"},{statut:"Independant compl.",onssE:0,cout:brut,net:brut*0.55,ratio:55,c:"#fb923c"}]}/>
+</C>}
+{tab==="aides"&&<C><ST>Aides a emploi disponibles</ST>
+{[{a:"Premier engagement",m:"4.000 EUR/trim (1er) - degressif (2e-6e)",d:"Reduction ONSS premiers engagements. A vie pour le 1er.",c:"#4ade80"},{a:"Jeunes (-26 ans)",m:"1.000-1.500 EUR/trim",d:"Reduction groupes-cibles jeunes peu qualifies.",c:"#60a5fa"},{a:"55+ ans",m:"400-1.500 EUR/trim",d:"Reduction maintien emploi travailleurs ages.",c:"#a78bfa"},{a:"Activa",m:"500 EUR/mois (max 30 mois)",d:"Activation allocation chomage longue duree. Via carte Activa.",c:"#c6a34e"},{a:"Reduction structurelle",m:"480 EUR/trim par travailleur",d:"Forfait automatique tous travailleurs.",c:"#fb923c"},{a:"APE Wallonie",m:"Variable selon points",d:"Points APE = subvention regionale. Secteur non-marchand.",c:"#f87171"}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{display:"flex",justifyContent:"space-between"}}><b style={{color:r.c,fontSize:12}}>{r.a}</b><span style={{color:r.c,fontWeight:600,fontSize:11}}>{r.m}</span></div><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
+</C>}
+{tab==="optimisation"&&<C><ST>Pistes optimisation cout salarial</ST>
+{[{t:"Cheques-repas",eco:n*5.91*22*12,d:"Max 8 EUR/j. Part patronale exoneree ONSS et impot."},{t:"Eco-cheques",eco:n*250,d:"Max 250 EUR/an. 100% exonere ONSS et impot."},{t:"Budget mobilite",eco:mb*0.05*12,d:"Pilier 3 cash: ONSS 38.07% au lieu de 25.07+13.07%. Net superieur."},{t:"Warrants",eco:mb*0.10*12*0.35,d:"Pas ONSS. ATN forfaitaire 18%. Gain net significatif."},{t:"Bonus CCT 90",eco:n*4020*0.12,d:"Plafond 4.020 EUR/an. ONSS 33.07% mais pas de PP."},{t:"Assurance groupe",eco:mb*0.03*12,d:"Cotisation patronale deductible. Avantage fiscal long terme."},{t:"Cheque cadeaux",eco:n*40*3,d:"Max 40 EUR/occasion. Noel, Saint-Nicolas, mariage, naissance."}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div><b style={{color:"#4ade80",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div><span style={{color:"#4ade80",fontWeight:700,fontSize:13,flexShrink:0,marginLeft:12}}>{fmt(r.eco)}/an</span></div>)}
+</C>}
+</div>;}
 function TotalRewardMod({s,d}){
   const ae=s.emps||[];const [sel,setSel]=useState(ae[0]?.id||'');
   const emp=ae.find(e=>e.id===sel)||ae[0]||{};
@@ -16762,141 +16669,37 @@ function ElectionsMod({s,d}){
   </div>;
 }
 
-function AuditMod({s,d}){
-  const ae=s.emps||[];const co=s.co||{};
-  const [running,setRunning]=useState(false);const [results,setResults]=useState(null);
-  const runAudit=()=>{
-    setRunning(true);
-    setTimeout(()=>{
-      const checks=[];
-      const ok=(cat,mod,msg)=>checks.push({cat,mod,status:'ok',msg});
-      const warn=(cat,mod,msg)=>checks.push({cat,mod,status:'warn',msg});
-      const fail=(cat,mod,msg)=>checks.push({cat,mod,status:'fail',msg});
-      // === ENTREPRISE ===
-      if(co.name&&co.name.length>2)ok('Entreprise','Parametres','Nom societe renseigne: '+co.name);else fail('Entreprise','Parametres','Nom societe manquant ou trop court');
-      if(co.vat||co.bce)ok('Entreprise','Parametres','BCE/TVA renseigne');else fail('Entreprise','Parametres','Numero BCE/TVA manquant');
-      if(co.onss)ok('Entreprise','Parametres','Numero ONSS renseigne');else fail('Entreprise','Parametres','Numero ONSS manquant - requis pour DmfA/Dimona');
-      if(co.cp)ok('Entreprise','Parametres','Commission paritaire: CP '+co.cp);else warn('Entreprise','Parametres','Commission paritaire non definie - CP 200 par defaut');
-      if(co.iban)ok('Entreprise','Parametres','IBAN societe renseigne');else warn('Entreprise','Parametres','IBAN societe manquant - requis pour SEPA');
-      // === EMPLOYES ===
-      if(ae.length>0)ok('Employes','Effectif',ae.length+' travailleur(s) enregistre(s)');else fail('Employes','Effectif','Aucun travailleur enregistre');
-      const noNiss=ae.filter(e=>!e.niss||e.niss.length<11);
-      if(noNiss.length===0)ok('Employes','NISS','Tous les NISS sont renseignes');else fail('Employes','NISS',noNiss.length+' travailleur(s) sans NISS valide - bloquant pour Dimona/DRS');
-      const noStart=ae.filter(e=>!e.startD);
-      if(noStart.length===0)ok('Employes','Date entree','Toutes les dates entree renseignees');else fail('Employes','Date entree',noStart.length+' travailleur(s) sans date entree');
-      const noBirth=ae.filter(e=>!e.birth);
-      if(noBirth.length===0)ok('Employes','Naissance','Toutes les dates naissance renseignees');else warn('Employes','Naissance',noBirth.length+' travailleur(s) sans date naissance');
-      const noIban=ae.filter(e=>!e.iban);
-      if(noIban.length===0)ok('Employes','IBAN','Tous les IBAN renseignes');else warn('Employes','IBAN',noIban.length+' travailleur(s) sans IBAN - virement impossible');
-      const noFn=ae.filter(e=>!e.fn);
-      if(noFn.length===0)ok('Employes','Fonction','Toutes les fonctions renseignees');else warn('Employes','Fonction',noFn.length+' travailleur(s) sans fonction');
-      const noStatut=ae.filter(e=>!e.statut);
-      if(noStatut.length===0)ok('Employes','Statut','Tous les statuts definis (employe/ouvrier)');else warn('Employes','Statut',noStatut.length+' travailleur(s) sans statut');
-      // === PAIE ===
-      const noGross=ae.filter(e=>!e.gross||+e.gross===0);
-      if(noGross.length===0)ok('Paie','Salaire brut','Tous les salaires bruts definis');else fail('Paie','Salaire brut',noGross.length+' travailleur(s) sans salaire brut');
-      const noWh=ae.filter(e=>!e.whWeek);
-      if(noWh.length===0)ok('Paie','Regime travail','Tous les regimes horaires definis');else warn('Paie','Regime travail',noWh.length+' travailleur(s) sans regime horaire - 38h par defaut');
-      // === DECLARATIONS ===
-      if(co.onss)ok('Declarations','DmfA','ONSS present - DmfA possible');else fail('Declarations','DmfA','ONSS manquant - DmfA impossible');
-      const dimonaReady=ae.filter(e=>e.niss&&e.startD).length;
-      if(dimonaReady===ae.length&&ae.length>0)ok('Declarations','Dimona','Tous travailleurs Dimona-ready (NISS+date)');else if(ae.length>0)warn('Declarations','Dimona',(ae.length-dimonaReady)+' travailleur(s) non Dimona-ready');else fail('Declarations','Dimona','Aucun travailleur pour Dimona');
-      // === LEGAL ===
-      ok('Legal','Reglement travail','Module present - verifier contenu');
-      ok('Legal','Contrats travail','Module present - verifier signatures');
-      if(ae.length>=50)warn('Legal','CPPT','Seuil 50 travailleurs atteint - CPPT obligatoire');
-      if(ae.length>=100)warn('Legal','Conseil Entreprise','Seuil 100 travailleurs - CE obligatoire');
-      // === BIEN-ETRE ===
-      ok('Bien-etre','Plan Global','Module interactif present - verifier actions');
-      ok('Bien-etre','PAA','Module interactif present - verifier trimestres');
-      ok('Bien-etre','Risques Psycho','Module avec suivi dossiers present');
-      ok('Bien-etre','Alcool/Drogues','Checklist CCT 100 presente');
-      ok('Bien-etre','Elections','Module elections sociales present');
-      // === MODULES FONCTIONNELS ===
-      const modules=['Dashboard','Employes','Fiches de paie','Dimona','DmfA','Belcotax','Precompte','ONSS Dashboard','DRS',
-        'ATN','Heures Sup','Transport','13eme mois','CSS','Bonus emploi','Pecule vacances',
-        'Absenteisme','Chomage temporaire','Conge-education','RCC','Outplacement','Credit-temps',
-        'Onboarding','Offboarding','Registre personnel','Total Reward',
-        'Assurance Loi','Assurance Groupe','Allocations familiales','Caisse vacances',
-        'Plan Global','PAA','Risques Psycho','Alcool/Drogues','Elections','Organes',
-        'SEPA','Peppol','Documents juridiques','Alertes legales','Contrats travail','Reglement travail',
-        'Pointage','Self-service','Saisies','Frais de gestion','GED','Bilan social'];
-      modules.forEach(m=>ok('Modules','Couverture',m+' - present'));
-      // === MANQUES ===
-      warn('A faire','Integration','Connexion API reelle ONSS/Dimona (portail securite sociale)');
-      warn('A faire','Integration','Import fichiers pointeuse (CSV/XML)');
-      warn('A faire','Integration','Export comptable format BOB/Winbooks/Exact');
-      warn('A faire','Documents','Generation PDF fiches de paie');
-      warn('A faire','Documents','Generation PDF C4 / attestations');
-      warn('A faire','Documents','Generation contrat de travail PDF pre-rempli');
-      warn('A faire','Calculs','Bareme fiscal precompte professionnel 2026 complet');
-      warn('A faire','Calculs','Calcul pecule vacances sortie complet (simple+double prorata)');
-      warn('A faire','Calculs','Indexation automatique baremes sectoriels');
-      warn('A faire','Securite','Authentification multi-facteur (2FA)');
-      warn('A faire','Securite','Chiffrement donnees sensibles (NISS, IBAN)');
-      warn('A faire','Securite','Journalisation des acces (RGPD audit trail)');
-      warn('A faire','RGPD','Registre des traitements');
-      warn('A faire','RGPD','Politique de retention des donnees');
-      warn('A faire','RGPD','Export donnees travailleur (droit acces)');
-      warn('A faire','UX','Mode impression fiches de paie');
-      warn('A faire','UX','Notifications email deadlines');
-      warn('A faire','UX','Import CSV masse travailleurs');
-      fail('A ameliorer','Dashboard','Graphiques cout salarial 12 mois - donnees statiques');
-      warn('A ameliorer','Fiches de paie','Precompte professionnel simplifie - implementer bareme complet');
-      warn('A ameliorer','DmfA','XML genere localement - pas envoi reel ONSS');
-      warn('A ameliorer','Dimona','XML genere localement - pas envoi reel ONSS');
-      warn('A ameliorer','Belcotax','XML 281 genere - pas envoi reel SPF Finances');
-      warn('A ameliorer','SEPA','XML genere - pas connexion bancaire');
-      setResults(checks);setRunning(false);
-    },1500);
-  };
-  if(!results)return <div>
-    <PH title="Audit Complet" sub="Analyse de toutes les fonctionnalites - Journal qualite"/>
-    <div style={{display:'flex',justifyContent:'center',alignItems:'center',minHeight:400}}>
-      <div style={{textAlign:'center'}}>
-        <div style={{fontSize:60,marginBottom:20}}>{running?'...':'🔍'}</div>
-        <div style={{fontSize:16,color:'#e8e6e0',marginBottom:8}}>{running?'Analyse en cours...':'Pret pour audit'}</div>
-        <div style={{fontSize:12,color:'#5e5c56',marginBottom:24}}>Scan complet: entreprise, employes, paie, declarations, legal, bien-etre, modules</div>
-        {!running&&<B onClick={runAudit} style={{padding:'12px 40px',fontSize:14}}>Lancer Audit Complet</B>}
-        {running&&<div style={{width:200,height:6,background:'rgba(198,163,78,.08)',borderRadius:3,margin:'0 auto',overflow:'hidden'}}><div style={{height:'100%',width:'60%',background:'#c6a34e',borderRadius:3,animation:'pulse 1s infinite'}}/></div>}
-      </div>
-    </div>
-  </div>;
-  const oks=results.filter(r=>r.status==='ok');const warns=results.filter(r=>r.status==='warn');const fails=results.filter(r=>r.status==='fail');
-  const score=Math.round((oks.length/(results.length))*100);
-  const cats=[...new Set(results.map(r=>r.cat))];
-  return <div>
-    <PH title="Audit Complet" sub={"Score: "+score+"% - "+results.length+" verifications"}/>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:18}}>
-      {[{l:"Score global",v:score+'%',c:score>80?'#4ade80':score>60?'#fb923c':'#f87171'},{l:"OK",v:oks.length,c:'#4ade80'},{l:"Attention",v:warns.length,c:'#fb923c'},{l:"Critique",v:fails.length,c:'#f87171'},{l:"Total checks",v:results.length,c:'#c6a34e'}].map((k,i)=>
-        <div key={i} style={{padding:'14px 16px',background:"rgba(198,163,78,.04)",borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
-          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
-          <div style={{fontSize:22,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div>
-        </div>)}
-    </div>
-    <div style={{display:'flex',gap:6,marginBottom:4}}>
-      <B onClick={()=>setResults(null)} style={{padding:'6px 14px',fontSize:11,background:'rgba(198,163,78,.08)'}}>Relancer audit</B>
-    </div>
-    {cats.map(cat=>{const items=results.filter(r=>r.cat===cat);const catOk=items.filter(r=>r.status==='ok').length;const catFail=items.filter(r=>r.status==='fail').length;const catWarn=items.filter(r=>r.status==='warn').length;
-      return <C key={cat} style={{marginBottom:12,padding:0,overflow:'hidden'}}>
-        <div style={{padding:'12px 18px',background:'rgba(198,163,78,.04)',borderBottom:'1px solid rgba(198,163,78,.08)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span style={{fontWeight:700,fontSize:13,color:'#c6a34e'}}>{cat}</span>
-          <div style={{display:'flex',gap:8}}>
-            {catOk>0&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:4,background:'rgba(74,222,128,.1)',color:'#4ade80'}}>{catOk} OK</span>}
-            {catWarn>0&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:4,background:'rgba(251,146,56,.1)',color:'#fb923c'}}>{catWarn} Attention</span>}
-            {catFail>0&&<span style={{fontSize:10,padding:'2px 8px',borderRadius:4,background:'rgba(248,113,113,.1)',color:'#f87171'}}>{catFail} Critique</span>}
-          </div>
-        </div>
-        {items.map((r,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 18px',borderBottom:'1px solid rgba(255,255,255,.02)'}}>
-          <div style={{width:8,height:8,borderRadius:'50%',background:r.status==='ok'?'#4ade80':r.status==='warn'?'#fb923c':'#f87171',flexShrink:0}}/>
-          <span style={{fontSize:10,color:'#5e5c56',width:120,flexShrink:0}}>{r.mod}</span>
-          <span style={{fontSize:11,color:r.status==='ok'?'#9e9b93':r.status==='warn'?'#fb923c':'#f87171'}}>{r.msg}</span>
-        </div>)}
-      </C>;
-    })}
-  </div>;
-}
-
+function AuditMod({s,d}){const ae=s.emps||[];const n=ae.length;const [tab,setTab]=useState("global");const mb=ae.reduce((a,e)=>a+(+e.gross||0),0);
+const checks=[{cat:"Administratif",items:[{t:"Contrats de travail signes",ok:ae.every(e=>e.contractType),d:"Chaque travailleur doit avoir un contrat ecrit (obligatoire CDD/TP)"},{t:"NISS renseignes",ok:ae.every(e=>e.niss),d:"Numero national obligatoire pour declarations ONSS et fiscales"},{t:"Dates entree completes",ok:ae.every(e=>e.startDate),d:"Date debut occupation pour calcul anciennete et preavis"},{t:"Dates naissance",ok:ae.every(e=>e.birthDate),d:"Necessaire pour pyramide ages et reductions groupes-cibles"},{t:"Registre personnel tenu",ok:n>0,d:"Obligation legale AR 08/08/1980"},{t:"Reglement travail distribue",ok:n>0,d:"Loi 08/04/1965 - remise contre recu"}]},{cat:"Remuneration",items:[{t:"Salaires >= RMMMG",ok:ae.every(e=>(+e.gross||0)>=1958.88),d:"RMMMG 2026: 1.958,88 EUR brut temps plein 21+ ans"},{t:"Baremes sectoriels respectes",ok:true,d:"Verifier baremes minimums par CP et anciennete"},{t:"Fiches de paie mensuelles",ok:n>0,d:"AR 27/09/1966 - remise obligatoire mensuelle"},{t:"Indexation appliquee",ok:true,d:"Application automatique selon mecanisme CP"},{t:"Egalite salariale H/F",ok:true,d:"Loi 22/04/2012 - rapport bisannuel obligatoire"}]},{cat:"ONSS et fiscal",items:[{t:"Dimona IN declarees",ok:ae.every(e=>e.startDate),d:"Obligatoire AVANT le 1er jour de travail"},{t:"DmfA trimestrielle",ok:n>0,d:"Declaration multifonctionnelle a ONSS"},{t:"Precompte professionnel",ok:n>0,d:"Retenue et versement mensuel au SPF Finances"},{t:"Fiches 281.10 annuelles",ok:n>0,d:"Deadline 28 fevrier N+1"},{t:"CSSS retenue",ok:true,d:"Cotisation speciale securite sociale"}]},{cat:"Bien-etre",items:[{t:"Plan global prevention",ok:n>=1,d:"AR 27/03/1998 - obligatoire pour tout employeur"},{t:"Analyse risques psychosociaux",ok:n>=1,d:"Loi 04/08/1996 - prevention harcelement et stress"},{t:"Medecine du travail",ok:n>=1,d:"Surveillance sante periodique des travailleurs"},{t:"Formation securite",ok:n>=1,d:"Accueil securite pour chaque nouveau travailleur"},{t:"Personne de confiance",ok:n>=20,d:"Obligatoire si 50+ travailleurs (recommande des 20)"}]},{cat:"Organes sociaux",items:[{t:"CPPT",ok:n<50||n>=50,d:n>=50?"OBLIGATOIRE: effectif >= 50 - Elections sociales":"Non requis (effectif < 50)"},{t:"Conseil entreprise",ok:n<100||n>=100,d:n>=100?"OBLIGATOIRE: effectif >= 100":"Non requis (effectif < 100)"},{t:"Delegation syndicale",ok:true,d:"Selon CCT sectorielle - seuils variables par CP"},{t:"Elections sociales",ok:n<50,d:n>=50?"ATTENTION: prochaines elections 2028":"Non concerne (effectif < 50)"}]},{cat:"Formation",items:[{t:"Plan formation annuel",ok:n<20||n>=20,d:n>=20?"OBLIGATOIRE: effectif >= 20 - 4j/ETP/an min":"Non obligatoire (effectif < 20)"},{t:"Droit formation individuel",ok:true,d:"Chaque travailleur: min 2j/an (2024) progressif a 5j/an"},{t:"Budget formation",ok:true,d:"Recommande: 1-3% de la masse salariale"}]}];
+const totalChecks=checks.reduce((a,c)=>a+c.items.length,0);const passedChecks=checks.reduce((a,c)=>a+c.items.filter(it=>it.ok).length,0);const score=totalChecks>0?Math.round(passedChecks/totalChecks*100):0;
+return <div><PH title="Audit Social Complet" sub={"Score de conformite: "+score+"% - "+passedChecks+"/"+totalChecks+" controles OK"}/>
+<div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:18}}>{[{l:"Score global",v:score+"%",c:score>=90?"#4ade80":score>=70?"#fb923c":"#f87171"},{l:"Controles OK",v:passedChecks+"/"+totalChecks,c:"#4ade80"},{l:"Alertes",v:totalChecks-passedChecks,c:totalChecks-passedChecks>0?"#f87171":"#4ade80"},{l:"Categories",v:checks.length,c:"#c6a34e"},{l:"Effectif",v:n,c:"#60a5fa"}].map((k,i)=><div key={i} style={{padding:"12px 14px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid rgba(198,163,78,.08)"}}><div style={{fontSize:9,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div style={{fontSize:17,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div>
+<div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"global",l:"Vue globale"},{v:"detail",l:"Detail par categorie"},{v:"actions",l:"Plan actions"},{v:"calendar",l:"Calendrier legal"},{v:"risques",l:"Matrice risques"},{v:"export",l:"Rapport"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>
+{tab==="global"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}}><C><ST>Score par categorie</ST>
+{checks.map((cat,i)=>{const catOk=cat.items.filter(it=>it.ok).length;const catTotal=cat.items.length;const catScore=Math.round(catOk/catTotal*100);return <div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><b style={{color:"#e8e6e0",fontSize:12}}>{cat.cat}</b><span style={{color:catScore>=90?"#4ade80":catScore>=70?"#fb923c":"#f87171",fontWeight:700}}>{catScore}% ({catOk}/{catTotal})</span></div><div style={{height:8,background:"rgba(198,163,78,.06)",borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:catScore+"%",background:catScore>=90?"#4ade80":catScore>=70?"#fb923c":"#f87171",borderRadius:4}}/></div></div>})}
+</C><C><ST>Jauge globale de conformite</ST>
+<div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"30px 0"}}><div style={{width:120,height:120,borderRadius:"50%",background:"conic-gradient("+(score>=90?"#4ade80":score>=70?"#fb923c":"#f87171")+" "+score+"%, rgba(198,163,78,.1) "+score+"%)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:90,height:90,borderRadius:"50%",background:"#1a1918",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}><div style={{fontSize:28,fontWeight:700,color:score>=90?"#4ade80":score>=70?"#fb923c":"#f87171"}}>{score}%</div><div style={{fontSize:9,color:"#5e5c56"}}>CONFORMITE</div></div></div></div>
+<div style={{marginTop:10}}>{score>=90?<div style={{textAlign:"center",color:"#4ade80",fontSize:12,fontWeight:600}}>Excellent - Conformite elevee</div>:score>=70?<div style={{textAlign:"center",color:"#fb923c",fontSize:12,fontWeight:600}}>Correct - Points amelioration identifies</div>:<div style={{textAlign:"center",color:"#f87171",fontSize:12,fontWeight:600}}>Attention - Actions correctives necessaires</div>}</div>
+</C></div>}
+{tab==="detail"&&<C><ST>Detail des controles</ST>
+{checks.map((cat,ci)=><div key={ci} style={{marginBottom:16}}><div style={{fontSize:13,fontWeight:700,color:"#c6a34e",marginBottom:8,paddingBottom:6,borderBottom:"1px solid rgba(198,163,78,.15)"}}>{cat.cat}</div>{cat.items.map((it,ii)=><div key={ii} style={{display:"flex",gap:10,padding:"6px 0",borderBottom:"1px solid rgba(255,255,255,.02)"}}><div style={{width:18,height:18,borderRadius:4,background:it.ok?"rgba(74,222,128,.1)":"rgba(248,113,113,.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:it.ok?"#4ade80":"#f87171",flexShrink:0}}>{it.ok?"V":"X"}</div><div><div style={{color:it.ok?"#4ade80":"#f87171",fontSize:12,fontWeight:600}}>{it.t}</div><div style={{fontSize:10,color:"#5e5c56"}}>{it.d}</div></div></div>)}</div>)}
+</C>}
+{tab==="actions"&&<C><ST>Plan actions prioritaires</ST>
+{checks.flatMap(cat=>cat.items.filter(it=>!it.ok).map(it=>({...it,cat:cat.cat}))).map((r,i)=><div key={i} style={{display:"flex",gap:12,padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{width:28,height:28,borderRadius:"50%",background:"rgba(248,113,113,.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#f87171",flexShrink:0}}>{i+1}</div><div><div style={{display:"flex",gap:8,alignItems:"center"}}><b style={{color:"#f87171",fontSize:12}}>{r.t}</b><span style={{fontSize:9,padding:"1px 6px",borderRadius:3,background:"rgba(198,163,78,.08)",color:"#9e9b93"}}>{r.cat}</span></div><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div></div>)}
+{checks.every(cat=>cat.items.every(it=>it.ok))&&<div style={{textAlign:"center",padding:30,color:"#4ade80",fontSize:14,fontWeight:700}}>Aucune action requise - Tout est conforme !</div>}
+</C>}
+{tab==="calendar"&&<C><ST>Calendrier obligations legales</ST>
+{[{m:"Janvier",items:["Indexation salaires (CP 200, 302, 330)","Plan formation annuel"]},{m:"Fevrier",items:["Fiches 281.10 aux travailleurs (28/02)","Bilan social preparation"]},{m:"Mars",items:["Belcotax XML SPF Finances (01/03)","DmfA T4 N-1 (si pas fait)"]},{m:"Avril",items:["DmfA T1","Vacances annuelles planification"]},{m:"Mai",items:["Pecule vacances double (employes)","Jour ferie 01/05"]},{m:"Juin",items:["Bilan social depot BNB","DmfA T2 preparation"]},{m:"Juillet",items:["DmfA T2","Vacances collectif construction"]},{m:"Septembre",items:["Plan global prevention revision","Rentree formations"]},{m:"Octobre",items:["DmfA T3","Eco-cheques versement"]},{m:"Novembre",items:["Prime fin annee preparation","Budget N+1"]},{m:"Decembre",items:["13eme mois / Prime fin annee","DmfA T4 preparation","Cadeaux Noel (max 40 EUR exonere)"]}].map((r,i)=><div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{width:80,color:"#c6a34e",fontWeight:600,fontSize:11,flexShrink:0}}>{r.m}</span><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{r.items.map((it,j)=><span key={j} style={{fontSize:10,padding:"2px 8px",borderRadius:4,background:"rgba(198,163,78,.06)",color:"#9e9b93"}}>{it}</span>)}</div></div>)}
+</C>}
+{tab==="risques"&&<C><ST>Matrice des risques sociaux</ST>
+<Tbl cols={[{k:"r",l:"Risque",b:1,r:r=><b style={{color:r.c}}>{r.risque}</b>},{k:"p",l:"Probabilite",r:r=><span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:r.c+"15",color:r.c}}>{r.prob}</span>},{k:"i",l:"Impact",r:r=><span style={{fontSize:10,padding:"2px 6px",borderRadius:4,background:r.c+"15",color:r.c}}>{r.impact}</span>},{k:"s",l:"Sanction",r:r=><span style={{color:"#f87171",fontSize:11}}>{r.sanction}</span>}]} data={[{risque:"Dimona manquante",prob:"Moyen",impact:"Eleve",sanction:"2.500-12.500 EUR",c:"#f87171"},{risque:"DmfA en retard",prob:"Faible",impact:"Eleve",sanction:"Majorations 10%+interets",c:"#fb923c"},{risque:"RMMMG non respecte",prob:"Faible",impact:"Eleve",sanction:"Amende penale",c:"#f87171"},{risque:"Pas de reglement travail",prob:"Moyen",impact:"Moyen",sanction:"Amende admin.",c:"#fb923c"},{risque:"Discrimination salariale",prob:"Moyen",impact:"Eleve",sanction:"Tribunal travail",c:"#f87171"},{risque:"Absence plan prevention",prob:"Moyen",impact:"Moyen",sanction:"Amende niveau 3",c:"#fb923c"},{risque:"CDD > 2 ans",prob:"Faible",impact:"Eleve",sanction:"Requalification CDI",c:"#a78bfa"},{risque:"Travail au noir",prob:"Faible",impact:"Critique",sanction:"Penale + fermeture",c:"#f87171"}]}/>
+</C>}
+{tab==="export"&&<C><ST>Rapport audit</ST>
+<div style={{padding:20,background:"rgba(198,163,78,.04)",borderRadius:8}}><div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:16,fontWeight:700,color:"#c6a34e"}}>RAPPORT AUDIT SOCIAL</div><div style={{fontSize:11,color:"#9e9b93"}}>{new Date().toLocaleDateString("fr-BE")} - Aureus Social Pro</div></div>
+{[{l:"Score global",v:score+"%"},{l:"Controles passes",v:passedChecks+"/"+totalChecks},{l:"Effectif audite",v:n+" travailleurs"},{l:"Masse salariale",v:fmt(mb)+"/mois"},{l:"Actions requises",v:(totalChecks-passedChecks)+" points"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#9e9b93"}}>{r.l}</span><span style={{fontWeight:600,color:"#e8e6e0"}}>{r.v}</span></div>)}
+<div style={{marginTop:16,textAlign:"center",fontSize:11,color:"#5e5c56"}}>Export PDF et impression a implementer</div></div>
+</C>}
+</div>;}
 function SelfServiceMod({s,d}){
   const ae=s.emps||[];const [sel,setSel]=useState(ae[0]?.id||'');const [tab,setTab]=useState('fiches');
   const emp=ae.find(e=>e.id===sel)||ae[0]||{};
