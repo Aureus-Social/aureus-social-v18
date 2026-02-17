@@ -11277,7 +11277,8 @@ function AureusSuitePage({s,d}){
   if(sub==='integrations')return <IntegrationsMod s={s} d={d}/>;
   if(sub==='webhooks')return <WebhookManagerMod s={s} d={d}/>;
   if(sub==='budget_auto')return <BudgetAutoMod s={s} d={d}/>;
-  if(sub==='what_if')return <SimulateurWhatIfMod s={s} d={d}/>:s.sub==='sim_netbrut'?<SimulateurNetBrutMod s={s} d={d}/>;
+  if(sub==='what_if')return <SimulateurWhatIfMod s={s} d={d}/>;
+  if(sub==='sim_netbrut')return <SimulateurNetBrutMod s={s} d={d}/>;
   if(sub==='kpi_dashboard')return <KPIDashboardMod s={s} d={d}/>;
   if(sub==='automations')return <AutomationsMod s={s} d={d}/>;
   if(sub==='scheduler')return <SchedulerMod s={s} d={d}/>;
