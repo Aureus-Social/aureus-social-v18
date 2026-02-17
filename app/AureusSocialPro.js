@@ -4319,7 +4319,7 @@ function Dashboard({s,d}) {
   const depts={};
   ae.forEach(e=>{const dp=e.dept||'Non défini';if(!depts[dp])depts[dp]={count:0,mass:0};depts[dp].count++;depts[dp].mass+=(e.monthlySalary||0);});
 
-  return <div style={{marginBottom:16}}>{(()=>{const al=getAlertes(s.emps||[],s.co);return al.length>0?<div style={{borderRadius:10,border:"1px solid rgba(198,163,78,.15)",padding:12,background:"rgba(198,163,78,.03)"}}><div style={{fontSize:12,fontWeight:700,color:"#c6a34e",marginBottom:8}}>Alertes ({al.length})</div>{al.slice(0,8).map((a,i)=><div key={i} style={{padding:"6px 8px",marginBottom:4,borderRadius:6,fontSize:11,background:a.level==="danger"?"rgba(248,113,113,.08)":a.level==="warning"?"rgba(251,146,60,.08)":"rgba(96,165,250,.08)",color:a.level==="danger"?"#f87171":a.level==="warning"?"#fb923c":"#60a5fa"}}>{a.icon} {a.msg}</div>)}{al.length>8&&<div style={{fontSize:10,color:"#9e9b93",marginTop:4}}>+{al.length-8} autres alertes</div>}</div>:null})()}</div><div>
+  return <div>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:24}}>
       <div>
         <h1 style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,fontWeight:700,color:'#e8e6e0',margin:0}}>Tableau de bord</h1>
