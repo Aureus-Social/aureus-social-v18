@@ -9242,54 +9242,7 @@ function generateSoldeCompte(emp,co){
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Solde de tout compte - ${name}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto;line-height:1.6}
 .title{font-size:18px;font-weight:700;text-decoration:underline;text-align:center;margin-bottom:20px}
-table{width:100%;border-cfunction generateC4PDF(emp,co){
-  const coName=co?.name||'Aureus IA SPRL';
-  const coVAT=co?.vat||'BE 1028.230.781';
-  const name=(emp.first||emp.fn||'')+" "+(emp.last||emp.ln||'');
-  const niss=emp.niss||'';
-  const start=emp.startDate||emp.start||'';
-  const end=emp.endDate||emp.contractEnd||new Date().toISOString().slice(0,10);
-  const brut=+(emp.monthlySalary||emp.gross||0);
-  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>C4 - ${name}</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;padding:30px;max-width:800px;margin:auto}
-.header{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:15px}
-.title{font-size:16px;font-weight:700}
-.section{margin:10px 0;padding:8px;border:1px solid #ccc}
-.section-title{font-weight:700;font-size:12px;margin-bottom:6px;text-decoration:underline}
-.row{display:flex;justify-content:space-between;margin:3px 0;font-size:10px}
-.signature{margin-top:40px;display:flex;justify-content:space-between}
-.sig-box{width:45%;border-top:1px solid #000;padding-top:5px;text-align:center;font-size:10px}
-@media print{button{display:none!important}}</style></head><body>
-<div class="header"><div class="title">CERTIFICAT DE CHOMAGE C4</div><div>Formulaire C4 - Certificat de l'employeur</div></div>
-<div class="section"><div class="section-title">1. Employeur</div>
-<div class="row"><span>Denomination:</span><span>${coName}</span></div>
-<div class="row"><span>N° BCE/TVA:</span><span>${coVAT}</span></div>
-<div class="row"><span>Commission paritaire:</span><span>${emp.cp||co?.cp||'200'}</span></div></div>
-<div class="section"><div class="section-title">2. Travailleur</div>
-<div class="row"><span>Nom et prenom:</span><span>${name}</span></div>
-<div class="row"><span>NISS:</span><span>${niss}</span></div>
-<div class="row"><span>Statut:</span><span>${emp.statut||'Employe'}</span></div></div>
-<div class="section"><div class="section-title">3. Occupation</div>
-<div class="row"><span>Date debut:</span><span>${start}</span></div>
-<div class="row"><span>Date fin:</span><span>${end}</span></div>
-<div class="row"><span>Regime:</span><span>${emp.whWeek||38}h/semaine</span></div>
-<div class="row"><span>Derniere remuneration brute:</span><span>${f2(brut)} EUR/mois</span></div></div>
-<div class="section"><div class="section-title">4. Motif de fin</div>
-<div class="row"><span>Motif:</span><span>${emp.endReason||'Fin de contrat'}</span></div>
-<div class="row"><span>Initiative:</span><span>${emp.endInitiative||'Employeur'}</span></div>
-<div class="row"><span>Preavis preste:</span><span>${emp.noticePeriod||'Oui'}</span></div></div>
-<div class="signature"><div class="sig-box">Date et signature de l'employeur</div><div class="sig-box">Date et signature du travailleur</div></div>
-<div style="text-align:center;margin-top:20px"><button onclick="window.print()" style="background:#333;color:#fff;border:none;padding:10px 30px;border-radius:6px;cursor:pointer;font-size:13px">Imprimer C4</button></div>
-</body></html>`;
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download='C4_'+name.replace(/ /g,'_')+'.html';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
+table{width:100%;border-cfunction generateC4PDF(emp,co){const coName=co?.name||"Aureus IA SPRL";const coVAT=co?.vat||"BE 1028.230.781";const name=(emp.first||emp.fn||"")+" "+(emp.last||emp.ln||"");const niss=emp.niss||"";const start=emp.startDate||emp.start||"";const end=emp.endDate||emp.contractEnd||new Date().toISOString().slice(0,10);const brut=+(emp.monthlySalary||emp.gross||0);const f2=v=>new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);const html="<!DOCTYPE html><html><head><meta charset=utf-8><title>C4 - "+name+"</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;padding:30px;max-width:800px;margin:auto}.header{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:15px}.title{font-size:16px;font-weight:700}.section{margin:10px 0;padding:8px;border:1px solid #ccc}.section-title{font-weight:700;font-size:12px;margin-bottom:6px;text-decoration:underline}.row{display:flex;justify-content:space-between;margin:3px 0;font-size:10px}.signature{margin-top:40px;display:flex;justify-content:space-between}.sig-box{width:45%;border-top:1px solid #000;padding-top:5px;text-align:center;font-size:10px}@media print{button{display:none!important}}</style></head><body><div class=header><div class=title>CERTIFICAT DE CHOMAGE C4</div><div>Formulaire C4</div></div><div class=section><div class=section-title>1. Employeur</div><div class=row><span>Denomination:</span><span>"+coName+"</span></div><div class=row><span>BCE/TVA:</span><span>"+coVAT+"</span></div><div class=row><span>CP:</span><span>"+(emp.cp||co?.cp||"200")+"</span></div></div><div class=section><div class=section-title>2. Travailleur</div><div class=row><span>Nom:</span><span>"+name+"</span></div><div class=row><span>NISS:</span><span>"+niss+"</span></div><div class=row><span>Statut:</span><span>"+(emp.statut||"Employe")+"</span></div></div><div class=section><div class=section-title>3. Occupation</div><div class=row><span>Debut:</span><span>"+start+"</span></div><div class=row><span>Fin:</span><span>"+end+"</span></div><div class=row><span>Regime:</span><span>"+(emp.whWeek||38)+"h/sem</span></div><div class=row><span>Brut:</span><span>"+f2(brut)+" EUR/mois</span></div></div><div class=section><div class=section-title>4. Motif</div><div class=row><span>Motif:</span><span>"+(emp.endReason||"Fin de contrat")+"</span></div><div class=row><span>Initiative:</span><span>"+(emp.endInitiative||"Employeur")+"</span></div></div><div class=signature><div class=sig-box>Signature employeur</div><div class=sig-box>Signature travailleur</div></div><div style=text-align:center;margin-top:20px><button onclick=window.print() style=background:#333;color:#fff;border:none;padding:10px_30px;border-radius:6px;cursor:pointer>Imprimer C4</button></div></body></html>";const blob=new Blob([html],{type:"text/html;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="C4_"+name.replace(/ /g,"_")+".html";document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
 function generateSEPAXML(emps,period,co){
   const coName=co?.name||'Aureus IA SPRL';
   const coIBAN=co?.iban||'BE00000000000000';
