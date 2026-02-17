@@ -9066,6 +9066,64 @@ function WorkflowEmbaucheMod({s,d}){
 //  WORKFLOW LICENCIEMENT — Préavis, C4, décompte final
 // ═══════════════════════════════════════════════════════════════
 function WorkflowLicenciementMod({s,d}){const [tab,setTab]=useState("workflow");return <div><PH title="Workflow Licenciement" sub="Processus complet - De la decision a la sortie"/><div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"workflow",l:"Etapes"},{v:"motif",l:"Motif et motivation"},{v:"docs",l:"Documents"},{v:"couts",l:"Couts"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>{tab==="workflow"&&<C><ST>Workflow licenciement</ST>{[{n:1,t:"Verification protections",d:"Enceinte? Credit-temps? Delegue? Maladie? Si oui: procedure speciale.",c:"#f87171"},{n:2,t:"Choix modalite",d:"Preavis preste ou indemnite compensatoire. Calcul semaines.",c:"#fb923c"},{n:3,t:"Notification",d:"Lettre recommandee (J+3 = notification) ou remise main propre (immediate).",c:"#c6a34e"},{n:4,t:"Dimona OUT",d:"Declaration sortie ONSS. Au plus tard dernier jour.",c:"#60a5fa"},{n:5,t:"C4 + Solde tout compte",d:"Formulaire chomage + decompte final dans les 2 mois.",c:"#a78bfa"},{n:6,t:"Outplacement si applicable",d:"Offre dans les 15 jours si preavis 30+ semaines.",c:"#4ade80"}].map((r,i)=><div key={i} style={{display:"flex",gap:12,padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{width:28,height:28,borderRadius:"50%",background:r.c+"20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:r.c,flexShrink:0}}>{r.n}</div><div><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div></div>)}</C>}{tab==="motif"&&<C><ST>Motivation licenciement</ST>{[{t:"CCT 109",d:"Tout licenciement doit pouvoir etre motive. Demande possible travailleur dans les 2 mois."},{t:"Reponse",d:"Employeur doit repondre dans les 2 mois. Par recommande."},{t:"Manifestement deraisonnable",d:"Si aucun lien avec aptitude, conduite ou necessite entreprise."},{t:"Indemnite",d:"3 a 17 semaines de remuneration si licenciement manifestement deraisonnable."},{t:"Motif grave (Art. 35)",d:"Faute grave rendant collaboration definitivement impossible. Notification 3 jours. Congedie 3 jours."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}</C>}{tab==="docs"&&<C><ST>Documents sortie</ST>{["Lettre licenciement (recommandee)","AccusÃ© reception (si main propre)","C4 (formulaire chomage ONEM)","Solde de tout compte","Attestation vacances","Fiche de paie finale","Attestation employeur (sur demande)","Offre outplacement (si applicable)"].map((r,i)=><div key={i} style={{padding:"4px 0",borderBottom:"1px solid rgba(255,255,255,.03)",fontSize:12,color:"#e8e6e0"}}><span style={{color:"#c6a34e",marginRight:6}}>{i+1}.</span>{r}</div>)}</C>}{tab==="couts"&&<C><ST>Couts licenciement</ST>{[{c:"Indemnite preavis",d:"Brut x semaines / 4,33. Soumis ONSS.",v:"Variable"},{c:"ONSS sur indemnite",d:"25.07% employeur + 13.07% travailleur",v:"38.14%"},{c:"Outplacement",d:"Si 30+ semaines. Min 1.800 EUR.",v:"1.800-6.000"},{c:"CCT 109",d:"Si manifestement deraisonnable: 3-17 semaines.",v:"3-17 sem."},{c:"Solde vacances",d:"Pecule prorata + double prorata.",v:"~14.47%"},{c:"13eme prorata",d:"Prorata mois prestes.",v:"Prorata"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div><b style={{color:"#c6a34e",fontSize:12}}>{r.c}</b><div style={{fontSize:10,color:"#5e5c56"}}>{r.d}</div></div><span style={{color:"#f87171",fontWeight:600}}>{r.v}</span></div>)}</C>}</div>;}
+function calcPayroll(brut,statut,familial,charges,regime){
+  if(!brut||brut<=0)return{brut:0,onssP:0,imposable:0,pp:0,csss:0,bonusEmploi:0,net:0,onssE:0,coutTotal:0,details:{}};
+  const r=(regime||100)/100;
+  const brutR=brut*r;
+  const onssP=Math.round(brutR*0.1307*100)/100;
+  const imposable=Math.round((brutR-onssP)*100)/100;
+  const qe=statut==='independant'?0:880.83;
+  const chDed=(charges||0)*175;
+  const baseImp=Math.max(0,imposable-qe-chDed);
+  let pp=0;
+  if(baseImp>0){
+    const t1=Math.min(baseImp,1128.33)*0.2675;
+    const t2=baseImp>1128.33?Math.min(baseImp-1128.33,450)*0.3210:0;
+    const t3=baseImp>1578.33?Math.min(baseImp-1578.33,1140)*0.4280:0;
+    const t4=baseImp>2718.33?(baseImp-2718.33)*0.4815:0;
+    pp=Math.round((t1+t2+t3+t4)*100)/100;
+  }
+  if(familial==='marie_1rev')pp=Math.round(pp*0.70*100)/100;
+  if(familial==='marie_2rev')pp=Math.round(pp*0.92*100)/100;
+  let csss=0;
+  if(brutR<=1945.38)csss=0;
+  else if(brutR<=2190.18)csss=brutR*0.076-147.87;
+  else if(brutR<=6038.82)csss=brutR*0.011-5.25;
+  else csss=60.94;
+  csss=Math.round(Math.max(0,csss)*100)/100;
+  let bonusEmploi=0;
+  if(imposable<=1945.38)bonusEmploi=Math.min(pp,308.33);
+  else if(imposable<=2721.56)bonusEmploi=Math.min(pp,Math.max(0,308.33-((imposable-1945.38)*0.3969)));
+  bonusEmploi=Math.round(bonusEmploi*100)/100;
+  const ppFinal=Math.round(Math.max(0,pp-bonusEmploi)*100)/100;
+  const net=Math.round((brutR-onssP-ppFinal-csss)*100)/100;
+  const onssE=Math.round(brutR*0.2507*100)/100;
+  const coutTotal=Math.round((brutR+onssE)*100)/100;
+  return{brut:brutR,onssP,imposable,pp:ppFinal,csss,bonusEmploi,baseImp:Math.round(baseImp*100)/100,coutTotal,onssE,net,details:{qe,chDed,ppBrut:Math.round(pp*100)/100,tauxPP:imposable>0?Math.round(ppFinal/imposable*10000)/100:0,tauxNet:brutR>0?Math.round(net/brutR*10000)/100:0}};
+}
+function calcPeculeDouble(brutAnnuel){
+  const base=Math.round(brutAnnuel*0.92*100)/100;
+  const onss=Math.round(base*0.1307*100)/100;
+  const cotSpec=Math.round(base*0.01*100)/100;
+  const imposable=Math.round((base-onss)*100)/100;
+  const pp=Math.round(imposable*0.2315*100)/100;
+  const net=Math.round((base-onss-cotSpec-pp)*100)/100;
+  return{base,onss,cotSpec,imposable,pp,net};
+}
+function calcProrata(brut,joursPreste,joursMois){
+  const jm=joursMois||22;
+  const ratio=Math.min(joursPreste,jm)/jm;
+  return Math.round(brut*ratio*100)/100;
+}
+function calc13eMois(brutMensuel){
+  const brut=brutMensuel;
+  const onss=Math.round(brut*0.1307*100)/100;
+  const imposable=Math.round((brut-onss)*100)/100;
+  const pp=Math.round(imposable*0.2315*100)/100;
+  const net=Math.round((brut-onss-pp)*100)/100;
+  return{brut,onss,imposable,pp,net};
+}
+
 const CP_PRESETS_GLOBAL={"cp200":{id:"cp200",label:"CP 200 - CPNAE",barMin:2029.88},"cp100":{id:"cp100",label:"CP 100",barMin:1958.88},"cp110":{id:"cp110",label:"CP 110 - Textile",barMin:1958.88},"cp124":{id:"cp124",label:"CP 124 - Construction",barMin:2100},"cp140":{id:"cp140",label:"CP 140 - Transport",barMin:2050},"cp149":{id:"cp149",label:"CP 149.01 - Electriciens",barMin:2000},"cp200":{id:"cp200",label:"CP 200 - CPNAE",barMin:2029.88},"cp209":{id:"cp209",label:"CP 209 - Metal",barMin:2100},"cp218":{id:"cp218",label:"CP 218",barMin:2029.88},"cp302":{id:"cp302",label:"CP 302 - Horeca",barMin:1958.88},"cp330":{id:"cp330",label:"CP 330 - Soins",barMin:2029.88}};
 
 function WorkflowMaladieMod({s,d}){const [tab,setTab]=useState("workflow");return <div><PH title="Workflow Maladie" sub="Processus absence maladie - Salaire garanti - Mutuelle"/><div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"workflow",l:"Workflow"},{v:"garanti",l:"Salaire garanti"},{v:"controle",l:"Controle"},{v:"rechute",l:"Rechute et longue duree"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>{tab==="workflow"&&<C><ST>Workflow absence maladie</ST>{[{n:1,t:"Notification",d:"Travailleur previent employeur immediatement (telephone, email).",c:"#f87171"},{n:2,t:"Certificat medical",d:"Envoi dans les 2 jours ouvrables (si prevu reglement travail: 1 jour).",c:"#fb923c"},{n:3,t:"Salaire garanti",d:"Employe: 30 jours a 100%. Ouvrier: 7j 100% + 7j 85.88% + 14j 85.88%.",c:"#c6a34e"},{n:4,t:"Controle medical",d:"Medecin controleur possible des le 1er jour. A charge employeur.",c:"#60a5fa"},{n:5,t:"Mutuelle (jour 31+)",d:"Apres salaire garanti: indemnites mutuelle 60% salaire plafonne.",c:"#a78bfa"},{n:6,t:"Reprise travail",d:"Examen reprise si absence > 4 semaines. Medecine du travail.",c:"#4ade80"}].map((r,i)=><div key={i} style={{display:"flex",gap:12,padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{width:28,height:28,borderRadius:"50%",background:r.c+"20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:r.c,flexShrink:0}}>{r.n}</div><div><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div></div>)}</C>}{tab==="garanti"&&<C><ST>Salaire garanti detaille</ST>{[{p:"Employe - Jours 1-30",v:"100% salaire normal",c:"#4ade80"},{p:"Ouvrier - Jours 1-7",v:"100% salaire normal",c:"#4ade80"},{p:"Ouvrier - Jours 8-14",v:"85.88% du salaire",c:"#fb923c"},{p:"Ouvrier - Jours 15-28",v:"85.88% (partie employeur + mutuelle)",c:"#fb923c"},{p:"Jour 31+ (employe et ouvrier)",v:"60% salaire plafonne (mutuelle)",c:"#f87171"},{p:"Apres 1 an",v:"Invalidite. 60% (charge) ou 65% (isole) plafonne",c:"#f87171"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:r.c,fontSize:12}}>{r.p}</span><span style={{color:"#e8e6e0",fontWeight:600}}>{r.v}</span></div>)}</C>}{tab==="controle"&&<C><ST>Controle medical</ST>{[{t:"Medecin controleur",d:"Engage par employeur. Visite au domicile ou cabinet. Travailleur doit se presenter."},{t:"Delai",d:"Possible des le 1er jour absence. Pas besoin attendre certificat."},{t:"Disponibilite",d:"Travailleur doit etre disponible pendant 4h/jour (sauf si sorties autorisees)."},{t:"Contestation",d:"Si desaccord: arbitrage par 3eme medecin dans les 2 jours ouvrables."},{t:"Cout",d:"~80-150 EUR par visite. A charge employeur."}].map((r,i)=><div key={i} style={{padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}</C>}{tab==="rechute"&&<C><ST>Rechute et longue duree</ST>{[{t:"Rechute (< 14 jours)",d:"Si rechute dans les 14 jours: pas de nouveau salaire garanti. Mutuelle directement."},{t:"Rechute (> 14 jours)",d:"Si rechute apres 14 jours: nouveau cycle salaire garanti complet."},{t:"Force majeure medicale",d:"Depuis 28/11/2022: procedure specifique si incapacite definitif (> 9 mois). Rupture possible sans preavis."},{t:"Trajet de reintegration",d:"Medecin du travail evalue possibilites retour. Travail adapte ou autre poste."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}</C>}</div>;}
@@ -9709,6 +9767,64 @@ function BudgetAutoMod({s,d}){
 }
 
 // ── SIMULATEUR WHAT-IF ──
+function SimulateurNetBrutMod({s,d}){
+  const[brut,setBrut]=useState(3500);
+  const[fam,setFam]=useState('isole');
+  const[ch,setCh]=useState(0);
+  const[reg,setReg]=useState(100);
+  const p=calcPayroll(brut,null,fam,ch,reg);
+  const pd=calcPeculeDouble(brut*12);
+  const t13=calc13eMois(brut);
+  const[tab,setTab]=useState("calcul");
+  return <div><PH title="Simulateur Net/Brut" sub={"Brut "+fmt(brut)+" â†’ Net "+fmt(p.net)+" ("+p.details.tauxNet+"%)"}/>
+    <div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"calcul",l:"Calcul"},{v:"detail",l:"Detail"},{v:"annuel",l:"Annuel"},{v:"pecule",l:"Pecule & 13e"}].map(t2=><button key={t2.v} onClick={()=>setTab(t2.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t2.v?600:400,fontFamily:"inherit",background:tab===t2.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t2.v?"#c6a34e":"#9e9b93"}}>{t2.l}</button>)}</div>
+    {tab==="calcul"&&<C>
+      <I label="Salaire brut mensuel (EUR)" type="number" value={brut} onChange={setBrut}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+        <div><div style={{fontSize:10,color:"#5e5c56",marginBottom:4}}>Situation familiale</div>
+          <select value={fam} onChange={e=>setFam(e.target.value)} style={{width:"100%",padding:"6px 8px",borderRadius:6,border:"1px solid rgba(255,255,255,.08)",background:"rgba(255,255,255,.03)",color:"#e8e6e0",fontSize:12}}>
+            <option value="isole">Isole</option>
+            <option value="marie_1rev">Marie - 1 revenu</option>
+            <option value="marie_2rev">Marie - 2 revenus</option>
+          </select></div>
+        <I label="Personnes a charge" type="number" value={ch} onChange={setCh}/>
+      </div>
+      <I label="Regime horaire (%)" type="number" value={reg} onChange={setReg}/>
+      <div style={{marginTop:12,padding:16,borderRadius:8,background:"rgba(198,163,78,.05)",border:"1px solid rgba(198,163,78,.15)"}}>
+        {[{l:"Salaire brut",v:p.brut,c:"#e8e6e0"},{l:"ONSS personnel (-13.07%)",v:-p.onssP,c:"#f87171"},{l:"Revenu imposable",v:p.imposable,c:"#9e9b93"},{l:"Precompte professionnel",v:-p.pp,c:"#f87171"},{l:"Cotisation speciale secu",v:-p.csss,c:"#f87171"},{l:"Bonus a emploi",v:p.bonusEmploi,c:"#4ade80"},{l:"SALAIRE NET",v:p.net,c:"#4ade80"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:i===6?"8px 0 0":"4px 0",borderTop:i===6?"2px solid rgba(198,163,78,.3)":"none",fontSize:i===6?13:12}}>
+          <span style={{color:i===6?"#c6a34e":"#9e9b93"}}>{r.l}</span>
+          <span style={{color:r.c,fontWeight:i===6?800:600}}>{r.v>=0?fmt(r.v):"-"+fmt(Math.abs(r.v))}</span>
+        </div>)}
+      </div>
+      <div style={{marginTop:12,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <div style={{padding:10,borderRadius:8,background:"rgba(248,113,113,.05)",border:"1px solid rgba(248,113,113,.1)"}}>
+          <div style={{fontSize:10,color:"#f87171"}}>ONSS patronal (25.07%)</div>
+          <div style={{fontSize:16,fontWeight:700,color:"#f87171"}}>{fmt(p.onssE)}</div>
+        </div>
+        <div style={{padding:10,borderRadius:8,background:"rgba(198,163,78,.05)",border:"1px solid rgba(198,163,78,.15)"}}>
+          <div style={{fontSize:10,color:"#c6a34e"}}>Cout total employeur</div>
+          <div style={{fontSize:16,fontWeight:700,color:"#c6a34e"}}>{fmt(p.coutTotal)}</div>
+        </div>
+      </div>
+    </C>}
+    {tab==="detail"&&<C><ST>Detail calcul</ST>
+      {[{l:"Quotite exemptee mensuelle",v:fmt(p.details.qe)},{l:"Deduction personnes a charge",v:fmt(p.details.chDed)},{l:"Base imposable PP",v:fmt(p.baseImp)},{l:"PP avant bonus",v:fmt(p.details.ppBrut)},{l:"Bonus a emploi",v:"-"+fmt(p.bonusEmploi)},{l:"PP final retenu",v:fmt(p.pp)},{l:"Taux PP effectif",v:p.details.tauxPP+"%"},{l:"Taux net/brut",v:p.details.tauxNet+"%"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"1px solid rgba(255,255,255,.03)",fontSize:12}}>
+        <span style={{color:"#9e9b93"}}>{r.l}</span><span style={{color:"#c6a34e",fontWeight:600}}>{r.v}</span>
+      </div>)}
+      <div style={{marginTop:12,padding:10,borderRadius:6,background:"rgba(96,165,250,.05)",fontSize:10.5,color:"#60a5fa"}}>
+        Baremes PP 2026: 26.75% (0-1.128) | 32.10% (1.128-1.578) | 42.80% (1.578-2.718) | 48.15% (2.718+)
+      </div>
+    </C>}
+    {tab==="annuel"&&<C><ST>Projection annuelle</ST>
+      {[{l:"Brut annuel (13.92 mois)",v:p.brut*13.92},{l:"ONSS personnel annuel",v:p.onssP*13.92},{l:"PP annuel",v:p.pp*12},{l:"CSSS annuel",v:p.csss*12},{l:"Net annuel estime",v:p.net*12+pd.net+t13.net},{l:"ONSS patronal annuel",v:p.onssE*13.92},{l:"Cout total employeur/an",v:p.coutTotal*13.92}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i===4?"2px solid rgba(74,222,128,.3)":i===6?"2px solid rgba(198,163,78,.3)":"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#9e9b93",fontSize:12}}>{r.l}</span><span style={{color:i===4?"#4ade80":i===6?"#c6a34e":"#e8e6e0",fontWeight:i>=4?700:600}}>{fmt(r.v)}</span></div>)}
+    </C>}
+    {tab==="pecule"&&<C><ST>Pecule vacances double</ST>
+      {[{l:"Base (92% du brut mensuel)",v:pd.base/12},{l:"ONSS 13.07%",v:-pd.onss/12},{l:"Cotisation speciale 1%",v:-pd.cotSpec/12},{l:"PP 23.15%",v:-pd.pp/12},{l:"Net pecule double",v:pd.net/12}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:i===4?"2px solid rgba(74,222,128,.3)":"1px solid rgba(255,255,255,.03)",fontSize:12}}><span style={{color:"#9e9b93"}}>{r.l}</span><span style={{color:i===4?"#4ade80":r.v<0?"#f87171":"#e8e6e0",fontWeight:i===4?700:600}}>{r.v>=0?fmt(r.v):"-"+fmt(Math.abs(r.v))}</span></div>)}
+      <ST>13eme mois</ST>
+      {[{l:"Brut 13eme mois",v:t13.brut},{l:"ONSS 13.07%",v:-t13.onss},{l:"PP 23.15%",v:-t13.pp},{l:"Net 13eme mois",v:t13.net}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:i===3?"2px solid rgba(74,222,128,.3)":"1px solid rgba(255,255,255,.03)",fontSize:12}}><span style={{color:"#9e9b93"}}>{r.l}</span><span style={{color:i===3?"#4ade80":r.v<0?"#f87171":"#e8e6e0",fontWeight:i===3?700:600}}>{r.v>=0?fmt(r.v):"-"+fmt(Math.abs(r.v))}</span></div>)}
+    </C>}
+  </div>;
+}
 function SimulateurWhatIfMod({s,d}){
   const ae=s.emps.filter(e=>e.status==='active'||!e.status);
   const masseBrute=ae.reduce((a,e)=>a+(parseFloat(e.monthlySalary)||0),0);
@@ -11040,7 +11156,7 @@ function AureusSuitePage({s,d}){
   if(sub==='integrations')return <IntegrationsMod s={s} d={d}/>;
   if(sub==='webhooks')return <WebhookManagerMod s={s} d={d}/>;
   if(sub==='budget_auto')return <BudgetAutoMod s={s} d={d}/>;
-  if(sub==='what_if')return <SimulateurWhatIfMod s={s} d={d}/>;
+  if(sub==='what_if')return <SimulateurWhatIfMod s={s} d={d}/>:s.sub==='sim_netbrut'?<SimulateurNetBrutMod s={s} d={d}/>;
   if(sub==='kpi_dashboard')return <KPIDashboardMod s={s} d={d}/>;
   if(sub==='automations')return <AutomationsMod s={s} d={d}/>;
   if(sub==='scheduler')return <SchedulerMod s={s} d={d}/>;
