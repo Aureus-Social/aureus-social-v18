@@ -4330,7 +4330,7 @@ function Dashboard({s,d}) {
         <span style={{fontSize:12,fontWeight:600,color:'#f87171'}}>{urgentCount} échéance{urgentCount>1?'s':''} urgente{urgentCount>1?'s':''}</span>
       </div>}
     </div>
-    <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes countUp{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}`}</style>
+    
 
     {/* KPI ROW */}
     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:14,marginBottom:22}}>
