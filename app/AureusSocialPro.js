@@ -9077,6 +9077,143 @@ function getAlertes(emps,co){
   if(m===1||m===4||m===7||m===10){if(d<=15)alerts.push({type:"deadline",level:"warning",icon:"📤",msg:"Trimestre: DmfA a envoyer avant le "+((m===1||m===7)?31:30)+"/"+String(m).padStart(2,"0"),days:15-d});}
   return alerts.sort((a,b)=>a.level==="danger"?-1:b.level==="danger"?1:a.level==="warning"?-1:1);
 }
+function generateBelcotaxXML(emps,year,co){
+  const coName=co?.name||'Aureus IA SPRL';
+  const coVAT=(co?.vat||'1028230781').replace(/[^0-9]/g,'');
+  const ae=emps.filter(e=>e.status==='active'||!e.status);
+  const fiches=ae.map(e=>{
+    const brut=+(e.monthlySalary||e.gross||0)*12;
+    const onss=Math.round(brut*0.1307*100)/100;
+    const imp=brut-onss;
+    const pp=Math.round(imp*0.22*100)/100;
+    const net=Math.round((brut-onss-pp)*100)/100;
+    const niss=(e.niss||'').replace(/[^0-9]/g,'');
+    return{name:(e.first||e.fn||'')+' '+(e.last||e.ln||''),niss,brut,onss,imposable:imp,pp,net,addr:e.address||''};
+  });
+  const f2=v=>(Math.round(v*100)/100).toFixed(2);
+  const xml=`<?xml version="1.0" encoding="UTF-8"?>
+<Belcotax xmlns="urn:belcotax:281" version="2026">
+  <Declarant>
+    <CompanyID>${coVAT}</CompanyID>
+    <Name>${coName}</Name>
+    <TaxYear>${year||2025}</TaxYear>
+    <IncomeYear>${(year||2025)-1}</IncomeYear>
+    <NbFiches>${fiches.length}</NbFiches>
+  </Declarant>
+${fiches.map((f,i)=>`  <Fiche281_10 seq="${i+1}">
+    <Worker>
+      <INSS>${f.niss}</INSS>
+      <Name>${f.name}</Name>
+      <Address>${f.addr}</Address>
+    </Worker>
+    <Income>
+      <GrossRemuneration>${f2(f.brut)}</GrossRemuneration>
+      <SocialContributions>${f2(f.onss)}</SocialContributions>
+      <TaxableIncome>${f2(f.imposable)}</TaxableIncome>
+      <WithholdingTax>${f2(f.pp)}</WithholdingTax>
+      <NetRemuneration>${f2(f.net)}</NetRemuneration>
+    </Income>
+  </Fiche281_10>`).join('\n')}
+</Belcotax>`;
+  const blob=new Blob([xml],{type:'application/octet-stream'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='Belcotax_281_10_'+(year||2025)+'.xml';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function generateDmfAXML(emps,trimestre,year,co){
+  const coName=co?.name||'Aureus IA SPRL';
+  const coVAT=(co?.vat||'1028230781').replace(/[^0-9]/g,'');
+  const ae=emps.filter(e=>e.status==='active'||!e.status);
+  const f2=v=>(Math.round(v*100)/100).toFixed(2);
+  const totalBrut=ae.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0))*3,0);
+  const totalONSS=Math.round(totalBrut*0.3814*100)/100;
+  const xml=`<?xml version="1.0" encoding="UTF-8"?>
+<DmfAMessage xmlns="http://www.smals-mvm.be/xml/ns/dmfa" version="20240101">
+  <Header>
+    <Sender><CompanyID origin="KBO">${coVAT}</CompanyID><Name>${coName}</Name></Sender>
+    <Reference>DMFA-${year||2026}-Q${trimestre||1}</Reference>
+    <Quarter>${trimestre||1}</Quarter>
+    <Year>${year||2026}</Year>
+  </Header>
+  <Employer>
+    <CompanyID origin="KBO">${coVAT}</CompanyID>
+    <NOSS>${coVAT.slice(0,10)}</NOSS>
+    <Name>${coName}</Name>
+    <NbWorkers>${ae.length}</NbWorkers>
+    <TotalGross>${f2(totalBrut)}</TotalGross>
+    <TotalONSS>${f2(totalONSS)}</TotalONSS>
+${ae.map(e=>{const brut3=(+(e.monthlySalary||e.gross||0))*3;const onss=Math.round(brut3*0.1307*100)/100;const onssE=Math.round(brut3*0.2507*100)/100;return`    <WorkerRecord>
+      <INSS>${(e.niss||'').replace(/[^0-9]/g,'')}</INSS>
+      <Name>${(e.first||e.fn||'')} ${(e.last||e.ln||'')}</Name>
+      <Category>${e.statut==='ouvrier'?'BC':'WC'}</Category>
+      <JointCommittee>${e.cp||co?.cp||'200'}</JointCommittee>
+      <GrossQuarter>${f2(brut3)}</GrossQuarter>
+      <WorkerONSS>${f2(onss)}</WorkerONSS>
+      <EmployerONSS>${f2(onssE)}</EmployerONSS>
+      <WorkDays>${(e.whWeek||38)/38*65}</WorkDays>
+    </WorkerRecord>`;}).join('\n')}
+  </Employer>
+  <Footer><TotalDue>${f2(totalONSS)}</TotalDue></Footer>
+</DmfAMessage>`;
+  const blob=new Blob([xml],{type:'application/octet-stream'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='DmfA_Q'+(trimestre||1)+'_'+(year||2026)+'.xml';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function generateC4PDF(emp,co){
+  const coName=co?.name||'Aureus IA SPRL';
+  const coVAT=co?.vat||'BE 1028.230.781';
+  const name=(emp.first||emp.fn||'')+" "+(emp.last||emp.ln||'');
+  const niss=emp.niss||'';
+  const start=emp.startDate||emp.start||'';
+  const end=emp.endDate||emp.contractEnd||new Date().toISOString().slice(0,10);
+  const brut=+(emp.monthlySalary||emp.gross||0);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>C4 - ${name}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;padding:30px;max-width:800px;margin:auto}
+.header{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:15px}
+.title{font-size:16px;font-weight:700}
+.section{margin:10px 0;padding:8px;border:1px solid #ccc}
+.section-title{font-weight:700;font-size:12px;margin-bottom:6px;text-decoration:underline}
+.row{display:flex;justify-content:space-between;margin:3px 0;font-size:10px}
+.signature{margin-top:40px;display:flex;justify-content:space-between}
+.sig-box{width:45%;border-top:1px solid #000;padding-top:5px;text-align:center;font-size:10px}
+@media print{button{display:none!important}}</style></head><body>
+<div class="header"><div class="title">CERTIFICAT DE CHOMAGE C4</div><div>Formulaire C4 - Certificat de l'employeur</div></div>
+<div class="section"><div class="section-title">1. Employeur</div>
+<div class="row"><span>Denomination:</span><span>${coName}</span></div>
+<div class="row"><span>N° BCE/TVA:</span><span>${coVAT}</span></div>
+<div class="row"><span>Commission paritaire:</span><span>${emp.cp||co?.cp||'200'}</span></div></div>
+<div class="section"><div class="section-title">2. Travailleur</div>
+<div class="row"><span>Nom et prenom:</span><span>${name}</span></div>
+<div class="row"><span>NISS:</span><span>${niss}</span></div>
+<div class="row"><span>Statut:</span><span>${emp.statut||'Employe'}</span></div></div>
+<div class="section"><div class="section-title">3. Occupation</div>
+<div class="row"><span>Date debut:</span><span>${start}</span></div>
+<div class="row"><span>Date fin:</span><span>${end}</span></div>
+<div class="row"><span>Regime:</span><span>${emp.whWeek||38}h/semaine</span></div>
+<div class="row"><span>Derniere remuneration brute:</span><span>${f2(brut)} EUR/mois</span></div></div>
+<div class="section"><div class="section-title">4. Motif de fin</div>
+<div class="row"><span>Motif:</span><span>${emp.endReason||'Fin de contrat'}</span></div>
+<div class="row"><span>Initiative:</span><span>${emp.endInitiative||'Employeur'}</span></div>
+<div class="row"><span>Preavis preste:</span><span>${emp.noticePeriod||'Oui'}</span></div></div>
+<div class="signature"><div class="sig-box">Date et signature de l'employeur</div><div class="sig-box">Date et signature du travailleur</div></div>
+<div style="text-align:center;margin-top:20px"><button onclick="window.print()" style="background:#333;color:#fff;border:none;padding:10px 30px;border-radius:6px;cursor:pointer;font-size:13px">Imprimer C4</button></div>
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='C4_'+name.replace(/ /g,'_')+'.html';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 function generateSEPAXML(emps,period,co){
   const coName=co?.name||'Aureus IA SPRL';
   const coIBAN=co?.iban||'BE00000000000000';
