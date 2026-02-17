@@ -5656,7 +5656,7 @@ function DimonaPage({s,d}) {
   const filtered=filter==='all'?s.dims:s.dims.filter(x=>x.action===filter);
 
   return <div>
-    <PH title="Déclarations Dimona" sub="Déclaration immédiate de l'emploi — ONSS / Portail sécurité sociale"/>
+    <PH title="Déclarations Dimona" sub="Déclaration immédiate de l'emploi — ONSS / Portail sécurité sociale"/><div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>{s.emps.filter(e=>e.status===\"active\"||!e.status).map(e=><div key={e.id} style={{display:"flex",gap:4}}><button onClick={()=>generateDimonaXML(e,\"IN\",s.co)} style={{padding:\"6px 12px\",borderRadius:6,border:\"none\",cursor:\"pointer\",fontSize:11,fontWeight:600,background:\"rgba(74,222,128,.15)\",color:\"#4ade80\"}}>IN {e.first||e.fn} {e.last||e.ln}</button><button onClick={()=>generateDimonaXML(e,\"OUT\",s.co)} style={{padding:\"6px 12px\",borderRadius:6,border:\"none\",cursor:\"pointer\",fontSize:11,fontWeight:600,background:\"rgba(248,113,113,.15)\",color:\"#f87171\"}}>OUT {e.first||e.fn} {e.last||e.ln}</button></div>)}</div>
     {/* Stats bar */}
     <div style={{display:'flex',gap:12,marginBottom:18}}>
       {[{l:"Total",v:s.dims.length,c:'#c6a34e'},{l:"IN",v:statsIN,c:'#4ade80'},{l:"OUT",v:statsOUT,c:'#f87171'},{l:"UPDATE",v:statsUPD,c:'#60a5fa'}].map((st,i)=>
@@ -9066,6 +9066,64 @@ function WorkflowEmbaucheMod({s,d}){
 //  WORKFLOW LICENCIEMENT — Préavis, C4, décompte final
 // ═══════════════════════════════════════════════════════════════
 function WorkflowLicenciementMod({s,d}){const [tab,setTab]=useState("workflow");return <div><PH title="Workflow Licenciement" sub="Processus complet - De la decision a la sortie"/><div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"workflow",l:"Etapes"},{v:"motif",l:"Motif et motivation"},{v:"docs",l:"Documents"},{v:"couts",l:"Couts"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>{tab==="workflow"&&<C><ST>Workflow licenciement</ST>{[{n:1,t:"Verification protections",d:"Enceinte? Credit-temps? Delegue? Maladie? Si oui: procedure speciale.",c:"#f87171"},{n:2,t:"Choix modalite",d:"Preavis preste ou indemnite compensatoire. Calcul semaines.",c:"#fb923c"},{n:3,t:"Notification",d:"Lettre recommandee (J+3 = notification) ou remise main propre (immediate).",c:"#c6a34e"},{n:4,t:"Dimona OUT",d:"Declaration sortie ONSS. Au plus tard dernier jour.",c:"#60a5fa"},{n:5,t:"C4 + Solde tout compte",d:"Formulaire chomage + decompte final dans les 2 mois.",c:"#a78bfa"},{n:6,t:"Outplacement si applicable",d:"Offre dans les 15 jours si preavis 30+ semaines.",c:"#4ade80"}].map((r,i)=><div key={i} style={{display:"flex",gap:12,padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{width:28,height:28,borderRadius:"50%",background:r.c+"20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:r.c,flexShrink:0}}>{r.n}</div><div><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div></div>)}</C>}{tab==="motif"&&<C><ST>Motivation licenciement</ST>{[{t:"CCT 109",d:"Tout licenciement doit pouvoir etre motive. Demande possible travailleur dans les 2 mois."},{t:"Reponse",d:"Employeur doit repondre dans les 2 mois. Par recommande."},{t:"Manifestement deraisonnable",d:"Si aucun lien avec aptitude, conduite ou necessite entreprise."},{t:"Indemnite",d:"3 a 17 semaines de remuneration si licenciement manifestement deraisonnable."},{t:"Motif grave (Art. 35)",d:"Faute grave rendant collaboration definitivement impossible. Notification 3 jours. Congedie 3 jours."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}</C>}{tab==="docs"&&<C><ST>Documents sortie</ST>{["Lettre licenciement (recommandee)","AccusÃ© reception (si main propre)","C4 (formulaire chomage ONEM)","Solde de tout compte","Attestation vacances","Fiche de paie finale","Attestation employeur (sur demande)","Offre outplacement (si applicable)"].map((r,i)=><div key={i} style={{padding:"4px 0",borderBottom:"1px solid rgba(255,255,255,.03)",fontSize:12,color:"#e8e6e0"}}><span style={{color:"#c6a34e",marginRight:6}}>{i+1}.</span>{r}</div>)}</C>}{tab==="couts"&&<C><ST>Couts licenciement</ST>{[{c:"Indemnite preavis",d:"Brut x semaines / 4,33. Soumis ONSS.",v:"Variable"},{c:"ONSS sur indemnite",d:"25.07% employeur + 13.07% travailleur",v:"38.14%"},{c:"Outplacement",d:"Si 30+ semaines. Min 1.800 EUR.",v:"1.800-6.000"},{c:"CCT 109",d:"Si manifestement deraisonnable: 3-17 semaines.",v:"3-17 sem."},{c:"Solde vacances",d:"Pecule prorata + double prorata.",v:"~14.47%"},{c:"13eme prorata",d:"Prorata mois prestes.",v:"Prorata"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div><b style={{color:"#c6a34e",fontSize:12}}>{r.c}</b><div style={{fontSize:10,color:"#5e5c56"}}>{r.d}</div></div><span style={{color:"#f87171",fontWeight:600}}>{r.v}</span></div>)}</C>}</div>;}
+function generateDimonaXML(emp,type,co){
+  const coVAT=(co?.vat||'1028230781').replace(/[^0-9]/g,'');
+  const empName=(emp.first||emp.fn||'')+" "+(emp.last||emp.ln||'');
+  const niss=(emp.niss||emp.NISS||'').replace(/[^0-9]/g,'');
+  const startD=(emp.startDate||emp.start||new Date().toISOString().slice(0,10)).replace(/-/g,'');
+  const endD=(emp.endDate||emp.end||'').replace(/-/g,'')||startD;
+  const now=new Date();
+  const ts=now.toISOString().replace(/[-:T]/g,'').slice(0,14);
+  const refNum='DIM'+ts+Math.floor(Math.random()*9999).toString().padStart(4,'0');
+  const xml=`<?xml version="1.0" encoding="UTF-8"?>
+<DIMONAMessage xmlns="http://www.smals-mvm.be/xml/ns/dimona" version="20240101">
+  <Header>
+    <Sender>
+      <CompanyID origin="KBO">${coVAT}</CompanyID>
+      <Name>${co?.name||'Aureus IA SPRL'}</Name>
+    </Sender>
+    <Reference>${refNum}</Reference>
+    <CreationDate>${now.toISOString().slice(0,10)}</CreationDate>
+    <CreationTime>${now.toTimeString().slice(0,8)}</CreationTime>
+  </Header>
+  <Declaration>
+    <DeclarationType>${type==='OUT'?'DIMONAOUT':'DIMONAIN'}</DeclarationType>
+    <Employer>
+      <CompanyID origin="KBO">${coVAT}</CompanyID>
+      <NOSS>${coVAT.slice(0,10)}</NOSS>
+      <Name>${co?.name||'Aureus IA SPRL'}</Name>
+      <JointCommittee>${emp.cp||co?.cp||'200'}</JointCommittee>
+    </Employer>
+    <Worker>
+      <INSS>${niss}</INSS>
+      <LastName>${emp.last||emp.ln||''}</LastName>
+      <FirstName>${emp.first||emp.fn||''}</FirstName>
+      <WorkerType>${emp.statut==='ouvrier'?'BC':'WC'}</WorkerType>
+    </Worker>
+    <EmploymentDetail>
+      <StartDate>${startD}</StartDate>
+      ${type==='OUT'?`<EndDate>${endD}</EndDate>
+      <EndReason>${emp.endReason||'CONTRACT_END'}</EndReason>`:''}
+      <WorkerCategory>${emp.category||'1'}</WorkerCategory>
+      <JointCommittee>${emp.cp||co?.cp||'200'}</JointCommittee>
+      <PlannedHoursPerWeek>${emp.whWeek||emp.regime||38}</PlannedHoursPerWeek>
+      <ReferenceHoursPerWeek>38</ReferenceHoursPerWeek>
+    </EmploymentDetail>
+  </Declaration>
+  <Footer>
+    <TotalDeclarations>1</TotalDeclarations>
+  </Footer>
+</DIMONAMessage>`;
+  const blob=new Blob([xml],{type:'application/xml;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='DIMONA_'+type+'_'+empName.replace(/ /g,'_')+'_'+now.toISOString().slice(0,10)+'.xml';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return{ref:refNum,xml};
+}
+
 async function generatePayslipPDF(emp,r,period,co){
   const blob=new Blob([],{type:'text/html'});const w={document:{write:function(h){this._h=h},close:function(){const b=new Blob([this._h],{type:"text/html;charset=utf-8"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="Fiche_paie_"+empName.replace(/ /g,"_")+"_"+periodeStr.replace(/ /g,"_")+".html";document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u)}}};
   const coName=co?.name||'Entreprise';
