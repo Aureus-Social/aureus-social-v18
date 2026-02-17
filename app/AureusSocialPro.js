@@ -9066,6 +9066,128 @@ function WorkflowEmbaucheMod({s,d}){
 //  WORKFLOW LICENCIEMENT — Préavis, C4, décompte final
 // ═══════════════════════════════════════════════════════════════
 function WorkflowLicenciementMod({s,d}){const [tab,setTab]=useState("workflow");return <div><PH title="Workflow Licenciement" sub="Processus complet - De la decision a la sortie"/><div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"workflow",l:"Etapes"},{v:"motif",l:"Motif et motivation"},{v:"docs",l:"Documents"},{v:"couts",l:"Couts"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>{tab==="workflow"&&<C><ST>Workflow licenciement</ST>{[{n:1,t:"Verification protections",d:"Enceinte? Credit-temps? Delegue? Maladie? Si oui: procedure speciale.",c:"#f87171"},{n:2,t:"Choix modalite",d:"Preavis preste ou indemnite compensatoire. Calcul semaines.",c:"#fb923c"},{n:3,t:"Notification",d:"Lettre recommandee (J+3 = notification) ou remise main propre (immediate).",c:"#c6a34e"},{n:4,t:"Dimona OUT",d:"Declaration sortie ONSS. Au plus tard dernier jour.",c:"#60a5fa"},{n:5,t:"C4 + Solde tout compte",d:"Formulaire chomage + decompte final dans les 2 mois.",c:"#a78bfa"},{n:6,t:"Outplacement si applicable",d:"Offre dans les 15 jours si preavis 30+ semaines.",c:"#4ade80"}].map((r,i)=><div key={i} style={{display:"flex",gap:12,padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{width:28,height:28,borderRadius:"50%",background:r.c+"20",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:r.c,flexShrink:0}}>{r.n}</div><div><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div></div>)}</C>}{tab==="motif"&&<C><ST>Motivation licenciement</ST>{[{t:"CCT 109",d:"Tout licenciement doit pouvoir etre motive. Demande possible travailleur dans les 2 mois."},{t:"Reponse",d:"Employeur doit repondre dans les 2 mois. Par recommande."},{t:"Manifestement deraisonnable",d:"Si aucun lien avec aptitude, conduite ou necessite entreprise."},{t:"Indemnite",d:"3 a 17 semaines de remuneration si licenciement manifestement deraisonnable."},{t:"Motif grave (Art. 35)",d:"Faute grave rendant collaboration definitivement impossible. Notification 3 jours. Congedie 3 jours."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}</C>}{tab==="docs"&&<C><ST>Documents sortie</ST>{["Lettre licenciement (recommandee)","AccusÃ© reception (si main propre)","C4 (formulaire chomage ONEM)","Solde de tout compte","Attestation vacances","Fiche de paie finale","Attestation employeur (sur demande)","Offre outplacement (si applicable)"].map((r,i)=><div key={i} style={{padding:"4px 0",borderBottom:"1px solid rgba(255,255,255,.03)",fontSize:12,color:"#e8e6e0"}}><span style={{color:"#c6a34e",marginRight:6}}>{i+1}.</span>{r}</div>)}</C>}{tab==="couts"&&<C><ST>Couts licenciement</ST>{[{c:"Indemnite preavis",d:"Brut x semaines / 4,33. Soumis ONSS.",v:"Variable"},{c:"ONSS sur indemnite",d:"25.07% employeur + 13.07% travailleur",v:"38.14%"},{c:"Outplacement",d:"Si 30+ semaines. Min 1.800 EUR.",v:"1.800-6.000"},{c:"CCT 109",d:"Si manifestement deraisonnable: 3-17 semaines.",v:"3-17 sem."},{c:"Solde vacances",d:"Pecule prorata + double prorata.",v:"~14.47%"},{c:"13eme prorata",d:"Prorata mois prestes.",v:"Prorata"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div><b style={{color:"#c6a34e",fontSize:12}}>{r.c}</b><div style={{fontSize:10,color:"#5e5c56"}}>{r.d}</div></div><span style={{color:"#f87171",fontWeight:600}}>{r.v}</span></div>)}</C>}</div>;}
+async function generatePayslipPDF(emp,r,period,co){
+  const w=window.open('','_blank','width=800,height=1100');
+  if(!w)return;
+  const coName=co?.name||'Entreprise';
+  const coVAT=co?.vat||'BE XXXX.XXX.XXX';
+  const coAddr=co?.address||'';
+  const coCP=co?.cp||'CP 200';
+  const empName=(emp.first||emp.fn||'')+" "+(emp.last||emp.ln||'');
+  const empNISS=emp.niss||emp.NISS||'XX.XX.XX-XXX.XX';
+  const empIBAN=emp.iban||emp.IBAN||'';
+  const mois=["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+  const periodeStr=period?(mois[(period.month||1)-1]||"")+" "+(period.year||2026):"Fevrier 2026";
+  const brut=r.gross||r.brut||0;
+  const onssP=r.onssP||r.onss||Math.round(brut*0.1307*100)/100;
+  const imposable=r.imposable||Math.round((brut-onssP)*100)/100;
+  const pp=r.pp||r.withholding||Math.round(imposable*0.22*100)/100;
+  const csss=r.csss||r.specSS||0;
+  const net=r.net||Math.round((brut-onssP-pp-csss)*100)/100;
+  const onssE=r.onssE||r.empSS||Math.round(brut*0.2507*100)/100;
+  const coutTotal=r.coutTotal||Math.round((brut+onssE)*100)/100;
+  const mealV=r.mealV||(emp.mealVoucher?emp.mealVoucher*22:0);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fiche de paie - ${empName} - ${periodeStr}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#1a1a1a;padding:30px;max-width:800px;margin:auto;background:#fff}
+.header{display:flex;justify-content:space-between;border-bottom:3px solid #c6a34e;padding-bottom:15px;margin-bottom:15px}
+.header-left{flex:1}
+.header-right{text-align:right;flex:1}
+.company{font-size:16px;font-weight:700;color:#1a1a1a}
+.subtitle{font-size:10px;color:#666;margin-top:2px}
+.gold{color:#c6a34e}
+.period-badge{display:inline-block;background:#c6a34e;color:#fff;padding:4px 12px;border-radius:4px;font-weight:700;font-size:12px}
+.section{margin:12px 0}
+.section-title{font-size:11px;font-weight:700;color:#c6a34e;text-transform:uppercase;letter-spacing:1px;padding:4px 0;border-bottom:1px solid #e5e5e5;margin-bottom:6px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px}
+.info-row{display:flex;justify-content:space-between;font-size:10px}
+.info-label{color:#666}
+.info-value{font-weight:600}
+table{width:100%;border-collapse:collapse;margin:6px 0}
+th{text-align:left;font-size:9px;text-transform:uppercase;color:#666;padding:4px 6px;border-bottom:2px solid #e5e5e5;letter-spacing:0.5px}
+th.right{text-align:right}
+td{padding:4px 6px;border-bottom:1px solid #f0f0f0;font-size:10px}
+td.right{text-align:right;font-family:'Courier New',monospace}
+td.bold{font-weight:700}
+.total-row{background:#f8f6f0;font-weight:700}
+.total-row td{border-top:2px solid #c6a34e;border-bottom:2px solid #c6a34e;padding:6px}
+.net-row{background:#c6a34e;color:#fff;font-weight:800;font-size:12px}
+.net-row td{padding:8px 6px;border:none}
+.footer{margin-top:20px;padding-top:10px;border-top:1px solid #e5e5e5;display:flex;justify-content:space-between;font-size:9px;color:#999}
+.employer-box{margin-top:12px;padding:8px;background:#fafafa;border:1px solid #e5e5e5;border-radius:4px}
+.employer-box .title{font-size:9px;color:#c6a34e;font-weight:700;text-transform:uppercase;margin-bottom:4px}
+@media print{body{padding:20px}button{display:none!important}}
+</style></head><body>
+<div class="header">
+  <div class="header-left">
+    <div class="company">${coName}</div>
+    <div class="subtitle">${coVAT} | ${coCP}</div>
+    <div class="subtitle">${coAddr}</div>
+  </div>
+  <div class="header-right">
+    <div class="period-badge">${periodeStr}</div>
+    <div style="margin-top:6px;font-size:10px;color:#666">FICHE DE PAIE</div>
+    <div style="font-size:9px;color:#999">Document confidentiel</div>
+  </div>
+</div>
+<div class="section">
+  <div class="section-title">Identification travailleur</div>
+  <div class="info-grid">
+    <div class="info-row"><span class="info-label">Nom:</span><span class="info-value">${empName}</span></div>
+    <div class="info-row"><span class="info-label">NISS:</span><span class="info-value">${empNISS}</span></div>
+    <div class="info-row"><span class="info-label">Fonction:</span><span class="info-value">${emp.function||emp.job||'Employe'}</span></div>
+    <div class="info-row"><span class="info-label">Statut:</span><span class="info-value">${emp.statut||'Employe'}</span></div>
+    <div class="info-row"><span class="info-label">Entree:</span><span class="info-value">${emp.startDate||emp.start||'-'}</span></div>
+    <div class="info-row"><span class="info-label">Regime:</span><span class="info-value">${emp.regime||emp.whWeek||38}h/sem</span></div>
+  </div>
+</div>
+<div class="section">
+  <div class="section-title">Remuneration brute</div>
+  <table>
+    <tr><th>Description</th><th class="right">Jours/Heures</th><th class="right">Taux</th><th class="right">Montant</th></tr>
+    <tr><td>Salaire mensuel de base</td><td class="right">${r.workDays||22} j</td><td class="right">${f2(brut/22)}/j</td><td class="right bold">${f2(r.base||brut)}</td></tr>
+    ${(r.overtime||0)>0?`<tr><td>Heures supplementaires (150%)</td><td class="right">${r.overtimeH||'-'}h</td><td class="right">150%</td><td class="right">${f2(r.overtime)}</td></tr>`:''}
+    ${(r.sunday||0)>0?`<tr><td>Heures dimanche (200%)</td><td class="right">${r.sundayH||'-'}h</td><td class="right">200%</td><td class="right">${f2(r.sunday)}</td></tr>`:''}
+    ${(r.night||0)>0?`<tr><td>Heures nuit (125%)</td><td class="right">${r.nightH||'-'}h</td><td class="right">125%</td><td class="right">${f2(r.night)}</td></tr>`:''}
+    ${(r.bonus||0)>0?`<tr><td>Prime/Bonus</td><td class="right">-</td><td class="right">-</td><td class="right">${f2(r.bonus)}</td></tr>`:''}
+    <tr class="total-row"><td colspan="3">TOTAL BRUT</td><td class="right">${f2(brut)}</td></tr>
+  </table>
+</div>
+<div class="section">
+  <div class="section-title">Retenues</div>
+  <table>
+    <tr><th>Description</th><th class="right">Base</th><th class="right">Taux</th><th class="right">Montant</th></tr>
+    <tr><td>Cotisation ONSS personnelle</td><td class="right">${f2(brut)}</td><td class="right">13,07%</td><td class="right" style="color:#c0392b">-${f2(onssP)}</td></tr>
+    <tr><td>Precompte professionnel</td><td class="right">${f2(imposable)}</td><td class="right">${imposable>0?(pp/imposable*100).toFixed(1)+'%':'-'}</td><td class="right" style="color:#c0392b">-${f2(pp)}</td></tr>
+    <tr><td>Cotisation speciale securite sociale</td><td class="right">-</td><td class="right">Bareme</td><td class="right" style="color:#c0392b">-${f2(csss)}</td></tr>
+    <tr class="total-row"><td colspan="3">TOTAL RETENUES</td><td class="right" style="color:#c0392b">-${f2(onssP+pp+csss)}</td></tr>
+  </table>
+</div>
+<div class="section">
+  <table>
+    <tr class="net-row"><td colspan="3" style="font-size:13px">NET A PAYER</td><td class="right" style="font-size:15px">${f2(net)} EUR</td></tr>
+  </table>
+</div>
+${empIBAN?`<div style="font-size:10px;color:#666;margin-top:4px">Virement sur: <b>${empIBAN}</b></div>`:''}
+<div class="employer-box">
+  <div class="title">Charges patronales (pour information)</div>
+  <div class="info-grid">
+    <div class="info-row"><span class="info-label">ONSS patronal (25,07%):</span><span class="info-value">${f2(onssE)}</span></div>
+    <div class="info-row"><span class="info-label">Cout total employeur:</span><span class="info-value" style="color:#c6a34e;font-weight:800">${f2(coutTotal)}</span></div>
+  </div>
+</div>
+${mealV>0?`<div style="margin-top:6px;font-size:10px;color:#666">Cheques-repas: ${emp.mealVoucher||0} x 22j = ${f2(mealV)} EUR (part patronale ${f2((emp.mealVoucher||0)*22*0.83)})</div>`:''}
+<div class="footer">
+  <span>Genere par Aureus Social Pro | ${coName} | ${coVAT}</span>
+  <span>Date edition: ${new Date().toLocaleDateString('fr-BE')}</span>
+</div>
+<div style="text-align:center;margin-top:15px"><button onclick="window.print()" style="background:#c6a34e;color:#fff;border:none;padding:10px 30px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Imprimer / Sauvegarder PDF</button></div>
+</body></html>`);
+  w.document.close();
+}
+
 function calcPayroll(brut,statut,familial,charges,regime){
   if(!brut||brut<=0)return{brut:0,onssP:0,imposable:0,pp:0,csss:0,bonusEmploi:0,net:0,onssE:0,coutTotal:0,details:{}};
   const r=(regime||100)/100;
