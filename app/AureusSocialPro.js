@@ -2989,12 +2989,18 @@ const PERMISSIONS = {
 };
 
 async function loadUserRole(supabase, userId) {
-  if (!supabase || !userId) return 'admin'; // Default admin for first user
+  if (!supabase || !userId) return 'admin';
   try {
     const { data } = await supabase.from('user_roles')
       .select('role').eq('user_id', userId).maybeSingle();
-    return data?.role || 'admin';
-  } catch(e) { return 'admin'; }
+    if (data?.role) return data.role;
+    // No role found — check if this is the FIRST user (owner = admin)
+    const { count } = await supabase.from('user_roles').select('*', { count: 'exact', head: true });
+    const defaultRole = (count === 0) ? 'admin' : 'client';
+    // Auto-save the default role
+    try { await supabase.from('user_roles').upsert({ user_id: userId, role: defaultRole, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); } catch(e2) {}
+    return defaultRole;
+  } catch(e) { return 'client'; }
 }
 
 async function saveUserRole(supabase, userId, role, email) {
