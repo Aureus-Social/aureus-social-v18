@@ -29,7 +29,8 @@ const I18N = {
   'nav.reporting': { fr:'Reporting & Export', nl:"Rapportage & Export", en:"Reporting & Export", de:"Berichterstattung & Export" },
   'nav.legal': { fr:'Juridique & Veille', nl:"Juridisch & Monitoring", en:"Legal & Monitoring", de:"Recht & Überwachung" },
   'nav.sprint9': { fr:'Sprint 9 - Modules', nl:'Sprint 9 - Modules', en:'Sprint 9 - Modules', de:'Sprint 9 - Module' },
-  'nav.queue': { fr:'File traitement',nl:'Wachtrij',en:'Queue',de:'Warteschlange' },
+  'nav.portalmanager': { fr:'Portail Clients',nl:'Klantenportaal',en:'Client Portal',de:'Kundenportal' },
+    'nav.queue': { fr:'File traitement',nl:'Wachtrij',en:'Queue',de:'Warteschlange' },
     'nav.onboarding': { fr:'Onboarding',nl:'Onboarding',en:'Onboarding',de:'Onboarding' },
     'nav.commandcenter': { fr:'Command Center',nl:'Command Center',en:'Command Center',de:'Command Center' },
     'nav.autopilot': { fr:'Autopilot',nl:'Autopilot',en:'Autopilot',de:'Autopilot' },
@@ -2978,6 +2979,12 @@ const PERMISSIONS = {
     label: 'Lecture seule', icon: '👁', color: '#888',
     canView: true, canEdit: false, canDelete: false, canExport: false, 
     canManageUsers: false, canSettings: false, canBackup: false, canBatch: false
+  },
+  client: { 
+    label: 'Client Employeur', icon: '🏢', color: '#22c55e',
+    canView: true, canEdit: false, canDelete: false, canExport: true, 
+    canManageUsers: false, canSettings: false, canBackup: false, canBatch: false,
+    isClient: true
   }
 };
 
@@ -3098,6 +3105,7 @@ function TeamManagement({ supabase, user, userRole }) {
             <option value="gestionnaire">📋 Gestionnaire</option>
             <option value="comptable">🧮 Comptable</option>
             <option value="readonly">👁 Lecture seule</option>
+                  <option value="client">🏢 Client Employeur</option>
           </select>
         </div>
         <button onClick={handleInvite} style={{padding:'10px 20px',borderRadius:8,border:'none',background:'#22c55e',color:'#fff',fontWeight:600,fontSize:12,cursor:'pointer',whiteSpace:'nowrap'}}>📨 Inviter</button>
@@ -4340,6 +4348,7 @@ function AppInner({ supabase, user, onLogout }) {
     {id:"social",l:t('nav.social'),i:'◆',sub:[{id:"assloi",l:t('sub.assloi')},{id:"assgroupe",l:t('sub.assgroupe')},{id:"syndicales",l:t('sub.syndicales')},{id:"allocfam",l:t('sub.allocfam')},{id:"caissevac",l:t('sub.caissevac')},{id:"rentes",l:t('sub.rentes')},{id:"decava",l:t('sub.decava')},{id:"aidesemploi",l:t('sub.aidesemploi')}]},
     {id:"bienetre",l:t('nav.bienetre'),i:'♥',sub:[{id:"planglobal",l:t('sub.planglobal')},{id:"paa",l:t('sub.paa')},{id:"risquespsycho",l:t('sub.risquespsycho')},{id:"alcool",l:t('sub.alcool')},{id:"elections",l:t('sub.elections')},{id:"organes",l:t('sub.organes')}]},
     {id:"sprint9",l:"Sprint 9 - Modules",i:"S9"},
+    {id:"portalmanager",l:"🏢 "+t("nav.portalmanager"),i:"🏢"},
     {id:"queue",l:"📋 "+t("nav.queue"),i:"📋"},
     {id:"onboarding",l:"🆕 "+t("nav.onboarding"),i:"🆕"},
     {id:"commandcenter",l:"🎯 "+t("nav.commandcenter"),i:"🎯"},
@@ -4437,6 +4446,7 @@ function AppInner({ supabase, user, onLogout }) {
   },[spotOpen]);
 
   // ── Early returns (AFTER all hooks) ──
+  if(!loading && userRole==='client') return <ClientPortal s={s} d={d} supabase={supabase} user={user} clientData={s.clients?.find(c=>c.company?.email===user?.email)||s.clients?.[0]||{}}/>;
   if(loading)return <div style={{minHeight:'100vh',background:"#060810",display:'flex',alignItems:'center',justifyContent:'center'}}>
     <div style={{textAlign:'center'}}>
       <div style={{width:56,height:56,borderRadius:14,background:"linear-gradient(135deg,#c6a34e,#a68a3c)",display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,fontWeight:800,color:'#060810',fontFamily:"'Cormorant Garamond',serif",margin:'0 auto 16px',animation:'pulse 2s ease infinite'}}>A</div>
@@ -4672,7 +4682,600 @@ function AppInner({ supabase, user, onLogout }) {
   };
 
   // ═══ CLIENT ONBOARDING WIZARD ═══
-  const OnboardingWizard=({s,d})=>{
+  
+  // ══════════════════════════════════════════════════
+  // ═══ SPRINT 23: CLIENT PORTAL — Portail Employeur ═══
+  // ══════════════════════════════════════════════════
+  const ClientPortal=({s,d,supabase,user,clientData})=>{
+    const [tab,setTab]=useState('accueil');
+    const now=new Date();
+    const mois=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    const currentMonth=mois[now.getMonth()];
+    const currentYear=now.getFullYear();
+    
+    // Client data
+    const co=clientData?.company||s.co||{};
+    const emps=clientData?.emps||s.emps||[];
+    const pays=clientData?.pays||s.pays||[];
+    
+    // Messages state
+    const [messages,setMessages]=useState([]);
+    const [newMsg,setNewMsg]=useState('');
+    const [msgCategory,setMsgCategory]=useState('general');
+    
+    // Demandes state
+    const [demandes,setDemandes]=useState([]);
+    const [demandeForm,setDemandeForm]=useState({type:'conge',empId:'',dateDebut:'',dateFin:'',motif:'',jours:1});
+    
+    // Prestations state
+    const [prestations,setPrestations]=useState({});
+    const [prestMonth,setPrestMonth]=useState(now.getMonth()+1);
+    const [prestYear,setPrestYear]=useState(now.getFullYear());
+    const [prestSaved,setPrestSaved]=useState(false);
+    
+    // Modifications state
+    const [modifications,setModifications]=useState([]);
+    const [modForm,setModForm]=useState({type:'nouvel_employe',data:{}});
+    
+    // Load messages & demandes from Supabase
+    useEffect(()=>{
+      if(!supabase||!user)return;
+      const loadPortalData=async()=>{
+        try{
+          const{data}=await supabase.from('app_state').select('val').eq('key','portal_'+user.id).maybeSingle();
+          if(data?.val){
+            const pd=typeof data.val==='string'?JSON.parse(data.val):data.val;
+            if(pd.messages)setMessages(pd.messages);
+            if(pd.demandes)setDemandes(pd.demandes);
+            if(pd.prestations)setPrestations(pd.prestations);
+            if(pd.modifications)setModifications(pd.modifications);
+          }
+        }catch(e){console.error('Portal load error:',e);}
+      };
+      loadPortalData();
+    },[supabase,user]);
+
+    // Save portal data
+    const savePortalData=async(updates)=>{
+      if(!supabase||!user)return;
+      const data={messages:updates.messages||messages,demandes:updates.demandes||demandes,prestations:updates.prestations||prestations,modifications:updates.modifications||modifications};
+      try{
+        await supabase.from('app_state').upsert({key:'portal_'+user.id,val:JSON.stringify(data),updated_at:new Date().toISOString()},{onConflict:'key'});
+      }catch(e){console.error('Portal save error:',e);}
+    };
+
+    // Send message
+    const sendMessage=()=>{
+      if(!newMsg.trim())return;
+      const msg={id:'MSG-'+Date.now(),from:'client',fromEmail:user?.email||'',category:msgCategory,text:newMsg.trim(),date:new Date().toISOString(),read:false};
+      const updated=[msg,...messages];
+      setMessages(updated);
+      setNewMsg('');
+      savePortalData({messages:updated});
+    };
+
+    // Submit demande
+    const submitDemande=()=>{
+      if(!demandeForm.empId||!demandeForm.dateDebut){alert('Sélectionnez un employé et une date');return;}
+      const emp=emps.find(e=>e.id===demandeForm.empId);
+      const dem={id:'DEM-'+Date.now(),type:demandeForm.type,empId:demandeForm.empId,empName:(emp?.first||emp?.fn||'')+' '+(emp?.last||emp?.ln||''),dateDebut:demandeForm.dateDebut,dateFin:demandeForm.dateFin||demandeForm.dateDebut,motif:demandeForm.motif,jours:+demandeForm.jours||1,status:'pending',createdAt:new Date().toISOString(),createdBy:user?.email||''};
+      const updated=[dem,...demandes];
+      setDemandes(updated);
+      setDemandeForm({type:'conge',empId:'',dateDebut:'',dateFin:'',motif:'',jours:1});
+      savePortalData({demandes:updated});
+      alert('✅ Demande envoyée — En attente de validation par le secrétariat social.');
+    };
+
+    // Save prestations
+    const savePrestations=()=>{
+      const key=prestYear+'-'+String(prestMonth).padStart(2,'0');
+      const updated={...prestations,[key]:{...prestations[key],savedAt:new Date().toISOString(),savedBy:user?.email}};
+      setPrestations(updated);
+      setPrestSaved(true);
+      savePortalData({prestations:updated});
+      setTimeout(()=>setPrestSaved(false),3000);
+    };
+
+    const updatePrest=(empId,field,val)=>{
+      const key=prestYear+'-'+String(prestMonth).padStart(2,'0');
+      setPrestations(p=>({...p,[key]:{...(p[key]||{}),emps:{...(p[key]?.emps||{}),[empId]:{...(p[key]?.emps?.[empId]||{}),[field]:val}}}}));
+      setPrestSaved(false);
+    };
+
+    // Submit modification request
+    const submitModification=(type,data)=>{
+      const mod={id:'MOD-'+Date.now(),type,data,status:'pending',createdAt:new Date().toISOString(),createdBy:user?.email||''};
+      const updated=[mod,...modifications];
+      setModifications(updated);
+      savePortalData({modifications:updated});
+      alert('✅ Demande de modification envoyée — En attente de validation.');
+    };
+
+    const fieldStyle={width:'100%',padding:'10px 14px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:8,color:'#e5e5e5',fontSize:12,fontFamily:'inherit',outline:'none',boxSizing:'border-box'};
+    const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v||0);
+    const tabs=[
+      {id:'accueil',icon:'🏠',label:'Accueil'},
+      {id:'prestations',icon:'📝',label:'Prestations'},
+      {id:'absences',icon:'🏖',label:'Congés & Absences'},
+      {id:'fiches',icon:'📄',label:'Fiches de paie'},
+      {id:'messages',icon:'💬',label:'Messages'+(messages.filter(m=>m.from==='secretariat'&&!m.read).length>0?' ('+messages.filter(m=>m.from==='secretariat'&&!m.read).length+')':'')},
+      {id:'modifications',icon:'✏️',label:'Modifications'},
+      {id:'kpi',icon:'📊',label:'Dashboard'},
+    ];
+
+    return <div style={{minHeight:'100vh',background:'#060810'}}>
+      {/* TOP BAR */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 28px',background:'linear-gradient(135deg,#080b14,#0d1117)',borderBottom:'1px solid rgba(198,163,78,.15)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
+          <div style={{fontSize:22,fontWeight:800,color:'#c6a34e',letterSpacing:'-0.5px'}}>AUREUS</div>
+          <div style={{width:1,height:28,background:'rgba(198,163,78,.2)'}}/>
+          <div>
+            <div style={{fontSize:14,fontWeight:600,color:'#e5e5e5'}}>{co.name||'Mon entreprise'}</div>
+            <div style={{fontSize:10,color:'#888'}}>Portail Employeur · {co.vat||''}</div>
+          </div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
+          <div style={{fontSize:11,color:'#888'}}>{user?.email}</div>
+          <div style={{width:32,height:32,borderRadius:'50%',background:'linear-gradient(135deg,#22c55e,#16a34a)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:'#fff',fontWeight:700}}>{(user?.email||'C')[0].toUpperCase()}</div>
+        </div>
+      </div>
+
+      <div style={{display:'flex'}}>
+        {/* SIDEBAR PORTAL */}
+        <div style={{width:220,padding:'20px 12px',borderRight:'1px solid rgba(198,163,78,.08)',background:'#070a12',minHeight:'calc(100vh - 60px)'}}>
+          {tabs.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'11px 14px',marginBottom:2,border:'none',borderRadius:10,cursor:'pointer',fontSize:12,fontWeight:tab===t.id?600:400,color:tab===t.id?'#c6a34e':'#888',background:tab===t.id?'rgba(198,163,78,.1)':'transparent',borderLeft:tab===t.id?'2px solid #c6a34e':'2px solid transparent',fontFamily:'inherit',textAlign:'left'}}>
+            <span style={{fontSize:15}}>{t.icon}</span>{t.label}
+          </button>)}
+          <div style={{marginTop:20,padding:'12px',background:'rgba(34,197,94,.04)',border:'1px solid rgba(34,197,94,.1)',borderRadius:10}}>
+            <div style={{fontSize:10,color:'#22c55e',fontWeight:600}}>📅 Échéances</div>
+            <div style={{fontSize:10,color:'#888',marginTop:6}}>Avant le 5 — Encoder prestations</div>
+            <div style={{fontSize:10,color:'#888',marginTop:2}}>Le 25 — Dernier délai modifs</div>
+            <div style={{fontSize:10,color:'#888',marginTop:2}}>Fin du mois — Fiches disponibles</div>
+          </div>
+        </div>
+
+        {/* MAIN CONTENT */}
+        <div style={{flex:1,padding:'28px 36px'}}>
+
+          {/* ═══ ACCUEIL ═══ */}
+          {tab==='accueil'&&<div>
+            <h2 style={{fontSize:22,fontWeight:700,color:'#e5e5e5',margin:'0 0 4px'}}>Bienvenue, {co.name||'Employeur'}</h2>
+            <p style={{fontSize:12,color:'#888',marginBottom:24}}>Portail Employeur — {currentMonth} {currentYear}</p>
+            
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:24}}>
+              {[{v:emps.length,l:'Travailleurs actifs',i:'👥',c:'#c6a34e'},
+                {v:currentMonth,l:'Prestations à encoder',i:'📝',c:'#3b82f6'},
+                {v:demandes.filter(d2=>d2.status==='pending').length,l:'Demandes en cours',i:'📋',c:'#a855f7'},
+                {v:messages.filter(m=>m.from==='secretariat'&&!m.read).length,l:'Messages non lus',i:'💬',c:'#22c55e'}
+              ].map((k,i)=><div key={i} style={{padding:18,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.08)',borderRadius:14,textAlign:'center'}}>
+                <div style={{fontSize:14,marginBottom:6}}>{k.i}</div>
+                <div style={{fontSize:22,fontWeight:700,color:k.c}}>{k.v}</div>
+                <div style={{fontSize:10,color:'#888',marginTop:2}}>{k.l}</div>
+              </div>)}
+            </div>
+
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(59,130,246,.1)',borderRadius:14}}>
+                <div style={{fontSize:14,fontWeight:600,color:'#3b82f6',marginBottom:12}}>📋 Actions rapides</div>
+                {[{l:'Encoder les prestations du mois',t:'prestations',c:'#3b82f6'},
+                  {l:'Demander un congé / absence',t:'absences',c:'#22c55e'},
+                  {l:'Consulter les fiches de paie',t:'fiches',c:'#c6a34e'},
+                  {l:'Envoyer un message',t:'messages',c:'#a855f7'}
+                ].map((a,i)=><button key={i} onClick={()=>setTab(a.t)} style={{display:'block',width:'100%',padding:'10px 14px',marginBottom:6,background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.04)',borderRadius:8,color:'#e5e5e5',fontSize:12,cursor:'pointer',fontFamily:'inherit',textAlign:'left'}} onMouseEnter={e=>e.currentTarget.style.borderColor=a.c+'50'} onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(255,255,255,.04)'}>{a.l} →</button>)}
+              </div>
+              <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+                <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:12}}>👥 Équipe ({emps.length})</div>
+                <div style={{maxHeight:180,overflowY:'auto'}}>
+                  {emps.map((e,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
+                    <span style={{color:'#e5e5e5'}}>{e.first||e.fn||''} {e.last||e.ln||''}</span>
+                    <span style={{color:'#888'}}>{e.contractType||'CDI'} · {f2(+(e.monthlySalary||e.gross||e.brut||0))}€</span>
+                  </div>)}
+                  {emps.length===0&&<div style={{textAlign:'center',padding:20,color:'#888',fontSize:11}}>Aucun employé</div>}
+                </div>
+              </div>
+            </div>
+          </div>}
+
+          {/* ═══ PRESTATIONS ═══ */}
+          {tab==='prestations'&&<div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+              <div>
+                <h2 style={{fontSize:20,fontWeight:700,color:'#e5e5e5',margin:0}}>📝 Encodage Prestations</h2>
+                <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Encodez les heures et événements de vos travailleurs</p>
+              </div>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <select value={prestMonth} onChange={e=>setPrestMonth(+e.target.value)} style={{padding:'8px 12px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:8,color:'#e5e5e5',fontSize:12,fontFamily:'inherit',outline:'none'}}>
+                  {mois.map((m,i)=><option key={i} value={i+1}>{m}</option>)}
+                </select>
+                <select value={prestYear} onChange={e=>setPrestYear(+e.target.value)} style={{padding:'8px 12px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:8,color:'#e5e5e5',fontSize:12,fontFamily:'inherit',outline:'none'}}>
+                  {[2024,2025,2026,2027].map(y=><option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {prestSaved&&<div style={{padding:'10px 14px',background:'rgba(34,197,94,.08)',border:'1px solid rgba(34,197,94,.2)',borderRadius:10,marginBottom:16,fontSize:12,color:'#22c55e',fontWeight:600}}>✅ Prestations sauvegardées</div>}
+
+            <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+              <div style={{display:'grid',gridTemplateColumns:'180px repeat(7,1fr)',padding:'10px 14px',background:'rgba(198,163,78,.06)',fontSize:10,fontWeight:600,color:'#c6a34e'}}>
+                <div>Travailleur</div><div>Jours prestés</div><div>H. sup.</div><div>H. dimanche</div><div>H. nuit</div><div>Maladie (j)</div><div>Prime (€)</div><div>Remarques</div>
+              </div>
+              {emps.map((e,i)=>{
+                const key=prestYear+'-'+String(prestMonth).padStart(2,'0');
+                const ep=prestations[key]?.emps?.[e.id]||{};
+                return <div key={i} style={{display:'grid',gridTemplateColumns:'180px repeat(7,1fr)',padding:'8px 14px',borderTop:'1px solid rgba(255,255,255,.03)',alignItems:'center',fontSize:11}}>
+                  <div style={{color:'#e5e5e5',fontWeight:500}}>{e.first||e.fn||''} {e.last||e.ln||''}</div>
+                  {['jours','hSup','hDimanche','hNuit','maladie','prime'].map(field=>
+                    <div key={field}><input type="number" value={ep[field]||''} onChange={ev=>updatePrest(e.id,field,ev.target.value)} style={{width:'90%',padding:'6px 8px',background:'#090c16',border:'1px solid rgba(139,115,60,.1)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',outline:'none',boxSizing:'border-box',textAlign:'center'}} placeholder={field==='jours'?'22':'0'}/></div>
+                  )}
+                  <div><input value={ep.remarques||''} onChange={ev=>updatePrest(e.id,'remarques',ev.target.value)} style={{width:'90%',padding:'6px 8px',background:'#090c16',border:'1px solid rgba(139,115,60,.1)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',outline:'none',boxSizing:'border-box'}} placeholder="..."/></div>
+                </div>;
+              })}
+            </div>
+            
+            <div style={{display:'flex',gap:10,marginTop:16}}>
+              <button onClick={savePrestations} style={{padding:'12px 28px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#22c55e,#16a34a)',color:'#fff',fontWeight:700,fontSize:13,cursor:'pointer'}}>💾 Sauvegarder les prestations</button>
+              <div style={{padding:'12px 16px',background:'rgba(198,163,78,.04)',borderRadius:10,fontSize:11,color:'#888',display:'flex',alignItems:'center'}}>⏰ Date limite d'encodage : le 5 du mois suivant</div>
+            </div>
+          </div>}
+
+          {/* ═══ CONGÉS & ABSENCES ═══ */}
+          {tab==='absences'&&<div>
+            <h2 style={{fontSize:20,fontWeight:700,color:'#e5e5e5',margin:'0 0 20px'}}>🏖 Demandes de Congés & Absences</h2>
+            
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:24}}>
+              <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(34,197,94,.15)',borderRadius:14}}>
+                <div style={{fontSize:14,fontWeight:600,color:'#22c55e',marginBottom:14}}>➕ Nouvelle demande</div>
+                <div style={{display:'grid',gap:10}}>
+                  <div>
+                    <label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Type</label>
+                    <select value={demandeForm.type} onChange={e=>setDemandeForm(p=>({...p,type:e.target.value}))} style={fieldStyle}>
+                      <option value="conge">🏖 Congé annuel</option>
+                      <option value="maladie">🏥 Maladie</option>
+                      <option value="sans_solde">💤 Congé sans solde</option>
+                      <option value="parental">👶 Congé parental</option>
+                      <option value="formation">📚 Congé formation</option>
+                      <option value="petit_chomage">📋 Petit chômage</option>
+                      <option value="credit_temps">⏰ Crédit-temps</option>
+                      <option value="autre">📝 Autre</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Employé</label>
+                    <select value={demandeForm.empId} onChange={e=>setDemandeForm(p=>({...p,empId:e.target.value}))} style={fieldStyle}>
+                      <option value="">— Sélectionner —</option>
+                      {emps.map(e=><option key={e.id} value={e.id}>{e.first||e.fn||''} {e.last||e.ln||''}</option>)}
+                    </select>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                    <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Du</label><input type="date" value={demandeForm.dateDebut} onChange={e=>setDemandeForm(p=>({...p,dateDebut:e.target.value}))} style={fieldStyle}/></div>
+                    <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Au</label><input type="date" value={demandeForm.dateFin} onChange={e=>setDemandeForm(p=>({...p,dateFin:e.target.value}))} style={fieldStyle}/></div>
+                  </div>
+                  <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Nombre de jours</label><input type="number" value={demandeForm.jours} onChange={e=>setDemandeForm(p=>({...p,jours:e.target.value}))} style={fieldStyle}/></div>
+                  <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Motif / Remarques</label><textarea value={demandeForm.motif} onChange={e=>setDemandeForm(p=>({...p,motif:e.target.value}))} style={{...fieldStyle,minHeight:60,resize:'vertical'}} placeholder="Optionnel"/></div>
+                  <button onClick={submitDemande} style={{padding:'12px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#22c55e,#16a34a)',color:'#fff',fontWeight:700,fontSize:13,cursor:'pointer'}}>📤 Envoyer la demande</button>
+                </div>
+              </div>
+              
+              <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+                <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:14}}>📋 Historique ({demandes.length})</div>
+                <div style={{maxHeight:400,overflowY:'auto'}}>
+                  {demandes.length===0?<div style={{textAlign:'center',padding:30,color:'#888',fontSize:11}}>Aucune demande</div>:
+                  demandes.map((dem,i)=><div key={i} style={{padding:'10px 12px',marginBottom:6,background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.04)',borderRadius:10}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <span style={{fontSize:12,fontWeight:500,color:'#e5e5e5'}}>{dem.empName}</span>
+                      <span style={{fontSize:9,padding:'2px 8px',borderRadius:6,fontWeight:600,
+                        background:dem.status==='pending'?'rgba(234,179,8,.12)':dem.status==='approved'?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)',
+                        color:dem.status==='pending'?'#eab308':dem.status==='approved'?'#22c55e':'#ef4444'
+                      }}>{dem.status==='pending'?'⏳ En attente':dem.status==='approved'?'✅ Approuvé':'❌ Refusé'}</span>
+                    </div>
+                    <div style={{fontSize:10,color:'#888',marginTop:4}}>
+                      {dem.type==='conge'?'🏖':dem.type==='maladie'?'🏥':'📋'} {dem.type} · {dem.dateDebut}{dem.dateFin&&dem.dateFin!==dem.dateDebut?' → '+dem.dateFin:''} · {dem.jours}j
+                    </div>
+                    {dem.motif&&<div style={{fontSize:10,color:'#666',marginTop:2,fontStyle:'italic'}}>{dem.motif}</div>}
+                    {dem.adminComment&&<div style={{fontSize:10,color:'#c6a34e',marginTop:4}}>💬 Secrétariat : {dem.adminComment}</div>}
+                  </div>)}
+                </div>
+              </div>
+            </div>
+          </div>}
+
+          {/* ═══ FICHES DE PAIE ═══ */}
+          {tab==='fiches'&&<div>
+            <h2 style={{fontSize:20,fontWeight:700,color:'#e5e5e5',margin:'0 0 20px'}}>📄 Fiches de Paie</h2>
+            
+            {pays.length===0?<div style={{textAlign:'center',padding:50}}>
+              <div style={{fontSize:50,marginBottom:12}}>📄</div>
+              <div style={{fontSize:16,fontWeight:600,color:'#888'}}>Aucune fiche de paie disponible</div>
+              <div style={{fontSize:12,color:'#666',marginTop:4}}>Les fiches seront disponibles ici dès qu'elles seront générées par le secrétariat social.</div>
+            </div>:
+            <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+              <div style={{display:'grid',gridTemplateColumns:'160px 1fr 100px 100px 100px 80px',padding:'10px 14px',background:'rgba(198,163,78,.06)',fontSize:10,fontWeight:600,color:'#c6a34e'}}>
+                <div>Période</div><div>Employé</div><div>Brut</div><div>ONSS</div><div>Net</div><div>Action</div>
+              </div>
+              {pays.map((p,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'160px 1fr 100px 100px 100px 80px',padding:'8px 14px',borderTop:'1px solid rgba(255,255,255,.03)',alignItems:'center',fontSize:12}}>
+                <span style={{color:'#c6a34e',fontWeight:500}}>{p.period||'-'}</span>
+                <span style={{color:'#e5e5e5'}}>{p.ename||'-'}</span>
+                <span style={{color:'#e5e5e5'}}>{f2(p.gross||0)}€</span>
+                <span style={{color:'#ef4444'}}>-{f2(p.onssNet||0)}€</span>
+                <span style={{color:'#22c55e',fontWeight:600}}>{f2(p.net||0)}€</span>
+                <button onClick={()=>{try{generatePayslipPDF(emps.find(e=>(e.first||e.fn)+' '+(e.last||e.ln)===p.ename)||emps[0],p,{month:+(p.period?.split(' ')[0])||1,year:+(p.period?.split(' ')[1])||2026},co)}catch(ex){}}} style={{padding:'4px 10px',borderRadius:6,border:'none',background:'rgba(198,163,78,.1)',color:'#c6a34e',fontSize:10,cursor:'pointer'}}>📥</button>
+              </div>)}
+            </div>}
+          </div>}
+
+          {/* ═══ MESSAGES ═══ */}
+          {tab==='messages'&&<div>
+            <h2 style={{fontSize:20,fontWeight:700,color:'#e5e5e5',margin:'0 0 20px'}}>💬 Messagerie</h2>
+            
+            <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:20}}>
+              <div>
+                {/* Message list */}
+                <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,padding:16,maxHeight:500,overflowY:'auto',marginBottom:16}}>
+                  {messages.length===0?<div style={{textAlign:'center',padding:30,color:'#888',fontSize:12}}>Aucun message. Envoyez votre premier message au secrétariat social.</div>:
+                  messages.map((m,i)=><div key={i} style={{display:'flex',flexDirection:m.from==='client'?'row-reverse':'row',gap:10,marginBottom:12}}>
+                    <div style={{width:32,height:32,borderRadius:'50%',background:m.from==='client'?'linear-gradient(135deg,#22c55e,#16a34a)':'linear-gradient(135deg,#c6a34e,#a07d3e)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'#fff',fontWeight:700,flexShrink:0}}>{m.from==='client'?'🏢':'🎯'}</div>
+                    <div style={{maxWidth:'70%',padding:'10px 14px',borderRadius:12,background:m.from==='client'?'rgba(34,197,94,.08)':'rgba(198,163,78,.08)',border:'1px solid '+(m.from==='client'?'rgba(34,197,94,.15)':'rgba(198,163,78,.15)')}}>
+                      <div style={{fontSize:12,color:'#e5e5e5'}}>{m.text}</div>
+                      <div style={{fontSize:9,color:'#888',marginTop:4}}>{new Date(m.date).toLocaleString('fr-BE')} · {m.category!=='general'?m.category:''}</div>
+                    </div>
+                  </div>)}
+                </div>
+                
+                {/* New message */}
+                <div style={{display:'flex',gap:8}}>
+                  <select value={msgCategory} onChange={e=>setMsgCategory(e.target.value)} style={{padding:'10px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:8,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',outline:'none',width:140}}>
+                    <option value="general">💬 Général</option>
+                    <option value="urgent">🔴 Urgent</option>
+                    <option value="paie">📄 Paie</option>
+                    <option value="conge">🏖 Congé</option>
+                    <option value="admin">📋 Administratif</option>
+                  </select>
+                  <input value={newMsg} onChange={e=>setNewMsg(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newMsg.trim())sendMessage()}} placeholder="Votre message au secrétariat social..." style={{flex:1,...fieldStyle}}/>
+                  <button onClick={sendMessage} disabled={!newMsg.trim()} style={{padding:'10px 20px',borderRadius:8,border:'none',background:newMsg.trim()?'linear-gradient(135deg,#22c55e,#16a34a)':'#333',color:newMsg.trim()?'#fff':'#666',fontWeight:600,fontSize:12,cursor:newMsg.trim()?'pointer':'not-allowed'}}>Envoyer</button>
+                </div>
+              </div>
+              
+              {/* Quick contacts */}
+              <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14,alignSelf:'start'}}>
+                <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:12}}>🎯 Votre secrétariat</div>
+                <div style={{fontSize:12,color:'#e5e5e5',marginBottom:4}}>Aureus Social Pro</div>
+                <div style={{fontSize:10,color:'#888',marginBottom:10}}>Secrétariat social agréé</div>
+                <div style={{fontSize:10,color:'#888',lineHeight:1.8}}>
+                  📧 contact@aureussocial.be<br/>
+                  📞 +32 2 000 00 00<br/>
+                  🏢 Bruxelles, Belgique
+                </div>
+                <div style={{marginTop:12,padding:10,background:'rgba(34,197,94,.06)',borderRadius:8,fontSize:10,color:'#22c55e'}}>
+                  ✅ Temps de réponse moyen : 4h
+                </div>
+              </div>
+            </div>
+          </div>}
+
+          {/* ═══ MODIFICATIONS ═══ */}
+          {tab==='modifications'&&<div>
+            <h2 style={{fontSize:20,fontWeight:700,color:'#e5e5e5',margin:'0 0 4px'}}>✏️ Demandes de Modification</h2>
+            <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Proposez des modifications — Le secrétariat social valide</p>
+            
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:24}}>
+              {[{type:'nouvel_employe',icon:'👤',label:'Nouvel employé',desc:'Signaler une nouvelle embauche'},
+                {type:'depart',icon:'🚪',label:'Départ employé',desc:'Signaler un départ / fin de contrat'},
+                {type:'changement_adresse',icon:'🏠',label:'Changement adresse',desc:'Adresse employé ou société'},
+                {type:'changement_iban',icon:'🏦',label:'Changement IBAN',desc:'Nouveau compte bancaire'},
+                {type:'changement_horaire',icon:'⏰',label:'Changement horaire',desc:'Modification temps de travail'},
+                {type:'autre',icon:'📝',label:'Autre modification',desc:'Toute autre demande'}
+              ].map((m,i)=><button key={i} onClick={()=>{
+                const details=prompt(m.label+'\n\nDécrivez la modification en détail :');
+                if(details)submitModification(m.type,{description:details,date:new Date().toISOString()});
+              }} style={{padding:18,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.08)',borderRadius:14,cursor:'pointer',textAlign:'left',fontFamily:'inherit'}} onMouseEnter={e=>e.currentTarget.style.borderColor='rgba(198,163,78,.25)'} onMouseLeave={e=>e.currentTarget.style.borderColor='rgba(198,163,78,.08)'}>
+                <div style={{fontSize:22,marginBottom:6}}>{m.icon}</div>
+                <div style={{fontSize:13,fontWeight:600,color:'#e5e5e5'}}>{m.label}</div>
+                <div style={{fontSize:10,color:'#888',marginTop:2}}>{m.desc}</div>
+              </button>)}
+            </div>
+
+            {modifications.length>0&&<div>
+              <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:10}}>📋 Historique des demandes</div>
+              {modifications.map((m,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',marginBottom:4,background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.04)',borderRadius:10}}>
+                <span style={{fontSize:9,padding:'2px 8px',borderRadius:6,fontWeight:600,
+                  background:m.status==='pending'?'rgba(234,179,8,.12)':m.status==='approved'?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)',
+                  color:m.status==='pending'?'#eab308':m.status==='approved'?'#22c55e':'#ef4444'
+                }}>{m.status==='pending'?'⏳':m.status==='approved'?'✅':'❌'}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,color:'#e5e5e5'}}>{m.type.replace(/_/g,' ')}</div>
+                  <div style={{fontSize:10,color:'#888'}}>{m.data?.description?.substring(0,80)||'—'}</div>
+                </div>
+                <span style={{fontSize:10,color:'#666'}}>{new Date(m.createdAt).toLocaleDateString('fr-BE')}</span>
+              </div>)}
+            </div>}
+          </div>}
+
+          {/* ═══ KPI DASHBOARD ═══ */}
+          {tab==='kpi'&&<div>
+            <h2 style={{fontSize:20,fontWeight:700,color:'#e5e5e5',margin:'0 0 20px'}}>📊 Dashboard</h2>
+            
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:24}}>
+              {[{v:emps.length,l:'Effectif total',c:'#c6a34e',i:'👥'},
+                {v:emps.filter(e=>(e.contractType||'CDI')==='CDI').length,l:'CDI',c:'#22c55e',i:'📋'},
+                {v:emps.filter(e=>(e.contractType)==='CDD').length,l:'CDD',c:'#eab308',i:'⏱'},
+                {v:f2(emps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0)),l:'Masse salariale brute',c:'#3b82f6',i:'💰'}
+              ].map((k,i)=><div key={i} style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'20',borderRadius:14,textAlign:'center'}}>
+                <div style={{fontSize:16,marginBottom:6}}>{k.i}</div>
+                <div style={{fontSize:24,fontWeight:700,color:k.c}}>{k.v}</div>
+                <div style={{fontSize:10,color:'#888',marginTop:2}}>{k.l}</div>
+              </div>)}
+            </div>
+
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+                <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:14}}>💰 Coûts estimés</div>
+                {(()=>{
+                  const totalBrut=emps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0);
+                  const onssP=Math.round(totalBrut*0.2507);
+                  const cout=totalBrut+onssP;
+                  return [{l:'Brut mensuel total',v:totalBrut,c:'#e5e5e5'},
+                    {l:'ONSS patronal (25.07%)',v:onssP,c:'#a855f7'},
+                    {l:'Coût mensuel estimé',v:cout,c:'#c6a34e'},
+                    {l:'Coût annuel estimé',v:cout*12,c:'#22c55e'}
+                  ].map((r,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12}}>
+                    <span style={{color:'#888'}}>{r.l}</span>
+                    <span style={{color:r.c,fontWeight:600}}>{f2(r.v)}€</span>
+                  </div>);
+                })()}
+              </div>
+              <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(59,130,246,.1)',borderRadius:14}}>
+                <div style={{fontSize:14,fontWeight:600,color:'#3b82f6',marginBottom:14}}>📊 Répartition</div>
+                {(()=>{
+                  const h=emps.filter(e=>(e.gender||e.sexe)==='M').length;
+                  const fe=emps.filter(e=>(e.gender||e.sexe)==='F').length;
+                  const tp=emps.filter(e=>e.regime&&e.regime<100).length;
+                  return [{l:'Hommes',v:h},{l:'Femmes',v:fe},{l:'Non renseigné',v:emps.length-h-fe},{l:'Temps plein',v:emps.length-tp},{l:'Temps partiel',v:tp}
+                  ].map((r,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12}}>
+                    <span style={{color:'#888'}}>{r.l}</span>
+                    <span style={{color:'#e5e5e5',fontWeight:500}}>{r.v}</span>
+                  </div>);
+                })()}
+              </div>
+            </div>
+          </div>}
+        </div>
+      </div>
+    </div>;
+  };
+
+  // ═══ ADMIN: Portail Manager (voir les demandes des clients) ═══
+  const PortalManager=({s,d,supabase})=>{
+    const [portalData,setPortalData]=useState({});
+    const [pmTab,setPmTab]=useState('demandes');
+    
+    useEffect(()=>{
+      if(!supabase)return;
+      const load=async()=>{
+        try{
+          const{data}=await supabase.from('app_state').select('key,val').like('key','portal_%');
+          if(data){
+            const pd={};
+            data.forEach(d2=>{try{pd[d2.key]=typeof d2.val==='string'?JSON.parse(d2.val):d2.val;}catch(e){}});
+            setPortalData(pd);
+          }
+        }catch(e){}
+      };
+      load();
+    },[supabase]);
+
+    const allDemandes=Object.entries(portalData).reduce((a,[k,v])=>[...a,...(v.demandes||[]).map(d2=>({...d2,portalKey:k}))],[]).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    const allMessages=Object.entries(portalData).reduce((a,[k,v])=>[...a,...(v.messages||[]).map(m=>({...m,portalKey:k}))],[]).sort((a,b)=>new Date(b.date)-new Date(a.date));
+    const allModifications=Object.entries(portalData).reduce((a,[k,v])=>[...a,...(v.modifications||[]).map(m=>({...m,portalKey:k}))],[]).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+
+    const updateDemande=async(portalKey,demandeId,newStatus,comment)=>{
+      const pd={...portalData};
+      if(pd[portalKey]?.demandes){
+        pd[portalKey].demandes=pd[portalKey].demandes.map(d2=>d2.id===demandeId?{...d2,status:newStatus,adminComment:comment||'',reviewedAt:new Date().toISOString()}:d2);
+        setPortalData(pd);
+        try{
+          await supabase.from('app_state').upsert({key:portalKey,val:JSON.stringify(pd[portalKey]),updated_at:new Date().toISOString()},{onConflict:'key'});
+        }catch(e){}
+      }
+    };
+
+    const updateModification=async(portalKey,modId,newStatus)=>{
+      const pd={...portalData};
+      if(pd[portalKey]?.modifications){
+        pd[portalKey].modifications=pd[portalKey].modifications.map(m=>m.id===modId?{...m,status:newStatus,reviewedAt:new Date().toISOString()}:m);
+        setPortalData(pd);
+        try{
+          await supabase.from('app_state').upsert({key:portalKey,val:JSON.stringify(pd[portalKey]),updated_at:new Date().toISOString()},{onConflict:'key'});
+        }catch(e){}
+      }
+    };
+
+    const replyMessage=async(portalKey,text)=>{
+      if(!text)return;
+      const pd={...portalData};
+      if(pd[portalKey]){
+        const msg={id:'MSG-'+Date.now(),from:'secretariat',text,date:new Date().toISOString(),category:'general'};
+        pd[portalKey].messages=[msg,...(pd[portalKey].messages||[])];
+        setPortalData(pd);
+        try{
+          await supabase.from('app_state').upsert({key:portalKey,val:JSON.stringify(pd[portalKey]),updated_at:new Date().toISOString()},{onConflict:'key'});
+        }catch(e){}
+      }
+    };
+
+    return <div style={{padding:24}}>
+      <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>🏢 Gestion Portail Clients</h2>
+      <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Demandes, messages et modifications des clients employeurs</p>
+
+      <div style={{display:'flex',gap:4,marginBottom:20}}>
+        {[{id:'demandes',l:'🏖 Demandes ('+allDemandes.filter(d2=>d2.status==='pending').length+')'},{id:'messages',l:'💬 Messages ('+allMessages.filter(m=>m.from==='client').length+')'},{id:'modifications',l:'✏️ Modifications ('+allModifications.filter(m=>m.status==='pending').length+')'},{id:'prestations',l:'📝 Prestations'}].map(tb=>
+          <button key={tb.id} onClick={()=>setPmTab(tb.id)} style={{padding:'10px 14px',borderRadius:10,border:pmTab===tb.id?'1px solid rgba(198,163,78,.3)':'1px solid rgba(255,255,255,.05)',background:pmTab===tb.id?'rgba(198,163,78,.12)':'rgba(255,255,255,.03)',color:pmTab===tb.id?'#c6a34e':'#888',fontSize:11,fontWeight:pmTab===tb.id?600:400,cursor:'pointer'}}>{tb.l}</button>)}
+      </div>
+
+      {/* Demandes */}
+      {pmTab==='demandes'&&<div>
+        {allDemandes.length===0?<div style={{textAlign:'center',padding:40,color:'#888'}}>Aucune demande client</div>:
+        allDemandes.map((d2,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:14,padding:'12px 16px',marginBottom:6,background:d2.status==='pending'?'rgba(234,179,8,.04)':'rgba(255,255,255,.02)',border:'1px solid '+(d2.status==='pending'?'rgba(234,179,8,.12)':'rgba(255,255,255,.04)'),borderRadius:12}}>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:500,color:'#e5e5e5'}}>{d2.empName} — {d2.type}</div>
+            <div style={{fontSize:10,color:'#888'}}>{d2.dateDebut}{d2.dateFin?' → '+d2.dateFin:''} · {d2.jours}j · Client: {d2.createdBy}</div>
+            {d2.motif&&<div style={{fontSize:10,color:'#666',marginTop:2}}>{d2.motif}</div>}
+          </div>
+          <span style={{fontSize:9,padding:'3px 8px',borderRadius:6,fontWeight:600,background:d2.status==='pending'?'rgba(234,179,8,.12)':d2.status==='approved'?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)',color:d2.status==='pending'?'#eab308':d2.status==='approved'?'#22c55e':'#ef4444'}}>{d2.status}</span>
+          {d2.status==='pending'&&<>
+            <button onClick={()=>{const c=prompt('Commentaire (optionnel):');updateDemande(d2.portalKey,d2.id,'approved',c);}} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#22c55e',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>✅ Approuver</button>
+            <button onClick={()=>{const c=prompt('Motif du refus:');if(c)updateDemande(d2.portalKey,d2.id,'rejected',c);}} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'rgba(239,68,68,.15)',color:'#ef4444',fontSize:11,fontWeight:600,cursor:'pointer'}}>❌ Refuser</button>
+          </>}
+        </div>)}
+      </div>}
+
+      {/* Messages */}
+      {pmTab==='messages'&&<div>
+        {allMessages.length===0?<div style={{textAlign:'center',padding:40,color:'#888'}}>Aucun message</div>:
+        allMessages.filter(m=>m.from==='client').slice(0,30).map((m,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:14,padding:'10px 16px',marginBottom:4,background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.04)',borderRadius:10}}>
+          <span style={{fontSize:9,padding:'2px 6px',borderRadius:4,background:m.category==='urgent'?'rgba(239,68,68,.12)':'rgba(59,130,246,.12)',color:m.category==='urgent'?'#ef4444':'#3b82f6'}}>{m.category}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:12,color:'#e5e5e5'}}>{m.text.substring(0,100)}</div>
+            <div style={{fontSize:10,color:'#888'}}>{m.fromEmail} · {new Date(m.date).toLocaleString('fr-BE')}</div>
+          </div>
+          <button onClick={()=>{const reply=prompt('Répondre:');if(reply)replyMessage(m.portalKey,reply);}} style={{padding:'5px 12px',borderRadius:6,border:'none',background:'rgba(198,163,78,.1)',color:'#c6a34e',fontSize:10,cursor:'pointer'}}>💬 Répondre</button>
+        </div>)}
+      </div>}
+
+      {/* Modifications */}
+      {pmTab==='modifications'&&<div>
+        {allModifications.length===0?<div style={{textAlign:'center',padding:40,color:'#888'}}>Aucune demande de modification</div>:
+        allModifications.map((m,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:14,padding:'10px 16px',marginBottom:4,background:m.status==='pending'?'rgba(234,179,8,.04)':'rgba(255,255,255,.02)',border:'1px solid '+(m.status==='pending'?'rgba(234,179,8,.12)':'rgba(255,255,255,.04)'),borderRadius:10}}>
+          <div style={{flex:1}}>
+            <div style={{fontSize:12,fontWeight:500,color:'#e5e5e5'}}>{m.type.replace(/_/g,' ')}</div>
+            <div style={{fontSize:10,color:'#888'}}>{m.data?.description?.substring(0,100)||'—'} · {m.createdBy}</div>
+          </div>
+          <span style={{fontSize:9,padding:'3px 8px',borderRadius:6,fontWeight:600,background:m.status==='pending'?'rgba(234,179,8,.12)':m.status==='approved'?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)',color:m.status==='pending'?'#eab308':m.status==='approved'?'#22c55e':'#ef4444'}}>{m.status}</span>
+          {m.status==='pending'&&<>
+            <button onClick={()=>updateModification(m.portalKey,m.id,'approved')} style={{padding:'5px 12px',borderRadius:6,border:'none',background:'#22c55e',color:'#fff',fontSize:10,fontWeight:600,cursor:'pointer'}}>✅</button>
+            <button onClick={()=>updateModification(m.portalKey,m.id,'rejected')} style={{padding:'5px 12px',borderRadius:6,border:'none',background:'rgba(239,68,68,.15)',color:'#ef4444',fontSize:10,fontWeight:600,cursor:'pointer'}}>❌</button>
+          </>}
+        </div>)}
+      </div>}
+
+      {/* Prestations */}
+      {pmTab==='prestations'&&<div>
+        <div style={{fontSize:13,color:'#888',marginBottom:14}}>Prestations encodées par les clients :</div>
+        {Object.entries(portalData).map(([key,val])=>{
+          const prest=val.prestations||{};
+          const months=Object.keys(prest);
+          if(months.length===0)return null;
+          return <div key={key} style={{marginBottom:16,padding:14,background:'rgba(255,255,255,.02)',border:'1px solid rgba(255,255,255,.04)',borderRadius:12}}>
+            <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:8}}>Client: {key.replace('portal_','')}</div>
+            {months.map(m=><div key={m} style={{fontSize:11,color:'#888',padding:'4px 0'}}>
+              📅 {m} — {prest[m]?.savedAt?'Sauvegardé le '+new Date(prest[m].savedAt).toLocaleString('fr-BE'):'Non sauvegardé'} — {Object.keys(prest[m]?.emps||{}).length} employés encodés
+            </div>)}
+          </div>;
+        })}
+      </div>}
+    </div>;
+  };
+
+const OnboardingWizard=({s,d})=>{
     const [step,setStep]=useState(1);
     const [ob,setOb]=useState({companyName:'',vat:'',bce:'',addr:'',cp:'200',email:'',phone:'',iban:'',employees:[]});
     const [empForm,setEmpForm]=useState({first:'',last:'',niss:'',brut:0,iban:'',email:'',contrat:'CDI',start:'',genre:'M',horaire:38});
@@ -6707,6 +7310,7 @@ const AutomationHub=({s,d})=>{
       case'commandcenter':return <CommandCenter s={s} d={d}/>;
       case'queue':return <ProcessingQueue s={s} d={d}/>;
       case'onboarding':return <OnboardingWizard s={s} d={d}/>;
+      case'portalmanager':return <PortalManager s={s} d={d} supabase={supabase}/>;
       case'team':return <TeamManagement supabase={supabase} user={user} userRole={userRole}/>;
       default:return <Dashboard s={s} d={d}/>;
     }
@@ -6727,7 +7331,7 @@ const AutomationHub=({s,d})=>{
       `}</style>
       
       {/* SIDEBAR */}
-      <style dangerouslySetInnerHTML={{__html:`@media print{aside,.no-print{display:none!important}main{margin-left:0!important;padding:10px!important}[data-payslip]{box-shadow:none!important;border-radius:0!important}}`}}/>
+      <style dangerouslySetInnerHTML={{__html:`@media print{aside,.no-print,nav,button,[class*="no-print"]{display:none!important;visibility:hidden!important}main{margin-left:0!important;padding:10px!important}[data-payslip]{box-shadow:none!important;border-radius:0!important;padding:20px!important}body,html{background:#fff!important}}`}}/>
       <aside className="no-print" style={{width:268,background:"linear-gradient(180deg,#080b14,#060810)",borderRight:'1px solid rgba(139,115,60,.1)',position:'fixed',top:0,left:0,bottom:0,display:'flex',flexDirection:'column',zIndex:100,boxShadow:'4px 0 30px rgba(0,0,0,.4)'}}>
         <div style={{padding:'24px 20px 16px',borderBottom:'1px solid rgba(139,115,60,.1)'}}>
           <div style={{display:'flex',alignItems:'center',gap:10}}>
@@ -8104,7 +8708,7 @@ function Payslips({s,d}) {
         </div>
         <div style={{marginTop:10,fontSize:10.5,color:'#bbb'}}>Versement: {emp.iban}</div>
         {/* CONDITIONS GÉNÉRALES INSTITUTIONNELLES */}
-        <div style={{marginTop:18,paddingTop:14,borderTop:'1px solid #e0dfda'}}>
+        <div className="no-print" style={{marginTop:18,paddingTop:14,borderTop:'1px solid #e0dfda'}}>
           <div style={{fontSize:8.5,color:'#bbb',textTransform:'uppercase',letterSpacing:'1.5px',fontWeight:600,marginBottom:8}}>Conditions générales</div>
           <div style={{fontSize:8,color:'#aaa',lineHeight:1.7,columnCount:2,columnGap:20}}>
             <p style={{margin:'0 0 4px'}}><b style={{color:'#999'}}>1. Confidentialité</b> — La présente fiche de paie est un document strictement confidentiel destiné exclusivement au travailleur mentionné ci-dessus. Toute reproduction, diffusion ou communication à des tiers est interdite sauf accord écrit de l'employeur.</p>
@@ -8123,7 +8727,7 @@ function Payslips({s,d}) {
         </div>
 
         {/* TABLEAU RÉCAPITULATIF SOUMISSION ONSS / PP PAR ÉLÉMENT */}
-        <div style={{marginTop:18,padding:14,background:"#f0efea",borderRadius:8}}>
+        <div className="no-print" style={{marginTop:18,padding:14,background:"#f0efea",borderRadius:8}}>
           <div style={{fontSize:9.5,color:'#999',textTransform:'uppercase',letterSpacing:'1px',fontWeight:600,marginBottom:10}}>Récapitulatif soumission ONSS & Précompte professionnel</div>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:10.5}}>
             <thead><tr style={{borderBottom:'2px solid #c6a34e'}}>
@@ -8200,7 +8804,7 @@ function Payslips({s,d}) {
         </div>
       </div>}
     </div>
-    {s.pays.length>0&&<C style={{marginTop:20,padding:0,overflow:'hidden'}}>
+    {s.pays.length>0&&<C className="no-print" style={{marginTop:20,padding:0,overflow:'hidden'}}>
       <div style={{padding:'14px 18px',borderBottom:'1px solid rgba(139,115,60,.1)'}}><div style={{fontSize:13,fontWeight:600,color:'#e8e6e0'}}>Historique</div></div>
       <Tbl cols={[
         {k:'p',l:"Période",b:1,c:'#c6a34e',r:r=>r.period},{k:'e',l:"Employé",r:r=>r.ename},
@@ -12008,7 +12612,8 @@ function generateDimonaXML(emp,type,co){
 }
 
 async function generatePayslipPDF(emp,r,period,co){
-  const blob=new Blob([],{type:'text/html'});const _payslipParts=[];const w={document:{write:function(h){_payslipParts.push(h)},close:function(){const fullHTML=_payslipParts.join('');const b=new Blob([fullHTML],{type:"text/html;charset=utf-8"});const u=URL.createObjectURL(b);const fname="Fiche_paie_"+empName.replace(/ /g,"_")+"_"+periodeStr.replace(/ /g,"_")+".html";const a=document.createElement("a");a.href=u;a.download=fname;a.style.display="none";document.body.appendChild(a);a.click();setTimeout(()=>{try{document.body.removeChild(a)}catch(e){}},5000);setTimeout(()=>{const iframe=document.createElement("iframe");iframe.style.cssText="position:fixed;top:0;left:0;width:100vw;height:100vh;border:none;z-index:99999;background:#fff";iframe.srcdoc=fullHTML;document.body.appendChild(iframe);setTimeout(()=>{try{iframe.contentWindow.focus();iframe.contentWindow.print()}catch(e){}const closeBtn=document.createElement("button");closeBtn.textContent="✕ Fermer";closeBtn.style.cssText="position:fixed;top:10px;right:10px;z-index:100000;padding:12px 24px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,.4)";closeBtn.onclick=()=>{document.body.removeChild(iframe);document.body.removeChild(closeBtn)};document.body.appendChild(closeBtn)},500)},200)}}};
+  try{
+  const _payslipHTML=[];const w={document:{write:function(h){_payslipHTML.push(h)},close:function(){try{const html=_payslipHTML.join('');if(!html||html.length<100){alert('Erreur: HTML vide');return;}const b=new Blob([html],{type:"text/html;charset=utf-8"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.setAttribute("href",u);a.setAttribute("download","Fiche_paie_"+empName.replace(/ /g,"_")+"_"+periodeStr.replace(/ /g,"_")+".html");a.style.cssText="display:none;position:fixed;top:0;left:0";document.body.appendChild(a);setTimeout(()=>{a.click();setTimeout(()=>{try{document.body.removeChild(a)}catch(e2){}URL.revokeObjectURL(u)},8000)},100)}catch(err){alert('Erreur download: '+err.message);}}}};
   const coName=co?.name||'Entreprise';
   const coVAT=co?.vat||'BE XXXX.XXX.XXX';
   const coAddr=co?.address||'';
@@ -12126,6 +12731,7 @@ ${mealV>0?`<div style="margin-top:6px;font-size:10px;color:#666">Cheques-repas: 
 <div style="text-align:center;margin-top:15px"><button onclick="window.print()" style="background:#c6a34e;color:#fff;border:none;padding:10px 30px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Imprimer / Sauvegarder PDF</button></div>
 </body></html>`);
   w.document.close();
+  }catch(err){alert('Erreur génération fiche: '+err.message);console.error(err);}
 }
 
 function calcPayroll(brut,statut,familial,charges,regime){
