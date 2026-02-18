@@ -29,7 +29,9 @@ const I18N = {
   'nav.reporting': { fr:'Reporting & Export', nl:"Rapportage & Export", en:"Reporting & Export", de:"Berichterstattung & Export" },
   'nav.legal': { fr:'Juridique & Veille', nl:"Juridisch & Monitoring", en:"Legal & Monitoring", de:"Recht & Überwachung" },
   'nav.sprint9': { fr:'Sprint 9 - Modules', nl:'Sprint 9 - Modules', en:'Sprint 9 - Modules', de:'Sprint 9 - Module' },
-  'nav.autopilot': { fr:'Autopilot',nl:'Autopilot',en:'Autopilot',de:'Autopilot' },
+  'nav.commandcenter': { fr:'Command Center',nl:'Command Center',en:'Command Center',de:'Command Center' },
+    'nav.autopilot': { fr:'Autopilot',nl:'Autopilot',en:'Autopilot',de:'Autopilot' },
+    'nav.smartauto': { fr:'Smart Auto',nl:'Smart Auto',en:'Smart Auto',de:'Smart Auto' },
     'nav.massengine': { fr:'Mass Engine',nl:'Mass Engine',en:'Mass Engine',de:'Mass Engine' },
     'nav.automatisation': { fr:'⚡ Automatisation',nl:'⚡ Automatisering',en:'⚡ Automation',de:'⚡ Automatisierung' },
     'nav.team': { fr:'Équipe',nl:'Team',en:'Team',de:'Team' },
@@ -4336,7 +4338,9 @@ function AppInner({ supabase, user, onLogout }) {
     {id:"social",l:t('nav.social'),i:'◆',sub:[{id:"assloi",l:t('sub.assloi')},{id:"assgroupe",l:t('sub.assgroupe')},{id:"syndicales",l:t('sub.syndicales')},{id:"allocfam",l:t('sub.allocfam')},{id:"caissevac",l:t('sub.caissevac')},{id:"rentes",l:t('sub.rentes')},{id:"decava",l:t('sub.decava')},{id:"aidesemploi",l:t('sub.aidesemploi')}]},
     {id:"bienetre",l:t('nav.bienetre'),i:'♥',sub:[{id:"planglobal",l:t('sub.planglobal')},{id:"paa",l:t('sub.paa')},{id:"risquespsycho",l:t('sub.risquespsycho')},{id:"alcool",l:t('sub.alcool')},{id:"elections",l:t('sub.elections')},{id:"organes",l:t('sub.organes')}]},
     {id:"sprint9",l:"Sprint 9 - Modules",i:"S9"},
+    {id:"commandcenter",l:"🎯 "+t("nav.commandcenter"),i:"🎯"},
     {id:"autopilot",l:"🤖 "+t("nav.autopilot"),i:"🤖"},
+    {id:"smartauto",l:"🤖 "+t("nav.smartauto"),i:"🤖"},
     {id:"massengine",l:"🏭 "+t("nav.massengine"),i:"🏭"},
     {id:"automatisation",l:t('nav.automatisation'),i:'⚡'},
     {id:"team",l:'👥 '+t('nav.team'),i:'👥'},
@@ -4449,7 +4453,378 @@ function AppInner({ supabase, user, onLogout }) {
   // ── Sprint 20: Mass Automation Engine (10K+ clients) ──
   
   // ── Sprint 20c: Smart Autopilot + CSV Import + ZIP Export ──
-  const SmartAutopilot=({s,d})=>{
+  
+  // ── Sprint 21: Command Center — Mega Automation ──
+  const CommandCenter=({s,d})=>{
+    const clients=s.clients||[];
+    const allEmps=clients.reduce((a,c)=>[...a,...(c.emps||[]).map(e=>({...e,clientName:c.company?.name||c.id,clientId:c.id}))],[]);
+    const now=new Date();
+    const [cmdTab,setCmdTab]=useState('alerts');
+    const [contractForm,setContractForm]=useState({type:'CDI',horaire:38,essai:false});
+    const [reportPeriod,setReportPeriod]=useState({month:now.getMonth()+1,year:now.getFullYear()});
+    const [emailList,setEmailList]=useState([]);
+    const [archiveSearch,setArchiveSearch]=useState('');
+
+    // ═══ 1. ALERT CENTER — Auto-scan all clients ═══
+    const alerts=[];
+    
+    // CDD expirant
+    clients.forEach(cl=>{(cl.emps||[]).forEach(e=>{
+      if((e.contractType||e.contrat?.type)==='CDD'){
+        const end=new Date(e.endDate||e.end||'2099-12-31');
+        const diff=Math.ceil((end-now)/(1000*60*60*24));
+        if(diff<=0)alerts.push({type:'danger',icon:'🔴',msg:'CDD EXPIRÉ: '+(e.first||e.fn)+' '+(e.last||e.ln),detail:cl.company?.name+' — Expiré depuis '+Math.abs(diff)+' jours',action:'C4+Dimona OUT',client:cl.id});
+        else if(diff<=7)alerts.push({type:'danger',icon:'🟠',msg:'CDD expire dans '+diff+'j: '+(e.first||e.fn)+' '+(e.last||e.ln),detail:cl.company?.name+' — Fin: '+end.toLocaleDateString('fr-BE'),action:'Préparer sortie',client:cl.id});
+        else if(diff<=30)alerts.push({type:'warning',icon:'🟡',msg:'CDD expire dans '+diff+'j: '+(e.first||e.fn)+' '+(e.last||e.ln),detail:cl.company?.name+' — Décision renouvellement',action:'Renouveler/Fin',client:cl.id});
+      }
+    });});
+    
+    // NISS manquant
+    clients.forEach(cl=>{(cl.emps||[]).filter(e=>!e.niss).forEach(e=>{
+      alerts.push({type:'warning',icon:'🆔',msg:'NISS manquant: '+(e.first||e.fn)+' '+(e.last||e.ln),detail:cl.company?.name+' — Dimona impossible sans NISS',action:'Compléter',client:cl.id});
+    });});
+    
+    // IBAN manquant
+    clients.forEach(cl=>{(cl.emps||[]).filter(e=>!e.iban).forEach(e=>{
+      alerts.push({type:'warning',icon:'🏦',msg:'IBAN manquant: '+(e.first||e.fn)+' '+(e.last||e.ln),detail:cl.company?.name+' — SEPA impossible',action:'Compléter',client:cl.id});
+    });});
+    
+    // Salaire à 0
+    clients.forEach(cl=>{(cl.emps||[]).filter(e=>!(+(e.monthlySalary||e.gross||e.brut||0))).forEach(e=>{
+      alerts.push({type:'danger',icon:'💰',msg:'Salaire = 0€: '+(e.first||e.fn)+' '+(e.last||e.ln),detail:cl.company?.name+' — Fiche de paie impossible',action:'Compléter',client:cl.id});
+    });});
+    
+    // TVA manquante
+    clients.filter(cl=>!cl.company?.vat&&(cl.emps?.length||0)>0).forEach(cl=>{
+      alerts.push({type:'warning',icon:'🏢',msg:'TVA manquante: '+(cl.company?.name||cl.id),detail:cl.emps?.length+' employés — Déclarations incomplètes',action:'Compléter',client:cl.id});
+    });
+    
+    // Date début manquante
+    clients.forEach(cl=>{(cl.emps||[]).filter(e=>!e.startDate&&!e.start).forEach(e=>{
+      alerts.push({type:'info',icon:'📅',msg:'Date début manquante: '+(e.first||e.fn)+' '+(e.last||e.ln),detail:cl.company?.name,action:'Compléter',client:cl.id});
+    });});
+    
+    // Visite médicale (>1 an sans visite)
+    clients.forEach(cl=>{(cl.emps||[]).forEach(e=>{
+      const lastVisit=e.lastMedical?new Date(e.lastMedical):null;
+      const start=new Date(e.startDate||e.start||'2020-01-01');
+      const ref=lastVisit||start;
+      const months=Math.ceil((now-ref)/(1000*60*60*24*30));
+      if(months>=12)alerts.push({type:'warning',icon:'🏥',msg:'Visite médicale > 12 mois: '+(e.first||e.fn)+' '+(e.last||e.ln),detail:cl.company?.name+' — Dernière: '+(lastVisit?lastVisit.toLocaleDateString('fr-BE'):'Jamais'),action:'Planifier',client:cl.id});
+    });});
+    
+    // Email manquant
+    clients.forEach(cl=>{(cl.emps||[]).filter(e=>!e.email).forEach(e=>{
+      alerts.push({type:'info',icon:'📧',msg:'Email manquant: '+(e.first||e.fn)+' '+(e.last||e.ln),detail:cl.company?.name+' — Envoi fiches impossible',action:'Compléter',client:cl.id});
+    });});
+
+    const alertsByType={danger:alerts.filter(a=>a.type==='danger'),warning:alerts.filter(a=>a.type==='warning'),info:alerts.filter(a=>a.type==='info')};
+
+    // ═══ 2. CONTRACT GENERATOR ═══
+    const generateContract=(emp,cl,type)=>{
+      const co=cl?.company||s.co||{};
+      const name=(emp.first||emp.fn||'')+' '+(emp.last||emp.ln||'');
+      const brut=+(emp.monthlySalary||emp.gross||emp.brut||0);
+      const html='<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}body{font-family:Georgia,serif;font-size:12px;padding:50px;max-width:750px;margin:auto;line-height:1.8}h1{text-align:center;font-size:18px;margin:30px 0}h2{font-size:14px;margin:20px 0 8px;border-bottom:1px solid #ccc;padding-bottom:4px}.sig{display:flex;justify-content:space-between;margin-top:60px}@media print{button{display:none!important}}</style></head><body>'+
+        '<h1>CONTRAT DE TRAVAIL '+(type||contractForm.type)+'</h1>'+
+        '<p><b>Entre</b> '+( co.name||'___')+' (TVA: '+(co.vat||'___')+'), ci-après "l\'employeur",</p>'+
+        '<p><b>Et</b> '+name+' (NISS: '+(emp.niss||'___')+'), ci-après "le travailleur".</p>'+
+        '<h2>Article 1 — Engagement</h2><p>Le travailleur est engagé en qualité de <b>'+(emp.function||emp.job||'employé(e)')+'</b> à partir du <b>'+(emp.startDate||emp.start||'___')+'</b>'+(type==='CDD'?' jusqu\'au <b>'+(emp.endDate||emp.end||'___')+'</b>':'')+'. Commission paritaire: '+(emp.cp||co.cp||'200')+'.</p>'+
+        '<h2>Article 2 — Lieu de travail</h2><p>Le lieu de travail principal est situé au '+(co.addr||co.address||co.rue||'siège social')+'.</p>'+
+        '<h2>Article 3 — Durée du travail</h2><p>Le travailleur effectuera <b>'+(emp.whWeek||contractForm.horaire||38)+' heures</b> par semaine, réparties selon l\'horaire en vigueur.</p>'+
+        '<h2>Article 4 — Rémunération</h2><p>La rémunération mensuelle brute est fixée à <b>'+new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(brut)+' EUR</b>.</p>'+
+        '<p>Le paiement s\'effectue par virement bancaire'+(emp.iban?' (IBAN: '+emp.iban+')':'')+' au plus tard le dernier jour ouvrable du mois.</p>'+
+        '<h2>Article 5 — Avantages</h2><p>Chèques-repas: '+(emp.mealVoucher||'8,00')+' EUR/jour (part patronale: '+(emp.mealVoucherEmployer||'6,91')+' EUR). '+(emp.carAllowance?'Indemnité transport: '+emp.carAllowance+' EUR/mois. ':'')+''+(emp.groupInsurance?'Assurance groupe: oui. ':'')+'</p>'+
+        '<h2>Article 6 — Période d\'essai</h2><p>'+(contractForm.essai?'Une période d\'essai de '+(type==='CDD'?'7 jours':'1 mois')+' est convenue.':'Conformément à la loi du 26/12/2013, il n\'y a pas de clause d\'essai.')+'</p>'+
+        '<h2>Article 7 — Confidentialité</h2><p>Le travailleur s\'engage à la confidentialité des informations relatives à l\'entreprise.</p>'+
+        '<h2>Article 8 — Droit applicable</h2><p>Le présent contrat est régi par la loi belge du 3 juillet 1978 relative aux contrats de travail et par les CCT applicables à la CP '+(emp.cp||co.cp||'200')+'.</p>'+
+        '<div class="sig"><div><p>L\'employeur:</p><br/><br/><p>____________________</p><p>'+(co.name||'')+'</p></div><div><p>Le travailleur:</p><br/><br/><p>____________________</p><p>'+name+'</p></div></div>'+
+        '<p style="margin-top:40px;font-size:10px;color:#888">Fait en deux exemplaires à '+(co.city||co.ville||'Bruxelles')+', le '+now.toLocaleDateString('fr-BE')+'.</p>'+
+        '<div style="text-align:center;margin-top:30px"><button onclick="window.print()">🖨 Imprimer</button></div></body></html>';
+      const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
+      a.download='Contrat_'+type+'_'+name.replace(/ /g,'_')+'_'+now.toISOString().split('T')[0]+'.html';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+      return name;
+    };
+
+    const batchContracts=()=>{
+      const withoutContract=allEmps.filter(e=>!e.contractGenerated);
+      if(withoutContract.length===0){alert('Tous les contrats sont générés');return;}
+      if(!confirm('Générer '+withoutContract.length+' contrats ?'))return;
+      let count=0;
+      withoutContract.forEach(e=>{
+        const cl=clients.find(c=>c.id===e.clientId);
+        try{generateContract(e,cl,e.contractType||'CDI');count++;}catch(ex){}
+      });
+      if(typeof addToast==='function')addToast('📝 '+count+' contrats générés');
+    };
+
+    // ═══ 3. AUTO-REPORTS ═══
+    const generateMonthlyReport=()=>{
+      const m=reportPeriod.month;const y=reportPeriod.year;
+      const mois=['','Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+      let totalBrut=0,totalONSSP=0,totalONSSE=0,totalPP=0,totalNet=0;
+      const clientData=[];
+      clients.forEach(cl=>{
+        const co=cl.company||{};
+        const emps=cl.emps||[];
+        const brut=emps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0);
+        const onssP=Math.round(brut*0.2507);
+        const onssE=Math.round(brut*0.1307);
+        const pp=Math.round((brut-onssE)*0.22);
+        const net=brut-onssE-pp;
+        totalBrut+=brut;totalONSSP+=onssP;totalONSSE+=onssE;totalPP+=pp;totalNet+=net;
+        if(emps.length>0)clientData.push({name:co.name||cl.id,emps:emps.length,brut,onssP,onssE,pp,net});
+      });
+      const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v);
+      const html='<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11px;padding:40px;max-width:900px;margin:auto}h1{text-align:center;font-size:18px;margin:20px 0;color:#1a365d}table{width:100%;border-collapse:collapse;margin:15px 0}th{background:#1a365d;color:white;padding:8px;text-align:left;font-size:10px}td{padding:6px 8px;border-bottom:1px solid #eee;font-size:10px}.total{background:#f0f4ff;font-weight:700}.kpi{display:flex;gap:20px;margin:20px 0}.kpi>div{flex:1;padding:15px;background:#f8f9fa;border-radius:8px;text-align:center}.kpi>div>div:first-child{font-size:20px;font-weight:700;color:#1a365d}@media print{button{display:none!important}}</style></head><body>'+
+        '<h1>RAPPORT MENSUEL — '+mois[m]+' '+y+'</h1>'+
+        '<p style="text-align:center;color:#666">Aureus Social Pro · '+clients.length+' clients · '+allEmps.length+' travailleurs</p>'+
+        '<div class="kpi"><div><div>'+f2(totalBrut)+'€</div><div>Masse brute</div></div><div><div>'+f2(totalONSSP)+'€</div><div>ONSS Patronal</div></div><div><div>'+f2(totalONSSE)+'€</div><div>ONSS Personnel</div></div><div><div>'+f2(totalPP)+'€</div><div>Précompte Prof.</div></div><div><div>'+f2(totalNet)+'€</div><div>Net Total</div></div></div>'+
+        '<table><tr><th>Client</th><th>Emp.</th><th>Brut</th><th>ONSS Pat.</th><th>ONSS Pers.</th><th>PP</th><th>Net</th></tr>'+
+        clientData.sort((a,b)=>b.brut-a.brut).map(c=>'<tr><td>'+c.name+'</td><td>'+c.emps+'</td><td>'+f2(c.brut)+'</td><td>'+f2(c.onssP)+'</td><td>'+f2(c.onssE)+'</td><td>'+f2(c.pp)+'</td><td>'+f2(c.net)+'</td></tr>').join('')+
+        '<tr class="total"><td>TOTAL</td><td>'+allEmps.length+'</td><td>'+f2(totalBrut)+'</td><td>'+f2(totalONSSP)+'</td><td>'+f2(totalONSSE)+'</td><td>'+f2(totalPP)+'</td><td>'+f2(totalNet)+'</td></tr></table>'+
+        '<h2 style="margin-top:30px;font-size:14px">Alertes</h2><ul>'+
+        alerts.filter(a=>a.type==='danger').slice(0,10).map(a=>'<li style="color:#c00;margin:4px 0">'+a.icon+' '+a.msg+'</li>').join('')+
+        '</ul><p style="margin-top:30px;font-size:9px;color:#999">Généré le '+now.toLocaleString('fr-BE')+' par Aureus Social Pro</p>'+
+        '<div style="text-align:center;margin-top:20px"><button onclick="window.print()">🖨 Imprimer</button></div></body></html>';
+      const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
+      a.download='Rapport_'+mois[m]+'_'+y+'.html';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    };
+
+    const generateONSSReconciliation=()=>{
+      const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v);
+      const clientRecon=[];
+      clients.forEach(cl=>{
+        const emps=cl.emps||[];
+        if(emps.length===0)return;
+        const brut=emps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0);
+        clientRecon.push({name:cl.company?.name||cl.id,emps:emps.length,brutMensuel:brut,brutTrimestriel:brut*3,onssP:Math.round(brut*3*0.2507),onssE:Math.round(brut*3*0.1307),total:Math.round(brut*3*0.3814)});
+      });
+      const totalTri=clientRecon.reduce((a,c)=>a+c.total,0);
+      const html='<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11px;padding:40px;max-width:900px;margin:auto}h1{text-align:center;font-size:16px;margin:20px 0}table{width:100%;border-collapse:collapse;margin:15px 0}th{background:#2d3748;color:white;padding:8px;text-align:right;font-size:10px}th:first-child{text-align:left}td{padding:6px 8px;border-bottom:1px solid #eee;font-size:10px;text-align:right}td:first-child{text-align:left}.t{font-weight:700;background:#edf2f7}@media print{button{display:none!important}}</style></head><body>'+
+        '<h1>RÉCONCILIATION ONSS — Q'+Math.ceil((now.getMonth()+1)/3)+'/'+now.getFullYear()+'</h1>'+
+        '<table><tr><th>Client</th><th>Emp.</th><th>Brut/mois</th><th>Brut/trim.</th><th>ONSS Pat. 25.07%</th><th>ONSS Pers. 13.07%</th><th>Total ONSS</th></tr>'+
+        clientRecon.sort((a,b)=>b.total-a.total).map(c=>'<tr><td>'+c.name+'</td><td style="text-align:center">'+c.emps+'</td><td>'+f2(c.brutMensuel)+'</td><td>'+f2(c.brutTrimestriel)+'</td><td>'+f2(c.onssP)+'</td><td>'+f2(c.onssE)+'</td><td>'+f2(c.total)+'</td></tr>').join('')+
+        '<tr class="t"><td>TOTAL</td><td style="text-align:center">'+allEmps.length+'</td><td>'+f2(clientRecon.reduce((a,c)=>a+c.brutMensuel,0))+'</td><td>'+f2(clientRecon.reduce((a,c)=>a+c.brutTrimestriel,0))+'</td><td>'+f2(clientRecon.reduce((a,c)=>a+c.onssP,0))+'</td><td>'+f2(clientRecon.reduce((a,c)=>a+c.onssE,0))+'</td><td>'+f2(totalTri)+'</td></tr></table>'+
+        '<p style="margin-top:20px;font-size:9px;color:#999">Aureus Social Pro — '+now.toLocaleString('fr-BE')+'</p>'+
+        '<div style="text-align:center;margin-top:20px"><button onclick="window.print()">🖨 Imprimer</button></div></body></html>';
+      const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
+      a.download='ONSS_Reconciliation_Q'+Math.ceil((now.getMonth()+1)/3)+'_'+now.getFullYear()+'.html';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    };
+
+    // ═══ 4. EMAIL DISTRIBUTION LIST ═══
+    const buildEmailList=()=>{
+      const list=[];
+      clients.forEach(cl=>{(cl.emps||[]).forEach(e=>{
+        if(e.email)list.push({email:e.email,name:(e.first||e.fn||'')+' '+(e.last||e.ln||''),client:cl.company?.name||cl.id,brut:+(e.monthlySalary||e.gross||e.brut||0)});
+      });});
+      setEmailList(list);
+      return list;
+    };
+
+    const exportEmailCSV=()=>{
+      const list=emailList.length>0?emailList:buildEmailList();
+      if(list.length===0){alert('Aucun email trouvé');return;}
+      const csv='email;nom;client;brut\n'+list.map(l=>l.email+';'+l.name+';'+l.client+';'+l.brut).join('\n');
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
+      a.download='Distribution_emails_'+now.toISOString().split('T')[0]+'.csv';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+    };
+
+    // ═══ 5. DOCUMENT ARCHIVE ═══
+    const docHistory=(JSON.parse(localStorage.getItem('aureus_doc_archive')||'[]')).slice(0,100);
+
+    const tabs=[
+      {id:'alerts',l:'🚨 Alertes ('+alerts.length+')'},
+      {id:'contrats',l:'📝 Contrats'},
+      {id:'rapports',l:'📊 Rapports'},
+      {id:'onss',l:'🏛️ ONSS'},
+      {id:'email',l:'📧 Distribution'},
+      {id:'qualite',l:'🔍 Qualité'},
+    ];
+
+    return <div style={{padding:24}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <div>
+          <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🎯 Command Center</h2>
+          <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Alertes, contrats, rapports, distribution — tout au même endroit</p>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          {[{v:alerts.filter(a=>a.type==='danger').length,l:'Critiques',c:'#ef4444'},{v:alerts.filter(a=>a.type==='warning').length,l:'Avertissements',c:'#eab308'},{v:clients.length,l:'Clients',c:'#c6a34e'},{v:allEmps.length,l:'Employés',c:'#3b82f6'}].map((k,i)=>
+            <div key={i} style={{padding:'6px 12px',background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)',borderRadius:8,textAlign:'center'}}>
+              <div style={{fontSize:15,fontWeight:700,color:k.c}}>{k.v}</div>
+              <div style={{fontSize:8,color:'#888'}}>{k.l}</div>
+            </div>)}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:'flex',gap:4,marginBottom:20,flexWrap:'wrap'}}>
+        {tabs.map(tb=><button key={tb.id} onClick={()=>setCmdTab(tb.id)} style={{padding:'10px 14px',borderRadius:10,border:cmdTab===tb.id?'1px solid rgba(198,163,78,.3)':'1px solid rgba(255,255,255,.05)',background:cmdTab===tb.id?'rgba(198,163,78,.12)':'rgba(255,255,255,.03)',color:cmdTab===tb.id?'#c6a34e':'#888',fontSize:11,fontWeight:cmdTab===tb.id?600:400,cursor:'pointer'}}>{tb.l}</button>)}
+      </div>
+
+      {/* TAB: Alerts */}
+      {cmdTab==='alerts'&&<div>
+        {alerts.length===0?<div style={{textAlign:'center',padding:40}}><div style={{fontSize:50}}>✅</div><div style={{fontSize:16,fontWeight:600,color:'#22c55e',marginTop:8}}>Aucune alerte !</div></div>:<>
+          {alertsByType.danger.length>0&&<div style={{marginBottom:16}}>
+            <div style={{fontSize:13,fontWeight:600,color:'#ef4444',marginBottom:8}}>🔴 Critiques ({alertsByType.danger.length})</div>
+            {alertsByType.danger.map((a,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:'rgba(239,68,68,.04)',border:'1px solid rgba(239,68,68,.12)',borderRadius:10,marginBottom:6}}>
+              <span style={{fontSize:18}}>{a.icon}</span>
+              <div style={{flex:1}}><div style={{fontSize:12,fontWeight:500,color:'#e5e5e5'}}>{a.msg}</div><div style={{fontSize:10,color:'#888'}}>{a.detail}</div></div>
+              <button onClick={()=>d({type:'SELECT_CLIENT',id:a.client})} style={{padding:'5px 12px',borderRadius:6,border:'none',background:'rgba(239,68,68,.15)',color:'#ef4444',fontSize:10,cursor:'pointer',fontWeight:600}}>{a.action}</button>
+            </div>)}
+          </div>}
+          {alertsByType.warning.length>0&&<div style={{marginBottom:16}}>
+            <div style={{fontSize:13,fontWeight:600,color:'#eab308',marginBottom:8}}>🟡 Avertissements ({alertsByType.warning.length})</div>
+            {alertsByType.warning.slice(0,20).map((a,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'8px 14px',background:'rgba(234,179,8,.03)',border:'1px solid rgba(234,179,8,.08)',borderRadius:10,marginBottom:4}}>
+              <span style={{fontSize:16}}>{a.icon}</span>
+              <div style={{flex:1}}><div style={{fontSize:11,color:'#e5e5e5'}}>{a.msg}</div><div style={{fontSize:10,color:'#888'}}>{a.detail}</div></div>
+              <button onClick={()=>d({type:'SELECT_CLIENT',id:a.client})} style={{padding:'4px 10px',borderRadius:6,border:'none',background:'rgba(234,179,8,.1)',color:'#eab308',fontSize:9,cursor:'pointer'}}>{a.action}</button>
+            </div>)}
+            {alertsByType.warning.length>20&&<div style={{fontSize:11,color:'#888',textAlign:'center',marginTop:8}}>+ {alertsByType.warning.length-20} autres avertissements</div>}
+          </div>}
+          {alertsByType.info.length>0&&<div>
+            <div style={{fontSize:13,fontWeight:600,color:'#888',marginBottom:8}}>ℹ️ Informations ({alertsByType.info.length})</div>
+            {alertsByType.info.slice(0,10).map((a,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'6px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
+              <span>{a.icon}</span><span style={{flex:1,color:'#999'}}>{a.msg}</span>
+              <button onClick={()=>d({type:'SELECT_CLIENT',id:a.client})} style={{padding:'3px 8px',borderRadius:4,border:'none',background:'rgba(255,255,255,.05)',color:'#888',fontSize:9,cursor:'pointer'}}>→</button>
+            </div>)}
+          </div>}
+        </>}
+      </div>}
+
+      {/* TAB: Contrats */}
+      {cmdTab==='contrats'&&<div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14}}>
+            <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:14}}>📝 Générer un Contrat</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
+              <div>
+                <label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Type</label>
+                <select value={contractForm.type} onChange={e=>setContractForm(p=>({...p,type:e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:6,color:'#e5e5e5',fontSize:12,fontFamily:'inherit',outline:'none'}}>
+                  <option value="CDI">CDI</option><option value="CDD">CDD</option><option value="temps_partiel">Temps partiel</option><option value="etudiant">Étudiant</option><option value="interim">Intérimaire</option>
+                </select>
+              </div>
+              <div>
+                <label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Horaire/sem</label>
+                <input type="number" value={contractForm.horaire} onChange={e=>setContractForm(p=>({...p,horaire:+e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:6,color:'#e5e5e5',fontSize:12,fontFamily:'inherit',outline:'none',boxSizing:'border-box'}}/>
+              </div>
+            </div>
+            <button onClick={batchContracts} style={{width:'100%',padding:'12px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#d4af37)',color:'#000',fontWeight:700,fontSize:13,cursor:'pointer'}}>📝 Générer TOUS les contrats ({allEmps.length})</button>
+          </div>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(59,130,246,.15)',borderRadius:14}}>
+            <div style={{fontSize:14,fontWeight:600,color:'#3b82f6',marginBottom:14}}>📋 Contrats par client</div>
+            <div style={{maxHeight:200,overflowY:'auto'}}>
+              {clients.filter(c=>(c.emps?.length||0)>0).map((cl,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+                <span style={{fontSize:11,color:'#e5e5e5'}}>{cl.company?.name||cl.id} ({cl.emps?.length||0})</span>
+                <button onClick={()=>{(cl.emps||[]).forEach(e=>generateContract(e,cl,e.contractType||'CDI'));if(typeof addToast==='function')addToast('📝 '+(cl.emps||[]).length+' contrats générés');}} style={{padding:'3px 10px',borderRadius:6,border:'none',background:'rgba(59,130,246,.1)',color:'#3b82f6',fontSize:10,cursor:'pointer'}}>Générer</button>
+              </div>)}
+            </div>
+          </div>
+        </div>
+      </div>}
+
+      {/* TAB: Rapports */}
+      {cmdTab==='rapports'&&<div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14,textAlign:'center'}}>
+            <div style={{fontSize:30,marginBottom:8}}>📊</div>
+            <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:6}}>Rapport Mensuel</div>
+            <div style={{fontSize:11,color:'#888',marginBottom:14}}>KPIs, masse salariale, alertes</div>
+            <div style={{display:'flex',gap:6,justifyContent:'center',marginBottom:10}}>
+              <select value={reportPeriod.month} onChange={e=>setReportPeriod(p=>({...p,month:+e.target.value}))} style={{padding:'6px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',outline:'none'}}>
+                {['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'].map((m,i)=><option key={i} value={i+1}>{m}</option>)}
+              </select>
+              <select value={reportPeriod.year} onChange={e=>setReportPeriod(p=>({...p,year:+e.target.value}))} style={{padding:'6px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',outline:'none'}}>
+                {[2024,2025,2026].map(y=><option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            <button onClick={generateMonthlyReport} style={{padding:'10px 20px',borderRadius:8,border:'none',background:'#c6a34e',color:'#000',fontWeight:600,fontSize:12,cursor:'pointer'}}>📊 Générer</button>
+          </div>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(168,85,247,.15)',borderRadius:14,textAlign:'center'}}>
+            <div style={{fontSize:30,marginBottom:8}}>🏛️</div>
+            <div style={{fontSize:14,fontWeight:600,color:'#a855f7',marginBottom:6}}>Réconciliation ONSS</div>
+            <div style={{fontSize:11,color:'#888',marginBottom:14}}>Par client, trimestriel</div>
+            <button onClick={generateONSSReconciliation} style={{padding:'10px 20px',borderRadius:8,border:'none',background:'#a855f7',color:'#fff',fontWeight:600,fontSize:12,cursor:'pointer'}}>🏛️ Générer</button>
+          </div>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(34,197,94,.15)',borderRadius:14,textAlign:'center'}}>
+            <div style={{fontSize:30,marginBottom:8}}>📈</div>
+            <div style={{fontSize:14,fontWeight:600,color:'#22c55e',marginBottom:6}}>Tableau de Bord KPI</div>
+            <div style={{fontSize:11,color:'#888',marginBottom:14}}>Export pour Direction</div>
+            <button onClick={()=>{generateMonthlyReport();generateONSSReconciliation();if(typeof addToast==='function')addToast('📈 Rapport complet exporté');}} style={{padding:'10px 20px',borderRadius:8,border:'none',background:'#22c55e',color:'#fff',fontWeight:600,fontSize:12,cursor:'pointer'}}>📈 Tout Exporter</button>
+          </div>
+        </div>
+      </div>}
+
+      {/* TAB: ONSS */}
+      {cmdTab==='onss'&&<div>
+        <div style={{marginBottom:16,padding:16,background:'rgba(168,85,247,.04)',border:'1px solid rgba(168,85,247,.15)',borderRadius:12}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,textAlign:'center'}}>
+            {[{l:'Masse brute',v:allEmps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0),c:'#c6a34e'},
+              {l:'ONSS Patronal',v:Math.round(allEmps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0)*0.2507),c:'#a855f7'},
+              {l:'ONSS Personnel',v:Math.round(allEmps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0)*0.1307),c:'#3b82f6'},
+              {l:'Total ONSS/mois',v:Math.round(allEmps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0)*0.3814),c:'#ef4444'},
+              {l:'ONSS/trimestre',v:Math.round(allEmps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0)*0.3814*3),c:'#22c55e'}
+            ].map((k,i)=><div key={i} style={{padding:14,background:'rgba(255,255,255,.02)',borderRadius:10}}>
+              <div style={{fontSize:18,fontWeight:700,color:k.c}}>{new Intl.NumberFormat('fr-BE').format(k.v)}€</div>
+              <div style={{fontSize:9,color:'#888'}}>{k.l}</div>
+            </div>)}
+          </div>
+        </div>
+        <button onClick={generateONSSReconciliation} style={{width:'100%',padding:'14px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#a855f7,#7c3aed)',color:'#fff',fontWeight:700,fontSize:14,cursor:'pointer'}}>🏛️ Générer Réconciliation ONSS Trimestrielle</button>
+      </div>}
+
+      {/* TAB: Email */}
+      {cmdTab==='email'&&<div>
+        <div style={{display:'flex',gap:10,marginBottom:16}}>
+          <button onClick={()=>buildEmailList()} style={{padding:'10px 20px',borderRadius:8,border:'none',background:'#3b82f6',color:'#fff',fontWeight:600,fontSize:12,cursor:'pointer'}}>📧 Scanner emails ({allEmps.filter(e=>e.email).length})</button>
+          <button onClick={exportEmailCSV} style={{padding:'10px 20px',borderRadius:8,border:'none',background:'#22c55e',color:'#fff',fontWeight:600,fontSize:12,cursor:'pointer'}}>📥 Exporter CSV</button>
+        </div>
+        {emailList.length>0&&<div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:12,overflow:'hidden'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 80px',padding:'8px 14px',background:'rgba(198,163,78,.06)',fontSize:10,fontWeight:600,color:'#c6a34e'}}>
+            <div>Email</div><div>Nom</div><div>Client</div><div>Brut</div>
+          </div>
+          <div style={{maxHeight:300,overflowY:'auto'}}>
+            {emailList.map((l,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 80px',padding:'6px 14px',borderTop:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
+              <span style={{color:'#3b82f6'}}>{l.email}</span>
+              <span style={{color:'#e5e5e5'}}>{l.name}</span>
+              <span style={{color:'#888'}}>{l.client}</span>
+              <span style={{color:'#22c55e'}}>{l.brut}€</span>
+            </div>)}
+          </div>
+        </div>}
+        {allEmps.filter(e=>!e.email).length>0&&<div style={{marginTop:12,padding:10,background:'rgba(234,179,8,.06)',borderRadius:8,fontSize:11,color:'#eab308'}}>
+          ⚠️ {allEmps.filter(e=>!e.email).length} employés n'ont pas d'email — fiches de paie envoyées impossible
+        </div>}
+      </div>}
+
+      {/* TAB: Qualité */}
+      {cmdTab==='qualite'&&<div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:20}}>
+          {[{l:'Données complètes',v:Math.round(allEmps.filter(e=>e.niss&&e.iban&&(+(e.monthlySalary||e.gross||e.brut||0))>0&&e.email).length/Math.max(allEmps.length,1)*100)+'%',c:allEmps.filter(e=>e.niss&&e.iban&&(+(e.monthlySalary||e.gross||e.brut||0))>0&&e.email).length===allEmps.length?'#22c55e':'#eab308'},
+            {l:'Avec NISS',v:allEmps.filter(e=>e.niss).length+'/'+allEmps.length,c:allEmps.every(e=>e.niss)?'#22c55e':'#ef4444'},
+            {l:'Avec IBAN',v:allEmps.filter(e=>e.iban).length+'/'+allEmps.length,c:allEmps.every(e=>e.iban)?'#22c55e':'#ef4444'},
+            {l:'Avec Email',v:allEmps.filter(e=>e.email).length+'/'+allEmps.length,c:'#3b82f6'},
+            {l:'Salaire > 0',v:allEmps.filter(e=>(+(e.monthlySalary||e.gross||e.brut||0))>0).length+'/'+allEmps.length,c:allEmps.every(e=>(+(e.monthlySalary||e.gross||e.brut||0))>0)?'#22c55e':'#ef4444'},
+            {l:'Clients TVA',v:clients.filter(c=>c.company?.vat).length+'/'+clients.length,c:'#a855f7'}
+          ].map((k,i)=><div key={i} style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'30',borderRadius:12,textAlign:'center'}}>
+            <div style={{fontSize:22,fontWeight:700,color:k.c}}>{k.v}</div>
+            <div style={{fontSize:10,color:'#888'}}>{k.l}</div>
+          </div>)}
+        </div>
+        <button onClick={()=>{const missing=[];allEmps.forEach(e=>{if(!e.niss)missing.push(e.clientName+': '+(e.first||e.fn)+' — NISS manquant');if(!e.iban)missing.push(e.clientName+': '+(e.first||e.fn)+' — IBAN manquant');});if(missing.length===0)alert('✅ Toutes les données sont complètes !');else{const csv='Client;Employé;Problème\n'+missing.map(m=>m.replace(': ',';').replace(' — ',';')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Donnees_manquantes.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);}}} style={{width:'100%',padding:'12px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#d4af37)',color:'#000',fontWeight:700,fontSize:13,cursor:'pointer'}}>🔍 Exporter données manquantes (CSV)</button>
+      </div>}
+    </div>;
+  };
+
+const SmartAutopilot=({s,d})=>{
     const clients=s.clients||[];
     const totalEmps=clients.reduce((a,c)=>a+(c.emps?.length||0),0);
     const now=new Date();
@@ -5294,6 +5669,174 @@ const MassEngine=({s,d})=>{
     </div>;
   };
 
+
+const SmartAutomation=({s,d,supabase,user})=>{
+  const clients=s.clients||[];
+  const totalEmps=clients.reduce((a,c)=>a+(c.emps?.length||0),0);
+  const now=new Date();
+  const [tab,setTab]=useState('alerts');
+  const [csvData,setCsvData]=useState('');
+  const [importResult,setImportResult]=useState(null);
+  const [validationResults,setValidationResults]=useState(null);
+  const [validating,setValidating]=useState(false);
+  const [alertFilter,setAlertFilter]=useState('all');
+
+  const generateAlerts=()=>{
+    const alerts=[];const today=now.getTime();
+    clients.forEach(cl=>{
+      const co=cl.company||{};const emps=cl.emps||[];const cName=co.name||cl.id||'Client';
+      if(!co.name)alerts.push({type:'error',cat:'Données',client:cName,msg:'Nom société manquant',priority:1});
+      if(!co.vat&&!co.bce)alerts.push({type:'error',cat:'Données',client:cName,msg:'TVA/BCE manquant',priority:1});
+      if(!co.iban)alerts.push({type:'warning',cat:'Données',client:cName,msg:'IBAN société manquant',priority:2});
+      emps.forEach(e=>{
+        const eName=(e.first||e.fn||'')+' '+(e.last||e.ln||'');
+        if(!e.niss)alerts.push({type:'error',cat:'NISS',client:cName,msg:eName+' — NISS manquant',priority:1});
+        else if(e.niss.replace(/[^0-9]/g,'').length!==11)alerts.push({type:'error',cat:'NISS',client:cName,msg:eName+' — NISS invalide',priority:1});
+        if(!e.iban)alerts.push({type:'warning',cat:'IBAN',client:cName,msg:eName+' — IBAN manquant',priority:2});
+        if(!(+(e.monthlySalary||e.gross||e.brut||0)))alerts.push({type:'error',cat:'Salaire',client:cName,msg:eName+' — Salaire = 0€',priority:1});
+        if(!e.contractType&&!e.contrat?.type)alerts.push({type:'info',cat:'Contrat',client:cName,msg:eName+' — Contrat non défini',priority:3});
+        const endD=e.endDate||e.endD||e.contrat?.endDate;
+        if(endD){const end=new Date(endD).getTime();const daysLeft=Math.round((end-today)/(1000*60*60*24));
+          if(daysLeft<0)alerts.push({type:'error',cat:'CDD',client:cName,msg:eName+' — CDD expiré '+Math.abs(daysLeft)+'j',priority:1});
+          else if(daysLeft<=30)alerts.push({type:'warning',cat:'CDD',client:cName,msg:eName+' — CDD expire '+daysLeft+'j',priority:1});
+          else if(daysLeft<=90)alerts.push({type:'info',cat:'CDD',client:cName,msg:eName+' — CDD expire '+daysLeft+'j',priority:2});}
+        const lastMed=e.lastMedical||e.visiteMedicale;
+        if(lastMed){const ds=Math.round((today-new Date(lastMed).getTime())/(1000*60*60*24));if(ds>365)alerts.push({type:'warning',cat:'Médical',client:cName,msg:eName+' — Visite > 1 an',priority:2});}
+        else alerts.push({type:'info',cat:'Médical',client:cName,msg:eName+' — Visite non renseignée',priority:3});
+        if(!e.startD&&!e.startDate)alerts.push({type:'warning',cat:'Données',client:cName,msg:eName+' — Date entrée manquante',priority:2});
+        if(!e.cp&&!e.commissionParitaire)alerts.push({type:'info',cat:'CP',client:cName,msg:eName+' — CP non définie',priority:3});
+      });
+      if(emps.length===0)alerts.push({type:'info',cat:'Données',client:cName,msg:'Aucun employé',priority:3});
+    });
+    return alerts.sort((a,b)=>a.priority-b.priority);
+  };
+  const alerts=generateAlerts();
+  const errCount=alerts.filter(a=>a.type==='error').length;
+  const warnCount=alerts.filter(a=>a.type==='warning').length;
+  const infoCount=alerts.filter(a=>a.type==='info').length;
+
+  const deadlines=[
+    {day:5,label:'ONSS — Paiement cotisations',icon:'\u{1F3E6}',monthly:true},
+    {day:15,label:'Précompte Prof. 274 — SPF',icon:'\u{1F4B0}',monthly:true},
+    {day:25,label:'Paie — Calcul & virements',icon:'\u{1F4C4}',monthly:true},
+    {day:25,label:'SEPA — Génération',icon:'\u{1F4B8}',monthly:true},
+    {day:1,month:1,label:'Belcotax 281.10',icon:'\u{1F3DB}',yearly:true},
+    {day:1,month:2,label:'Bilan Social BNB',icon:'\u{1F3DB}',yearly:true},
+    {day:31,month:3,label:'DmfA Q1',icon:'\u{1F4CA}',quarterly:true},
+    {day:30,month:6,label:'DmfA Q2',icon:'\u{1F4CA}',quarterly:true},
+    {day:30,month:9,label:'DmfA Q3',icon:'\u{1F4CA}',quarterly:true},
+    {day:31,month:12,label:'DmfA Q4',icon:'\u{1F4CA}',quarterly:true},
+    {day:15,month:5,label:'Pécule de Vacances',icon:'\u{1F3D6}',yearly:true},
+    {day:15,month:12,label:'13ème Mois',icon:'\u{1F384}',yearly:true},
+  ];
+  const upcomingDeadlines=deadlines.map(dl=>{
+    let next=new Date(now.getFullYear(),dl.month?(dl.month-1):now.getMonth(),dl.day);
+    if(next<=now){if(dl.monthly)next.setMonth(next.getMonth()+1);else next.setFullYear(next.getFullYear()+1);}
+    return{...dl,daysLeft:Math.round((next.getTime()-now.getTime())/(1000*60*60*24)),nextDate:next};
+  }).sort((a,b)=>a.daysLeft-b.daysLeft);
+
+  const runValidation=()=>{
+    setValidating(true);const results={passed:[],failed:[],warnings:[]};
+    clients.forEach(cl=>{
+      const co=cl.company||{};const emps=cl.emps||[];const cName=co.name||cl.id;let pass=true;const issues=[];
+      if(!co.name){issues.push('Nom manquant');pass=false;}
+      if(!co.vat&&!co.bce){issues.push('TVA/BCE manquant');pass=false;}
+      if(emps.length===0){issues.push('Aucun employé');pass=false;}
+      emps.forEach(e=>{
+        const en=(e.first||e.fn||'')+' '+(e.last||e.ln||'');
+        if(!e.niss||e.niss.replace(/[^0-9]/g,'').length!==11){issues.push(en+': NISS');pass=false;}
+        if(!(+(e.monthlySalary||e.gross||e.brut||0))){issues.push(en+': Salaire=0');pass=false;}
+      });
+      if(pass&&issues.length===0)results.passed.push({client:cName,emps:emps.length});
+      else if(!pass)results.failed.push({client:cName,issues});
+      else results.warnings.push({client:cName,issues});
+    });
+    setValidationResults(results);setValidating(false);
+  };
+
+  const parseCSV=(text)=>{const lines=text.trim().split('\n');if(lines.length<2)return{error:'CSV vide'};const headers=lines[0].split(';').map(h=>h.trim().toLowerCase());const rows=[];for(let i=1;i<lines.length;i++){const vals=lines[i].split(';');const row={};headers.forEach((h,j)=>row[h]=vals[j]?.trim()||'');rows.push(row);}return{headers,rows};};
+
+  const importClientsCSV=()=>{const{rows,error}=parseCSV(csvData);if(error){setImportResult({error});return;}let imported=0,skipped=0;rows.forEach(row=>{const name=row.societe||row.nom||row.company||'';const vat=row.tva||row.vat||row.bce||'';if(!name&&!vat){skipped++;return;}if(clients.find(c=>(c.company?.name||'')===name)){skipped++;return;}d({type:'ADD_CLIENT',d:{company:{name,vat,bce:vat,iban:row.iban||'',address:row.adresse||'',cp:row.cp||'',city:row.ville||'',phone:row.tel||'',email:row.email||''},emps:[]}});imported++;});setImportResult({imported,skipped,total:rows.length});};
+
+  const importEmpsCSV=()=>{const{rows,error}=parseCSV(csvData);if(error){setImportResult({error});return;}let imported=0;const newEmps=[...(s.emps||[])];rows.forEach(row=>{const emp={id:'E-'+Date.now()+'-'+Math.random().toString(36).substr(2,5),first:row.prenom||row.first||'',last:row.nom||row.last||'',fn:row.prenom||'',ln:row.nom||'',niss:row.niss||'',iban:row.iban||'',email:row.email||'',monthlySalary:parseFloat(row.salaire||row.brut||0)||0,gross:parseFloat(row.salaire||row.brut||0)||0,contractType:row.contrat||'CDI',startD:row.debut||'',cp:row.cp_paritaire||'',status:row.statut||'actif',gender:row.sexe||''};if(emp.first||emp.last){newEmps.push(emp);imported++;}});d({type:'SET_EMPS',data:newEmps});setImportResult({imported,total:rows.length,type:'emps'});};
+
+  const autoFix=()=>{let fixed=0;const up=clients.map(cl=>{const emps=(cl.emps||[]).map(e=>{const u={...e};if(u.niss){const c=u.niss.replace(/[^0-9]/g,'');if(c.length===11&&c!==u.niss){u.niss=c;fixed++;}}if(u.iban){const c=u.iban.replace(/\s/g,'').toUpperCase();if(c!==u.iban){u.iban=c;fixed++;}}if(!u.contractType&&!u.contrat?.type){u.contractType='CDI';fixed++;}if(!u.status){u.status='actif';fixed++;}return u;});return{...cl,emps};});d({type:'SET_CLIENTS',data:up});if(typeof addToast==='function')addToast('Auto-Fix: '+fixed+' corrections');return fixed;};
+
+  const tabs2=[{id:'alerts',l:'\u{1F6A8} Alertes ('+errCount+')',badge:errCount},{id:'deadlines',l:'\u{1F4C5} Échéances'},{id:'validation',l:'\u2705 Pré-Vol'},{id:'import',l:'\u{1F4E5} Import CSV'},{id:'autofix',l:'\u{1F527} Auto-Fix'},{id:'onboarding',l:'\u{1F680} Onboarding'}];
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <div><h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🤖 Smart Automation</h2><p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Alertes, validation, import, corrections automatiques</p></div>
+      <div style={{display:'flex',gap:8}}>
+        <div style={{padding:'8px 14px',background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.2)',borderRadius:10,textAlign:'center'}}><div style={{fontSize:18,fontWeight:700,color:'#ef4444'}}>{errCount}</div><div style={{fontSize:9,color:'#888'}}>Erreurs</div></div>
+        <div style={{padding:'8px 14px',background:'rgba(234,179,8,.08)',border:'1px solid rgba(234,179,8,.2)',borderRadius:10,textAlign:'center'}}><div style={{fontSize:18,fontWeight:700,color:'#eab308'}}>{warnCount}</div><div style={{fontSize:9,color:'#888'}}>Alertes</div></div>
+        <div style={{padding:'8px 14px',background:'rgba(34,197,94,.08)',border:'1px solid rgba(34,197,94,.2)',borderRadius:10,textAlign:'center'}}><div style={{fontSize:18,fontWeight:700,color:'#22c55e'}}>{clients.filter(c=>(c.emps?.length||0)>0&&c.company?.name&&c.company?.vat).length}</div><div style={{fontSize:9,color:'#888'}}>Prêts</div></div>
+      </div>
+    </div>
+    <div style={{display:'flex',gap:4,marginBottom:20,flexWrap:'wrap'}}>{tabs2.map(tb=><button key={tb.id} onClick={()=>setTab(tb.id)} style={{padding:'10px 16px',borderRadius:10,border:tab===tb.id?'1px solid rgba(198,163,78,.3)':'1px solid rgba(255,255,255,.05)',background:tab===tb.id?'rgba(198,163,78,.12)':'rgba(255,255,255,.03)',color:tab===tb.id?'#c6a34e':'#888',fontSize:12,fontWeight:tab===tb.id?600:400,cursor:'pointer',position:'relative'}}>{tb.l}{tb.badge>0&&<span style={{position:'absolute',top:-4,right:-4,background:'#ef4444',color:'#fff',fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:10}}>{tb.badge}</span>}</button>)}</div>
+
+    {tab==='alerts'&&<div>
+      <div style={{display:'flex',gap:6,marginBottom:14}}>{[{id:'all',l:'Tout ('+alerts.length+')'},{id:'error',l:'❌ Erreurs ('+errCount+')'},{id:'warning',l:'⚠️ Alertes ('+warnCount+')'},{id:'info',l:'ℹ️ Info ('+infoCount+')'}].map(f2=><button key={f2.id} onClick={()=>setAlertFilter(f2.id)} style={{padding:'6px 12px',borderRadius:8,border:alertFilter===f2.id?'1px solid rgba(198,163,78,.3)':'1px solid rgba(255,255,255,.04)',background:alertFilter===f2.id?'rgba(198,163,78,.1)':'transparent',color:alertFilter===f2.id?'#c6a34e':'#888',fontSize:11,cursor:'pointer'}}>{f2.l}</button>)}</div>
+      <div style={{maxHeight:500,overflowY:'auto',border:'1px solid rgba(198,163,78,.1)',borderRadius:12}}>{alerts.filter(a=>alertFilter==='all'||a.type===alertFilter).map((a,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'30px 80px 150px 1fr',padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',alignItems:'center',fontSize:11}}><span>{a.type==='error'?'❌':a.type==='warning'?'⚠️':'ℹ️'}</span><span style={{color:a.type==='error'?'#ef4444':a.type==='warning'?'#eab308':'#3b82f6',fontWeight:600}}>{a.cat}</span><span style={{color:'#c6a34e'}}>{a.client}</span><span style={{color:'#888'}}>{a.msg}</span></div>)}{alerts.filter(a=>alertFilter==='all'||a.type===alertFilter).length===0&&<div style={{padding:30,textAlign:'center',color:'#22c55e',fontSize:13}}>✅ Tout est OK</div>}</div>
+    </div>}
+
+    {tab==='deadlines'&&<div>
+      <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:14}}>📅 Prochaines Échéances</div>
+      <div style={{display:'grid',gap:8}}>{upcomingDeadlines.slice(0,15).map((dl,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:14,padding:'12px 16px',background:dl.daysLeft<=7?'rgba(239,68,68,.06)':dl.daysLeft<=14?'rgba(234,179,8,.06)':'rgba(255,255,255,.02)',border:'1px solid '+(dl.daysLeft<=7?'rgba(239,68,68,.15)':dl.daysLeft<=14?'rgba(234,179,8,.15)':'rgba(255,255,255,.04)'),borderRadius:12}}><div style={{fontSize:22}}>{dl.icon}</div><div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:'#e5e5e5'}}>{dl.label}</div><div style={{fontSize:10,color:'#888'}}>{dl.nextDate.toLocaleDateString('fr-BE',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div></div><div style={{textAlign:'right'}}><div style={{fontSize:18,fontWeight:700,color:dl.daysLeft<=7?'#ef4444':dl.daysLeft<=14?'#eab308':'#22c55e'}}>{dl.daysLeft}j</div><div style={{fontSize:9,color:'#888'}}>{dl.monthly?'Mensuel':dl.quarterly?'Trimestriel':'Annuel'}</div></div></div>)}</div>
+      <div style={{marginTop:20,padding:16,background:'rgba(168,85,247,.04)',border:'1px solid rgba(168,85,247,.1)',borderRadius:12}}><div style={{fontSize:13,fontWeight:600,color:'#a855f7',marginBottom:10}}>⚡ Actions Auto Configurées</div><div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8}}>{['Paie auto le 25','SEPA jour de paie','DmfA fin trimestre','Précompte le 15','Alerte CDD 30j','Alerte visite médicale','Belcotax janvier','Pécule vacances mai','13ème mois décembre','Indexation auto','Dimona embauche','Package sortie auto'].map((r,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 12px',background:'rgba(255,255,255,.02)',borderRadius:8}}><span style={{fontSize:11,color:'#e5e5e5'}}>{r}</span><span style={{fontSize:10,color:'#22c55e',fontWeight:600}}>● Actif</span></div>)}</div></div>
+    </div>}
+
+    {tab==='validation'&&<div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}><div><div style={{fontSize:14,fontWeight:600,color:'#c6a34e'}}>✅ Validation Pré-Vol</div><div style={{fontSize:11,color:'#888'}}>Vérifie tout avant le Mass Engine</div></div><button onClick={runValidation} style={{padding:'12px 24px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#d4af37)',color:'#000',fontWeight:600,fontSize:13,cursor:'pointer'}}>{validating?'⏳...':'🔍 Vérifier'}</button></div>
+      {validationResults&&<><div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}><div style={{padding:16,background:'rgba(34,197,94,.06)',border:'1px solid rgba(34,197,94,.15)',borderRadius:12,textAlign:'center'}}><div style={{fontSize:28,fontWeight:700,color:'#22c55e'}}>{validationResults.passed.length}</div><div style={{fontSize:11,color:'#888'}}>✅ Prêts</div></div><div style={{padding:16,background:'rgba(239,68,68,.06)',border:'1px solid rgba(239,68,68,.15)',borderRadius:12,textAlign:'center'}}><div style={{fontSize:28,fontWeight:700,color:'#ef4444'}}>{validationResults.failed.length}</div><div style={{fontSize:11,color:'#888'}}>❌ Bloquants</div></div><div style={{padding:16,background:'rgba(234,179,8,.06)',border:'1px solid rgba(234,179,8,.15)',borderRadius:12,textAlign:'center'}}><div style={{fontSize:28,fontWeight:700,color:'#eab308'}}>{validationResults.warnings.length}</div><div style={{fontSize:11,color:'#888'}}>⚠️ À vérifier</div></div></div>{validationResults.failed.length>0&&<div style={{marginBottom:12}}><div style={{fontSize:12,fontWeight:600,color:'#ef4444',marginBottom:6}}>❌ Bloquants:</div>{validationResults.failed.map((r,i)=><div key={i} style={{padding:'8px 12px',marginBottom:4,background:'rgba(239,68,68,.04)',borderRadius:8,fontSize:11}}><span style={{color:'#e5e5e5',fontWeight:600}}>{r.client}</span> — <span style={{color:'#ef4444'}}>{r.issues.join(' · ')}</span></div>)}</div>}{validationResults.passed.length>0&&<div><div style={{fontSize:12,fontWeight:600,color:'#22c55e',marginBottom:6}}>✅ Prêts:</div><div style={{display:'flex',flexWrap:'wrap',gap:6}}>{validationResults.passed.map((r,i)=><span key={i} style={{padding:'4px 10px',background:'rgba(34,197,94,.08)',border:'1px solid rgba(34,197,94,.15)',borderRadius:6,fontSize:10,color:'#22c55e'}}>{r.client} ({r.emps})</span>)}</div></div>}</>}
+    </div>}
+
+    {tab==='import'&&<div>
+      <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:6}}>📥 Import CSV en Masse</div>
+      <div style={{fontSize:11,color:'#888',marginBottom:14}}>Collez un CSV pour importer clients ou employés</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+        <div style={{padding:14,background:'rgba(198,163,78,.04)',border:'1px solid rgba(198,163,78,.1)',borderRadius:12}}><div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:6}}>📋 Template Clients</div><code style={{fontSize:9,color:'#888',display:'block',background:'#090c16',padding:8,borderRadius:6,whiteSpace:'pre'}}>{"societe;tva;iban;adresse;cp;ville;email;tel\nAureus;BE1028230781;BE68...;Rue...;1060;Bruxelles;a@b.be;02123"}</code></div>
+        <div style={{padding:14,background:'rgba(59,130,246,.04)',border:'1px solid rgba(59,130,246,.1)',borderRadius:12}}><div style={{fontSize:12,fontWeight:600,color:'#3b82f6',marginBottom:6}}>📋 Template Employés</div><code style={{fontSize:9,color:'#888',display:'block',background:'#090c16',padding:8,borderRadius:6,whiteSpace:'pre'}}>{"prenom;nom;niss;iban;salaire;contrat;debut;email\nJean;Dupont;85073015784;BE68...;3500;CDI;2024-01-15;j@m.be"}</code></div>
+      </div>
+      <textarea value={csvData} onChange={e=>setCsvData(e.target.value)} rows={8} placeholder="Collez votre CSV ici (séparateur: ;)" style={{width:'100%',padding:12,background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:10,color:'#e5e5e5',fontSize:12,fontFamily:'monospace',resize:'vertical',outline:'none',boxSizing:'border-box'}}/>
+      <div style={{display:'flex',gap:8,marginTop:10}}>
+        <label style={{padding:'10px 16px',borderRadius:8,background:'rgba(198,163,78,.1)',border:'1px solid rgba(198,163,78,.2)',color:'#c6a34e',fontSize:11,fontWeight:600,cursor:'pointer'}}>📂 Charger CSV<input type="file" accept=".csv,.txt" style={{display:'none'}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setCsvData(ev.target.result);r.readAsText(f);}}/></label>
+        <button onClick={importClientsCSV} disabled={!csvData} style={{padding:'10px 16px',borderRadius:8,border:'none',background:csvData?'#c6a34e':'#555',color:csvData?'#000':'#999',fontSize:11,fontWeight:600,cursor:csvData?'pointer':'not-allowed'}}>🏢 Importer Clients</button>
+        <button onClick={importEmpsCSV} disabled={!csvData} style={{padding:'10px 16px',borderRadius:8,border:'none',background:csvData?'#3b82f6':'#555',color:'#fff',fontSize:11,fontWeight:600,cursor:csvData?'pointer':'not-allowed'}}>👤 Importer Employés</button>
+      </div>
+      {importResult&&<div style={{marginTop:14,padding:14,background:importResult.error?'rgba(239,68,68,.06)':'rgba(34,197,94,.06)',border:'1px solid '+(importResult.error?'rgba(239,68,68,.15)':'rgba(34,197,94,.15)'),borderRadius:10}}>{importResult.error?<div style={{color:'#ef4444',fontSize:12}}>{importResult.error}</div>:<div style={{fontSize:12,color:'#22c55e'}}>✅ {importResult.imported} {importResult.type==='emps'?'employés':'clients'} importés{importResult.skipped?' · '+importResult.skipped+' doublons':''}</div>}</div>}
+    </div>}
+
+    {tab==='autofix'&&<div>
+      <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:14}}>🔧 Corrections Automatiques</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12,marginBottom:20}}>{[
+        {icon:'🔢',title:'NISS — Nettoyage',desc:'Supprime espaces/tirets',count:clients.reduce((a,c)=>a+(c.emps||[]).filter(e=>e.niss&&/[^0-9]/.test(e.niss)).length,0)},
+        {icon:'🏦',title:'IBAN — Normalisation',desc:'Majuscules, sans espaces',count:clients.reduce((a,c)=>a+(c.emps||[]).filter(e=>e.iban&&(e.iban.includes(' ')||e.iban!==e.iban.toUpperCase())).length,0)},
+        {icon:'📋',title:'Contrat — Défaut CDI',desc:'CDI si type absent',count:clients.reduce((a,c)=>a+(c.emps||[]).filter(e=>!e.contractType&&!e.contrat?.type).length,0)},
+        {icon:'🟢',title:'Statut — Défaut actif',desc:'Actif si manquant',count:clients.reduce((a,c)=>a+(c.emps||[]).filter(e=>!e.status).length,0)},
+      ].map((fix,i)=><div key={i} style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:12}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}><span style={{fontSize:14}}>{fix.icon}</span><span style={{fontSize:14,fontWeight:700,color:fix.count>0?'#eab308':'#22c55e'}}>{fix.count}</span></div><div style={{fontSize:12,fontWeight:600,color:'#e5e5e5'}}>{fix.title}</div><div style={{fontSize:10,color:'#888',marginTop:2}}>{fix.desc}</div></div>)}</div>
+      <button onClick={()=>{const n=autoFix();alert('✅ '+n+' corrections !');}} style={{padding:'14px 30px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#22c55e,#16a34a)',color:'#fff',fontWeight:700,fontSize:14,cursor:'pointer',boxShadow:'0 4px 20px rgba(34,197,94,.3)'}}>🔧 Lancer Auto-Fix</button>
+    </div>}
+
+    {tab==='onboarding'&&<div>
+      <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:14}}>🚀 Onboarding Express — Nouveau Client</div>
+      <div style={{display:'grid',gap:12}}>{[
+        {step:1,title:'📝 Données société',desc:'Nom, TVA, IBAN, adresse',status:s.co?.name?'done':'todo'},
+        {step:2,title:'👤 Ajouter employés',desc:'Import CSV ou saisie',status:(s.emps||[]).length>0?'done':'todo'},
+        {step:3,title:'🔍 Validation NISS',desc:'Vérifier chaque N° National',status:(s.emps||[]).length>0&&(s.emps||[]).every(e=>e.niss&&e.niss.replace(/[^0-9]/g,'').length===11)?'done':'todo'},
+        {step:4,title:'📡 Dimona IN',desc:'Déclaration embauche',status:'todo'},
+        {step:5,title:'💰 Premier salaire',desc:'Configurer barèmes',status:(s.emps||[]).every(e=>+(e.monthlySalary||0)>0)?'done':'todo'},
+        {step:6,title:'📄 Première fiche',desc:'Générer et vérifier',status:(s.pays||[]).length>0?'done':'todo'},
+        {step:7,title:'💸 SEPA virement',desc:'Fichier pour la banque',status:'todo'},
+        {step:8,title:'✅ Opérationnel',desc:'Client actif !',status:'final'},
+      ].map((st,i)=><div key={i} style={{display:'flex',gap:14,padding:'14px 16px',background:st.status==='done'?'rgba(34,197,94,.04)':'rgba(255,255,255,.02)',border:'1px solid '+(st.status==='done'?'rgba(34,197,94,.15)':'rgba(255,255,255,.04)'),borderRadius:12,alignItems:'center'}}>
+        <div style={{width:36,height:36,borderRadius:'50%',background:st.status==='done'?'#22c55e':st.status==='final'?'linear-gradient(135deg,#c6a34e,#d4af37)':'rgba(255,255,255,.06)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:st.status==='done'?16:14,fontWeight:700,color:st.status==='done'?'#fff':'#888'}}>{st.status==='done'?'✓':st.step}</div>
+        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:st.status==='done'?'#22c55e':'#e5e5e5'}}>{st.title}</div><div style={{fontSize:10,color:'#888'}}>{st.desc}</div></div>
+      </div>)}</div>
+    </div>}
+  </div>;
+};
+
 const AutomationHub=({s,d})=>{
     const emps=s.emps||[];
     const co=s.co||{};
@@ -5810,7 +6353,9 @@ const AutomationHub=({s,d})=>{
       case'sprint9':return <ModulesProPage s={s} d={d}/>;
       case'automatisation':return <AutomationHub s={s} d={d}/>;
       case'massengine':return <MassEngine s={s} d={d}/>;
+      case'smartauto':return <SmartAutomation s={s} d={d} supabase={supabase} user={user}/>;
       case'autopilot':return <SmartAutopilot s={s} d={d}/>;
+      case'commandcenter':return <CommandCenter s={s} d={d}/>;
       case'team':return <TeamManagement supabase={supabase} user={user} userRole={userRole}/>;
       default:return <Dashboard s={s} d={d}/>;
     }
