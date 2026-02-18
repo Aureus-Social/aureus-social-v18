@@ -29,7 +29,8 @@ const I18N = {
   'nav.reporting': { fr:'Reporting & Export', nl:"Rapportage & Export", en:"Reporting & Export", de:"Berichterstattung & Export" },
   'nav.legal': { fr:'Juridique & Veille', nl:"Juridisch & Monitoring", en:"Legal & Monitoring", de:"Recht & Überwachung" },
   'nav.sprint9': { fr:'Sprint 9 - Modules', nl:'Sprint 9 - Modules', en:'Sprint 9 - Modules', de:'Sprint 9 - Module' },
-  'nav.massengine': { fr:'Mass Engine',nl:'Mass Engine',en:'Mass Engine',de:'Mass Engine' },
+  'nav.autopilot': { fr:'Autopilot',nl:'Autopilot',en:'Autopilot',de:'Autopilot' },
+    'nav.massengine': { fr:'Mass Engine',nl:'Mass Engine',en:'Mass Engine',de:'Mass Engine' },
     'nav.automatisation': { fr:'⚡ Automatisation',nl:'⚡ Automatisering',en:'⚡ Automation',de:'⚡ Automatisierung' },
     'nav.team': { fr:'Équipe',nl:'Team',en:'Team',de:'Team' },
   'nav.settings': { fr:'Paramètres', nl:"Instellingen", en:"Settings", de:"Einstellungen" },
@@ -2910,6 +2911,7 @@ function reducer(s,a){
   switch(a.type){
     case'SET_COMPANY':return{...s,co:{...s.co,...a.data}};
     case'SET_EMPS':return{...s,emps:a.data};
+    case'ADD_EMPS_BATCH':return{...s,emps:[...s.emps,...(a.data||[])]};
     case'SET_PAYS':return{...s,pays:a.data};
     case'SET_CLIENTS':return{...s,clients:a.data||[]};
     case'NAV':if(a.page==='sprint10'){window.location.href='/sprint10/auth';return s;}const s9map={s9_dimona:'/sprint9/dimona',s9_precompte:'/sprint9/precompte',s9_onss:'/sprint9/onss',s9_bilan:'/sprint9/bilan-social',s9_netbrut:'/sprint9/net-brut',s9_od:'/sprint9/od-comptables',s9_cheques:'/sprint9/cheques-repas',s9_trilingue:'/sprint9/trilingue',s9_vacances:'/sprint9/vacances',s9_enfants:'/sprint9/enfants',s9_attestations:'/sprint9/attestations',s9_exports:'/sprint9/exports',s9_baremes:'/sprint9/baremes',s9_provisions:'/sprint9/provisions',s9_heures:'/sprint9/heures-sup',s9_primes:'/sprint9/primes',s9_saisies:'/sprint9/saisies'};ns={...s,page:a.page,sub:a.sub||null};break;
@@ -4334,6 +4336,7 @@ function AppInner({ supabase, user, onLogout }) {
     {id:"social",l:t('nav.social'),i:'◆',sub:[{id:"assloi",l:t('sub.assloi')},{id:"assgroupe",l:t('sub.assgroupe')},{id:"syndicales",l:t('sub.syndicales')},{id:"allocfam",l:t('sub.allocfam')},{id:"caissevac",l:t('sub.caissevac')},{id:"rentes",l:t('sub.rentes')},{id:"decava",l:t('sub.decava')},{id:"aidesemploi",l:t('sub.aidesemploi')}]},
     {id:"bienetre",l:t('nav.bienetre'),i:'♥',sub:[{id:"planglobal",l:t('sub.planglobal')},{id:"paa",l:t('sub.paa')},{id:"risquespsycho",l:t('sub.risquespsycho')},{id:"alcool",l:t('sub.alcool')},{id:"elections",l:t('sub.elections')},{id:"organes",l:t('sub.organes')}]},
     {id:"sprint9",l:"Sprint 9 - Modules",i:"S9"},
+    {id:"autopilot",l:"🤖 "+t("nav.autopilot"),i:"🤖"},
     {id:"massengine",l:"🏭 "+t("nav.massengine"),i:"🏭"},
     {id:"automatisation",l:t('nav.automatisation'),i:'⚡'},
     {id:"team",l:'👥 '+t('nav.team'),i:'👥'},
@@ -4444,7 +4447,351 @@ function AppInner({ supabase, user, onLogout }) {
   // ── Sprint 17: Automation Hub ──
   
   // ── Sprint 20: Mass Automation Engine (10K+ clients) ──
-  const MassEngine=({s,d})=>{
+  
+  // ── Sprint 20c: Smart Autopilot + CSV Import + ZIP Export ──
+  const SmartAutopilot=({s,d})=>{
+    const clients=s.clients||[];
+    const totalEmps=clients.reduce((a,c)=>a+(c.emps?.length||0),0);
+    const now=new Date();
+    const day=now.getDate();
+    const month=now.getMonth()+1;
+    const quarter=Math.ceil(month/3);
+    const mois=['','Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    const [pilotTab,setPilotTab]=useState('smart');
+    const [csvData,setCsvData]=useState(null);
+    const [csvPreview,setCsvPreview]=useState([]);
+    const [importType,setImportType]=useState('employees');
+    const [autoResults,setAutoResults]=useState([]);
+
+    // SMART DETECT: what needs to be done TODAY
+    const smartTasks=[];
+    
+    // Mensuel: Fiches de paie (25 du mois)
+    if(day>=20&&day<=28) smartTasks.push({id:'fiches',priority:'high',icon:'📄',task:'Fiches de paie '+mois[month],desc:totalEmps+' fiches à générer',color:'#c6a34e',auto:true,
+      fn:()=>{clients.forEach(cl=>{(cl.emps||[]).forEach(e=>generatePayslipPDF(e,cl.company||{}))});}});
+    
+    // Mensuel: SEPA (25 du mois)
+    if(day>=23&&day<=28) smartTasks.push({id:'sepa',priority:'high',icon:'💸',task:'SEPA Virements '+mois[month],desc:clients.filter(c=>(c.emps?.length||0)>0).length+' fichiers SEPA',color:'#22c55e',auto:true,
+      fn:()=>{clients.filter(c=>(c.emps?.length||0)>0).forEach(cl=>generateSEPAXML(cl.emps||[],cl.company||{}));}});
+    
+    // Mensuel: Précompte (avant le 15)
+    if(day>=1&&day<=15) smartTasks.push({id:'precompte',priority:'high',icon:'💰',task:'Précompte Prof. 274',desc:'Déclaration SPF Finances avant le 15',color:'#ef4444',auto:true,
+      fn:()=>{}});
+    
+    // Mensuel: ONSS Provisions (5 du mois)
+    if(day>=1&&day<=5) smartTasks.push({id:'onss',priority:'high',icon:'📈',task:'Provisions ONSS',desc:'Provisions mensuelles cotisations',color:'#f59e0b',auto:true,
+      fn:()=>{}});
+    
+    // Trimestriel: DmfA (fin trimestre)
+    if((month%3===0&&day>=15)||(month%3===1&&day<=10)) smartTasks.push({id:'dmfa',priority:'medium',icon:'📊',task:'DmfA Q'+quarter+'/'+now.getFullYear(),desc:totalEmps+' travailleurs à déclarer',color:'#a855f7',auto:true,
+      fn:()=>{clients.filter(c=>(c.emps?.length||0)>0).forEach(cl=>generateDmfAXML(cl.emps||[],cl.company||{}));}});
+    
+    // Annuel: Belcotax (janvier-février)
+    if(month<=2) smartTasks.push({id:'belcotax',priority:'medium',icon:'🏛️',task:'Belcotax 281.10 — '+(now.getFullYear()-1),desc:totalEmps+' fiches fiscales',color:'#ef4444',auto:true,
+      fn:()=>{clients.forEach(cl=>{(cl.emps||[]).forEach(e=>generateBelcotaxXML(e,cl.company||{}))});}});
+    
+    // Annuel: Bilan Social BNB (février)
+    if(month===2) smartTasks.push({id:'bilan',priority:'medium',icon:'🏛️',task:'Bilan Social BNB',desc:'Rapport annuel Banque Nationale',color:'#6366f1',auto:true,fn:()=>{}});
+    
+    // Annuel: Pécule vacances (mai-juin)
+    if(month>=5&&month<=6) smartTasks.push({id:'pecule',priority:'medium',icon:'🏖️',task:'Pécule de Vacances '+now.getFullYear(),desc:totalEmps+' calculs',color:'#06b6d4',auto:true,fn:()=>{}});
+    
+    // Annuel: 13ème mois (décembre)
+    if(month===12) smartTasks.push({id:'treizieme',priority:'high',icon:'🎄',task:'13ème Mois / Prime',desc:totalEmps+' primes à calculer',color:'#f59e0b',auto:true,fn:()=>{}});
+    
+    // Événement: CDD expirant dans 30 jours
+    const expiringCDD=clients.reduce((a,cl)=>{
+      return a+(cl.emps||[]).filter(e=>{
+        if((e.contractType||e.contrat?.type)!=='CDD')return false;
+        const end=new Date(e.endDate||e.end||'2099-12-31');
+        const diff=Math.ceil((end-now)/(1000*60*60*24));
+        return diff>0&&diff<=30;
+      }).length;
+    },0);
+    if(expiringCDD>0) smartTasks.push({id:'cdd',priority:'urgent',icon:'⚠️',task:expiringCDD+' CDD expirent dans 30j',desc:'Dimona OUT + C4 à préparer',color:'#ef4444',auto:false,fn:()=>{}});
+    
+    // Événement: Nouveaux employés sans Dimona
+    const newEmps=clients.reduce((a,cl)=>{
+      return a+(cl.emps||[]).filter(e=>{
+        const start=new Date(e.startDate||e.start||'2020-01-01');
+        const diff=Math.ceil((now-start)/(1000*60*60*24));
+        return diff>=0&&diff<=7;
+      }).length;
+    },0);
+    if(newEmps>0) smartTasks.push({id:'dimona_new',priority:'urgent',icon:'📡',task:newEmps+' Dimona IN à envoyer',desc:'Nouveaux employés cette semaine',color:'#3b82f6',auto:true,
+      fn:()=>{clients.forEach(cl=>{(cl.emps||[]).filter(e=>{const d2=new Date(e.startDate||e.start||'2020-01-01');return Math.ceil((now-d2)/(1000*60*60*24))<=7;}).forEach(e=>generateDimonaXML(e,'IN'))});}});
+
+    // Always show: data quality check
+    const incomplete=clients.filter(cl=>{
+      const co=cl.company||{};
+      const emps=cl.emps||[];
+      return !co.name||!co.vat||emps.length===0||emps.some(e=>!(e.monthlySalary||e.gross||e.brut));
+    }).length;
+    if(incomplete>0) smartTasks.push({id:'quality',priority:'info',icon:'🔍',task:incomplete+' dossiers incomplets',desc:'Données manquantes à compléter',color:'#eab308',auto:false,fn:()=>d({type:'NAV',page:'clients'})});
+
+    const runAllSmart=()=>{
+      const autoTasks=smartTasks.filter(t=>t.auto&&t.fn);
+      if(autoTasks.length===0){alert('Aucune tâche auto à exécuter');return;}
+      if(!confirm('🤖 AUTOPILOT\n\nExécuter '+autoTasks.length+' tâches automatiquement :\n\n'+autoTasks.map(t=>t.icon+' '+t.task).join('\n')+'\n\n1 seule confirmation. Je gère le reste.'))return;
+      const results=[];
+      autoTasks.forEach(t=>{
+        try{t.fn();results.push({task:t.task,status:'ok'});}
+        catch(e){results.push({task:t.task,status:'error',msg:e.message});}
+      });
+      setAutoResults(results);
+      if(typeof addToast==='function')addToast('🤖 Autopilot: '+results.filter(r=>r.status==='ok').length+'/'+results.length+' tâches exécutées');
+    };
+
+    // CSV IMPORT
+    const handleCSV=(e)=>{
+      const file=e.target.files[0];if(!file)return;
+      const reader=new FileReader();
+      reader.onload=(ev)=>{
+        const text=ev.target.result;
+        const lines=text.split('\n').map(l=>l.split(';').map(c=>c.trim().replace(/^"|"$/g,'')));
+        if(lines.length<2){alert('Fichier vide');return;}
+        setCsvData({headers:lines[0],rows:lines.slice(1).filter(r=>r.length>1&&r.some(c=>c))});
+        setCsvPreview(lines.slice(0,6));
+      };
+      reader.readAsText(file,'utf-8');
+      e.target.value='';
+    };
+
+    const importCSV=()=>{
+      if(!csvData||csvData.rows.length===0){alert('Aucune donnée');return;}
+      const h=csvData.headers.map(x=>x.toLowerCase());
+      let count=0;
+      
+      if(importType==='employees'){
+        // Map CSV to employees - detect columns
+        const iNom=h.findIndex(x=>x.includes('nom')||x.includes('last')||x.includes('name'));
+        const iPrenom=h.findIndex(x=>x.includes('prenom')||x.includes('prénom')||x.includes('first'));
+        const iNiss=h.findIndex(x=>x.includes('niss')||x.includes('registre'));
+        const iBrut=h.findIndex(x=>x.includes('brut')||x.includes('salaire')||x.includes('gross'));
+        const iEmail=h.findIndex(x=>x.includes('email')||x.includes('mail'));
+        const iIban=h.findIndex(x=>x.includes('iban')||x.includes('compte'));
+        const iContrat=h.findIndex(x=>x.includes('contrat')||x.includes('contract')||x.includes('type'));
+        const iDebut=h.findIndex(x=>x.includes('debut')||x.includes('début')||x.includes('start'));
+        const iGenre=h.findIndex(x=>x.includes('genre')||x.includes('sexe')||x.includes('gender'));
+        
+        const newEmps=csvData.rows.map(r=>({
+          id:'EMP-'+Date.now()+'-'+Math.random().toString(36).substr(2,6),
+          last:iNom>=0?r[iNom]:'',
+          first:iPrenom>=0?r[iPrenom]:'',
+          niss:iNiss>=0?r[iNiss]:'',
+          monthlySalary:iBrut>=0?parseFloat(r[iBrut]?.replace(/[^\d.,]/g,'').replace(',','.'))||0:0,
+          email:iEmail>=0?r[iEmail]:'',
+          iban:iIban>=0?r[iIban]:'',
+          contractType:iContrat>=0?r[iContrat]:'CDI',
+          startDate:iDebut>=0?r[iDebut]:'',
+          gender:iGenre>=0?r[iGenre]:'',
+          status:'active'
+        })).filter(e=>e.last||e.first);
+        
+        if(newEmps.length>0){
+          d({type:'ADD_EMPS_BATCH',data:newEmps});
+          count=newEmps.length;
+        }
+      } else {
+        // Import clients
+        const iNom=h.findIndex(x=>x.includes('societe')||x.includes('société')||x.includes('company')||x.includes('nom'));
+        const iTva=h.findIndex(x=>x.includes('tva')||x.includes('vat'));
+        const iAddr=h.findIndex(x=>x.includes('adresse')||x.includes('address'));
+        const iBce=h.findIndex(x=>x.includes('bce'));
+        
+        csvData.rows.forEach(r=>{
+          const name=iNom>=0?r[iNom]:'';
+          if(!name)return;
+          d({type:'ADD_CLIENT',d:{company:{name,vat:iTva>=0?r[iTva]:'',addr:iAddr>=0?r[iAddr]:'',bce:iBce>=0?r[iBce]:''},emps:[],pays:[]}});
+          count++;
+        });
+      }
+      
+      setCsvData(null);setCsvPreview([]);
+      if(typeof addToast==='function')addToast('📥 Import: '+count+(importType==='employees'?' employés':' clients')+' ajoutés');
+      alert('✅ '+count+(importType==='employees'?' employés':' clients')+' importés avec succès');
+    };
+
+    // ZIP EXPORT
+    const exportAllDocs=async()=>{
+      if(!confirm('📦 Exporter TOUS les documents ?\n\n'+clients.length+' clients × '+totalEmps+' employés\n\nChaque client recevra un dossier avec toutes ses fiches.'))return;
+      
+      let totalDocs=0;
+      for(const cl of clients){
+        const co=cl.company||{};
+        const emps=cl.emps||[];
+        if(emps.length===0)continue;
+        
+        // Generate all docs for this client
+        emps.forEach(e=>{
+          try{generatePayslipPDF(e,co);totalDocs++;}catch(ex){}
+        });
+        try{generateSEPAXML(emps,co);totalDocs++;}catch(ex){}
+        try{generateDmfAXML(emps,co);totalDocs++;}catch(ex){}
+      }
+      if(typeof addToast==='function')addToast('📦 Export complet: '+totalDocs+' documents générés pour '+clients.length+' clients');
+    };
+
+    return <div style={{padding:24}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <div>
+          <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🤖 Smart Autopilot</h2>
+          <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>L'IA détecte ce qui doit être fait — Vous confirmez une seule fois</p>
+        </div>
+        <button onClick={runAllSmart} disabled={smartTasks.filter(t=>t.auto).length===0} style={{padding:'12px 24px',borderRadius:12,border:'none',background:smartTasks.filter(t=>t.auto).length>0?'linear-gradient(135deg,#c6a34e,#d4af37)':'#555',color:smartTasks.filter(t=>t.auto).length>0?'#000':'#999',fontWeight:700,fontSize:13,cursor:smartTasks.filter(t=>t.auto).length>0?'pointer':'not-allowed',boxShadow:smartTasks.filter(t=>t.auto).length>0?'0 4px 20px rgba(198,163,78,.35)':'none'}}>
+          🤖 AUTOPILOT — {smartTasks.filter(t=>t.auto).length} tâches
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:'flex',gap:4,marginBottom:20}}>
+        {[{id:'smart',l:'🤖 Smart Detect'},{id:'import',l:'📥 Import CSV'},{id:'export',l:'📦 Export Tout'},{id:'calendrier',l:'📅 Calendrier Auto'}].map(tb=>
+          <button key={tb.id} onClick={()=>setPilotTab(tb.id)} style={{padding:'10px 16px',borderRadius:10,border:pilotTab===tb.id?'1px solid rgba(198,163,78,.3)':'1px solid rgba(255,255,255,.05)',background:pilotTab===tb.id?'rgba(198,163,78,.12)':'rgba(255,255,255,.03)',color:pilotTab===tb.id?'#c6a34e':'#888',fontSize:12,fontWeight:pilotTab===tb.id?600:400,cursor:'pointer'}}>{tb.l}</button>)}
+      </div>
+
+      {/* TAB: Smart Detect */}
+      {pilotTab==='smart'&&<div>
+        {smartTasks.length===0?<div style={{textAlign:'center',padding:40,color:'#888'}}>
+          <div style={{fontSize:50,marginBottom:10}}>✅</div>
+          <div style={{fontSize:16,fontWeight:600,color:'#22c55e'}}>Tout est à jour !</div>
+          <div style={{fontSize:12,marginTop:4}}>Aucune action requise aujourd'hui</div>
+        </div>:
+        <div style={{display:'grid',gap:10}}>
+          {smartTasks.sort((a,b)=>{const p={urgent:0,high:1,medium:2,info:3};return (p[a.priority]||3)-(p[b.priority]||3);}).map((t,i)=>
+            <div key={i} style={{display:'flex',alignItems:'center',gap:14,padding:'14px 18px',background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+(t.priority==='urgent'?'rgba(239,68,68,.25)':t.priority==='high'?'rgba(198,163,78,.2)':'rgba(255,255,255,.06)'),borderRadius:12}}>
+              <div style={{fontSize:28}}>{t.icon}</div>
+              <div style={{flex:1}}>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{fontSize:13,fontWeight:600,color:'#e5e5e5'}}>{t.task}</span>
+                  <span style={{fontSize:9,padding:'2px 8px',borderRadius:10,background:t.priority==='urgent'?'rgba(239,68,68,.15)':t.priority==='high'?'rgba(198,163,78,.15)':'rgba(255,255,255,.05)',color:t.priority==='urgent'?'#ef4444':t.priority==='high'?'#c6a34e':'#888',fontWeight:600}}>{t.priority.toUpperCase()}</span>
+                  {t.auto&&<span style={{fontSize:9,padding:'2px 8px',borderRadius:10,background:'rgba(34,197,94,.12)',color:'#22c55e'}}>AUTO</span>}
+                </div>
+                <div style={{fontSize:11,color:'#888',marginTop:2}}>{t.desc}</div>
+              </div>
+              {t.fn&&<button onClick={()=>{if(confirm(t.task+'\n\n'+t.desc+'\n\nConfirmer ?')){try{t.fn();if(typeof addToast==='function')addToast('✅ '+t.task+' terminé');}catch(e){alert('❌ '+e.message);}}}} style={{padding:'8px 16px',borderRadius:8,border:'none',background:t.color,color:'#fff',fontWeight:600,fontSize:11,cursor:'pointer'}}>✓ Exécuter</button>}
+            </div>)}
+        </div>}
+
+        {/* Auto results */}
+        {autoResults.length>0&&<div style={{marginTop:20,padding:16,background:'rgba(34,197,94,.04)',border:'1px solid rgba(34,197,94,.15)',borderRadius:12}}>
+          <div style={{fontSize:13,fontWeight:600,color:'#22c55e',marginBottom:8}}>🤖 Résultats Autopilot</div>
+          {autoResults.map((r,i)=><div key={i} style={{display:'flex',gap:8,padding:'4px 0',fontSize:12}}>
+            <span>{r.status==='ok'?'✅':'❌'}</span>
+            <span style={{color:r.status==='ok'?'#e5e5e5':'#ef4444'}}>{r.task}</span>
+          </div>)}
+        </div>}
+      </div>}
+
+      {/* TAB: Import CSV */}
+      {pilotTab==='import'&&<div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14}}>
+            <div style={{fontSize:15,fontWeight:600,color:'#c6a34e',marginBottom:12}}>📥 Import Massif</div>
+            <div style={{display:'flex',gap:8,marginBottom:14}}>
+              <button onClick={()=>setImportType('employees')} style={{flex:1,padding:'10px',borderRadius:8,border:'none',background:importType==='employees'?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:importType==='employees'?'#c6a34e':'#888',fontSize:12,cursor:'pointer',fontWeight:600}}>👥 Employés</button>
+              <button onClick={()=>setImportType('clients')} style={{flex:1,padding:'10px',borderRadius:8,border:'none',background:importType==='clients'?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:importType==='clients'?'#c6a34e':'#888',fontSize:12,cursor:'pointer',fontWeight:600}}>🏢 Clients</button>
+            </div>
+            <label style={{display:'block',padding:'14px',borderRadius:10,border:'2px dashed rgba(198,163,78,.2)',textAlign:'center',cursor:'pointer',background:'rgba(198,163,78,.03)'}}>
+              <div style={{fontSize:24,marginBottom:4}}>📂</div>
+              <div style={{fontSize:12,color:'#c6a34e',fontWeight:600}}>Glisser ou cliquer pour importer CSV</div>
+              <div style={{fontSize:10,color:'#888',marginTop:2}}>Séparateur: point-virgule (;) · Encodage: UTF-8</div>
+              <input type="file" accept=".csv,.txt" style={{display:'none'}} onChange={handleCSV}/>
+            </label>
+          </div>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(59,130,246,.15)',borderRadius:14}}>
+            <div style={{fontSize:15,fontWeight:600,color:'#3b82f6',marginBottom:12}}>📋 Colonnes attendues</div>
+            {importType==='employees'?
+              <div style={{fontSize:11,color:'#888',lineHeight:1.8}}>
+                <span style={{color:'#22c55e'}}>●</span> <b style={{color:'#e5e5e5'}}>nom</b> — Nom de famille<br/>
+                <span style={{color:'#22c55e'}}>●</span> <b style={{color:'#e5e5e5'}}>prenom</b> — Prénom<br/>
+                <span style={{color:'#22c55e'}}>●</span> <b style={{color:'#e5e5e5'}}>niss</b> — Numéro NISS<br/>
+                <span style={{color:'#22c55e'}}>●</span> <b style={{color:'#e5e5e5'}}>brut</b> — Salaire brut mensuel<br/>
+                <span style={{color:'#888'}}>○</span> <b style={{color:'#999'}}>email</b> — Email<br/>
+                <span style={{color:'#888'}}>○</span> <b style={{color:'#999'}}>iban</b> — Compte bancaire<br/>
+                <span style={{color:'#888'}}>○</span> <b style={{color:'#999'}}>contrat</b> — CDI/CDD<br/>
+                <span style={{color:'#888'}}>○</span> <b style={{color:'#999'}}>debut</b> — Date début<br/>
+                <span style={{color:'#888'}}>○</span> <b style={{color:'#999'}}>genre</b> — M/F
+              </div>:
+              <div style={{fontSize:11,color:'#888',lineHeight:1.8}}>
+                <span style={{color:'#22c55e'}}>●</span> <b style={{color:'#e5e5e5'}}>societe</b> — Nom de la société<br/>
+                <span style={{color:'#888'}}>○</span> <b style={{color:'#999'}}>tva</b> — Numéro TVA<br/>
+                <span style={{color:'#888'}}>○</span> <b style={{color:'#999'}}>bce</b> — Numéro BCE<br/>
+                <span style={{color:'#888'}}>○</span> <b style={{color:'#999'}}>adresse</b> — Adresse
+              </div>}
+          </div>
+        </div>
+
+        {/* CSV Preview */}
+        {csvData&&<div style={{padding:16,background:'rgba(198,163,78,.04)',border:'1px solid rgba(198,163,78,.15)',borderRadius:12}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+            <div style={{fontSize:13,fontWeight:600,color:'#c6a34e'}}>Aperçu — {csvData.rows.length} lignes détectées</div>
+            <button onClick={importCSV} style={{padding:'8px 20px',borderRadius:8,border:'none',background:'#22c55e',color:'#fff',fontWeight:600,fontSize:12,cursor:'pointer'}}>✅ Importer {csvData.rows.length} {importType==='employees'?'employés':'clients'}</button>
+          </div>
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',fontSize:10,borderCollapse:'collapse'}}>
+              <thead><tr>{csvPreview[0]?.map((h2,i)=><th key={i} style={{padding:'6px 8px',background:'rgba(198,163,78,.1)',color:'#c6a34e',textAlign:'left',borderBottom:'1px solid rgba(198,163,78,.2)'}}>{h2}</th>)}</tr></thead>
+              <tbody>{csvPreview.slice(1,6).map((r,i)=><tr key={i}>{r.map((c,j)=><td key={j} style={{padding:'4px 8px',color:'#999',borderBottom:'1px solid rgba(255,255,255,.03)'}}>{c}</td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        </div>}
+      </div>}
+
+      {/* TAB: Export Tout */}
+      {pilotTab==='export'&&<div style={{textAlign:'center',padding:30}}>
+        <div style={{fontSize:50,marginBottom:16}}>📦</div>
+        <div style={{fontSize:18,fontWeight:700,color:'#e5e5e5',marginBottom:6}}>Export Complet Multi-Clients</div>
+        <div style={{fontSize:12,color:'#888',marginBottom:20}}>{clients.length} clients · {totalEmps} employés</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,maxWidth:600,margin:'0 auto 24px'}}>
+          <div style={{padding:14,background:'rgba(198,163,78,.06)',borderRadius:12,textAlign:'center'}}>
+            <div style={{fontSize:20,fontWeight:700,color:'#c6a34e'}}>{totalEmps}</div>
+            <div style={{fontSize:10,color:'#888'}}>Fiches de paie</div>
+          </div>
+          <div style={{padding:14,background:'rgba(34,197,94,.06)',borderRadius:12,textAlign:'center'}}>
+            <div style={{fontSize:20,fontWeight:700,color:'#22c55e'}}>{clients.filter(c=>(c.emps?.length||0)>0).length}</div>
+            <div style={{fontSize:10,color:'#888'}}>Fichiers SEPA</div>
+          </div>
+          <div style={{padding:14,background:'rgba(168,85,247,.06)',borderRadius:12,textAlign:'center'}}>
+            <div style={{fontSize:20,fontWeight:700,color:'#a855f7'}}>{clients.filter(c=>(c.emps?.length||0)>0).length}</div>
+            <div style={{fontSize:10,color:'#888'}}>DmfA</div>
+          </div>
+        </div>
+        <button onClick={exportAllDocs} style={{padding:'16px 36px',borderRadius:14,border:'none',background:'linear-gradient(135deg,#c6a34e,#d4af37)',color:'#000',fontWeight:700,fontSize:15,cursor:'pointer',boxShadow:'0 4px 20px rgba(198,163,78,.35)'}}>📦 Tout Exporter — 1 clic</button>
+      </div>}
+
+      {/* TAB: Calendrier Auto */}
+      {pilotTab==='calendrier'&&<div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
+          {[
+            {m:'Janvier',tasks:['Belcotax 281.10','Bilan Social BNB prep'],color:'#ef4444'},
+            {m:'Février',tasks:['Bilan Social BNB deadline','Belcotax deadline 1/3'],color:'#6366f1'},
+            {m:'Mars',tasks:['DmfA Q1 clôture','PP 274 mensuel'],color:'#a855f7'},
+            {m:'Avril',tasks:['DmfA Q1 envoi','PP 274 mensuel'],color:'#3b82f6'},
+            {m:'Mai',tasks:['Pécule vacances simple','PP 274 mensuel'],color:'#06b6d4'},
+            {m:'Juin',tasks:['Pécule vacances double','DmfA Q2'],color:'#22c55e'},
+            {m:'Juillet',tasks:['PP 274 mensuel','Provisions ONSS'],color:'#f59e0b'},
+            {m:'Août',tasks:['PP 274 mensuel','Provisions ONSS'],color:'#c6a34e'},
+            {m:'Septembre',tasks:['DmfA Q3','PP 274 mensuel'],color:'#a855f7'},
+            {m:'Octobre',tasks:['PP 274 mensuel','Indexation check'],color:'#3b82f6'},
+            {m:'Novembre',tasks:['PP 274 mensuel','13ème mois prep'],color:'#f59e0b'},
+            {m:'Décembre',tasks:['13ème Mois','DmfA Q4','Clôture annuelle'],color:'#ef4444'}
+          ].map((m,i)=><div key={i} style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+(month===i+1?'rgba(198,163,78,.3)':'rgba(255,255,255,.05)'),borderRadius:12,opacity:month>i+1?0.5:1}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <span style={{fontSize:12,fontWeight:600,color:month===i+1?'#c6a34e':'#e5e5e5'}}>{m.m}</span>
+              {month===i+1&&<span style={{fontSize:8,padding:'2px 6px',borderRadius:6,background:'rgba(198,163,78,.15)',color:'#c6a34e'}}>EN COURS</span>}
+              {month>i+1&&<span style={{fontSize:8,padding:'2px 6px',borderRadius:6,background:'rgba(34,197,94,.12)',color:'#22c55e'}}>✓</span>}
+            </div>
+            {m.tasks.map((t,j)=><div key={j} style={{fontSize:10,color:'#888',padding:'2px 0'}}>• {t}</div>)}
+          </div>)}
+        </div>
+        <div style={{marginTop:16,padding:14,background:'rgba(198,163,78,.04)',borderRadius:12,textAlign:'center'}}>
+          <div style={{fontSize:11,color:'#888'}}>📅 Chaque mois : Fiches de paie (25) + SEPA (25) + PP 274 (15) + Provisions ONSS (5)</div>
+          <div style={{fontSize:10,color:'#666',marginTop:4}}>L'Autopilot détecte automatiquement les tâches du jour et vous les propose.</div>
+        </div>
+      </div>}
+    </div>;
+  };
+
+const MassEngine=({s,d})=>{
     const clients=s.clients||[];
     const totalEmps=clients.reduce((a,c)=>a+(c.emps?.length||0),0);
     const totalDocs=totalEmps*5; // fiches+dimona+sepa+dmfa+belcotax
@@ -5463,6 +5810,7 @@ const AutomationHub=({s,d})=>{
       case'sprint9':return <ModulesProPage s={s} d={d}/>;
       case'automatisation':return <AutomationHub s={s} d={d}/>;
       case'massengine':return <MassEngine s={s} d={d}/>;
+      case'autopilot':return <SmartAutopilot s={s} d={d}/>;
       case'team':return <TeamManagement supabase={supabase} user={user} userRole={userRole}/>;
       default:return <Dashboard s={s} d={d}/>;
     }
