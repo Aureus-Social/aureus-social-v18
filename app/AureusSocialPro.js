@@ -29,7 +29,8 @@ const I18N = {
   'nav.reporting': { fr:'Reporting & Export', nl:"Rapportage & Export", en:"Reporting & Export", de:"Berichterstattung & Export" },
   'nav.legal': { fr:'Juridique & Veille', nl:"Juridisch & Monitoring", en:"Legal & Monitoring", de:"Recht & Überwachung" },
   'nav.sprint9': { fr:'Sprint 9 - Modules', nl:'Sprint 9 - Modules', en:'Sprint 9 - Modules', de:'Sprint 9 - Module' },
-  'nav.automatisation': { fr:'⚡ Automatisation',nl:'⚡ Automatisering',en:'⚡ Automation',de:'⚡ Automatisierung' },
+  'nav.massengine': { fr:'Mass Engine',nl:'Mass Engine',en:'Mass Engine',de:'Mass Engine' },
+    'nav.automatisation': { fr:'⚡ Automatisation',nl:'⚡ Automatisering',en:'⚡ Automation',de:'⚡ Automatisierung' },
     'nav.team': { fr:'Équipe',nl:'Team',en:'Team',de:'Team' },
   'nav.settings': { fr:'Paramètres', nl:"Instellingen", en:"Settings", de:"Einstellungen" },
   'nav.aureussuite': { fr:'Aureus Suite', nl:"Aureus Suite", en:"Aureus Suite", de:"Aureus Suite" },
@@ -4344,6 +4345,7 @@ function AppInner({ supabase, user, onLogout }) {
     {id:"social",l:t('nav.social'),i:'◆',sub:[{id:"assloi",l:t('sub.assloi')},{id:"assgroupe",l:t('sub.assgroupe')},{id:"syndicales",l:t('sub.syndicales')},{id:"allocfam",l:t('sub.allocfam')},{id:"caissevac",l:t('sub.caissevac')},{id:"rentes",l:t('sub.rentes')},{id:"decava",l:t('sub.decava')},{id:"aidesemploi",l:t('sub.aidesemploi')}]},
     {id:"bienetre",l:t('nav.bienetre'),i:'♥',sub:[{id:"planglobal",l:t('sub.planglobal')},{id:"paa",l:t('sub.paa')},{id:"risquespsycho",l:t('sub.risquespsycho')},{id:"alcool",l:t('sub.alcool')},{id:"elections",l:t('sub.elections')},{id:"organes",l:t('sub.organes')}]},
     {id:"sprint9",l:"Sprint 9 - Modules",i:"S9"},
+    {id:"massengine",l:"🏭 "+t("nav.massengine"),i:"🏭"},
     {id:"automatisation",l:t('nav.automatisation'),i:'⚡'},
     {id:"team",l:'👥 '+t('nav.team'),i:'👥'},
     {id:"reporting",l:t('nav.reporting'),i:'▤',sub:[{id:"accounting",l:t('sub.accounting')},{id:"bilanbnb",l:t('sub.bilanbnb')},{id:"bilan",l:t('sub.bilan')},{id:"statsins",l:t('sub.statsins')},{id:"sepa",l:t('sub.sepa')},{id:"peppol",l:t('sub.peppol')},{id:"envoi",l:t('sub.envoi')},{id:"exportimport",l:t('sub.exportimport')},{id:"ged",l:t('sub.ged')}]},
@@ -4451,7 +4453,377 @@ function AppInner({ supabase, user, onLogout }) {
   if(!s.activeClient)return <ClientsPage s={s} d={d} user={user} onLogout={onLogout} veilleNotif={veilleNotif} setVeilleNotif={setVeilleNotif}/>;
 
   // ── Sprint 17: Automation Hub ──
-  const AutomationHub=({s,d})=>{
+  
+  // ── Sprint 20: Mass Automation Engine (10K+ clients) ──
+  const MassEngine=({s,d})=>{
+    const clients=s.clients||[];
+    const totalEmps=clients.reduce((a,c)=>a+(c.emps?.length||0),0);
+    const totalDocs=totalEmps*5; // fiches+dimona+sepa+dmfa+belcotax
+    const now=new Date();
+    const mois=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    const [engineTab,setEngineTab]=useState('overview');
+    const [running,setRunning]=useState(false);
+    const [paused,setPaused]=useState(false);
+    const [progress,setProgress]=useState({client:0,emp:0,doc:0,total:0,errors:0,startTime:null,currentClient:'',currentAction:''});
+    const [jobLog,setJobLog]=useState([]);
+    const [selectedOps,setSelectedOps]=useState({fiches:true,sepa:true,dmfa:true,dimona:false,belcotax:false,c4:false,attestations:false});
+    const [batchMonth,setBatchMonth]=useState(now.getMonth()+1);
+    const [batchYear,setBatchYear]=useState(now.getFullYear());
+    const pauseRef=useRef(false);
+    const cancelRef=useRef(false);
+
+    const opsCount=Object.values(selectedOps).filter(Boolean).length;
+    const estDocs=totalEmps*opsCount;
+    const estTime=Math.ceil(estDocs*0.05); // ~50ms per doc
+
+    const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+
+    const runMassJob=async()=>{
+      if(clients.length===0){alert('Aucun client');return;}
+      const ops=Object.entries(selectedOps).filter(([k,v])=>v).map(([k])=>k);
+      if(ops.length===0){alert('Sélectionnez au moins une opération');return;}
+      
+      if(!confirm('🚀 LANCEMENT MASS ENGINE\n\n'+
+        clients.length+' clients\n'+
+        totalEmps+' employés\n'+
+        estDocs+' documents à générer\n'+
+        'Opérations: '+ops.join(', ')+'\n'+
+        'Mois: '+mois[batchMonth-1]+' '+batchYear+'\n\n'+
+        'Confirmer le lancement ?'))return;
+
+      setRunning(true);setPaused(false);
+      cancelRef.current=false;pauseRef.current=false;
+      const startTime=Date.now();
+      let docCount=0,errCount=0;
+      const log=[];
+
+      for(let ci=0;ci<clients.length;ci++){
+        if(cancelRef.current)break;
+        while(pauseRef.current)await sleep(200);
+
+        const cl=clients[ci];
+        const co=cl.company||{};
+        const emps=cl.emps||[];
+        
+        setProgress({client:ci+1,emp:0,doc:docCount,total:clients.length,errors:errCount,startTime,
+          currentClient:co.name||cl.id||('Client '+(ci+1)),currentAction:'Initialisation...'});
+
+        if(emps.length===0){
+          log.push({client:co.name||cl.id,status:'skip',msg:'Aucun employé',docs:0});
+          continue;
+        }
+
+        let clientDocs=0;
+        try{
+          // Fiches de paie
+          if(selectedOps.fiches){
+            setProgress(p=>({...p,currentAction:'📄 Fiches de paie ('+emps.length+')'}));
+            for(let ei=0;ei<emps.length;ei++){
+              if(cancelRef.current)break;
+              while(pauseRef.current)await sleep(200);
+              try{generatePayslipPDF(emps[ei],co);clientDocs++;docCount++;}catch(e){errCount++;}
+              setProgress(p=>({...p,emp:ei+1,doc:docCount,errors:errCount}));
+              await sleep(10); // Let UI breathe
+            }
+          }
+
+          // SEPA
+          if(selectedOps.sepa&&!cancelRef.current){
+            setProgress(p=>({...p,currentAction:'💸 SEPA pain.001'}));
+            try{generateSEPAXML(emps,co);clientDocs++;docCount++;}catch(e){errCount++;}
+            await sleep(10);
+          }
+
+          // DmfA
+          if(selectedOps.dmfa&&!cancelRef.current){
+            setProgress(p=>({...p,currentAction:'📊 DmfA trimestrielle'}));
+            try{generateDmfAXML(emps,co);clientDocs++;docCount++;}catch(e){errCount++;}
+            await sleep(10);
+          }
+
+          // Dimona
+          if(selectedOps.dimona&&!cancelRef.current){
+            setProgress(p=>({...p,currentAction:'📡 Dimona IN'}));
+            for(let ei=0;ei<emps.length;ei++){
+              if(cancelRef.current)break;
+              try{generateDimonaXML(emps[ei],'IN');clientDocs++;docCount++;}catch(e){errCount++;}
+            }
+            await sleep(10);
+          }
+
+          // Belcotax
+          if(selectedOps.belcotax&&!cancelRef.current){
+            setProgress(p=>({...p,currentAction:'🏛️ Belcotax 281.10'}));
+            for(let ei=0;ei<emps.length;ei++){
+              if(cancelRef.current)break;
+              try{generateBelcotaxXML(emps[ei],co);clientDocs++;docCount++;}catch(e){errCount++;}
+            }
+            await sleep(10);
+          }
+
+          // C4
+          if(selectedOps.c4&&!cancelRef.current){
+            const sortis=emps.filter(e=>e.status==='sorti');
+            if(sortis.length>0){
+              setProgress(p=>({...p,currentAction:'📋 C4 ('+sortis.length+')'}));
+              sortis.forEach(e=>{try{generateC4PDF(e,co);clientDocs++;docCount++;}catch(ex){errCount++;}});
+            }
+            await sleep(10);
+          }
+
+          // Attestations
+          if(selectedOps.attestations&&!cancelRef.current){
+            setProgress(p=>({...p,currentAction:'📝 Attestations'}));
+            for(let ei=0;ei<emps.length;ei++){
+              if(cancelRef.current)break;
+              try{generateAttestationEmploi(emps[ei],co);clientDocs++;docCount++;}catch(e){errCount++;}
+            }
+            await sleep(10);
+          }
+
+          log.push({client:co.name||cl.id,status:'ok',msg:emps.length+' emp · '+clientDocs+' docs',docs:clientDocs});
+        }catch(e){
+          errCount++;
+          log.push({client:co.name||cl.id,status:'error',msg:e.message||'Erreur',docs:clientDocs});
+        }
+
+        setProgress(p=>({...p,doc:docCount,errors:errCount}));
+      }
+
+      setRunning(false);
+      setJobLog(log);
+      setEngineTab('results');
+      const elapsed=Math.round((Date.now()-startTime)/1000);
+      if(typeof addToast==='function')addToast('🎉 Mass Engine terminé: '+docCount+' documents en '+elapsed+'s');
+    };
+
+    const elapsedSec=progress.startTime?Math.round((Date.now()-progress.startTime)/1000):0;
+    const pctClient=progress.total>0?(progress.client/progress.total*100).toFixed(1):0;
+
+    const tabs=[
+      {id:'overview',l:'📊 Vue globale'},
+      {id:'config',l:'⚙️ Configuration'},
+      {id:'run',l:'🚀 Exécution'},
+      {id:'results',l:'📋 Résultats ('+jobLog.length+')'},
+    ];
+
+    return <div style={{padding:24}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <div>
+          <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🏭 Mass Engine</h2>
+          <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Automatisation massive — {clients.length} clients · {totalEmps} employés · {mois[batchMonth-1]} {batchYear}</p>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          {[{v:clients.length,l:'Clients',c:'#c6a34e'},{v:totalEmps,l:'Employés',c:'#3b82f6'},{v:estDocs,l:'Docs estimés',c:'#a855f7'},{v:Math.ceil(estTime/60)+'min',l:'Temps estimé',c:'#22c55e'}].map((k,i)=>
+            <div key={i} style={{padding:'8px 14px',background:'rgba(198,163,78,.06)',border:'1px solid rgba(198,163,78,.1)',borderRadius:10,textAlign:'center'}}>
+              <div style={{fontSize:16,fontWeight:700,color:k.c}}>{k.v}</div>
+              <div style={{fontSize:9,color:'#888'}}>{k.l}</div>
+            </div>)}
+        </div>
+      </div>
+
+      {/* Running Progress */}
+      {running&&<div style={{marginBottom:20,padding:20,background:'linear-gradient(135deg,rgba(198,163,78,.08),rgba(198,163,78,.02))',border:'1px solid rgba(198,163,78,.25)',borderRadius:14}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div style={{fontSize:14,fontWeight:600,color:'#c6a34e'}}>
+            {paused?'⏸ En pause':'⚡ En cours...'} — Client {progress.client}/{progress.total}
+          </div>
+          <div style={{display:'flex',gap:6}}>
+            <button onClick={()=>{pauseRef.current=!pauseRef.current;setPaused(!paused);}} style={{padding:'6px 14px',borderRadius:8,border:'none',background:paused?'#22c55e':'#eab308',color:'#fff',fontWeight:600,fontSize:11,cursor:'pointer'}}>{paused?'▶ Reprendre':'⏸ Pause'}</button>
+            <button onClick={()=>{cancelRef.current=true;}} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#ef4444',color:'#fff',fontWeight:600,fontSize:11,cursor:'pointer'}}>✕ Annuler</button>
+          </div>
+        </div>
+        <div style={{fontSize:12,color:'#e5e5e5',marginBottom:4}}>{progress.currentClient}</div>
+        <div style={{fontSize:11,color:'#888',marginBottom:10}}>{progress.currentAction}</div>
+        {/* Progress bar */}
+        <div style={{height:8,background:'rgba(198,163,78,.1)',borderRadius:4,overflow:'hidden',marginBottom:8}}>
+          <div style={{height:'100%',width:pctClient+'%',background:'linear-gradient(90deg,#c6a34e,#d4af37)',borderRadius:4,transition:'width .3s'}}/>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#888'}}>
+          <span>{pctClient}% — {progress.doc} documents générés</span>
+          <span>{progress.errors>0?'❌ '+progress.errors+' erreurs':''} · {elapsedSec}s</span>
+        </div>
+      </div>}
+
+      {/* Tabs */}
+      <div style={{display:'flex',gap:4,marginBottom:20}}>
+        {tabs.map(tb=><button key={tb.id} onClick={()=>setEngineTab(tb.id)} style={{padding:'10px 16px',borderRadius:10,border:engineTab===tb.id?'1px solid rgba(198,163,78,.3)':'1px solid rgba(255,255,255,.05)',background:engineTab===tb.id?'rgba(198,163,78,.12)':'rgba(255,255,255,.03)',color:engineTab===tb.id?'#c6a34e':'#888',fontSize:12,fontWeight:engineTab===tb.id?600:400,cursor:'pointer'}}>{tb.l}</button>)}
+      </div>
+
+      {/* TAB: Overview */}
+      {engineTab==='overview'&&<div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:20}}>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14}}>
+            <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:12}}>📊 Répartition Clients</div>
+            {[{l:'Avec employés',v:clients.filter(c=>(c.emps?.length||0)>0).length,c:'#22c55e'},
+              {l:'Sans employés',v:clients.filter(c=>(c.emps?.length||0)===0).length,c:'#ef4444'},
+              {l:'Avec TVA',v:clients.filter(c=>c.company?.vat).length,c:'#3b82f6'},
+              {l:'Complets',v:clients.filter(c=>c.company?.vat&&c.company?.name&&(c.emps?.length||0)>0).length,c:'#a855f7'}
+            ].map((r,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+              <span style={{fontSize:11,color:'#888'}}>{r.l}</span>
+              <span style={{fontSize:13,fontWeight:700,color:r.c}}>{r.v}</span>
+            </div>)}
+          </div>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(59,130,246,.15)',borderRadius:14}}>
+            <div style={{fontSize:13,fontWeight:600,color:'#3b82f6',marginBottom:12}}>👥 Répartition Employés</div>
+            {[{l:'Total',v:totalEmps,c:'#3b82f6'},
+              {l:'Moy/client',v:clients.length>0?(totalEmps/clients.length).toFixed(1):'0',c:'#c6a34e'},
+              {l:'Max/client',v:Math.max(0,...clients.map(c=>c.emps?.length||0)),c:'#a855f7'},
+              {l:'CDI estimés',v:clients.reduce((a,c)=>a+(c.emps||[]).filter(e=>(e.contractType||e.contrat?.type||'CDI')==='CDI').length,0),c:'#22c55e'}
+            ].map((r,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+              <span style={{fontSize:11,color:'#888'}}>{r.l}</span>
+              <span style={{fontSize:13,fontWeight:700,color:r.c}}>{r.v}</span>
+            </div>)}
+          </div>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(34,197,94,.15)',borderRadius:14}}>
+            <div style={{fontSize:13,fontWeight:600,color:'#22c55e',marginBottom:12}}>📄 Estimation Documents</div>
+            {[{l:'Fiches de paie',v:totalEmps,c:'#c6a34e'},
+              {l:'SEPA virements',v:clients.filter(c=>(c.emps?.length||0)>0).length,c:'#22c55e'},
+              {l:'DmfA trimest.',v:clients.filter(c=>(c.emps?.length||0)>0).length,c:'#a855f7'},
+              {l:'Total max',v:totalDocs,c:'#ef4444'}
+            ].map((r,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+              <span style={{fontSize:11,color:'#888'}}>{r.l}</span>
+              <span style={{fontSize:13,fontWeight:700,color:r.c}}>{r.v}</span>
+            </div>)}
+          </div>
+        </div>
+
+        {/* Top clients by employee count */}
+        <div style={{padding:16,background:'rgba(198,163,78,.04)',border:'1px solid rgba(198,163,78,.1)',borderRadius:12}}>
+          <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:10}}>🏢 Top 10 Clients (par effectif)</div>
+          <div style={{display:'grid',gridTemplateColumns:'40px 1fr 80px 80px',gap:6,fontSize:10,fontWeight:600,color:'#888',paddingBottom:6,borderBottom:'1px solid rgba(198,163,78,.1)'}}>
+            <div>#</div><div>Société</div><div>Employés</div><div>Masse brute</div>
+          </div>
+          {[...clients].sort((a,b)=>(b.emps?.length||0)-(a.emps?.length||0)).slice(0,10).map((cl,i)=>{
+            const mass=(cl.emps||[]).reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0);
+            return <div key={i} style={{display:'grid',gridTemplateColumns:'40px 1fr 80px 80px',gap:6,padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.02)',alignItems:'center'}}>
+              <span style={{fontSize:11,fontWeight:700,color:'#c6a34e'}}>{i+1}</span>
+              <span style={{fontSize:11,color:'#e5e5e5'}}>{cl.company?.name||cl.id||'—'}</span>
+              <span style={{fontSize:12,fontWeight:600,color:'#3b82f6'}}>{cl.emps?.length||0}</span>
+              <span style={{fontSize:11,color:'#22c55e'}}>{new Intl.NumberFormat('fr-BE').format(mass)} €</span>
+            </div>;
+          })}
+        </div>
+      </div>}
+
+      {/* TAB: Config */}
+      {engineTab==='config'&&<div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14}}>
+            <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:14}}>📅 Période</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              <div>
+                <label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Mois</label>
+                <select value={batchMonth} onChange={e=>setBatchMonth(+e.target.value)} style={{width:'100%',padding:'10px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:8,color:'#e5e5e5',fontSize:13,fontFamily:'inherit',cursor:'pointer',outline:'none'}}>
+                  {mois.map((m,i)=><option key={i} value={i+1}>{m}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Année</label>
+                <select value={batchYear} onChange={e=>setBatchYear(+e.target.value)} style={{width:'100%',padding:'10px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:8,color:'#e5e5e5',fontSize:13,fontFamily:'inherit',cursor:'pointer',outline:'none'}}>
+                  {[2024,2025,2026,2027].map(y=><option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14}}>
+            <div style={{fontSize:14,fontWeight:600,color:'#c6a34e',marginBottom:14}}>⚙️ Opérations ({opsCount} sélectionnées)</div>
+            <div style={{display:'grid',gap:6}}>
+              {[{k:'fiches',l:'📄 Fiches de paie',desc:'1 par employé'},{k:'sepa',l:'💸 SEPA pain.001',desc:'1 par client'},{k:'dmfa',l:'📊 DmfA trimestrielle',desc:'1 par client'},{k:'dimona',l:'📡 Dimona IN/OUT',desc:'1 par employé'},{k:'belcotax',l:'🏛️ Belcotax 281.10',desc:'1 par employé'},{k:'c4',l:'📋 Certificat C4',desc:'Employés sortis'},{k:'attestations',l:'📝 Attestations',desc:'1 par employé'}].map(op=>
+                <div key={op.k} onClick={()=>setSelectedOps(p=>({...p,[op.k]:!p[op.k]}))} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',background:selectedOps[op.k]?'rgba(34,197,94,.06)':'rgba(255,255,255,.02)',border:'1px solid '+(selectedOps[op.k]?'rgba(34,197,94,.15)':'rgba(255,255,255,.04)'),borderRadius:8,cursor:'pointer'}}>
+                  <div style={{width:20,height:20,borderRadius:6,border:'2px solid '+(selectedOps[op.k]?'#22c55e':'#555'),background:selectedOps[op.k]?'#22c55e':'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#fff'}}>{selectedOps[op.k]?'✓':''}</div>
+                  <div style={{flex:1}}><div style={{fontSize:12,color:selectedOps[op.k]?'#e5e5e5':'#888'}}>{op.l}</div><div style={{fontSize:9,color:'#666'}}>{op.desc}</div></div>
+                </div>)}
+            </div>
+          </div>
+        </div>
+
+        {/* Estimation */}
+        <div style={{marginTop:16,padding:16,background:'rgba(198,163,78,.06)',border:'1px solid rgba(198,163,78,.15)',borderRadius:12}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,textAlign:'center'}}>
+            <div><div style={{fontSize:22,fontWeight:700,color:'#c6a34e'}}>{clients.filter(c=>(c.emps?.length||0)>0).length}</div><div style={{fontSize:10,color:'#888'}}>Clients à traiter</div></div>
+            <div><div style={{fontSize:22,fontWeight:700,color:'#3b82f6'}}>{totalEmps}</div><div style={{fontSize:10,color:'#888'}}>Employés</div></div>
+            <div><div style={{fontSize:22,fontWeight:700,color:'#a855f7'}}>{estDocs.toLocaleString()}</div><div style={{fontSize:10,color:'#888'}}>Documents</div></div>
+            <div><div style={{fontSize:22,fontWeight:700,color:'#22c55e'}}>{estTime<60?estTime+'s':Math.ceil(estTime/60)+'min'}</div><div style={{fontSize:10,color:'#888'}}>Temps estimé</div></div>
+          </div>
+        </div>
+      </div>}
+
+      {/* TAB: Run */}
+      {engineTab==='run'&&<div style={{textAlign:'center',padding:40}}>
+        <div style={{fontSize:60,marginBottom:16}}>🏭</div>
+        <div style={{fontSize:20,fontWeight:700,color:'#e5e5e5',marginBottom:8}}>Prêt à lancer</div>
+        <div style={{fontSize:13,color:'#888',marginBottom:8}}>{clients.length} clients · {totalEmps} employés · {opsCount} opérations</div>
+        <div style={{fontSize:13,color:'#c6a34e',marginBottom:24}}>≈ {estDocs.toLocaleString()} documents • {mois[batchMonth-1]} {batchYear}</div>
+        
+        <div style={{display:'inline-flex',gap:10}}>
+          <button onClick={runMassJob} disabled={running} style={{padding:'18px 40px',borderRadius:14,border:'none',background:running?'#555':'linear-gradient(135deg,#c6a34e,#d4af37)',color:running?'#999':'#000',fontWeight:700,fontSize:16,cursor:running?'not-allowed':'pointer',boxShadow:running?'none':'0 6px 30px rgba(198,163,78,.4)'}}>
+            {running?'⏳ En cours...':'⚡ LANCER — 1 clic, je confirme'}
+          </button>
+        </div>
+        
+        <div style={{marginTop:30,fontSize:11,color:'#666',maxWidth:500,margin:'30px auto 0'}}>
+          Processus : pour chaque client → génère les fiches de paie, SEPA, DmfA selon votre configuration. 
+          Vous pouvez mettre en pause ou annuler à tout moment.
+        </div>
+      </div>}
+
+      {/* TAB: Results */}
+      {engineTab==='results'&&<div>
+        {jobLog.length===0?<div style={{textAlign:'center',padding:40,color:'#888'}}>
+          <div style={{fontSize:40,marginBottom:10}}>📋</div>
+          <div>Aucun résultat. Lancez le Mass Engine pour voir les résultats ici.</div>
+        </div>:<>
+          {/* Summary */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+            <div style={{padding:14,background:'rgba(34,197,94,.06)',borderRadius:12,textAlign:'center'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'#22c55e'}}>{jobLog.filter(l=>l.status==='ok').length}</div>
+              <div style={{fontSize:10,color:'#888'}}>Réussis</div>
+            </div>
+            <div style={{padding:14,background:'rgba(239,68,68,.06)',borderRadius:12,textAlign:'center'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'#ef4444'}}>{jobLog.filter(l=>l.status==='error').length}</div>
+              <div style={{fontSize:10,color:'#888'}}>Erreurs</div>
+            </div>
+            <div style={{padding:14,background:'rgba(234,179,8,.06)',borderRadius:12,textAlign:'center'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'#eab308'}}>{jobLog.filter(l=>l.status==='skip').length}</div>
+              <div style={{fontSize:10,color:'#888'}}>Ignorés</div>
+            </div>
+            <div style={{padding:14,background:'rgba(198,163,78,.06)',borderRadius:12,textAlign:'center'}}>
+              <div style={{fontSize:22,fontWeight:700,color:'#c6a34e'}}>{jobLog.reduce((a,l)=>a+l.docs,0)}</div>
+              <div style={{fontSize:10,color:'#888'}}>Documents</div>
+            </div>
+          </div>
+
+          {/* Detail table */}
+          <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:12,overflow:'hidden'}}>
+            <div style={{display:'grid',gridTemplateColumns:'40px 1fr 200px 80px',padding:'10px 14px',background:'rgba(198,163,78,.06)',fontSize:10,fontWeight:600,color:'#c6a34e'}}>
+              <div>#</div><div>Client</div><div>Détail</div><div>Statut</div>
+            </div>
+            <div style={{maxHeight:400,overflowY:'auto'}}>
+              {jobLog.map((log,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'40px 1fr 200px 80px',padding:'8px 14px',borderTop:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
+                <span style={{color:'#888'}}>{i+1}</span>
+                <span style={{color:'#e5e5e5',fontWeight:500}}>{log.client}</span>
+                <span style={{color:'#888'}}>{log.msg}</span>
+                <span style={{fontSize:10,padding:'3px 8px',borderRadius:6,textAlign:'center',
+                  background:log.status==='ok'?'rgba(34,197,94,.12)':log.status==='error'?'rgba(239,68,68,.12)':'rgba(234,179,8,.12)',
+                  color:log.status==='ok'?'#22c55e':log.status==='error'?'#ef4444':'#eab308'
+                }}>{log.status==='ok'?'✅ OK':log.status==='error'?'❌ Erreur':'⏭ Skip'}</span>
+              </div>)}
+            </div>
+          </div>
+        </>}
+      </div>}
+
+      {/* Footer */}
+      <div style={{marginTop:30,textAlign:'center',padding:14,borderTop:'1px solid rgba(198,163,78,.1)'}}>
+        <div style={{fontSize:10,color:'#666'}}>Mass Engine v1 — Sprint 20 — {clients.length} clients · {totalEmps} employés</div>
+        <div style={{fontSize:9,color:'#444',marginTop:2}}>Tous les documents sont générés localement. Vous confirmez, l'IA exécute.</div>
+      </div>
+    </div>;
+  };
+
+const AutomationHub=({s,d})=>{
     const emps=s.emps||[];
     const co=s.co||{};
     const now=new Date();
@@ -4597,6 +4969,15 @@ function AppInner({ supabase, user, onLogout }) {
       {/* Quick Launch */}
       <div style={{marginBottom:20,padding:16,background:'linear-gradient(135deg,rgba(198,163,78,.1),rgba(198,163,78,.03))',border:'1px solid rgba(198,163,78,.25)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
         <div>
+      {/* Link to Mass Engine */}
+      <div style={{marginBottom:16,padding:14,background:'linear-gradient(135deg,rgba(168,85,247,.08),rgba(168,85,247,.02))',border:'1px solid rgba(168,85,247,.2)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div>
+          <div style={{fontSize:14,fontWeight:600,color:'#a855f7'}}>🏭 Mass Engine — Multi-Clients</div>
+          <div style={{fontSize:11,color:'#888'}}>Traitez {(s.clients||[]).length} clients × {(s.clients||[]).reduce((a,c)=>a+(c.emps?.length||0),0)} employés en 1 clic</div>
+        </div>
+        <button onClick={()=>d({type:'NAV',page:'massengine'})} style={{padding:'12px 24px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#a855f7,#7c3aed)',color:'#fff',fontWeight:600,fontSize:12,cursor:'pointer'}}>🏭 Ouvrir Mass Engine</button>
+      </div>
+
           <div style={{fontSize:16,fontWeight:700,color:'#c6a34e',marginBottom:4}}>🚀 Paie Complète du Mois</div>
           <div style={{fontSize:11,color:'#999'}}>Fiches + SEPA + DmfA + Précompte — tout en 1 clic</div>
         </div>
@@ -4957,6 +5338,7 @@ function AppInner({ supabase, user, onLogout }) {
       case'modules':return <ModulesProPage s={s} d={d}/>;
       case'sprint9':return <ModulesProPage s={s} d={d}/>;
       case'automatisation':return <AutomationHub s={s} d={d}/>;
+      case'massengine':return <MassEngine s={s} d={d}/>;
       case'team':return <TeamManagement supabase={supabase} user={user} userRole={userRole}/>;
       default:return <Dashboard s={s} d={d}/>;
     }
