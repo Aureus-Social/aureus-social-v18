@@ -2840,17 +2840,6 @@ function cleanupRealtime() {
 }
 
 // Save user role to Supabase
-async function saveUserRole(supabase, targetUserId, role) {
-  if (!supabase) return false;
-  try {
-    const { error } = await supabase.from('user_roles').upsert({
-      user_id: targetUserId,
-      role: role,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' });
-    return !error;
-  } catch(e) { return false; }
-}
 
 async function getUserRoles(supabase) {
   if (!supabase) return [];
