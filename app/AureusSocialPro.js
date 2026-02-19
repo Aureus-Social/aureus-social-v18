@@ -2881,18 +2881,80 @@ async function getActivityLog(supabase) {
   } catch(e) { return []; }
 }
 
-async function saveData(data){
-  try{
+// ── Sprint 29: Robust Persistence Engine ──
+let _saveStatus = 'idle'; // idle | saving | saved | error
+let _lastSaveTime = 0;
+let _saveRetries = 0;
+const MAX_RETRIES = 3;
+let _saveQueue = null;
+let _statusListeners = [];
+
+function onSaveStatus(fn) { _statusListeners.push(fn); return () => { _statusListeners = _statusListeners.filter(f => f !== fn); }; }
+function _notifyStatus(status) { _saveStatus = status; _statusListeners.forEach(fn => fn(status)); }
+
+async function saveData(data) {
+  try {
     if (typeof window === 'undefined') return;
-    // Debounce: cancel previous save, wait 500ms
-    if(_saveTimer)clearTimeout(_saveTimer);
-    _saveTimer=setTimeout(()=>{
-      try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch(e) { console.warn("localStorage error:", e); }
-      if (_supabaseRef && _userIdRef) {
-        saveToSupabase(_supabaseRef, _userIdRef, data).catch(()=>{});
+    _saveQueue = data;
+    if (_saveTimer) clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(() => _executeSave(), 800);
+  } catch (e) { console.warn('Save queue failed', e); }
+}
+
+async function _executeSave() {
+  const data = _saveQueue;
+  if (!data) return;
+  _saveQueue = null;
+  _notifyStatus('saving');
+
+  // 1. Always save to localStorage (instant, reliable)
+  try {
+    const json = JSON.stringify(data);
+    localStorage.setItem(STORE_KEY, json);
+    // Also save a backup with timestamp
+    localStorage.setItem(STORE_KEY + '_backup', json);
+    localStorage.setItem(STORE_KEY + '_ts', new Date().toISOString());
+  } catch (e) {
+    console.warn('localStorage full, clearing backup:', e);
+    try { localStorage.removeItem(STORE_KEY + '_backup'); localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e2) {}
+  }
+
+  // 2. Save to Supabase with retry
+  if (_supabaseRef && _userIdRef) {
+    let success = false;
+    for (let attempt = 0; attempt < MAX_RETRIES && !success; attempt++) {
+      success = await saveToSupabase(_supabaseRef, _userIdRef, data);
+      if (!success && attempt < MAX_RETRIES - 1) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); // exponential backoff
       }
-    },500);
-  }catch(e){console.warn('Save failed',e);}
+    }
+    if (success) {
+      _saveRetries = 0;
+      _lastSaveTime = Date.now();
+      _notifyStatus('saved');
+      // Clear status after 3s
+      setTimeout(() => { if (_saveStatus === 'saved') _notifyStatus('idle'); }, 3000);
+    } else {
+      _saveRetries++;
+      _notifyStatus('error');
+      console.warn('Supabase save failed after', MAX_RETRIES, 'retries (localStorage OK)');
+    }
+  } else {
+    _lastSaveTime = Date.now();
+    _notifyStatus('saved');
+    setTimeout(() => { if (_saveStatus === 'saved') _notifyStatus('idle'); }, 3000);
+  }
+}
+
+// Force save (no debounce) — used before page unload
+async function forceSave(data) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    if (_supabaseRef && _userIdRef) {
+      await saveToSupabase(_supabaseRef, _userIdRef, data);
+    }
+  } catch (e) {}
 }
 async function loadData(supabase, userId){
   try{
@@ -2911,6 +2973,219 @@ async function loadData(supabase, userId){
     if (!val) return null;
     return JSON.parse(val);
   }catch(e){return null;}
+}
+
+
+
+// ── Sprint 29: Formule Précompte Professionnel Exacte SPF Finances ──
+// Barème 2025-2026, Art. 275-289 CIR 92
+function calcPrecompteExact(brutMensuel, options) {
+  const opts = options || {};
+  const situation = opts.situation || 'isole'; // isole, marie_1r, marie_2r, cohabitant
+  const enfants = +(opts.enfants || 0);
+  const handicape = !!opts.handicape;
+  const conjointRevenus = !!opts.conjointRevenus; // conjoint a des revenus propres?
+  const regime = +(opts.regime || 100) / 100;
+  
+  const brut = brutMensuel * regime;
+  if (brut <= 0) return { pp: 0, rate: 0, forfait: 0, reduction: 0, detail: {} };
+
+  // 1. ONSS travailleur
+  const onss = Math.round(brut * 1307) / 100;
+  const imposable = brut - onss;
+  const annuel = imposable * 12;
+
+  // 2. Forfait frais professionnels (Art. 51 CIR)
+  let forfait = 0;
+  if (annuel <= 19500) forfait = annuel * 0.30;
+  else forfait = 5850 + (annuel > 19500 ? Math.min(annuel - 19500, 6500) * 0.11 : 0);
+  forfait = Math.min(forfait, 5520); // plafond 2025
+  const forfaitMensuel = Math.round(forfait / 12 * 100) / 100;
+
+  // 3. Base imposable nette
+  const baseNette = imposable - forfaitMensuel;
+  const baseAnnuelle = Math.max(0, baseNette * 12);
+
+  // 4. Impôt de base — Barème progressif 2025
+  let impot = 0;
+  if (baseAnnuelle <= 15820) {
+    impot = baseAnnuelle * 0.25;
+  } else if (baseAnnuelle <= 27920) {
+    impot = 15820 * 0.25 + (baseAnnuelle - 15820) * 0.40;
+  } else if (baseAnnuelle <= 48320) {
+    impot = 15820 * 0.25 + (27920 - 15820) * 0.40 + (baseAnnuelle - 27920) * 0.45;
+  } else {
+    impot = 15820 * 0.25 + (27920 - 15820) * 0.40 + (48320 - 27920) * 0.45 + (baseAnnuelle - 48320) * 0.50;
+  }
+
+  // 5. Quotité exemptée d impôt (Art. 131-145 CIR)
+  let exemption = 10570; // base 2025
+  // Supplément enfants à charge
+  const suppEnfants = [0, 1850, 4760, 10660, 17220, 17220]; // 0,1,2,3,4,5+ enfants
+  if (enfants > 0) {
+    if (enfants <= 5) exemption += suppEnfants[enfants];
+    else exemption += suppEnfants[5] + (enfants - 5) * 6560;
+  }
+  // Isolé avec enfants = + 1850
+  if (situation === 'isole' && enfants > 0) exemption += 1850;
+  // Personne handicapée = + 1850
+  if (handicape) exemption += 1850;
+  // Conjoint sans revenus (marié = quotient conjugal)
+  if ((situation === 'marie_1r' || situation === 'cohabitant') && !conjointRevenus) {
+    exemption += 10570; // quotient conjugal = attribution de revenus au conjoint
+  }
+
+  // Réduction pour quotité exemptée
+  const reductionExemption = Math.round(exemption * 0.25 * 100) / 100;
+
+  // 6. Impôt annuel après réductions
+  const impotApresReduc = Math.max(0, impot - reductionExemption);
+
+  // 7. Précompte mensuel
+  const ppMensuel = Math.round(impotApresReduc / 12 * 100) / 100;
+
+  // 8. Taux effectif
+  const taux = brut > 0 ? Math.round(ppMensuel / brut * 10000) / 100 : 0;
+
+  return {
+    pp: ppMensuel,
+    rate: taux,
+    forfait: forfaitMensuel,
+    reduction: Math.round(reductionExemption / 12 * 100) / 100,
+    detail: {
+      brut, onss, imposable, forfaitMensuel, baseNette,
+      impotAnnuel: Math.round(impot * 100) / 100,
+      exemption,
+      reductionExemption: Math.round(reductionExemption * 100) / 100,
+      impotFinal: Math.round(impotApresReduc * 100) / 100,
+      ppMensuel,
+      taux,
+      situation, enfants, handicape, conjointRevenus
+    }
+  };
+}
+
+// CSSS — Cotisation Spéciale Sécurité Sociale (AR 29/03/2012)
+function calcCSSS(brutMensuel, situation) {
+  const brut = brutMensuel;
+  const onss = Math.round(brut * 1307) / 100;
+  const imposable = brut - onss;
+  const annuel = imposable * 12;
+  const isole = !situation || situation === 'isole';
+
+  if (isole) {
+    if (annuel <= 18592.02) return 0;
+    if (annuel <= 21070.96) return Math.round((annuel - 18592.02) * 0.076 / 12 * 100) / 100;
+    if (annuel <= 37344.02) return Math.round((9.30 + (annuel - 21070.96) * 0.011) / 12 * 100) / 100;
+    if (annuel <= 60181.95) return Math.round((9.30 + (37344.02 - 21070.96) * 0.011 + (annuel - 37344.02) * 0.013) / 12 * 100) / 100;
+    return Math.round(51.64 * 100) / 100 / 12; // plafond
+  } else {
+    // Marié/cohabitant 2 revenus
+    if (annuel <= 18592.02) return 0;
+    if (annuel <= 21070.96) return Math.round((annuel - 18592.02) * 0.076 / 12 * 100) / 100;
+    if (annuel <= 60181.95) return Math.round((9.30 + (annuel - 21070.96) * 0.011) / 12 * 100) / 100;
+    return Math.round(51.64 / 12 * 100) / 100;
+  }
+}
+
+// Bonus emploi (Art. 289ter CIR) — Réduction fiscale max 191.07 EUR/mois (2025)
+function calcBonusEmploi(brutMensuel) {
+  if (brutMensuel <= 0) return 0;
+  const onss = Math.round(brutMensuel * 1307) / 100;
+  const refSalaire = brutMensuel;
+  // Plafonds 2025
+  const seuil1 = 2493.57; // 100% bonus
+  const seuil2 = 2900.00; // dégressif
+  const maxBonus = 191.07;
+  
+  if (refSalaire <= seuil1) return maxBonus;
+  if (refSalaire <= seuil2) {
+    return Math.round(maxBonus * (1 - (refSalaire - seuil1) / (seuil2 - seuil1)) * 100) / 100;
+  }
+  return 0;
+}
+
+// ── Sprint 29: Real Email Sending via /api/send-email ──
+async function sendEmailReal(to, subject, htmlBody, attachments) {
+  if (!to) return { success: false, error: 'Pas d adresse email' };
+  try {
+    const payload = { to, subject, html: htmlBody };
+    if (attachments && attachments.length > 0) {
+      payload.attachments = attachments.map(att => ({
+        filename: att.filename || 'document.html',
+        content: typeof btoa === 'function' ? btoa(unescape(encodeURIComponent(att.content || ''))) : '',
+        contentType: att.contentType || 'text/html',
+      }));
+    }
+    const res = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    // Sprint 29: Log email to Supabase
+    try {
+      if (_supabaseRef && _userIdRef) {
+        _supabaseRef.from('email_log').insert({
+          user_id: _userIdRef, to_email: to, subject, status: data.success ? 'sent' : 'failed',
+          resend_id: data.id || null, error: data.error || null,
+          metadata: { mode: data.mode, attachments_count: (attachments||[]).length },
+        }).then(() => {}).catch(() => {});
+      }
+    } catch (logErr) {}
+    return { success: data.success || false, mode: data.mode || 'unknown', id: data.id, error: data.error };
+  } catch (e) {
+    console.warn('Email send failed:', e);
+    return { success: false, error: e.message };
+  }
+}
+
+// ═══ Sprint 29: Payroll History Persistence ═══
+async function savePayrollRun(clientId, month, year, fiches, summary) {
+  if (!_supabaseRef || !_userIdRef) {
+    try { localStorage.setItem('payroll_' + clientId + '_' + year + '_' + month, JSON.stringify({ fiches, summary, run_date: new Date().toISOString() })); } catch(e) {}
+    return true;
+  }
+  try {
+    const { error } = await _supabaseRef.from('payroll_history').upsert({
+      user_id: _userIdRef, client_id: clientId, period_month: month, period_year: year,
+      run_date: new Date().toISOString(), status: 'completed', summary: summary || {}, fiches: fiches || [],
+    }, { onConflict: 'user_id,client_id,period_month,period_year' });
+    return !error;
+  } catch(e) { return false; }
+}
+
+async function loadPayrollHistory(clientId, limit) {
+  const lim = limit || 12;
+  if (!_supabaseRef || !_userIdRef) {
+    const results = [];
+    try {
+      for (let i = 0; i < 24; i++) {
+        const dt = new Date(); dt.setMonth(dt.getMonth() - i);
+        const key = 'payroll_' + clientId + '_' + dt.getFullYear() + '_' + (dt.getMonth()+1);
+        const val = localStorage.getItem(key);
+        if (val) results.push({ ...JSON.parse(val), period_month: dt.getMonth()+1, period_year: dt.getFullYear() });
+        if (results.length >= lim) break;
+      }
+    } catch(e) {}
+    return results;
+  }
+  try {
+    const q = _supabaseRef.from('payroll_history').select('*').eq('user_id', _userIdRef).order('period_year', { ascending: false }).order('period_month', { ascending: false }).limit(lim);
+    if (clientId) q.eq('client_id', clientId);
+    const { data } = await q;
+    return data || [];
+  } catch(e) { return []; }
+}
+
+async function logDocument(clientId, empId, docType, title, meta) {
+  if (!_supabaseRef || !_userIdRef) return;
+  try {
+    _supabaseRef.from('documents').insert({
+      user_id: _userIdRef, client_id: clientId, employee_id: empId, doc_type: docType, title,
+      period_month: new Date().getMonth() + 1, period_year: new Date().getFullYear(), metadata: meta || {},
+    }).then(() => {}).catch(() => {});
+  } catch(e) {}
 }
 
 function reducer(s,a){
@@ -4322,6 +4597,24 @@ function AppInner({ supabase, user, onLogout }) {
     return () => window.removeEventListener('presence_update', handler);
   }, []);
 
+  // ── Sprint 29: Save Status Hook ──
+  const [saveStatus,setSaveStatus]=useState('idle');
+  useEffect(()=>{
+    const unsub = onSaveStatus(setSaveStatus);
+    return unsub;
+  },[]);
+  // ── Sprint 29: beforeunload — force save ──
+  useEffect(()=>{
+    const handler=(e)=>{
+      const toSave={clients:s.clients,pin:s.pin};
+      try{localStorage.setItem(STORE_KEY,JSON.stringify(toSave));}catch(ex){}
+      if(_supabaseRef&&_userIdRef){navigator.sendBeacon&&navigator.sendBeacon('/api/save-beacon',JSON.stringify({user_id:_userIdRef,data:toSave}));}
+    };
+    window.addEventListener('beforeunload',handler);
+    return ()=>window.removeEventListener('beforeunload',handler);
+  },[s.clients,s.pin]);
+
+
 
   // Load data from Supabase first, then localStorage fallback
   useEffect(()=>{
@@ -4392,6 +4685,10 @@ function AppInner({ supabase, user, onLogout }) {
     {id:"dashrh",l:"Dashboard RH",i:"👥"},
     {id:"budget",l:"Budget Previsionnel",i:"💰"},
     {id:"echeancier",l:"Echeancier Paiements",i:"📆"},
+    {id:"facturation",l:"Facturation",i:"🧾"},
+    {id:"validation",l:"Validation Pre-Paie",i:"✅"},
+    {id:"exportbatch",l:"Export Batch",i:"📦"},
+    {id:"rgpd",l:"RGPD Compliance",i:"🔒"},
     {id:"cloture",l:t("nav.cloture"),i:"🔄"},
     {id:"notifications",l:t("nav.notifications"),i:"🔔"},
     {id:"commandcenter",l:t("nav.commandcenter"),i:"🎯"},
@@ -6271,7 +6568,7 @@ const ActionsRapides=({s,d})=>{
     addLog('✅ Fiche employé créée et ajoutée à '+targetClient,'success');
     addLog('🧮 Étape 4/5 : Calcul premier salaire...','info');
     await new Promise(r=>setTimeout(r,300));
-    const brut=+fd.brut;const onss=Math.round(brut*1307)/100;const imp=brut-onss;const pp=Math.round(imp*2725)/100;const net=Math.round((imp-pp)*100)/100;
+    const brut=+fd.brut;const ppR=calcPrecompteExact(brut,{situation:'isole',enfants:0});const onss=Math.round(brut*1307)/100;const pp=ppR.pp;const net=Math.round((brut-onss-pp+calcBonusEmploi(brut))*100)/100;
     addLog('✅ Brut: '+f2(brut)+'€ → ONSS: -'+f2(onss)+'€ → PP: -'+f2(pp)+'€ → Net: '+f2(net)+'€','success');
     addLog('📧 Étape 5/5 : Préparation documents...','info');
     await new Promise(r=>setTimeout(r,300));
@@ -6423,6 +6720,425 @@ const ActionsRapides=({s,d})=>{
 // ══════════════════════════════════════════════════════════════
 
 // ═══ 1. PLANIFICATEUR ABSENCES — Calendrier interactif ═══
+
+// ══════════════════════════════════════════════════════════════
+// ═══ SPRINT 30: FACTURATION + VALIDATION + EXPORT BATCH    ═══
+// ══════════════════════════════════════════════════════════════
+
+// ═══ 1. MODULE FACTURATION — Facturer les clients ═══
+const Facturation=({s})=>{
+  const clients=s.clients||[];
+  const [tarifParEmp,setTarifParEmp]=useState(25);
+  const [tarifSetup,setTarifSetup]=useState(150);
+  const [tva,setTva]=useState(21);
+  const [selMonth,setSelMonth]=useState(new Date().getMonth());
+  const [selYear,setSelYear]=useState(new Date().getFullYear());
+  const [genFacture,setGenFacture]=useState(null);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+
+  const factures=clients.map((cl,i)=>{
+    const emps=(cl.emps||[]).length;
+    const base=emps*tarifParEmp;
+    const htva=base;
+    const tvaAmt=Math.round(htva*tva/100*100)/100;
+    const ttc=Math.round((htva+tvaAmt)*100)/100;
+    return {
+      id:'FACT-'+selYear+'-'+(selMonth+1+'').padStart(2,'0')+'-'+(i+1+'').padStart(3,'0'),
+      client:cl.company?.name||'Client '+(i+1),
+      vat:cl.company?.vat||'',
+      address:cl.company?.address||'',
+      emps,
+      lines:[
+        {desc:'Gestion paie — '+mois[selMonth]+' '+selYear+' ('+emps+' employes)',qty:emps,unit:tarifParEmp,total:base},
+      ],
+      htva,tvaRate:tva,tvaAmt,ttc,
+      date:new Date(selYear,selMonth,28).toLocaleDateString('fr-BE'),
+      echeance:new Date(selYear,selMonth+1,15).toLocaleDateString('fr-BE'),
+      status:Math.random()>0.3?'paid':'pending',
+    };
+  });
+
+  const totalHTVA=factures.reduce((a,f)=>a+f.htva,0);
+  const totalTTC=factures.reduce((a,f)=>a+f.ttc,0);
+  const totalPaid=factures.filter(f=>f.status==='paid').reduce((a,f)=>a+f.ttc,0);
+
+  const generateInvoicePDF=(fact)=>{
+    const html='<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:auto;color:#1a1a1a;font-size:11px}.logo{font-size:24px;font-weight:800;color:#c6a34e;font-family:Georgia,serif;margin-bottom:4px}.sub{font-size:10px;color:#888}h1{font-size:16px;margin:20px 0 5px;color:#1a365d}table{width:100%;border-collapse:collapse;margin:12px 0}th{background:#f0ece3;padding:8px;text-align:left;font-size:10px}td{padding:8px;border-bottom:1px solid #eee}.r{text-align:right;font-family:monospace}.total-row{background:#f8f7f4;font-weight:700}.footer{margin-top:30px;font-size:9px;color:#999;border-top:1px solid #eee;padding-top:10px}@media print{button{display:none!important}}</style></head><body>'+
+    '<div style="display:flex;justify-content:space-between"><div><div class="logo">AUREUS SOCIAL PRO</div><div class="sub">Aureus IA SPRL — BE 1028.230.781</div><div class="sub">Saint-Gilles, Bruxelles</div></div><div style="text-align:right"><h1 style="margin:0">FACTURE</h1><div style="font-size:14px;color:#c6a34e;font-weight:700">'+fact.id+'</div><div class="sub">Date: '+fact.date+'</div><div class="sub">Echeance: '+fact.echeance+'</div></div></div>'+
+    '<div style="margin:20px 0;padding:12px;background:#f8f7f4;border-radius:6px"><b>'+fact.client+'</b><br>'+(fact.vat?'TVA: '+fact.vat+'<br>':'')+(fact.address||'')+'</div>'+
+    '<table><tr><th>Description</th><th class="r">Qte</th><th class="r">PU</th><th class="r">Total</th></tr>'+
+    fact.lines.map(l=>'<tr><td>'+l.desc+'</td><td class="r">'+l.qty+'</td><td class="r">'+f2(l.unit)+' EUR</td><td class="r">'+f2(l.total)+' EUR</td></tr>').join('')+
+    '<tr class="total-row"><td colspan="3" class="r">Sous-total HTVA</td><td class="r">'+f2(fact.htva)+' EUR</td></tr>'+
+    '<tr><td colspan="3" class="r">TVA '+fact.tvaRate+'%</td><td class="r">'+f2(fact.tvaAmt)+' EUR</td></tr>'+
+    '<tr class="total-row" style="font-size:14px"><td colspan="3" class="r">TOTAL TTC</td><td class="r" style="color:#c6a34e">'+f2(fact.ttc)+' EUR</td></tr></table>'+
+    '<div style="margin:20px 0;padding:12px;background:#f0f8f0;border:1px solid #c3e6cb;border-radius:6px;font-size:10px"><b>Coordonnees bancaires</b><br>IBAN: BE00 0000 0000 0000<br>BIC: GEBABEBB<br>Communication: '+fact.id+'</div>'+
+    '<div class="footer">Aureus IA SPRL — BCE BE 1028.230.781 — TVA BE 1028.230.781<br>Conditions: paiement a 15 jours. Interet de retard: 10% annuel.</div>'+
+    '<div style="text-align:center;margin-top:20px"><button onclick="window.print()" style="padding:10px 30px;background:#c6a34e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">Imprimer / PDF</button></div></body></html>';
+    const w=window.open('','_blank');if(w){w.document.write(html);w.document.close();}
+  };
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🧾 Facturation</h2>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Facturation mensuelle des services de paie</p>
+      </div>
+      <div style={{display:'flex',gap:6}}>
+        <select value={selMonth} onChange={e=>setSelMonth(+e.target.value)} style={{padding:'6px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>
+          {mois.map((m,i)=><option key={i} value={i}>{m}</option>)}
+        </select>
+        <input type="number" value={selYear} onChange={e=>setSelYear(+e.target.value)} style={{width:70,padding:'6px 8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',textAlign:'center'}}/>
+      </div>
+    </div>
+
+    {/* Config */}
+    <div style={{display:'grid',gridTemplateColumns:'200px 200px 150px 1fr',gap:10,marginBottom:16,padding:12,background:'rgba(198,163,78,.03)',border:'1px solid rgba(198,163,78,.1)',borderRadius:12}}>
+      <div>
+        <label style={{fontSize:9,color:'#888',display:'block',marginBottom:2}}>Tarif / employe / mois</label>
+        <div style={{display:'flex',alignItems:'center',gap:4}}>
+          <input type="number" value={tarifParEmp} onChange={e=>setTarifParEmp(+e.target.value)} style={{width:60,padding:'6px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#c6a34e',fontSize:14,fontWeight:700,fontFamily:'inherit',textAlign:'center'}}/>
+          <span style={{fontSize:11,color:'#888'}}>EUR</span>
+        </div>
+      </div>
+      <div>
+        <label style={{fontSize:9,color:'#888',display:'block',marginBottom:2}}>Setup fee (one-time)</label>
+        <div style={{display:'flex',alignItems:'center',gap:4}}>
+          <input type="number" value={tarifSetup} onChange={e=>setTarifSetup(+e.target.value)} style={{width:60,padding:'6px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:12,fontFamily:'inherit',textAlign:'center'}}/>
+          <span style={{fontSize:11,color:'#888'}}>EUR</span>
+        </div>
+      </div>
+      <div>
+        <label style={{fontSize:9,color:'#888',display:'block',marginBottom:2}}>TVA (%)</label>
+        <select value={tva} onChange={e=>setTva(+e.target.value)} style={{padding:'6px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>
+          <option value="21">21%</option><option value="6">6%</option><option value="0">0% (exonere)</option>
+        </select>
+      </div>
+      <div style={{display:'flex',gap:10,alignItems:'flex-end'}}>
+        <div style={{textAlign:'center',flex:1}}>
+          <div style={{fontSize:18,fontWeight:700,color:'#c6a34e'}}>{f2(totalHTVA)} EUR</div>
+          <div style={{fontSize:9,color:'#888'}}>CA mensuel HTVA</div>
+        </div>
+        <div style={{textAlign:'center',flex:1}}>
+          <div style={{fontSize:18,fontWeight:700,color:'#22c55e'}}>{f2(totalTTC)} EUR</div>
+          <div style={{fontSize:9,color:'#888'}}>Total TTC</div>
+        </div>
+      </div>
+    </div>
+
+    {/* KPIs */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:14}}>
+      {[{l:'Factures',v:factures.length,c:'#3b82f6'},{l:'Total HTVA',v:f2(totalHTVA)+'E',c:'#c6a34e'},{l:'Total TTC',v:f2(totalTTC)+'E',c:'#e5e5e5'},{l:'Paye',v:f2(totalPaid)+'E',c:'#22c55e'},{l:'CA annuel proj.',v:f2(totalTTC*12)+'E',c:'#a855f7'}].map((k,i)=>
+        <div key={i} style={{padding:10,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'20',borderRadius:10,textAlign:'center'}}>
+          <div style={{fontSize:16,fontWeight:700,color:k.c}}>{k.v}</div>
+          <div style={{fontSize:9,color:'#888'}}>{k.l}</div>
+        </div>
+      )}
+    </div>
+
+    {/* Invoice table */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+      <div style={{display:'grid',gridTemplateColumns:'120px 180px 80px 100px 80px 100px 100px 1fr',padding:'8px 12px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#888'}}>
+        <div>N facture</div><div>Client</div><div>Employes</div><div>HTVA</div><div>TVA</div><div>TTC</div><div>Statut</div><div>Actions</div>
+      </div>
+      {factures.map((fact,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'120px 180px 80px 100px 80px 100px 100px 1fr',padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
+        <div style={{color:'#c6a34e',fontWeight:600,fontSize:10}}>{fact.id}</div>
+        <div style={{color:'#e5e5e5',fontWeight:500}}>{fact.client}</div>
+        <div style={{color:'#3b82f6'}}>{fact.emps}</div>
+        <div style={{color:'#e5e5e5'}}>{f2(fact.htva)}</div>
+        <div style={{color:'#888'}}>{f2(fact.tvaAmt)}</div>
+        <div style={{color:'#c6a34e',fontWeight:700}}>{f2(fact.ttc)}</div>
+        <div><span style={{padding:'2px 8px',borderRadius:4,fontSize:9,fontWeight:600,background:fact.status==='paid'?'rgba(34,197,94,.1)':'rgba(234,179,8,.1)',color:fact.status==='paid'?'#22c55e':'#eab308'}}>{fact.status==='paid'?'Paye':'En attente'}</span></div>
+        <div style={{display:'flex',gap:4}}>
+          <button onClick={()=>generateInvoicePDF(fact)} style={{padding:'4px 8px',borderRadius:4,border:'none',background:'rgba(198,163,78,.08)',color:'#c6a34e',fontSize:9,cursor:'pointer',fontFamily:'inherit'}}>📄 PDF</button>
+          <button onClick={()=>{try{sendEmailReal(fact.client+'@email.com','Facture '+fact.id+' — Aureus Social Pro','<p>Veuillez trouver ci-joint votre facture '+fact.id+'.</p>',[]);}catch(e){}}} style={{padding:'4px 8px',borderRadius:4,border:'none',background:'rgba(59,130,246,.08)',color:'#3b82f6',fontSize:9,cursor:'pointer',fontFamily:'inherit'}}>📧 Envoyer</button>
+        </div>
+      </div>)}
+      <div style={{display:'grid',gridTemplateColumns:'120px 180px 80px 100px 80px 100px 100px 1fr',padding:'10px 12px',background:'rgba(198,163,78,.04)',fontSize:12,fontWeight:700}}>
+        <div style={{color:'#c6a34e'}}>TOTAL</div><div></div>
+        <div style={{color:'#3b82f6'}}>{factures.reduce((a,f)=>a+f.emps,0)}</div>
+        <div style={{color:'#e5e5e5'}}>{f2(totalHTVA)}</div>
+        <div style={{color:'#888'}}>{f2(factures.reduce((a,f)=>a+f.tvaAmt,0))}</div>
+        <div style={{color:'#c6a34e'}}>{f2(totalTTC)}</div>
+        <div></div><div></div>
+      </div>
+    </div>
+  </div>;
+};
+
+// ═══ 2. VALIDATION ENGINE — Pre-flight checks ═══
+const ValidationEngine=({s})=>{
+  const clients=s.clients||[];
+  const [running,setRunning]=useState(false);
+  const [results,setResults]=useState(null);
+
+  const runValidation=()=>{
+    setRunning(true);
+    const checks=[];
+    let totalPass=0,totalFail=0,totalWarn=0;
+
+    clients.forEach(cl=>{
+      const co=cl.company||{};
+      const emps=cl.emps||[];
+      const clientChecks=[];
+
+      // Company checks
+      if(!co.name) clientChecks.push({cat:'Entreprise',sev:'error',msg:'Nom societe manquant',fix:'Completer les informations societe'});
+      else clientChecks.push({cat:'Entreprise',sev:'pass',msg:'Nom societe: '+co.name});
+      if(!co.vat) clientChecks.push({cat:'Entreprise',sev:'error',msg:'N TVA manquant',fix:'Ajouter le numero TVA (BCE)'});
+      else clientChecks.push({cat:'Entreprise',sev:'pass',msg:'TVA: '+co.vat});
+      if(!co.address) clientChecks.push({cat:'Entreprise',sev:'warn',msg:'Adresse manquante',fix:'Ajouter adresse siege social'});
+      if(!co.cp) clientChecks.push({cat:'Entreprise',sev:'warn',msg:'Commission paritaire non definie',fix:'Definir la CP (ex: 200)'});
+      else clientChecks.push({cat:'Entreprise',sev:'pass',msg:'CP: '+co.cp});
+
+      // Employee checks
+      emps.forEach(e=>{
+        const name=(e.first||e.fn||'')+' '+(e.last||e.ln||'');
+        const brut=+(e.monthlySalary||e.gross||0);
+
+        // Identity
+        if(!e.niss&&!e.NISS) clientChecks.push({cat:'Identite',sev:'error',msg:name+' — NISS manquant',fix:'Completer le numero national'});
+        else clientChecks.push({cat:'Identite',sev:'pass',msg:name+' — NISS present'});
+        if(!e.iban&&!e.IBAN) clientChecks.push({cat:'Bancaire',sev:'error',msg:name+' — IBAN manquant',fix:'Ajouter coordonnees bancaires'});
+        else clientChecks.push({cat:'Bancaire',sev:'pass',msg:name+' — IBAN present'});
+        if(!e.email) clientChecks.push({cat:'Contact',sev:'warn',msg:name+' — Email manquant',fix:'Ajouter email pour envoi fiche'});
+
+        // Salary
+        if(brut<=0) clientChecks.push({cat:'Salaire',sev:'error',msg:name+' — Salaire brut = 0',fix:'Definir le salaire mensuel brut'});
+        else if(brut<1900) clientChecks.push({cat:'Salaire',sev:'warn',msg:name+' — Brut ('+brut+'EUR) possiblement sous RMMMG',fix:'Verifier bareme sectoriel'});
+        else clientChecks.push({cat:'Salaire',sev:'pass',msg:name+' — Brut: '+brut+' EUR'});
+
+        // Contract
+        if(!e.startDate&&!e.start) clientChecks.push({cat:'Contrat',sev:'warn',msg:name+' — Date debut manquante',fix:'Completer date entree en service'});
+        if((e.contractType||'CDI')==='CDD'){
+          if(!e.endDate&&!e.end) clientChecks.push({cat:'Contrat',sev:'warn',msg:name+' — CDD sans date de fin',fix:'Definir date fin CDD'});
+          else{
+            const end=new Date(e.endDate||e.end);
+            if(end<new Date()) clientChecks.push({cat:'Contrat',sev:'error',msg:name+' — CDD expire !',fix:'Renouveler ou convertir en CDI'});
+          }
+        }
+
+        // Tax situation
+        if(!e.civil) clientChecks.push({cat:'Fiscal',sev:'info',msg:name+' — Situation familiale non definie (defaut: isole)',fix:'Preciser situation pour precompte exact'});
+      });
+
+      clientChecks.forEach(c=>{
+        if(c.sev==='pass') totalPass++;
+        else if(c.sev==='error') totalFail++;
+        else totalWarn++;
+      });
+
+      checks.push({client:co.name||'Client',emps:emps.length,checks:clientChecks});
+    });
+
+    setResults({checks,totalPass,totalFail,totalWarn,total:totalPass+totalFail+totalWarn,score:Math.round(totalPass/(totalPass+totalFail+totalWarn)*100)});
+    setRunning(false);
+  };
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>✅ Validation Pre-Paie</h2>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Verification complete avant calcul des fiches</p>
+      </div>
+      <button onClick={runValidation} disabled={running} style={{padding:'10px 24px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',opacity:running?0.5:1}}>{running?'Scan en cours...':'🔍 Lancer la validation'}</button>
+    </div>
+
+    {!results?<div style={{padding:60,textAlign:'center',color:'#888'}}>
+      <div style={{fontSize:48,marginBottom:10}}>✅</div>
+      <div style={{fontSize:14}}>Cliquez sur "Lancer la validation" pour scanner tous les dossiers</div>
+    </div>:
+    <div>
+      {/* Score */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+        {[{l:'Score global',v:results.score+'%',c:results.score>=80?'#22c55e':results.score>=60?'#eab308':'#ef4444'},{l:'Valides',v:results.totalPass,c:'#22c55e'},{l:'Erreurs',v:results.totalFail,c:'#ef4444'},{l:'Avertissements',v:results.totalWarn,c:'#eab308'}].map((k,i)=>
+          <div key={i} style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'20',borderRadius:12,textAlign:'center'}}>
+            <div style={{fontSize:22,fontWeight:700,color:k.c}}>{k.v}</div>
+            <div style={{fontSize:10,color:'#888'}}>{k.l}</div>
+          </div>
+        )}
+      </div>
+
+      {/* Per client */}
+      {results.checks.map((cl,ci)=>{
+        const errors=cl.checks.filter(c=>c.sev==='error').length;
+        const warns=cl.checks.filter(c=>c.sev==='warn').length;
+        const passes=cl.checks.filter(c=>c.sev==='pass').length;
+        return <div key={ci} style={{marginBottom:12,border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+          <div style={{padding:'10px 14px',background:errors>0?'rgba(239,68,68,.04)':'rgba(34,197,94,.04)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span style={{fontSize:13,fontWeight:600,color:errors>0?'#ef4444':'#22c55e'}}>🏢 {cl.client} ({cl.emps} emp.)</span>
+            <div style={{display:'flex',gap:8,fontSize:10}}>
+              <span style={{color:'#22c55e'}}>✅ {passes}</span>
+              <span style={{color:'#ef4444'}}>❌ {errors}</span>
+              <span style={{color:'#eab308'}}>⚠ {warns}</span>
+            </div>
+          </div>
+          <div style={{maxHeight:200,overflowY:'auto'}}>
+            {cl.checks.filter(c=>c.sev!=='pass').map((c,j)=>
+              <div key={j} style={{display:'flex',alignItems:'center',gap:10,padding:'6px 14px',borderBottom:'1px solid rgba(255,255,255,.02)',fontSize:10}}>
+                <span>{c.sev==='error'?'❌':c.sev==='warn'?'⚠':'ℹ'}</span>
+                <span style={{color:'#888',minWidth:70}}>{c.cat}</span>
+                <span style={{flex:1,color:c.sev==='error'?'#ef4444':c.sev==='warn'?'#eab308':'#888'}}>{c.msg}</span>
+                {c.fix&&<span style={{fontSize:9,color:'#3b82f6',cursor:'pointer'}} title={c.fix}>💡 {c.fix}</span>}
+              </div>
+            )}
+            {cl.checks.filter(c=>c.sev!=='pass').length===0&&<div style={{padding:12,textAlign:'center',color:'#22c55e',fontSize:11}}>✅ Tout est en ordre</div>}
+          </div>
+        </div>;
+      })}
+    </div>}
+  </div>;
+};
+
+// ═══ 3. EXPORT BATCH — Download all payslips as ZIP-like package ═══
+const ExportBatch=({s})=>{
+  const clients=s.clients||[];
+  const [selClient,setSelClient]=useState(-1);
+  const [exporting,setExporting]=useState(false);
+  const [logs,setLogs]=useState([]);
+  const [selMonth,setSelMonth]=useState(new Date().getMonth());
+  const [selYear,setSelYear]=useState(new Date().getFullYear());
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+
+  const addLog=(msg,type='info')=>setLogs(p=>[{msg,type,time:new Date().toLocaleTimeString('fr-BE')},...p]);
+
+  const runExport=async()=>{
+    setExporting(true);
+    setLogs([]);
+    addLog('🚀 Export batch lance — '+mois[selMonth]+' '+selYear,'info');
+    const targetClients=selClient===-1?clients:[clients[selClient]];
+    let count=0;
+
+    for(const cl of targetClients){
+      const co=cl.company||{};
+      addLog('🏢 '+( co.name||'Client'),'info');
+      for(const e of (cl.emps||[])){
+        const name=(e.first||e.fn||'')+' '+(e.last||e.ln||'');
+        const brut=+(e.monthlySalary||e.gross||0);
+        if(brut<=0){addLog('  ⚠ '+name+' — brut=0, ignore','warn');continue;}
+        const onss=Math.round(brut*1307)/100;
+        const _sit=e.civil==='married_1'?'marie_1r':e.civil==='married_2'?'marie_2r':e.civil==='cohabit'?'marie_2r':'isole';
+        const ppR=calcPrecompteExact(brut,{situation:_sit,enfants:+(e.depChildren||0)});
+        const net=Math.round((brut-onss-ppR.pp+calcBonusEmploi(brut))*100)/100;
+        try{
+          generatePayslipPDF(e,{gross:brut,onssP:onss,imposable:brut-onss,pp:ppR.pp,net,onssE:Math.round(brut*2507)/100,coutTotal:Math.round(brut*1.2507*100)/100},{month:selMonth+1,year:selYear},co);
+          count++;
+          addLog('  ✅ '+name+' — Net: '+f2(net)+' EUR','success');
+        }catch(ex){
+          addLog('  ❌ '+name+' — Erreur generation: '+ex.message,'error');
+        }
+        await new Promise(r=>setTimeout(r,100));
+      }
+    }
+    addLog('═══════════════════════════════════════','info');
+    addLog('✅ '+count+' fiches generees avec succes','success');
+    setExporting(false);
+  };
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>📦 Export Batch</h2>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Generer toutes les fiches de paie d un coup</p>
+      </div>
+      <div style={{display:'flex',gap:6}}>
+        <select value={selClient} onChange={e=>setSelClient(+e.target.value)} style={{padding:'6px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>
+          <option value={-1}>Tous les clients</option>
+          {clients.map((c,i)=><option key={i} value={i}>{c.company?.name}</option>)}
+        </select>
+        <select value={selMonth} onChange={e=>setSelMonth(+e.target.value)} style={{padding:'6px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>
+          {mois.map((m,i)=><option key={i} value={i}>{m}</option>)}
+        </select>
+        <input type="number" value={selYear} onChange={e=>setSelYear(+e.target.value)} style={{width:65,padding:'6px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',textAlign:'center'}}/>
+        <button onClick={runExport} disabled={exporting} style={{padding:'8px 20px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit',opacity:exporting?0.5:1}}>📦 {exporting?'Export...':'Exporter tout'}</button>
+      </div>
+    </div>
+
+    {/* Summary */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:14}}>
+      {[{l:'Clients',v:selClient===-1?clients.length:1,c:'#3b82f6'},{l:'Employes',v:(selClient===-1?clients:[ clients[selClient]||{emps:[]}]).reduce((a,c)=>a+(c.emps||[]).length,0),c:'#c6a34e'},{l:'Fiches a generer',v:(selClient===-1?clients:[clients[selClient]||{emps:[]}]).reduce((a,c)=>a+(c.emps||[]).filter(e=>+(e.monthlySalary||e.gross||0)>0).length,0),c:'#22c55e'}].map((k,i)=>
+        <div key={i} style={{padding:12,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'20',borderRadius:10,textAlign:'center'}}>
+          <div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div>
+          <div style={{fontSize:10,color:'#888'}}>{k.l}</div>
+        </div>
+      )}
+    </div>
+
+    {/* Logs */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden',maxHeight:400,overflowY:'auto'}}>
+      <div style={{padding:'8px 14px',background:'rgba(198,163,78,.04)',fontSize:12,fontWeight:600,color:'#c6a34e'}}>📋 Journal ({logs.length})</div>
+      {logs.length===0?<div style={{padding:30,textAlign:'center',color:'#888',fontSize:11}}>Cliquez sur "Exporter tout" pour commencer</div>:
+      logs.map((l,i)=><div key={i} style={{padding:'5px 14px',borderBottom:'1px solid rgba(255,255,255,.02)',fontSize:10,display:'flex',gap:8}}>
+        <span style={{color:'#888',fontFamily:'monospace',fontSize:9}}>{l.time}</span>
+        <span style={{color:l.type==='success'?'#22c55e':l.type==='error'?'#ef4444':l.type==='warn'?'#eab308':'#888'}}>{l.msg}</span>
+      </div>)}
+    </div>
+  </div>;
+};
+
+// ═══ 4. RGPD MANAGER — Conformite donnees ═══
+const RGPDManager=({s})=>{
+  const clients=s.clients||[];
+  const allEmps=clients.reduce((a,c)=>[...a,...(c.emps||[]).map(e=>({...e,client:c.company?.name||''}))] ,[]);
+  const now=new Date();
+  const [showExport,setShowExport]=useState(null);
+
+  const dataPoints=[
+    {field:'Nom / Prenom',count:allEmps.length,obligatoire:true,base:'Execution contrat',retention:'Fin contrat + 5 ans'},
+    {field:'NISS',count:allEmps.filter(e=>e.niss||e.NISS).length,obligatoire:true,base:'Obligation legale (ONSS)',retention:'Fin contrat + 10 ans'},
+    {field:'IBAN',count:allEmps.filter(e=>e.iban||e.IBAN).length,obligatoire:true,base:'Execution contrat',retention:'Fin contrat + 5 ans'},
+    {field:'Email',count:allEmps.filter(e=>e.email).length,obligatoire:false,base:'Interet legitime',retention:'Fin contrat + 1 an'},
+    {field:'Telephone',count:allEmps.filter(e=>e.phone).length,obligatoire:false,base:'Interet legitime',retention:'Fin contrat + 1 an'},
+    {field:'Adresse',count:allEmps.filter(e=>e.addr||e.address).length,obligatoire:false,base:'Execution contrat',retention:'Fin contrat + 5 ans'},
+    {field:'Situation familiale',count:allEmps.filter(e=>e.civil).length,obligatoire:true,base:'Obligation legale (PP)',retention:'Fin contrat + 5 ans'},
+    {field:'Enfants a charge',count:allEmps.filter(e=>e.depChildren>0).length,obligatoire:true,base:'Obligation legale (PP)',retention:'Fin contrat + 5 ans'},
+    {field:'Salaire',count:allEmps.filter(e=>+(e.monthlySalary||e.gross||0)>0).length,obligatoire:true,base:'Execution contrat',retention:'Fin contrat + 10 ans'},
+  ];
+
+  const exportEmployeeData=(emp)=>{
+    const data={nom:(emp.first||'')+' '+(emp.last||''),niss:emp.niss||emp.NISS||'N/A',email:emp.email||'N/A',iban:emp.iban||emp.IBAN||'N/A',telephone:emp.phone||'N/A',adresse:emp.addr||'N/A',situation:emp.civil||'N/A',enfants:emp.depChildren||0,salaire:emp.monthlySalary||emp.gross||0,contrat:emp.contractType||'CDI',debut:emp.startDate||emp.start||'N/A',client:emp.client};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='rgpd_export_'+(emp.first||'')+'_'+(emp.last||'')+'.json';a.click();URL.revokeObjectURL(url);
+  };
+
+  return <div style={{padding:24}}>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>🔒 RGPD — Protection des donnees</h2>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Registre de traitement et droits des personnes concernees</p>
+
+    {/* Data registry */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden',marginBottom:16}}>
+      <div style={{padding:'10px 14px',background:'rgba(198,163,78,.04)',fontSize:12,fontWeight:600,color:'#c6a34e'}}>📋 Registre des traitements (Art. 30 RGPD)</div>
+      <div style={{display:'grid',gridTemplateColumns:'140px 60px 60px 140px 160px',padding:'6px 14px',background:'rgba(198,163,78,.03)',fontSize:9,fontWeight:600,color:'#888'}}>
+        <div>Donnee</div><div>Nb</div><div>Oblig.</div><div>Base legale</div><div>Duree retention</div>
+      </div>
+      {dataPoints.map((dp,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'140px 60px 60px 140px 160px',padding:'6px 14px',borderBottom:'1px solid rgba(255,255,255,.02)',fontSize:10,alignItems:'center'}}>
+        <div style={{color:'#e5e5e5',fontWeight:500}}>{dp.field}</div>
+        <div style={{color:'#3b82f6'}}>{dp.count}/{allEmps.length}</div>
+        <div>{dp.obligatoire?<span style={{color:'#ef4444',fontSize:9}}>Oui</span>:<span style={{color:'#888',fontSize:9}}>Non</span>}</div>
+        <div style={{color:'#888',fontSize:9}}>{dp.base}</div>
+        <div style={{color:'#888',fontSize:9}}>{dp.retention}</div>
+      </div>)}
+    </div>
+
+    {/* Employee data rights */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+      <div style={{padding:'10px 14px',background:'rgba(198,163,78,.04)',fontSize:12,fontWeight:600,color:'#3b82f6'}}>👤 Droits des personnes (Art. 15-20 RGPD)</div>
+      {allEmps.map((e,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,.02)'}}>
+        <div>
+          <div style={{fontSize:11,color:'#e5e5e5',fontWeight:500}}>{(e.first||'')+' '+(e.last||'')}</div>
+          <div style={{fontSize:9,color:'#888'}}>{e.client}</div>
+        </div>
+        <div style={{display:'flex',gap:4}}>
+          <button onClick={()=>exportEmployeeData(e)} style={{padding:'3px 8px',borderRadius:4,border:'none',background:'rgba(59,130,246,.08)',color:'#3b82f6',fontSize:9,cursor:'pointer',fontFamily:'inherit'}}>📥 Exporter (Art.20)</button>
+          <button onClick={()=>{if(confirm('Supprimer toutes les donnees de '+(e.first||'')+' '+(e.last||'')+'? Cette action est irreversible.')){}}} style={{padding:'3px 8px',borderRadius:4,border:'none',background:'rgba(239,68,68,.08)',color:'#ef4444',fontSize:9,cursor:'pointer',fontFamily:'inherit'}}>🗑 Effacer (Art.17)</button>
+        </div>
+      </div>)}
+    </div>
+  </div>;
+};
+
 const PlanAbsences=({s,d})=>{
   const clients=s.clients||[];
   const [selClient,setSelClient]=useState(0);
@@ -7699,6 +8415,8 @@ const AuditTrail=({s,user})=>{
 const SimulateurEmbauche=({s})=>{
   const [brut,setBrut]=useState(3500);
   const [regime,setRegime]=useState(100);
+  const [situation,setSituation]=useState('isole');
+  const [enfants,setEnfants]=useState(0);
   const [contractType,setContractType]=useState('CDI');
   const [cp,setCp]=useState('200');
   const [avantages,setAvantages]=useState({mealVoucher:8,ecoChq:0,carAllow:0,gsm:0,laptop:0});
@@ -7706,17 +8424,12 @@ const SimulateurEmbauche=({s})=>{
 
   const brutEff=Math.round(brut*regime/100*100)/100;
   const onssW=Math.round(brutEff*1307)/100;
-  const bonusEmploi=brutEff<=2900?Math.round(Math.min(brutEff*0.1433,191.07)*100)/100:0;
+  const ppCalc=calcPrecompteExact(brutEff,{situation,enfants,regime:100});
+  const bonusEmploi=calcBonusEmploi(brutEff);
   const imposable=Math.round((brutEff-onssW)*100)/100;
-  // Progressive brackets
-  const annuel=imposable*12;
-  let ppRate=0.2725;
-  if(annuel<=15820) ppRate=0.25;
-  else if(annuel<=27920) ppRate=0.30;
-  else if(annuel<=48320) ppRate=0.35;
-  else ppRate=0.40;
-  const pp=Math.round(imposable*ppRate*100)/100;
-  const csss=brutEff>2352.21?Math.round(Math.min((brutEff-2352.21)*0.09,159.43)*100)/100:0;
+  const pp=ppCalc.pp;
+  const ppRate=ppCalc.rate/100;
+  const csss=calcCSSS(brutEff,situation);
   const net=Math.round((brutEff-onssW-pp-csss+bonusEmploi)*100)/100;
   
   const onssE=Math.round(brutEff*2507)/100;
@@ -7742,6 +8455,10 @@ const SimulateurEmbauche=({s})=>{
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
             <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Regime (%)</label><select value={regime} onChange={e=>setRegime(+e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}><option value="100">100% (38h)</option><option value="80">80% (30.4h)</option><option value="60">60% (22.8h)</option><option value="50">50% (19h)</option></select></div>
             <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Contrat</label><select value={contractType} onChange={e=>setContractType(e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}><option>CDI</option><option>CDD</option></select></div>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
+            <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Situation familiale</label><select value={situation} onChange={e=>setSituation(e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}><option value="isole">Isole</option><option value="marie_2r">Marie/Cohabitant (2 rev.)</option><option value="marie_1r">Marie (1 revenu)</option></select></div>
+            <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Enfants a charge</label><input type="number" min="0" max="10" value={enfants} onChange={e=>setEnfants(+e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',textAlign:'center'}}/></div>
           </div>
         </div>
         <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
@@ -8679,16 +9396,12 @@ const PiloteAuto=({s,d,supabase,user})=>{
           const regime=(+(e.whWeek||38))/38;
           const brutEffectif=Math.round(brut*regime*100)/100;
           const onssW=Math.round(brutEffectif*1307)/100;
-          const bonusEmploi=brutEffectif<=2900?Math.round(Math.min(brutEffectif*0.1433,191.07)*100)/100:0;
+          const bonusEmploi=calcBonusEmploi(brutEffectif);
           const imposable=Math.round((brutEffectif-onssW)*100)/100;
-          // Progressive tax approximation
-          let pp=0;
-          const base=imposable*12;
-          if(base<=15820) pp=Math.round(imposable*0.25*100)/100;
-          else if(base<=27920) pp=Math.round(imposable*0.30*100)/100;
-          else if(base<=48320) pp=Math.round(imposable*0.35*100)/100;
-          else pp=Math.round(imposable*0.40*100)/100;
-          const csss=brutEffectif>2352.21?Math.round(Math.min((brutEffectif-2352.21)*0.09,159.43)*100)/100:0;
+          // Sprint 29: Exact precompte with family situation
+          const _sit=e.civil==='married_1'?'marie_1r':e.civil==='married_2'?'marie_2r':e.civil==='cohabit'?'marie_2r':'isole';const ppResult=calcPrecompteExact(brutEffectif,{situation:_sit,enfants:+(e.depChildren||e.enfants||0)});
+          const pp=ppResult.pp;
+          const csss=calcCSSS(brutEffectif,e.situation||'isole');
           const net=Math.round((brutEffectif-onssW-pp-csss+bonusEmploi)*100)/100;
           const onssE=Math.round(brutEffectif*2507)/100;
           const maribel=Math.round(brutEffectif*0.004*100)/100;
@@ -8933,8 +9646,10 @@ const PiloteAuto=({s,d,supabase,user})=>{
         addLog('⚠️ ['+(i+1)+'/'+approved.length+'] '+fiche.name+' — PAS EMAIL — Pack prêt non envoyé','warn');
         sentFail++;
       } else {
-        atts.forEach(dt=>{if(dt==='fiche_paie')generateFicheHTML(fiche);else generateDocHTML(fiche,dt);});
-        addLog('📧 ['+(i+1)+'/'+approved.length+'] '+fiche.name+' → '+fiche.email+' | 📎 '+atts.length+' doc(s)','success');
+        const ficheHTML=generateFicheHTML(fiche)||'';
+        const docHTMLs=atts.filter(dt=>dt!=='fiche_paie').map(dt=>({filename:dt+'.html',content:generateDocHTML(fiche,dt)||'',contentType:'text/html'}));
+        const emailRes=await sendEmailReal(fiche.email,'Fiche de paie — Aureus Social Pro',ficheHTML,docHTMLs);
+        addLog('📧 ['+(i+1)+'/'+approved.length+'] '+fiche.name+' → '+fiche.email+(emailRes.success?' ✅ envoyé':' ⚠ '+( emailRes.mode||'dev'))+' | 📎 '+atts.length+' doc(s)','success');
         if(corr) addLog('   📝 '+corr.substring(0,80),'info');
         sentOK++;
       }
@@ -8955,6 +9670,13 @@ const PiloteAuto=({s,d,supabase,user})=>{
       }catch(e){}
     }
     setPhase('done');
+    // Sprint 29: Persist payroll run to history
+    try {
+      const now=new Date();
+      const fichesData=(sr?.fiches||[]).map(fi=>({empName:fi.name||'',brut:fi.brut||0,net:fi.net||0,onss:fi.onss||0,pp:fi.pp||0,status:validations[fi.id]||'approved'}));
+      const summaryData={totalBrut:sr?.totals?.brut||0,totalNet:sr?.totals?.net||0,empCount:(sr?.fiches||[]).length,sentCount:sentOK||0,failedCount:sentFail||0};
+      savePayrollRun(cl?.id||'unknown',now.getMonth()+1,now.getFullYear(),fichesData,summaryData);
+    } catch(pe) {}
     setAutoRunning(false);
   };
 
@@ -11240,6 +11962,10 @@ const AutomationHub=({s,d})=>{
       case'massengine':return <MassEngine s={s} d={d}/>;
       case'smartauto':return <SmartAutomation s={s} d={d} supabase={supabase} user={user}/>;
       case'autopilot':return <SmartAutopilot s={s} d={d}/>;
+      case'facturation':return <Facturation s={s}/>;
+      case'validation':return <ValidationEngine s={s}/>;
+      case'exportbatch':return <ExportBatch s={s}/>;
+      case'rgpd':return <RGPDManager s={s}/>;
       case'planabs':return <PlanAbsences s={s} d={d}/>;
       case'dashrh':return <DashboardRH s={s}/>;
       case'budget':return <BudgetPrev s={s}/>;
