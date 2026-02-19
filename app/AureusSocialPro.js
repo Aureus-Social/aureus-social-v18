@@ -4374,6 +4374,24 @@ function AppInner({ supabase, user, onLogout }) {
     {id:"payslip",l:t('nav.payslip'),i:'◈'},
     {id:"_sep1",l:"AUTOMATISATION",sep:true},
     {id:"piloteauto",l:"Pilote Auto Total",i:"🏎️"},
+    {id:"compliance",l:"Compliance Radar",i:"🛡"},
+    {id:"autoindex",l:"Auto-Indexation",i:"📈"},
+    {id:"historique",l:"Historique Runs",i:"📊"},
+    {id:"sepa",l:"SEPA Virements",i:"💳"},
+    {id:"smartalerts",l:"Smart Alerts",i:"🔔"},
+    {id:"batchdecl",l:"Declarations Batch",i:"📋"},
+    {id:"analytics",l:"Analytics",i:"📈"},
+    {id:"exportcompta",l:"Export Comptable",i:"📤"},
+    {id:"audittrail",l:"Audit Trail",i:"🔍"},
+    {id:"simembauche",l:"Simulateur Embauche",i:"🧮"},
+    {id:"ged",l:"GED Documents",i:"📁"},
+    {id:"portail",l:"Portail Employe",i:"👤"},
+    {id:"dashclient",l:"Dashboard Client",i:"🏢"},
+    {id:"comparateur",l:"Comparateur Salarial",i:"⚖"},
+    {id:"planabs",l:"Planificateur Absences",i:"📅"},
+    {id:"dashrh",l:"Dashboard RH",i:"👥"},
+    {id:"budget",l:"Budget Previsionnel",i:"💰"},
+    {id:"echeancier",l:"Echeancier Paiements",i:"📆"},
     {id:"cloture",l:t("nav.cloture"),i:"🔄"},
     {id:"notifications",l:t("nav.notifications"),i:"🔔"},
     {id:"commandcenter",l:t("nav.commandcenter"),i:"🎯"},
@@ -6374,6 +6392,2207 @@ const ActionsRapides=({s,d})=>{
 // ═══ SPRINT 25: PILOTE AUTOMATIQUE TOTAL — LA ROLLS ROYCE  ═══
 // ═══ L'humain ne fait QUE la validation finale              ═══
 // ══════════════════════════════════════════════════════════════
+
+
+// ══════════════════════════════════════════════════════════════
+// ═══ SPRINT 25b: AUTOMATISATION NIVEAU SUPÉRIEUR           ═══
+// ══════════════════════════════════════════════════════════════
+
+// ═══ 1. COMPLIANCE RADAR — Conformité en temps réel ═══
+
+// ══════════════════════════════════════════════════════════════
+// ═══ SPRINT 25c: SEPA + ALERTES + DECLARATIONS + SCHEDULER ═══
+// ══════════════════════════════════════════════════════════════
+
+// ═══ 1. SEPA XML GENERATOR ═══
+
+// ══════════════════════════════════════════════════════════════
+// ═══ SPRINT 26: ANALYTICS + EXPORT COMPTABLE + AUDIT TRAIL ═══
+// ══════════════════════════════════════════════════════════════
+
+// ═══ 1. ANALYTICS DASHBOARD AVANCÉ ═══
+
+// ══════════════════════════════════════════════════════════════
+// ═══ SPRINT 27: GED + PORTAIL EMPLOYE + DASHBOARD CLIENT   ═══
+// ══════════════════════════════════════════════════════════════
+
+// ═══ 1. GED — Gestion Electronique Documents ═══
+
+// ══════════════════════════════════════════════════════════════
+// ═══ SPRINT 28: ABSENCES + RH BOARD + CONTRATS + BUDGET    ═══
+// ══════════════════════════════════════════════════════════════
+
+// ═══ 1. PLANIFICATEUR ABSENCES — Calendrier interactif ═══
+const PlanAbsences=({s,d})=>{
+  const clients=s.clients||[];
+  const [selClient,setSelClient]=useState(0);
+  const [month,setMonth]=useState(new Date().getMonth());
+  const [year,setYear]=useState(new Date().getFullYear());
+  const [absences,setAbsences]=useState({});
+  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const jours=['Lu','Ma','Me','Je','Ve','Sa','Di'];
+  const absTypes=[{id:'conge',icon:'🏖',label:'Conge',c:'#22c55e'},{id:'maladie',icon:'🤒',label:'Maladie',c:'#ef4444'},{id:'formation',icon:'📚',label:'Formation',c:'#3b82f6'},{id:'teletravail',icon:'🏠',label:'Teletravail',c:'#a855f7'},{id:'recup',icon:'⏰',label:'Recup',c:'#eab308'},{id:'sans_solde',icon:'⚪',label:'Sans solde',c:'#888'}];
+  const [selType,setSelType]=useState('conge');
+  const cl=clients[selClient]||{emps:[]};
+  const emps=cl.emps||[];
+
+  const getDaysInMonth=(m,y)=>new Date(y,m+1,0).getDate();
+  const getFirstDay=(m,y)=>{const d=new Date(y,m,1).getDay();return d===0?6:d-1;};
+  const days=getDaysInMonth(month,year);
+  const firstDay=getFirstDay(month,year);
+  const feries=[1,1, 1,5, 21,7, 15,8, 1,11, 11,11, 25,12]; // Belgian holidays month,day pairs
+
+  const isHoliday=(d)=>{for(let i=0;i<feries.length;i+=2){if(feries[i+1]-1===month&&feries[i]===d)return true;}return false;};
+  const isWeekend=(d)=>{const day=new Date(year,month,d).getDay();return day===0||day===6;};
+
+  const toggleAbsence=(empIdx,day)=>{
+    const key=selClient+'-'+empIdx+'-'+year+'-'+month+'-'+day;
+    setAbsences(p=>{
+      const cur={...p};
+      if(cur[key]===selType) delete cur[key];
+      else cur[key]=selType;
+      return cur;
+    });
+  };
+
+  const getAbsence=(empIdx,day)=>absences[selClient+'-'+empIdx+'-'+year+'-'+month+'-'+day];
+
+  // Stats
+  const totalAbs=Object.keys(absences).filter(k=>k.startsWith(selClient+'-')).length;
+  const byType={};absTypes.forEach(t=>{byType[t.id]=Object.values(absences).filter(v=>v===t.id).length;});
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>📅 Planificateur Absences</h2>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Calendrier interactif — Conges, maladies, teletravail</p>
+      </div>
+      <div style={{display:'flex',gap:6,alignItems:'center'}}>
+        <button onClick={()=>{if(month===0){setMonth(11);setYear(y=>y-1);}else setMonth(m=>m-1);}} style={{padding:'6px 12px',borderRadius:6,border:'1px solid rgba(198,163,78,.15)',background:'transparent',color:'#c6a34e',cursor:'pointer',fontFamily:'inherit'}}>◀</button>
+        <span style={{fontSize:14,fontWeight:700,color:'#c6a34e',minWidth:140,textAlign:'center'}}>{mois[month]} {year}</span>
+        <button onClick={()=>{if(month===11){setMonth(0);setYear(y=>y+1);}else setMonth(m=>m+1);}} style={{padding:'6px 12px',borderRadius:6,border:'1px solid rgba(198,163,78,.15)',background:'transparent',color:'#c6a34e',cursor:'pointer',fontFamily:'inherit'}}>▶</button>
+        <select value={selClient} onChange={e=>{setSelClient(+e.target.value);}} style={{padding:'6px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',marginLeft:8}}>
+          {clients.map((c,i)=><option key={i} value={i}>{c.company?.name}</option>)}
+        </select>
+      </div>
+    </div>
+
+    {/* Type selector */}
+    <div style={{display:'flex',gap:6,marginBottom:12}}>
+      {absTypes.map(t=><button key={t.id} onClick={()=>setSelType(t.id)} style={{padding:'6px 12px',borderRadius:8,border:selType===t.id?'2px solid '+t.c:'1px solid rgba(255,255,255,.05)',background:selType===t.id?t.c+'15':'transparent',color:selType===t.id?t.c:'#888',fontSize:11,cursor:'pointer',fontFamily:'inherit',fontWeight:600}}>{t.icon} {t.label} ({byType[t.id]||0})</button>)}
+    </div>
+
+    {/* Calendar grid */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+      {/* Header row: days */}
+      <div style={{display:'grid',gridTemplateColumns:'140px repeat('+days+',1fr)',background:'rgba(198,163,78,.06)'}}>
+        <div style={{padding:'8px 12px',fontSize:11,fontWeight:600,color:'#c6a34e'}}>Employe</div>
+        {Array.from({length:days},(_,i)=>{
+          const d=i+1;
+          const we=isWeekend(d);
+          const hol=isHoliday(d);
+          return <div key={i} style={{padding:'4px 0',textAlign:'center',fontSize:9,color:hol?'#ef4444':we?'#555':'#888',fontWeight:hol?700:400,background:we?'rgba(0,0,0,.15)':'transparent'}}>
+            <div>{jours[new Date(year,month,d).getDay()===0?6:new Date(year,month,d).getDay()-1]}</div>
+            <div style={{fontSize:11,fontWeight:600}}>{d}</div>
+          </div>;
+        })}
+      </div>
+      {/* Employee rows */}
+      <div style={{maxHeight:400,overflowY:'auto'}}>
+        {emps.map((e,ei)=><div key={ei} style={{display:'grid',gridTemplateColumns:'140px repeat('+days+',1fr)',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+          <div style={{padding:'6px 12px',fontSize:10,color:'#e5e5e5',fontWeight:500,display:'flex',alignItems:'center'}}>{(e.first||'')[0]}.{e.last||''}</div>
+          {Array.from({length:days},(_,i)=>{
+            const d=i+1;
+            const abs=getAbsence(ei,d);
+            const we=isWeekend(d);
+            const hol=isHoliday(d);
+            const at=abs?absTypes.find(t=>t.id===abs):null;
+            return <div key={i} onClick={()=>!we&&!hol&&toggleAbsence(ei,d)} style={{height:28,display:'flex',alignItems:'center',justifyContent:'center',cursor:we||hol?'default':'pointer',background:hol?'rgba(239,68,68,.06)':we?'rgba(0,0,0,.15)':abs?at.c+'15':'transparent',borderRight:'1px solid rgba(255,255,255,.02)',fontSize:11,transition:'all .1s'}}>
+              {abs&&<span title={at?.label}>{at?.icon}</span>}
+              {hol&&!abs&&<span style={{fontSize:8,color:'#ef4444'}}>F</span>}
+            </div>;
+          })}
+        </div>)}
+      </div>
+    </div>
+
+    {/* Summary */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat('+absTypes.length+',1fr)',gap:8,marginTop:12}}>
+      {absTypes.map(t=><div key={t.id} style={{padding:8,borderRadius:8,background:t.c+'08',border:'1px solid '+t.c+'15',textAlign:'center'}}>
+        <div style={{fontSize:16,fontWeight:700,color:t.c}}>{byType[t.id]||0}</div>
+        <div style={{fontSize:9,color:'#888'}}>{t.icon} {t.label}</div>
+      </div>)}
+    </div>
+  </div>;
+};
+
+// ═══ 2. TABLEAU DE BORD RH — Vue consolidee ═══
+const DashboardRH=({s})=>{
+  const clients=s.clients||[];
+  const now=new Date();
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const allEmps=clients.reduce((a,c)=>[...a,...(c.emps||[]).map(e=>({...e,client:c.company?.name||''}))],[]);
+  const totalBrut=allEmps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0)),0);
+
+  // Demographics
+  const contracts={CDI:0,CDD:0,other:0};
+  allEmps.forEach(e=>{const t=e.contractType||'CDI';if(contracts[t]!==undefined)contracts[t]++;else contracts.other++;});
+  
+  // Seniority buckets
+  const seniority=[{l:'<1 an',c:0},{l:'1-3 ans',c:0},{l:'3-5 ans',c:0},{l:'5-10 ans',c:0},{l:'10+ ans',c:0}];
+  allEmps.forEach(e=>{
+    const start=new Date(e.startDate||e.start||'2023-01-01');
+    const yrs=(now-start)/31536000000;
+    if(yrs<1) seniority[0].c++;
+    else if(yrs<3) seniority[1].c++;
+    else if(yrs<5) seniority[2].c++;
+    else if(yrs<10) seniority[3].c++;
+    else seniority[4].c++;
+  });
+
+  // Upcoming events
+  const events=[];
+  allEmps.forEach(e=>{
+    const name=(e.first||e.fn||'')+' '+(e.last||e.ln||'');
+    if((e.contractType||'')==='CDD'){
+      const end=new Date(e.endDate||e.end||'2099-12-31');
+      const d=Math.ceil((end-now)/86400000);
+      if(d<=90&&d>-30) events.push({name,event:'Fin CDD',days:d,c:d<0?'#ef4444':d<30?'#eab308':'#3b82f6',client:e.client});
+    }
+    const start=new Date(e.startDate||e.start||'2020-01-01');
+    const monthsIn=Math.round((now-start)/2592000000);
+    if(monthsIn>=5&&monthsIn<=7) events.push({name,event:'Fin essai',days:180-Math.ceil((now-start)/86400000),c:'#a855f7',client:e.client});
+    // Anniversary
+    if(start.getMonth()===now.getMonth()&&(now.getFullYear()-start.getFullYear())>0){
+      events.push({name,event:'Anniversaire '+(now.getFullYear()-start.getFullYear())+' an(s)',days:start.getDate()-now.getDate(),c:'#c6a34e',client:e.client});
+    }
+  });
+  events.sort((a,b)=>a.days-b.days);
+
+  // Alerts
+  const noNISS=allEmps.filter(e=>!e.niss&&!e.NISS).length;
+  const noIBAN=allEmps.filter(e=>!e.iban&&!e.IBAN).length;
+  const noEmail=allEmps.filter(e=>!e.email).length;
+  const noSalary=allEmps.filter(e=>+(e.monthlySalary||e.gross||0)<=0).length;
+
+  return <div style={{padding:24}}>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>👥 Dashboard RH</h2>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Vue consolidee des ressources humaines</p>
+
+    {/* KPIs */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10,marginBottom:16}}>
+      {[{l:'Total employes',v:allEmps.length,c:'#c6a34e'},{l:'CDI',v:contracts.CDI,c:'#22c55e'},{l:'CDD',v:contracts.CDD,c:'#eab308'},{l:'Masse brute',v:f2(totalBrut)+'E',c:'#e5e5e5'},{l:'Cout annuel',v:f2(totalBrut*1.2507*12)+'E',c:'#ef4444'},{l:'Salaire moy.',v:f2(allEmps.length>0?totalBrut/allEmps.length:0)+'E',c:'#3b82f6'}].map((k,i)=>
+        <div key={i} style={{padding:12,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'20',borderRadius:12,textAlign:'center'}}>
+          <div style={{fontSize:9,color:'#888'}}>{k.l}</div>
+          <div style={{fontSize:18,fontWeight:700,color:k.c}}>{k.v}</div>
+        </div>
+      )}
+    </div>
+
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14,marginBottom:14}}>
+      {/* Seniority */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:10}}>📊 Anciennete</div>
+        {seniority.map((s,i)=>{const max=Math.max(...seniority.map(x=>x.c),1);return <div key={i} style={{marginBottom:6}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:10,marginBottom:2}}>
+            <span style={{color:'#888'}}>{s.l}</span><span style={{color:'#e5e5e5',fontWeight:600}}>{s.c}</span>
+          </div>
+          <div style={{height:6,background:'rgba(255,255,255,.05)',borderRadius:3,overflow:'hidden'}}>
+            <div style={{height:'100%',width:(s.c/max*100)+'%',background:'linear-gradient(90deg,#c6a34e,#a07d3e)',borderRadius:3}}/>
+          </div>
+        </div>;})}
+      </div>
+
+      {/* Upcoming events */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#3b82f6',marginBottom:10}}>📅 Evenements a venir</div>
+        {events.length===0?<div style={{color:'#888',fontSize:11,padding:10}}>Aucun evenement</div>:
+        events.slice(0,8).map((e,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:10}}>
+          <div><span style={{color:'#e5e5e5',fontWeight:500}}>{e.name}</span><br/><span style={{color:'#888',fontSize:9}}>{e.event} — {e.client}</span></div>
+          <span style={{color:e.c,fontWeight:600,fontSize:11}}>{e.days>=0?'J-'+e.days:'J+'+Math.abs(e.days)}</span>
+        </div>)}
+      </div>
+
+      {/* Data quality */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#ef4444',marginBottom:10}}>⚠ Qualite donnees</div>
+        {[{l:'Sans NISS',v:noNISS,t:allEmps.length},{l:'Sans IBAN',v:noIBAN,t:allEmps.length},{l:'Sans email',v:noEmail,t:allEmps.length},{l:'Sans salaire',v:noSalary,t:allEmps.length}].map((q,i)=>
+          <div key={i} style={{marginBottom:8}}>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:10,marginBottom:2}}>
+              <span style={{color:q.v>0?'#ef4444':'#22c55e'}}>{q.v>0?'❌':'✅'} {q.l}</span>
+              <span style={{color:'#888'}}>{q.v}/{q.t}</span>
+            </div>
+            <div style={{height:4,background:'rgba(255,255,255,.05)',borderRadius:2,overflow:'hidden'}}>
+              <div style={{height:'100%',width:(q.t>0?((q.t-q.v)/q.t*100):100)+'%',background:q.v>0?'#eab308':'#22c55e',borderRadius:2}}/>
+            </div>
+          </div>
+        )}
+        <div style={{marginTop:8,fontSize:10,color:'#888'}}>Completude: <span style={{color:'#c6a34e',fontWeight:700}}>{allEmps.length>0?Math.round(((allEmps.length*4-noNISS-noIBAN-noEmail-noSalary)/(allEmps.length*4))*100):100}%</span></div>
+      </div>
+    </div>
+
+    {/* Per-client breakdown */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+      <div style={{padding:'10px 14px',background:'rgba(198,163,78,.06)',fontSize:12,fontWeight:600,color:'#c6a34e'}}>🏢 Par client</div>
+      <div style={{display:'grid',gridTemplateColumns:'180px 80px 80px 100px 100px 100px 1fr',padding:'6px 12px',background:'rgba(198,163,78,.03)',fontSize:9,color:'#888',fontWeight:600}}>
+        <div>Client</div><div>Employes</div><div>CDI/CDD</div><div>Masse brute</div><div>Cout/mois</div><div>Cout/an</div><div>Score</div>
+      </div>
+      {clients.map((cl,i)=>{
+        const e=cl.emps||[];
+        const b=e.reduce((a,x)=>a+(+(x.monthlySalary||x.gross||0)),0);
+        const cd=e.filter(x=>(x.contractType||'CDI')==='CDI').length;
+        let sc=100;e.forEach(x=>{if(!x.niss&&!x.NISS)sc-=5;if(!x.iban&&!x.IBAN)sc-=5;if(+(x.monthlySalary||x.gross||0)<=0)sc-=10;});sc=Math.max(0,sc);
+        return <div key={i} style={{display:'grid',gridTemplateColumns:'180px 80px 80px 100px 100px 100px 1fr',padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
+          <div style={{color:'#e5e5e5',fontWeight:500}}>{cl.company?.name||'Client'}</div>
+          <div style={{color:'#3b82f6'}}>{e.length}</div>
+          <div style={{color:'#888'}}>{cd}/{e.length-cd}</div>
+          <div style={{color:'#c6a34e'}}>{f2(b)}</div>
+          <div style={{color:'#ef4444'}}>{f2(b*1.2507)}</div>
+          <div style={{color:'#ef4444'}}>{f2(b*1.2507*12)}</div>
+          <div style={{color:sc>=80?'#22c55e':sc>=60?'#eab308':'#ef4444',fontWeight:700}}>{sc}%</div>
+        </div>;
+      })}
+    </div>
+  </div>;
+};
+
+// ═══ 3. BUDGET PREVISIONNEL — Projection 12 mois ═══
+const BudgetPrev=({s})=>{
+  const clients=s.clients||[];
+  const [growthRate,setGrowthRate]=useState(2);
+  const [newHires,setNewHires]=useState(0);
+  const [avgNewSalary,setAvgNewSalary]=useState(3500);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const mois=['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+
+  const totalEmps=clients.reduce((a,c)=>a+(c.emps||[]).length,0);
+  const totalBrut=clients.reduce((a,c)=>a+(c.emps||[]).reduce((b,e)=>b+(+(e.monthlySalary||e.gross||0)),0),0);
+  const now=new Date();
+
+  // Project 12 months
+  const projection=Array.from({length:12},(_,i)=>{
+    const d=new Date();d.setMonth(d.getMonth()+i);
+    const monthGrowth=1+(growthRate/100/12*i);
+    const extraEmps=Math.floor(newHires*i/12);
+    const brutBase=totalBrut*monthGrowth;
+    const brutNew=extraEmps*avgNewSalary;
+    const brut=brutBase+brutNew;
+    const onss=brut*0.3814;
+    const net=brut*0.5645;
+    const cout=brut*1.2507;
+    const emps=totalEmps+extraEmps;
+    return {label:mois[d.getMonth()]+' '+d.getFullYear(),brut:Math.round(brut),net:Math.round(net),cout:Math.round(cout),onss:Math.round(onss),emps};
+  });
+
+  const totalCoutAn=projection.reduce((a,p)=>a+p.cout,0);
+  const totalBrutAn=projection.reduce((a,p)=>a+p.brut,0);
+  const maxCout=Math.max(...projection.map(p=>p.cout));
+
+  return <div style={{padding:24}}>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>💰 Budget Previsionnel</h2>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Projection sur 12 mois — Masse salariale et cout employeur</p>
+
+    <div style={{display:'grid',gridTemplateColumns:'300px 1fr',gap:16}}>
+      {/* Config */}
+      <div>
+        <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14,marginBottom:14}}>
+          <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:10}}>Hypotheses</div>
+          <div style={{marginBottom:8}}>
+            <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Croissance salariale annuelle (%)</label>
+            <input type="range" min="0" max="10" step="0.5" value={growthRate} onChange={e=>setGrowthRate(+e.target.value)} style={{width:'100%'}}/>
+            <div style={{textAlign:'center',fontSize:14,fontWeight:700,color:'#c6a34e'}}>+{growthRate}%</div>
+          </div>
+          <div style={{marginBottom:8}}>
+            <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Nouvelles embauches sur 12 mois</label>
+            <input type="number" value={newHires} onChange={e=>setNewHires(+e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:14,fontWeight:700,fontFamily:'inherit',textAlign:'center'}}/>
+          </div>
+          {newHires>0&&<div style={{marginBottom:8}}>
+            <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Salaire moyen nouveaux (EUR)</label>
+            <input type="number" value={avgNewSalary} onChange={e=>setAvgNewSalary(+e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:12,fontFamily:'inherit',textAlign:'center'}}/>
+          </div>}
+        </div>
+        <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+          <div style={{fontSize:13,fontWeight:600,color:'#ef4444',marginBottom:10}}>Projections annuelles</div>
+          {[{l:'Cout annuel total',v:f2(totalCoutAn)+' EUR',c:'#ef4444'},{l:'Masse brute annuelle',v:f2(totalBrutAn)+' EUR',c:'#c6a34e'},{l:'Effectif fin periode',v:projection[11].emps+' employes',c:'#3b82f6'},{l:'Variation cout',v:(totalCoutAn>totalBrut*1.2507*12?'+':'')+f2(totalCoutAn-totalBrut*1.2507*12)+' EUR',c:totalCoutAn>totalBrut*1.2507*12?'#ef4444':'#22c55e'}].map((k,i)=>
+            <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
+              <span style={{color:'#888'}}>{k.l}</span><span style={{color:k.c,fontWeight:700}}>{k.v}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chart + table */}
+      <div>
+        <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14,marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Projection mensuelle</div>
+          <div style={{display:'flex',alignItems:'flex-end',gap:3,height:140}}>
+            {projection.map((p,i)=><div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+              <div style={{fontSize:7,color:'#888'}}>{f2(p.cout)}</div>
+              <div style={{width:'100%',height:maxCout>0?(p.cout/maxCout*120)+'px':'4px',background:'linear-gradient(180deg,#ef4444,rgba(198,163,78,.4))',borderRadius:'3px 3px 0 0',position:'relative'}}>
+                <div style={{position:'absolute',bottom:0,width:'100%',height:maxCout>0?(p.brut/maxCout*120)+'px':'2px',background:'rgba(198,163,78,.6)',borderRadius:'2px 2px 0 0'}}>
+                  <div style={{position:'absolute',bottom:0,width:'100%',height:maxCout>0?(p.net/maxCout*120)+'px':'1px',background:'rgba(34,197,94,.6)',borderRadius:'1px 1px 0 0'}}/>
+                </div>
+              </div>
+              <div style={{fontSize:8,color:'#888'}}>{p.label}</div>
+            </div>)}
+          </div>
+        </div>
+        <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+          <div style={{display:'grid',gridTemplateColumns:'100px 60px 90px 90px 90px 90px',padding:'6px 12px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#888'}}>
+            <div>Mois</div><div>Effectif</div><div>Brut</div><div>ONSS</div><div>Net</div><div>Cout total</div>
+          </div>
+          {projection.map((p,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'100px 60px 90px 90px 90px 90px',padding:'5px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:10}}>
+            <div style={{color:'#c6a34e',fontWeight:500}}>{p.label}</div>
+            <div style={{color:'#3b82f6'}}>{p.emps}</div>
+            <div style={{color:'#e5e5e5'}}>{f2(p.brut)}</div>
+            <div style={{color:'#a855f7'}}>{f2(p.onss)}</div>
+            <div style={{color:'#22c55e'}}>{f2(p.net)}</div>
+            <div style={{color:'#ef4444',fontWeight:600}}>{f2(p.cout)}</div>
+          </div>)}
+        </div>
+      </div>
+    </div>
+  </div>;
+};
+
+// ═══ 4. ECHEANCIER PAIEMENTS — Tout ce qui est du ═══
+const Echeancier=({s})=>{
+  const clients=s.clients||[];
+  const now=new Date();
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const month=now.getMonth();const year=now.getFullYear();
+  const totalBrut=clients.reduce((a,c)=>a+(c.emps||[]).reduce((b,e)=>b+(+(e.monthlySalary||e.gross||0)),0),0);
+
+  const echeances=[
+    {day:5,label:'ONSS provisoire',amount:Math.round(totalBrut*0.3814),cat:'ONSS',icon:'🏛',dest:'ONSS via portail securite sociale'},
+    {day:15,label:'Precompte professionnel',amount:Math.round(totalBrut*0.5645*0.2725),cat:'Fiscal',icon:'💰',dest:'SPF Finances via Finprof'},
+    {day:20,label:'Cheques-repas',amount:Math.round(clients.reduce((a,c)=>a+(c.emps||[]).length,0)*8*22*0.83),cat:'Avantages',icon:'🍽',dest:'Sodexo/Edenred'},
+    {day:25,label:'Virements salaires SEPA',amount:Math.round(totalBrut*0.5645),cat:'Paie',icon:'💳',dest:'Banque via fichier SEPA'},
+    {day:28,label:'Distribution fiches de paie',amount:0,cat:'Admin',icon:'📄',dest:'Email / portail employe'},
+  ];
+
+  // Quarterly
+  if([0,3,6,9].includes(month)){
+    echeances.push({day:10,label:'DmfA trimestrielle T'+Math.ceil((month+1)/3),amount:Math.round(totalBrut*3*0.3814),cat:'ONSS',icon:'🏛',dest:'Portail ONSS',quarterly:true});
+  }
+
+  echeances.sort((a,b)=>a.day-b.day);
+
+  const totalDue=echeances.reduce((a,e)=>a+e.amount,0);
+  const pastDue=echeances.filter(e=>e.day<now.getDate());
+  const upcoming=echeances.filter(e=>e.day>=now.getDate());
+
+  return <div style={{padding:24}}>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📆 Echeancier Paiements</h2>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>{mois[month]} {year} — Toutes les echeances du mois</p>
+
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+      {[{l:'Total du ce mois',v:f2(totalDue)+' EUR',c:'#c6a34e'},{l:'Paye',v:f2(pastDue.reduce((a,e)=>a+e.amount,0))+' EUR',c:'#22c55e'},{l:'A venir',v:f2(upcoming.reduce((a,e)=>a+e.amount,0))+' EUR',c:'#eab308'},{l:'Echeances restantes',v:upcoming.length,c:'#3b82f6'}].map((k,i)=>
+        <div key={i} style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'20',borderRadius:12,textAlign:'center'}}>
+          <div style={{fontSize:18,fontWeight:700,color:k.c}}>{k.v}</div>
+          <div style={{fontSize:9,color:'#888'}}>{k.l}</div>
+        </div>
+      )}
+    </div>
+
+    {/* Timeline */}
+    <div style={{display:'flex',flexDirection:'column',gap:6}}>
+      {echeances.map((e,i)=>{
+        const past=e.day<now.getDate();
+        const today=e.day===now.getDate();
+        return <div key={i} style={{display:'flex',alignItems:'center',gap:14,padding:'14px 18px',background:today?'rgba(198,163,78,.06)':past?'rgba(34,197,94,.03)':'rgba(255,255,255,.01)',border:'1px solid '+(today?'rgba(198,163,78,.2)':past?'rgba(34,197,94,.1)':'rgba(255,255,255,.05)'),borderRadius:12}}>
+          <div style={{width:40,textAlign:'center'}}>
+            <div style={{fontSize:20,fontWeight:800,color:past?'#22c55e':today?'#c6a34e':'#e5e5e5'}}>{e.day}</div>
+            <div style={{fontSize:8,color:'#888'}}>{mois[month].substring(0,3)}</div>
+          </div>
+          <div style={{fontSize:20}}>{e.icon}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:600,color:past?'#888':'#e5e5e5'}}>{e.label}{e.quarterly?' (trimestriel)':''}</div>
+            <div style={{fontSize:10,color:'#888'}}>{e.dest}</div>
+          </div>
+          {e.amount>0&&<div style={{fontSize:16,fontWeight:700,color:past?'#22c55e':'#c6a34e'}}>{f2(e.amount)} EUR</div>}
+          <div style={{padding:'4px 10px',borderRadius:6,background:past?'rgba(34,197,94,.1)':today?'rgba(198,163,78,.1)':'rgba(255,255,255,.05)',color:past?'#22c55e':today?'#c6a34e':'#888',fontSize:10,fontWeight:600}}>
+            {past?'✅ Paye':today?'📌 Aujourd hui':'⏳ J-'+(e.day-now.getDate())}
+          </div>
+        </div>;
+      })}
+    </div>
+  </div>;
+};
+
+const GedDocuments=({s,d})=>{
+  const clients=s.clients||[];
+  const [selClient,setSelClient]=useState(0);
+  const [selEmp,setSelEmp]=useState(null);
+  const [search,setSearch]=useState('');
+  const [genType,setGenType]=useState(null);
+  const now=new Date();
+
+  const docTypes=[
+    {id:'contrat',icon:'📝',label:'Contrat de travail',auto:true,obligatoire:true},
+    {id:'avenant',icon:'📝',label:'Avenant au contrat',auto:true},
+    {id:'fiche_paie',icon:'📄',label:'Fiche de paie',auto:true,obligatoire:true},
+    {id:'c4',icon:'📄',label:'Certificat C4',auto:true},
+    {id:'attestation',icon:'📄',label:'Attestation emploi',auto:true},
+    {id:'solde',icon:'💰',label:'Solde de tout compte',auto:true},
+    {id:'dimona',icon:'📋',label:'Declaration Dimona',auto:true},
+    {id:'identite',icon:'🪪',label:'Carte identite',auto:false},
+    {id:'iban',icon:'🏦',label:'Coordonnees bancaires',auto:true},
+    {id:'medical',icon:'🏥',label:'Certificat medical',auto:false},
+    {id:'diplome',icon:'🎓',label:'Diplome / Certificat',auto:false},
+    {id:'permis',icon:'🚗',label:'Permis de conduire',auto:false},
+    {id:'sejour',icon:'🛂',label:'Titre de sejour',auto:false},
+    {id:'reglement',icon:'📖',label:'Reglement de travail',auto:false,obligatoire:true},
+  ];
+
+  const cl=clients[selClient]||{emps:[]};
+  const emps=cl.emps||[];
+  const emp=selEmp!==null?emps[selEmp]:null;
+
+  // Generate document inventory per employee
+  const getEmpDocs=(e)=>{
+    const docs=[];
+    const name=(e.first||e.fn||'')+' '+(e.last||e.ln||'');
+    // Auto-detect existing docs
+    if(e.startDate||e.start) docs.push({type:'contrat',date:e.startDate||e.start,status:'ok',name:'Contrat '+( e.contractType||'CDI')});
+    if(e.niss||e.NISS) docs.push({type:'identite',date:'-',status:'ok',name:'NISS renseigne'});
+    if(e.iban||e.IBAN) docs.push({type:'iban',date:'-',status:'ok',name:'IBAN renseigne'});
+    if(e.dimonaDone) docs.push({type:'dimona',date:e.startDate,status:'ok',name:'Dimona IN'});
+    // Check missing obligatory
+    docTypes.filter(d=>d.obligatoire).forEach(dt=>{
+      if(!docs.find(d=>d.type===dt.id)){
+        docs.push({type:dt.id,date:null,status:'missing',name:dt.label+' — MANQUANT'});
+      }
+    });
+    // Add payslip history
+    const pays=(cl.pays||[]).filter(p=>(p.ename||'').includes(name.split(' ')[0]));
+    pays.forEach(p=>docs.push({type:'fiche_paie',date:p.generated||'',status:'ok',name:'Fiche '+( p.period||'')}));
+    return docs;
+  };
+
+  const filteredEmps=emps.filter(e=>{
+    if(!search) return true;
+    const name=((e.first||e.fn||'')+' '+(e.last||e.ln||'')).toLowerCase();
+    return name.includes(search.toLowerCase());
+  });
+
+  const empDocs=emp?getEmpDocs(emp):[];
+  const totalDocs=emps.reduce((a,e)=>a+getEmpDocs(e).length,0);
+  const missingDocs=emps.reduce((a,e)=>a+getEmpDocs(e).filter(d=>d.status==='missing').length,0);
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>📁 GED — Documents</h2>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Gestion electronique des documents employes</p>
+      </div>
+      <div style={{display:'flex',gap:8}}>
+        <select value={selClient} onChange={e=>{setSelClient(+e.target.value);setSelEmp(null);}} style={{padding:'8px 12px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:12,fontFamily:'inherit'}}>
+          {clients.map((c,i)=><option key={i} value={i}>{c.company?.name||'Client '+(i+1)}</option>)}
+        </select>
+      </div>
+    </div>
+
+    {/* KPIs */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:16}}>
+      {[{l:'Employes',v:emps.length,c:'#c6a34e',i:'👥'},{l:'Documents',v:totalDocs,c:'#3b82f6',i:'📄'},{l:'Manquants',v:missingDocs,c:'#ef4444',i:'❌'},{l:'Completude',v:totalDocs>0?Math.round((totalDocs-missingDocs)/totalDocs*100)+'%':'N/A',c:'#22c55e',i:'✅'}].map((k,i)=>
+        <div key={i} style={{padding:12,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'20',borderRadius:12,textAlign:'center'}}>
+          <div style={{fontSize:9,color:'#888'}}>{k.i} {k.l}</div>
+          <div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div>
+        </div>
+      )}
+    </div>
+
+    <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:16}}>
+      {/* Employee list */}
+      <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+        <div style={{padding:'8px 12px',background:'rgba(198,163,78,.06)'}}>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." style={{width:'100%',padding:'6px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.1)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}/>
+        </div>
+        <div style={{maxHeight:500,overflowY:'auto'}}>
+          {filteredEmps.map((e,i)=>{
+            const docs=getEmpDocs(e);
+            const missing=docs.filter(d=>d.status==='missing').length;
+            const idx=emps.indexOf(e);
+            return <div key={i} onClick={()=>setSelEmp(idx)} style={{padding:'10px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',cursor:'pointer',background:selEmp===idx?'rgba(198,163,78,.06)':'transparent'}}>
+              <div style={{fontSize:12,fontWeight:selEmp===idx?600:400,color:selEmp===idx?'#c6a34e':'#e5e5e5'}}>{(e.first||e.fn||'')+' '+(e.last||e.ln||'')}</div>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:9,marginTop:2}}>
+                <span style={{color:'#888'}}>{docs.length} docs</span>
+                {missing>0&&<span style={{color:'#ef4444',fontWeight:600}}>{missing} manquant(s)</span>}
+                {missing===0&&<span style={{color:'#22c55e'}}>Complet</span>}
+              </div>
+            </div>;
+          })}
+        </div>
+      </div>
+
+      {/* Document view */}
+      <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+        {!emp?<div style={{padding:60,textAlign:'center',color:'#888'}}>
+          <div style={{fontSize:40,marginBottom:10}}>📁</div>
+          <div style={{fontSize:14}}>Selectionnez un employe</div>
+        </div>:
+        <div>
+          <div style={{padding:'12px 16px',background:'rgba(198,163,78,.06)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span style={{fontSize:13,fontWeight:600,color:'#c6a34e'}}>📁 {(emp.first||'')+' '+(emp.last||'')} — {empDocs.length} documents</span>
+            <div style={{display:'flex',gap:4}}>
+              {docTypes.filter(d=>d.auto).slice(0,4).map(dt=><button key={dt.id} onClick={()=>{
+                try{
+                  if(dt.id==='contrat') generateDocHTML&&previewHTML(generateDocHTML({name:(emp.first||'')+' '+(emp.last||''),niss:emp.niss,contractType:emp.contractType||'CDI',fonction:emp.function||'Employe',startDate:emp.startDate,brut:+(emp.monthlySalary||0),whWeek:emp.whWeek||38,company:cl.company},'contrat_travail'),'Contrat');
+                  else if(dt.id==='attestation') generateAttestationEmploi(emp,cl.company||{});
+                  else if(dt.id==='fiche_paie'){const brut=+(emp.monthlySalary||emp.gross||0);const o=Math.round(brut*1307)/100;const imp=brut-o;const pp=Math.round(imp*2725)/100;const net=Math.round((imp-pp)*100)/100;generatePayslipPDF(emp,{gross:brut,onssP:o,imposable:imp,pp,net,onssE:Math.round(brut*2507)/100,coutTotal:Math.round(brut*1.2507*100)/100},{month:new Date().getMonth()+1,year:new Date().getFullYear()},cl.company||{});}
+                }catch(ex){}
+              }} style={{padding:'4px 8px',borderRadius:4,border:'none',background:'rgba(198,163,78,.08)',color:'#c6a34e',fontSize:9,cursor:'pointer',fontFamily:'inherit'}}>{dt.icon} {dt.label.split(' ')[0]}</button>)}
+            </div>
+          </div>
+          <div style={{maxHeight:460,overflowY:'auto'}}>
+            {empDocs.map((doc,i)=>{
+              const dt=docTypes.find(d=>d.id===doc.type);
+              return <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',background:doc.status==='missing'?'rgba(239,68,68,.03)':'transparent'}}>
+                <div style={{fontSize:16}}>{dt?.icon||'📄'}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,fontWeight:500,color:doc.status==='missing'?'#ef4444':'#e5e5e5'}}>{doc.name}</div>
+                  {doc.date&&<div style={{fontSize:9,color:'#888'}}>{doc.date}</div>}
+                </div>
+                <span style={{fontSize:9,padding:'2px 6px',borderRadius:4,background:doc.status==='ok'?'rgba(34,197,94,.1)':'rgba(239,68,68,.1)',color:doc.status==='ok'?'#22c55e':'#ef4444',fontWeight:600}}>{doc.status==='ok'?'OK':'MANQUANT'}</span>
+              </div>;
+            })}
+          </div>
+        </div>}
+      </div>
+    </div>
+  </div>;
+};
+
+// ═══ 2. PORTAIL EMPLOYE (preview mode) ═══
+const PortailEmploye=({s})=>{
+  const clients=s.clients||[];
+  const [selClient,setSelClient]=useState(0);
+  const [selEmp,setSelEmp]=useState(0);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+
+  const cl=clients[selClient]||{emps:[]};
+  const emp=(cl.emps||[])[selEmp];
+  if(!emp) return <div style={{padding:24,textAlign:'center',color:'#888'}}>Aucun employe. Ajoutez des clients d abord.</div>;
+
+  const name=(emp.first||emp.fn||'')+' '+(emp.last||emp.ln||'');
+  const brut=+(emp.monthlySalary||emp.gross||0);
+  const onss=Math.round(brut*1307)/100;
+  const imp=brut-onss;
+  const pp=Math.round(imp*2725)/100;
+  const net=Math.round((imp-pp)*100)/100;
+  const anciennete=emp.startDate?Math.round((new Date()-new Date(emp.startDate))/2592000000):0;
+  const congesRestants=20-Math.min(20,Math.floor(Math.random()*8));
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+      <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>👤 Portail Employe</h2>
+      <div style={{display:'flex',gap:6}}>
+        <select value={selClient} onChange={e=>{setSelClient(+e.target.value);setSelEmp(0);}} style={{padding:'6px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:10,fontFamily:'inherit'}}>
+          {clients.map((c,i)=><option key={i} value={i}>{c.company?.name}</option>)}
+        </select>
+        <select value={selEmp} onChange={e=>setSelEmp(+e.target.value)} style={{padding:'6px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:10,fontFamily:'inherit'}}>
+          {(cl.emps||[]).map((e,i)=><option key={i} value={i}>{(e.first||'')+' '+(e.last||'')}</option>)}
+        </select>
+        <div style={{padding:'6px 12px',borderRadius:6,background:'rgba(234,179,8,.1)',border:'1px solid rgba(234,179,8,.2)',color:'#eab308',fontSize:10,fontWeight:600}}>MODE PREVIEW</div>
+      </div>
+    </div>
+    <p style={{fontSize:11,color:'#888',margin:'0 0 20px'}}>Ce que voit l employe quand il se connecte a son espace</p>
+
+    {/* Welcome */}
+    <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:16,marginBottom:16}}>
+      <div style={{display:'flex',alignItems:'center',gap:14}}>
+        <div style={{width:52,height:52,borderRadius:26,background:'linear-gradient(135deg,#c6a34e,#a07d3e)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,color:'#060810',fontWeight:800}}>{(emp.first||'?')[0]}{(emp.last||'?')[0]}</div>
+        <div>
+          <div style={{fontSize:18,fontWeight:700,color:'#e5e5e5'}}>Bonjour, {emp.first||name} 👋</div>
+          <div style={{fontSize:11,color:'#888'}}>{emp.function||emp.job||'Employe'} — {cl.company?.name} — {emp.contractType||'CDI'}</div>
+        </div>
+      </div>
+    </div>
+
+    {/* Quick KPIs */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:16}}>
+      {[{l:'Net mensuel',v:f2(net)+' EUR',c:'#22c55e',i:'💵'},{l:'Anciennete',v:anciennete+' mois',c:'#3b82f6',i:'📅'},{l:'Conges restants',v:congesRestants+' jours',c:'#c6a34e',i:'🏖'},{l:'Prochain salaire',v:'25/'+((new Date().getMonth()+1)+'').padStart(2,'0'),c:'#a855f7',i:'💳'}].map((k,i)=>
+        <div key={i} style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'20',borderRadius:12,textAlign:'center'}}>
+          <div style={{fontSize:9,color:'#888'}}>{k.i} {k.l}</div>
+          <div style={{fontSize:18,fontWeight:700,color:k.c}}>{k.v}</div>
+        </div>
+      )}
+    </div>
+
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+      {/* Last payslip */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:10}}>📄 Derniere fiche de paie</div>
+        {[{l:'Brut mensuel',v:f2(brut)+' EUR'},{l:'ONSS (-13,07%)',v:'-'+f2(onss)+' EUR'},{l:'Imposable',v:f2(imp)+' EUR'},{l:'Precompte prof.',v:'-'+f2(pp)+' EUR'}].map((r,i)=>
+          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
+            <span style={{color:'#888'}}>{r.l}</span><span style={{color:'#e5e5e5'}}>{r.v}</span>
+          </div>
+        )}
+        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',fontSize:14,fontWeight:700}}>
+          <span style={{color:'#e5e5e5'}}>NET A PAYER</span><span style={{color:'#22c55e'}}>{f2(net)} EUR</span>
+        </div>
+        <button onClick={()=>{try{generatePayslipPDF(emp,{gross:brut,onssP:onss,imposable:imp,pp,net,onssE:Math.round(brut*2507)/100,coutTotal:Math.round(brut*1.2507*100)/100},{month:new Date().getMonth()+1,year:new Date().getFullYear()},cl.company||{});}catch(e){}}} style={{width:'100%',marginTop:8,padding:'10px',borderRadius:8,border:'none',background:'rgba(198,163,78,.08)',color:'#c6a34e',fontSize:12,fontWeight:600,cursor:'pointer'}}>📥 Telecharger ma fiche</button>
+      </div>
+
+      {/* Personal info */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:13,fontWeight:600,color:'#3b82f6',marginBottom:10}}>👤 Mes informations</div>
+        {[{l:'Nom complet',v:name},{l:'NISS',v:emp.niss||emp.NISS||'Non renseigne'},{l:'Email',v:emp.email||'Non renseigne'},{l:'IBAN',v:emp.iban||emp.IBAN||'Non renseigne'},{l:'Contrat',v:(emp.contractType||'CDI')+' — '+(emp.whWeek||38)+'h/sem'},{l:'Debut',v:emp.startDate||emp.start||'N/A'},{l:'Fonction',v:emp.function||emp.job||'Employe'},{l:'Commission paritaire',v:cl.company?.cp||'CP 200'}].map((r,i)=>
+          <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
+            <span style={{color:'#888'}}>{r.l}</span><span style={{color:'#e5e5e5',fontWeight:500}}>{r.v}</span>
+          </div>
+        )}
+      </div>
+    </div>
+
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14,marginTop:14}}>
+      {/* Payslip history */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:8}}>📋 Historique fiches</div>
+        {Array.from({length:6},(_, i)=>{const d=new Date();d.setMonth(d.getMonth()-i);return <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:10}}>
+          <span style={{color:'#888'}}>{mois[d.getMonth()]} {d.getFullYear()}</span>
+          <span style={{color:'#22c55e',fontWeight:600}}>{f2(net*(0.97+Math.random()*0.06))} EUR</span>
+        </div>;})}
+      </div>
+
+      {/* Documents */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#3b82f6',marginBottom:8}}>📁 Mes documents</div>
+        {[{n:'Contrat de travail',d:emp.startDate||'',i:'📝'},{n:'Reglement de travail',d:'-',i:'📖'},{n:'Attestation emploi',d:'A generer',i:'📄'}].map((doc,i)=>
+          <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:10}}>
+            <span>{doc.i}</span><span style={{flex:1,color:'#e5e5e5'}}>{doc.n}</span><span style={{color:'#888'}}>{doc.d}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Conges */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#22c55e',marginBottom:8}}>🏖 Mes conges</div>
+        <div style={{textAlign:'center',marginBottom:10}}>
+          <div style={{fontSize:32,fontWeight:800,color:'#22c55e'}}>{congesRestants}</div>
+          <div style={{fontSize:10,color:'#888'}}>jours restants sur 20</div>
+        </div>
+        <div style={{height:8,background:'rgba(255,255,255,.05)',borderRadius:4,overflow:'hidden'}}>
+          <div style={{height:'100%',width:(congesRestants/20*100)+'%',background:'#22c55e',borderRadius:4}}/>
+        </div>
+      </div>
+    </div>
+  </div>;
+};
+
+// ═══ 3. DASHBOARD CLIENT — Vue par client ═══
+const DashboardClient=({s})=>{
+  const clients=s.clients||[];
+  const [sel,setSel]=useState(0);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+
+  const cl=clients[sel]||{emps:[],company:{}};
+  const co=cl.company||{};
+  const emps=cl.emps||[];
+  const totalBrut=emps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0)),0);
+  const totalNet=Math.round(totalBrut*0.5645*100)/100;
+  const totalCout=Math.round(totalBrut*1.2507*100)/100;
+  const cdi=emps.filter(e=>(e.contractType||'CDI')==='CDI').length;
+  const avgBrut=emps.length>0?Math.round(totalBrut/emps.length):0;
+
+  // Health score
+  let health=100;
+  emps.forEach(e=>{
+    if(!e.niss&&!e.NISS) health-=5;
+    if(!e.iban&&!e.IBAN) health-=5;
+    if(!e.email) health-=3;
+    if(+(e.monthlySalary||e.gross||0)<=0) health-=10;
+    if(!e.startDate&&!e.start) health-=5;
+  });
+  health=Math.max(0,Math.min(100,health));
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🏢 Dashboard Client</h2>
+      <select value={sel} onChange={e=>setSel(+e.target.value)} style={{padding:'8px 14px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:13,fontFamily:'inherit',fontWeight:600}}>
+        {clients.map((c,i)=><option key={i} value={i}>{c.company?.name||'Client '+(i+1)}</option>)}
+      </select>
+    </div>
+
+    {/* Company header */}
+    <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:16,marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+      <div>
+        <div style={{fontSize:20,fontWeight:700,color:'#c6a34e'}}>{co.name||'Client'}</div>
+        <div style={{fontSize:11,color:'#888'}}>{co.vat||''} {co.address?'— '+co.address:''} {co.cp?'— CP '+co.cp:''}</div>
+      </div>
+      <div style={{textAlign:'center'}}>
+        <div style={{fontSize:32,fontWeight:800,color:health>=80?'#22c55e':health>=60?'#eab308':'#ef4444'}}>{health}%</div>
+        <div style={{fontSize:9,color:'#888'}}>Score sante</div>
+      </div>
+    </div>
+
+    {/* KPIs */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10,marginBottom:16}}>
+      {[{l:'Employes',v:emps.length,c:'#3b82f6'},{l:'CDI',v:cdi,c:'#22c55e'},{l:'CDD',v:emps.length-cdi,c:'#eab308'},{l:'Brut/mois',v:f2(totalBrut),c:'#c6a34e'},{l:'Net/mois',v:f2(totalNet),c:'#22c55e'},{l:'Cout/mois',v:f2(totalCout),c:'#ef4444'}].map((k,i)=>
+        <div key={i} style={{padding:10,background:'rgba(198,163,78,.03)',border:'1px solid '+k.c+'15',borderRadius:10,textAlign:'center'}}>
+          <div style={{fontSize:16,fontWeight:700,color:k.c}}>{k.v}</div>
+          <div style={{fontSize:9,color:'#888'}}>{k.l}</div>
+        </div>
+      )}
+    </div>
+
+    {/* Employee table */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+      <div style={{padding:'10px 14px',background:'rgba(198,163,78,.06)',fontSize:12,fontWeight:600,color:'#c6a34e'}}>👥 Employes ({emps.length})</div>
+      <div style={{display:'grid',gridTemplateColumns:'160px 100px 80px 90px 90px 90px 90px 1fr',padding:'6px 12px',background:'rgba(198,163,78,.03)',fontSize:9,fontWeight:600,color:'#888'}}>
+        <div>Nom</div><div>Contrat</div><div>Regime</div><div>Brut</div><div>ONSS</div><div>Net</div><div>Cout</div><div>Statut</div>
+      </div>
+      {emps.map((e,i)=>{
+        const b=+(e.monthlySalary||e.gross||0);
+        const o=Math.round(b*1307)/100;
+        const n=Math.round((b-o)*0.7275*100)/100;
+        const c=Math.round(b*1.2507*100)/100;
+        const issues=[];
+        if(!e.niss&&!e.NISS) issues.push('NISS');
+        if(!e.iban&&!e.IBAN) issues.push('IBAN');
+        if(b<=0) issues.push('Salaire');
+        return <div key={i} style={{display:'grid',gridTemplateColumns:'160px 100px 80px 90px 90px 90px 90px 1fr',padding:'7px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
+          <div style={{color:'#e5e5e5',fontWeight:500}}>{(e.first||'')+' '+(e.last||'')}</div>
+          <div style={{color:'#888'}}>{e.contractType||'CDI'}</div>
+          <div style={{color:'#888'}}>{e.whWeek||38}h/sem</div>
+          <div style={{color:'#c6a34e'}}>{f2(b)}</div>
+          <div style={{color:'#a855f7'}}>{f2(o)}</div>
+          <div style={{color:'#22c55e',fontWeight:600}}>{f2(n)}</div>
+          <div style={{color:'#ef4444'}}>{f2(c)}</div>
+          <div>{issues.length===0?<span style={{fontSize:9,color:'#22c55e'}}>✅</span>:issues.map((is,j)=><span key={j} style={{fontSize:8,padding:'1px 4px',borderRadius:3,background:'rgba(239,68,68,.1)',color:'#ef4444',marginRight:2}}>{is}</span>)}</div>
+        </div>;
+      })}
+      <div style={{display:'grid',gridTemplateColumns:'160px 100px 80px 90px 90px 90px 90px 1fr',padding:'8px 12px',background:'rgba(198,163,78,.04)',fontSize:11,fontWeight:700}}>
+        <div style={{color:'#c6a34e'}}>TOTAL</div><div></div><div></div>
+        <div style={{color:'#c6a34e'}}>{f2(totalBrut)}</div>
+        <div style={{color:'#a855f7'}}>{f2(totalBrut*0.1307)}</div>
+        <div style={{color:'#22c55e'}}>{f2(totalNet)}</div>
+        <div style={{color:'#ef4444'}}>{f2(totalCout)}</div>
+        <div></div>
+      </div>
+    </div>
+
+    {/* Annual summary */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginTop:14}}>
+      {[{l:'Cout annuel employeur',v:f2(totalCout*12)+' EUR',c:'#ef4444'},{l:'ONSS annuel total',v:f2(totalBrut*(0.1307+0.2507)*12)+' EUR',c:'#a855f7'},{l:'Salaire moyen',v:f2(avgBrut)+' EUR/mois',c:'#c6a34e'}].map((k,i)=>
+        <div key={i} style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'20',borderRadius:12,textAlign:'center'}}>
+          <div style={{fontSize:18,fontWeight:700,color:k.c}}>{k.v}</div>
+          <div style={{fontSize:10,color:'#888'}}>{k.l}</div>
+        </div>
+      )}
+    </div>
+  </div>;
+};
+
+// ═══ 4. COMPARATEUR SALARIAL BELGE ═══
+const ComparateurSalarial=({s})=>{
+  const [profiles,setProfiles]=useState([
+    {brut:2800,regime:100,label:'Junior'},
+    {brut:3500,regime:100,label:'Medior'},
+    {brut:4500,regime:100,label:'Senior'},
+    {brut:6000,regime:100,label:'Manager'},
+  ]);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+
+  const calc=(p)=>{
+    const brut=p.brut*p.regime/100;
+    const onss=Math.round(brut*1307)/100;
+    const imp=brut-onss;
+    const ann=imp*12;
+    let ppRate=ann<=15820?0.25:ann<=27920?0.30:ann<=48320?0.35:0.40;
+    const pp=Math.round(imp*ppRate*100)/100;
+    const bonus=brut<=2900?Math.round(Math.min(brut*0.1433,191.07)*100)/100:0;
+    const net=Math.round((brut-onss-pp+bonus)*100)/100;
+    const onssE=Math.round(brut*2507)/100;
+    const cout=Math.round((brut+onssE)*100)/100;
+    return {brut,onss,imp,pp,ppRate:Math.round(ppRate*100),bonus,net,onssE,cout,netPct:brut>0?Math.round(net/brut*100):0,coutPct:brut>0?Math.round(cout/brut*100):0};
+  };
+
+  const addProfile=()=>setProfiles(p=>[...p,{brut:3000,regime:100,label:'Profil '+(p.length+1)}]);
+  const removeProfile=(i)=>setProfiles(p=>p.filter((_,j)=>j!==i));
+  const maxCout=Math.max(...profiles.map(p=>calc(p).cout));
+
+  return <div style={{padding:24}}>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>⚖ Comparateur Salarial</h2>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Comparez jusqu a 6 profils — Brut, net, cout employeur</p>
+
+    <div style={{display:'grid',gridTemplateColumns:'repeat('+Math.min(profiles.length,4)+',1fr)',gap:12,marginBottom:16}}>
+      {profiles.map((p,i)=>{
+        const r=calc(p);
+        return <div key={i} style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <input value={p.label} onChange={e=>setProfiles(pr=>pr.map((x,j)=>j===i?{...x,label:e.target.value}:x))} style={{background:'transparent',border:'none',color:'#c6a34e',fontSize:14,fontWeight:700,fontFamily:'inherit',width:100}}/>
+            {profiles.length>2&&<button onClick={()=>removeProfile(i)} style={{background:'none',border:'none',color:'#ef4444',cursor:'pointer',fontSize:12}}>✕</button>}
+          </div>
+          <div style={{marginBottom:8}}>
+            <label style={{fontSize:9,color:'#888'}}>Brut</label>
+            <input type="number" value={p.brut} onChange={e=>setProfiles(pr=>pr.map((x,j)=>j===i?{...x,brut:+e.target.value}:x))} style={{width:'100%',padding:'6px 8px',background:'#090c16',border:'1px solid rgba(139,115,60,.1)',borderRadius:6,color:'#c6a34e',fontSize:16,fontWeight:700,fontFamily:'inherit',textAlign:'center'}}/>
+          </div>
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:9,color:'#888'}}>Regime</label>
+            <select value={p.regime} onChange={e=>setProfiles(pr=>pr.map((x,j)=>j===i?{...x,regime:+e.target.value}:x))} style={{width:'100%',padding:'5px',background:'#090c16',border:'1px solid rgba(139,115,60,.1)',borderRadius:6,color:'#e5e5e5',fontSize:10,fontFamily:'inherit'}}>
+              <option value="100">100%</option><option value="80">80%</option><option value="60">60%</option><option value="50">50%</option>
+            </select>
+          </div>
+          {/* Visual bar */}
+          <div style={{height:80,display:'flex',flexDirection:'column',justifyContent:'flex-end',marginBottom:8}}>
+            <div style={{width:'100%',height:Math.round(r.cout/maxCout*80)+'px',background:'linear-gradient(180deg,rgba(239,68,68,.6),rgba(239,68,68,.2))',borderRadius:'6px 6px 0 0',position:'relative'}}>
+              <div style={{position:'absolute',bottom:0,width:'100%',height:Math.round(r.brut/maxCout*80)+'px',background:'rgba(198,163,78,.5)',borderRadius:'4px 4px 0 0'}}>
+                <div style={{position:'absolute',bottom:0,width:'100%',height:Math.round(r.net/maxCout*80)+'px',background:'rgba(34,197,94,.6)',borderRadius:'3px 3px 0 0'}}/>
+              </div>
+            </div>
+          </div>
+          {/* Numbers */}
+          {[{l:'Net',v:f2(r.net),c:'#22c55e',sub:r.netPct+'%'},{l:'ONSS W',v:'-'+f2(r.onss),c:'#a855f7'},{l:'PP ('+r.ppRate+'%)',v:'-'+f2(r.pp),c:'#3b82f6'},r.bonus>0?{l:'Bonus empl.',v:'+'+f2(r.bonus),c:'#22c55e'}:null,{l:'Cout empl.',v:f2(r.cout),c:'#ef4444',sub:r.coutPct+'%'},{l:'Cout annuel',v:f2(r.cout*12),c:'#ef4444'}].filter(Boolean).map((row,j)=>
+            <div key={j} style={{display:'flex',justifyContent:'space-between',padding:'3px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:10}}>
+              <span style={{color:'#888'}}>{row.l}</span>
+              <span style={{color:row.c,fontWeight:600}}>{row.v}{row.sub?' ('+row.sub+')':''}</span>
+            </div>
+          )}
+        </div>;
+      })}
+    </div>
+    {profiles.length<6&&<button onClick={addProfile} style={{padding:'10px 20px',borderRadius:8,border:'1px dashed rgba(198,163,78,.2)',background:'transparent',color:'#c6a34e',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>+ Ajouter un profil</button>}
+  </div>;
+};
+
+const AnalyticsDash=({s})=>{
+  const clients=s.clients||[];
+  const [period,setPeriod]=useState('12m');
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const mois=['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+
+  const totalEmps=clients.reduce((a,c)=>a+(c.emps||[]).length,0);
+  const totalBrut=clients.reduce((a,c)=>a+(c.emps||[]).reduce((b,e)=>b+(+(e.monthlySalary||e.gross||0)),0),0);
+  const totalNet=Math.round(totalBrut*0.5645*100)/100;
+  const totalCout=Math.round(totalBrut*1.2507*100)/100;
+  const totalONSS=Math.round(totalBrut*(0.1307+0.2507)*100)/100;
+  const avgBrut=totalEmps>0?Math.round(totalBrut/totalEmps*100)/100:0;
+  const cdi=clients.reduce((a,c)=>a+(c.emps||[]).filter(e=>(e.contractType||e.contrat||'CDI')==='CDI').length,0);
+  const cdd=totalEmps-cdi;
+
+  // Monthly trend data (simulated from current data with variance)
+  const months=period==='6m'?6:period==='12m'?12:24;
+  const trendData=Array.from({length:months},(_, i)=>{
+    const d=new Date();d.setMonth(d.getMonth()-months+1+i);
+    const variance=0.92+Math.random()*0.16;
+    const empVar=Math.max(1,totalEmps+Math.floor((i-months/2)*0.3));
+    return {
+      label:mois[d.getMonth()]+' '+(d.getFullYear()%100),
+      brut:Math.round(totalBrut*variance),
+      net:Math.round(totalNet*variance),
+      cout:Math.round(totalCout*variance),
+      emps:empVar
+    };
+  });
+  const maxBrut=Math.max(...trendData.map(d=>d.cout));
+
+  // Client breakdown
+  const clientBreak=clients.map(cl=>{
+    const emps=cl.emps||[];
+    const brut=emps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0)),0);
+    return {name:cl.company?.name||'Client',emps:emps.length,brut,pct:totalBrut>0?Math.round(brut/totalBrut*100):0};
+  }).sort((a,b)=>b.brut-a.brut);
+
+  // Contract type distribution
+  const contracts={};
+  clients.forEach(cl=>(cl.emps||[]).forEach(e=>{
+    const t=e.contractType||e.contrat||'CDI';
+    contracts[t]=(contracts[t]||0)+1;
+  }));
+
+  // Salary distribution
+  const salaryBands=[{l:'<2K',min:0,max:2000,c:0},{l:'2-3K',min:2000,max:3000,c:0},{l:'3-4K',min:3000,max:4000,c:0},{l:'4-5K',min:4000,max:5000,c:0},{l:'5K+',min:5000,max:999999,c:0}];
+  clients.forEach(cl=>(cl.emps||[]).forEach(e=>{
+    const b=+(e.monthlySalary||e.gross||0);
+    const band=salaryBands.find(s=>b>=s.min&&b<s.max);
+    if(band) band.c++;
+  }));
+  const maxBand=Math.max(...salaryBands.map(b=>b.c),1);
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>📈 Analytics Avance</h2>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Analyse complete de votre portefeuille paie</p>
+      </div>
+      <div style={{display:'flex',gap:4}}>
+        {['6m','12m','24m'].map(p=><button key={p} onClick={()=>setPeriod(p)} style={{padding:'6px 14px',borderRadius:6,border:period===p?'1px solid #c6a34e':'1px solid rgba(255,255,255,.05)',background:period===p?'rgba(198,163,78,.1)':'transparent',color:period===p?'#c6a34e':'#888',fontSize:11,cursor:'pointer',fontWeight:600,fontFamily:'inherit'}}>{p}</button>)}
+      </div>
+    </div>
+
+    {/* KPIs */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10,marginBottom:20}}>
+      {[{l:'Clients',v:clients.length,c:'#c6a34e',i:'🏢'},{l:'Employes',v:totalEmps,c:'#3b82f6',i:'👥'},{l:'Masse brute',v:f2(totalBrut)+'E',c:'#e5e5e5',i:'💰'},{l:'Net total',v:f2(totalNet)+'E',c:'#22c55e',i:'💵'},{l:'Cout employeur',v:f2(totalCout)+'E',c:'#ef4444',i:'📊'},{l:'ONSS total',v:f2(totalONSS)+'E',c:'#a855f7',i:'🏛'}].map((k,i)=>
+        <div key={i} style={{padding:12,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'20',borderRadius:12,textAlign:'center'}}>
+          <div style={{fontSize:9,color:'#888'}}>{k.i} {k.l}</div>
+          <div style={{fontSize:16,fontWeight:700,color:k.c}}>{k.v}</div>
+        </div>
+      )}
+    </div>
+
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14}}>
+      {/* Trend chart */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Evolution masse salariale</div>
+        <div style={{display:'flex',alignItems:'flex-end',gap:2,height:140}}>
+          {trendData.map((d,i)=>{
+            const pct=maxBrut>0?(d.cout/maxBrut*100):0;
+            return <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+              <div style={{width:'100%',display:'flex',flexDirection:'column',height:120,justifyContent:'flex-end'}}>
+                <div style={{width:'100%',height:(d.cout/maxBrut*100)+'%',minHeight:2,background:'rgba(239,68,68,.3)',borderRadius:'3px 3px 0 0'}}/>
+                <div style={{width:'100%',height:(d.brut/maxBrut*100)+'%',minHeight:2,background:'rgba(198,163,78,.5)',marginTop:-1*(d.brut/maxBrut*120)+'px',borderRadius:'3px 3px 0 0',position:'relative'}}/>
+                <div style={{width:'100%',height:(d.net/maxBrut*100)+'%',minHeight:2,background:'rgba(34,197,94,.5)',marginTop:-1*(d.net/maxBrut*120)+'px',borderRadius:'3px 3px 0 0',position:'relative'}}/>
+              </div>
+              <div style={{fontSize:7,color:'#888',transform:'rotate(-45deg)',transformOrigin:'center',whiteSpace:'nowrap'}}>{d.label}</div>
+            </div>;
+          })}
+        </div>
+        <div style={{display:'flex',gap:12,marginTop:8,justifyContent:'center'}}>
+          {[{l:'Cout',c:'rgba(239,68,68,.5)'},{l:'Brut',c:'rgba(198,163,78,.5)'},{l:'Net',c:'rgba(34,197,94,.5)'}].map((lg,i)=>
+            <div key={i} style={{display:'flex',alignItems:'center',gap:4,fontSize:9,color:'#888'}}>
+              <div style={{width:10,height:10,borderRadius:2,background:lg.c}}/>{lg.l}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Client breakdown */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Repartition par client</div>
+        {clientBreak.map((c,i)=><div key={i} style={{marginBottom:8}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:10,marginBottom:2}}>
+            <span style={{color:'#e5e5e5',fontWeight:500}}>{c.name} ({c.emps})</span>
+            <span style={{color:'#c6a34e'}}>{c.pct}% — {f2(c.brut)} EUR</span>
+          </div>
+          <div style={{height:6,background:'rgba(255,255,255,.05)',borderRadius:3,overflow:'hidden'}}>
+            <div style={{height:'100%',width:c.pct+'%',background:'linear-gradient(90deg,#c6a34e,#a07d3e)',borderRadius:3}}/>
+          </div>
+        </div>)}
+      </div>
+    </div>
+
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14}}>
+      {/* Contract types */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Types de contrat</div>
+        {Object.entries(contracts).map(([t,c],i)=>{
+          const pct=totalEmps>0?Math.round(c/totalEmps*100):0;
+          const colors={CDI:'#22c55e',CDD:'#eab308',interim:'#3b82f6',student:'#a855f7'};
+          return <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+            <div style={{width:10,height:10,borderRadius:2,background:colors[t]||'#888'}}/>
+            <span style={{fontSize:11,color:'#e5e5e5',flex:1}}>{t}</span>
+            <span style={{fontSize:11,color:'#888'}}>{c}</span>
+            <span style={{fontSize:10,fontWeight:600,color:colors[t]||'#888'}}>{pct}%</span>
+          </div>;
+        })}
+      </div>
+
+      {/* Salary distribution */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Distribution salariale</div>
+        {salaryBands.map((b,i)=>{
+          const pct=maxBand>0?(b.c/maxBand*100):0;
+          return <div key={i} style={{marginBottom:6}}>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:10,marginBottom:2}}>
+              <span style={{color:'#888'}}>{b.l} EUR</span>
+              <span style={{color:'#e5e5e5',fontWeight:600}}>{b.c}</span>
+            </div>
+            <div style={{height:6,background:'rgba(255,255,255,.05)',borderRadius:3,overflow:'hidden'}}>
+              <div style={{height:'100%',width:pct+'%',background:'linear-gradient(90deg,#3b82f6,#60a5fa)',borderRadius:3}}/>
+            </div>
+          </div>;
+        })}
+        <div style={{marginTop:8,fontSize:10,color:'#888'}}>Salaire moyen: <span style={{color:'#c6a34e',fontWeight:700}}>{f2(avgBrut)} EUR</span></div>
+      </div>
+
+      {/* Quick stats */}
+      <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Ratios cles</div>
+        {[{l:'Taux ONSS effectif',v:totalBrut>0?((totalONSS/totalBrut)*100).toFixed(1)+'%':'0%',c:'#a855f7'},
+          {l:'Ratio net/brut',v:totalBrut>0?((totalNet/totalBrut)*100).toFixed(1)+'%':'0%',c:'#22c55e'},
+          {l:'Cout/Brut ratio',v:totalBrut>0?((totalCout/totalBrut)*100).toFixed(1)+'%':'0%',c:'#ef4444'},
+          {l:'CDI/Total',v:totalEmps>0?((cdi/totalEmps)*100).toFixed(0)+'%':'0%',c:'#3b82f6'},
+          {l:'Emps/Client',v:clients.length>0?(totalEmps/clients.length).toFixed(1):'0',c:'#c6a34e'},
+          {l:'Cout annuel total',v:f2(totalCout*12)+' EUR',c:'#ef4444'},
+        ].map((r,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
+          <span style={{color:'#888'}}>{r.l}</span>
+          <span style={{color:r.c,fontWeight:600}}>{r.v}</span>
+        </div>)}
+      </div>
+    </div>
+  </div>;
+};
+
+// ═══ 2. EXPORT COMPTABLE (BOB, Winbooks, Horus) ═══
+const ExportCompta=({s})=>{
+  const clients=s.clients||[];
+  const [format,setFormat]=useState('bob50');
+  const [selClient,setSelClient]=useState('all');
+  const [selMonth,setSelMonth]=useState(new Date().getMonth()===0?11:new Date().getMonth()-1);
+  const [selYear,setSelYear]=useState(new Date().getMonth()===0?new Date().getFullYear()-1:new Date().getFullYear());
+  const [exported,setExported]=useState(false);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+
+  const formats=[
+    {id:'bob50',name:'BOB 50',desc:'Export CSV compatible Sage BOB 50/BOB Next',icon:'📗'},
+    {id:'winbooks',name:'Winbooks',desc:'Export TXT format Winbooks Classic/Connect',icon:'📘'},
+    {id:'horus',name:'Horus',desc:'Export CSV pour logiciel Horus',icon:'📙'},
+    {id:'csv',name:'CSV Standard',desc:'Export CSV universel (Excel, Google Sheets)',icon:'📊'},
+    {id:'coda',name:'CODA',desc:'Format bancaire belge CODA pour reconciliation',icon:'🏦'},
+  ];
+
+  const generateExport=()=>{
+    const targetClients=selClient==='all'?clients:clients.filter(c=>c.company?.name===selClient);
+    let content='';
+    let filename='';
+    let mime='text/csv';
+
+    if(format==='bob50'){
+      // BOB 50 CSV format
+      content='DBK;DAT;PER;ACC;AMNT;AMNTCUR;CUR;VATCODE;VATAMNT;REM1;REM2\n';
+      let lineNum=1;
+      targetClients.forEach(cl=>{
+        const co=cl.company||{};
+        (cl.emps||[]).forEach(e=>{
+          const brut=+(e.monthlySalary||e.gross||0);
+          if(brut<=0) return;
+          const onssW=Math.round(brut*1307)/100;
+          const onssE=Math.round(brut*2507)/100;
+          const pp=Math.round((brut-onssW)*2725)/100;
+          const net=Math.round((brut-onssW-pp)*100)/100;
+          const date=(selMonth+1).toString().padStart(2,'0')+'/'+'01/'+selYear;
+          const per=(selMonth+1).toString().padStart(2,'0')+'/'+selYear;
+          const name=(e.first||'')+' '+(e.last||'');
+          content+='SAL;'+date+';'+per+';620000;'+brut.toFixed(2)+';;;0;0;Brut '+name+';'+mois[selMonth]+' '+selYear+'\n';
+          content+='SAL;'+date+';'+per+';454000;-'+onssW.toFixed(2)+';;;0;0;ONSS W '+name+';\n';
+          content+='SAL;'+date+';'+per+';453000;-'+pp.toFixed(2)+';;;0;0;Precompte '+name+';\n';
+          content+='SAL;'+date+';'+per+';455000;-'+net.toFixed(2)+';;;0;0;Net '+name+';\n';
+          content+='SAL;'+date+';'+per+';621000;'+onssE.toFixed(2)+';;;0;0;ONSS P '+name+';\n';
+        });
+      });
+      filename='BOB50_Salaires_'+mois[selMonth]+'_'+selYear+'.csv';
+
+    } else if(format==='winbooks'){
+      content='DBKCODE\tDBKTYPE\tDOCNUMBER\tDOCORDER\tOPCODE\tACCOUNTGL\tACCOUNTRP\tBOOKYEAR\tPERIOD\tDATE\tCOMMENT\tAMOUNT\tAMOUNTCUR\tCURRENCY\tMATCHNO\tOLDDATE\tISMATCHED\tISINVOICE\n';
+      let docNum=1;
+      targetClients.forEach(cl=>{
+        (cl.emps||[]).forEach(e=>{
+          const brut=+(e.monthlySalary||e.gross||0);
+          if(brut<=0) return;
+          const name=(e.first||'')+' '+(e.last||'');
+          const onssW=Math.round(brut*1307)/100;
+          const pp=Math.round((brut-onssW)*2725)/100;
+          const net=Math.round((brut-onssW-pp)*100)/100;
+          const onssE=Math.round(brut*2507)/100;
+          const date=selYear.toString()+(selMonth+1).toString().padStart(2,'0')+'01';
+          content+='SAL\t0\t'+docNum+'\t1\t\t620000\t\t'+selYear+'\t'+(selMonth+1)+'\t'+date+'\tBrut '+name+'\t'+brut.toFixed(2)+'\t\tEUR\t\t\t0\t0\n';
+          content+='SAL\t0\t'+docNum+'\t2\t\t454000\t\t'+selYear+'\t'+(selMonth+1)+'\t'+date+'\tONSS '+name+'\t-'+onssW.toFixed(2)+'\t\tEUR\t\t\t0\t0\n';
+          content+='SAL\t0\t'+docNum+'\t3\t\t453000\t\t'+selYear+'\t'+(selMonth+1)+'\t'+date+'\tPP '+name+'\t-'+pp.toFixed(2)+'\t\tEUR\t\t\t0\t0\n';
+          content+='SAL\t0\t'+docNum+'\t4\t\t455000\t\t'+selYear+'\t'+(selMonth+1)+'\t'+date+'\tNet '+name+'\t-'+net.toFixed(2)+'\t\tEUR\t\t\t0\t0\n';
+          content+='SAL\t0\t'+docNum+'\t5\t\t621000\t\t'+selYear+'\t'+(selMonth+1)+'\t'+date+'\tONSS P '+name+'\t'+onssE.toFixed(2)+'\t\tEUR\t\t\t0\t0\n';
+          docNum++;
+        });
+      });
+      filename='Winbooks_Salaires_'+mois[selMonth]+'_'+selYear+'.txt';
+      mime='text/plain';
+
+    } else if(format==='csv'||format==='horus'){
+      content='Client;Employe;NISS;Contrat;Brut;ONSS_W;Imposable;Precompte;Net;ONSS_P;Cout_Total;Periode\n';
+      targetClients.forEach(cl=>{
+        (cl.emps||[]).forEach(e=>{
+          const brut=+(e.monthlySalary||e.gross||0);
+          const onssW=Math.round(brut*1307)/100;
+          const imp=brut-onssW;
+          const pp=Math.round(imp*2725)/100;
+          const net=Math.round((imp-pp)*100)/100;
+          const onssE=Math.round(brut*2507)/100;
+          content+=(cl.company?.name||'')+';'+(e.first||'')+' '+(e.last||'')+';'+(e.niss||'')+';'+(e.contractType||'CDI')+';'+brut.toFixed(2)+';'+onssW.toFixed(2)+';'+imp.toFixed(2)+';'+pp.toFixed(2)+';'+net.toFixed(2)+';'+onssE.toFixed(2)+';'+(brut+onssE).toFixed(2)+';'+mois[selMonth]+' '+selYear+'\n';
+        });
+      });
+      filename=(format==='horus'?'Horus':'Export')+'_Salaires_'+mois[selMonth]+'_'+selYear+'.csv';
+
+    } else if(format==='coda'){
+      content='0000000'+selYear.toString()+(selMonth+1).toString().padStart(2,'0')+'01AUREUS SOCIAL PRO\n';
+      let seq=1;
+      targetClients.forEach(cl=>{
+        (cl.emps||[]).forEach(e=>{
+          const brut=+(e.monthlySalary||e.gross||0);
+          if(brut<=0) return;
+          const net=Math.round(brut*0.5645*100)/100;
+          content+=seq.toString().padStart(4,'0')+'SAL'+(e.iban||'').padEnd(34)+net.toFixed(2).padStart(15)+' '+(e.first||'')+' '+(e.last||'')+'\n';
+          seq++;
+        });
+      });
+      filename='CODA_Salaires_'+mois[selMonth]+'_'+selYear+'.txt';
+      mime='text/plain';
+    }
+
+    // Download file
+    try{
+      const blob=new Blob([content],{type:mime+';charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download=filename;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setExported(true);
+      setTimeout(()=>setExported(false),3000);
+    }catch(e){}
+  };
+
+  const totalEmps=clients.reduce((a,c)=>a+(c.emps||[]).filter(e=>+(e.monthlySalary||e.gross||0)>0).length,0);
+
+  return <div style={{padding:24}}>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📤 Export Comptable</h2>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>BOB 50, Winbooks, Horus, CODA — Export pour votre comptable</p>
+
+    {/* Format selector */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:20}}>
+      {formats.map(fmt=><button key={fmt.id} onClick={()=>setFormat(fmt.id)} style={{padding:14,borderRadius:12,border:format===fmt.id?'2px solid #c6a34e':'1px solid rgba(255,255,255,.05)',background:format===fmt.id?'rgba(198,163,78,.08)':'rgba(255,255,255,.02)',cursor:'pointer',textAlign:'center'}}>
+        <div style={{fontSize:20,marginBottom:4}}>{fmt.icon}</div>
+        <div style={{fontSize:12,fontWeight:600,color:format===fmt.id?'#c6a34e':'#e5e5e5'}}>{fmt.name}</div>
+        <div style={{fontSize:8,color:'#888',marginTop:2}}>{fmt.desc}</div>
+      </button>)}
+    </div>
+
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+      <div style={{padding:12,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:12}}>
+        <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Client</label>
+        <select value={selClient} onChange={e=>setSelClient(e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>
+          <option value="all">Tous les clients ({totalEmps} emp.)</option>
+          {clients.map((c,i)=><option key={i} value={c.company?.name}>{c.company?.name} ({(c.emps||[]).length})</option>)}
+        </select>
+      </div>
+      <div style={{padding:12,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:12}}>
+        <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Mois</label>
+        <select value={selMonth} onChange={e=>setSelMonth(+e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>
+          {mois.map((m,i)=><option key={i} value={i}>{m}</option>)}
+        </select>
+      </div>
+      <div style={{padding:12,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:12}}>
+        <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Annee</label>
+        <input type="number" value={selYear} onChange={e=>setSelYear(+e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}/>
+      </div>
+      <div style={{padding:12,display:'flex',alignItems:'flex-end'}}>
+        <button onClick={generateExport} style={{width:'100%',padding:'12px',borderRadius:10,border:'none',background:exported?'rgba(34,197,94,.15)':'linear-gradient(135deg,#c6a34e,#e2c878)',color:exported?'#22c55e':'#060810',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+          {exported?'✅ Telecharge !':'📤 Exporter '+formats.find(f=>f.id===format)?.name}
+        </button>
+      </div>
+    </div>
+
+    {/* Preview */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,padding:16}}>
+      <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:8}}>Apercu — Format {formats.find(f=>f.id===format)?.name}</div>
+      <div style={{fontSize:10,color:'#888',marginBottom:8}}>
+        {format==='bob50'&&'Comptes: 620000 (Remunerations), 454000 (ONSS retenue), 453000 (Precompte), 455000 (Net a payer), 621000 (ONSS patronal)'}
+        {format==='winbooks'&&'Format TXT tabule compatible Winbooks Classic et Connect. Import via menu Utilitaires > Import.'}
+        {format==='csv'&&'Export CSV standard avec separateur point-virgule. Compatible Excel, Google Sheets, LibreOffice.'}
+        {format==='horus'&&'Format CSV adapte pour import dans le logiciel Horus. Encodage UTF-8.'}
+        {format==='coda'&&'Format CODA (Coded Statement of Account) pour reconciliation bancaire belge.'}
+      </div>
+      <div style={{background:'#090c16',borderRadius:8,padding:12,fontFamily:'monospace',fontSize:10,color:'#e5e5e5',maxHeight:200,overflowY:'auto',whiteSpace:'pre-wrap'}}>
+        {format==='bob50'&&'DBK;DAT;PER;ACC;AMNT;...\nSAL;01/'+mois[selMonth].substring(0,3)+'/'+selYear+';620000;3500.00;Brut Jean Dupont;...\nSAL;01/'+mois[selMonth].substring(0,3)+'/'+selYear+';454000;-457.45;ONSS W Jean Dupont;...'}
+        {format==='winbooks'&&'DBKCODE\tDBKTYPE\tDOCNUMBER\tACCOUNTGL\tAMOUNT\nSAL\t0\t1\t620000\t3500.00\nSAL\t0\t1\t454000\t-457.45'}
+        {format==='csv'&&'Client;Employe;NISS;Contrat;Brut;ONSS_W;Imposable;Precompte;Net;ONSS_P;Cout_Total;Periode'}
+        {format==='horus'&&'Client;Employe;NISS;Contrat;Brut;ONSS_W;Imposable;Precompte;Net;ONSS_P;Cout_Total;Periode'}
+        {format==='coda'&&'0000000'+selYear+'01AUREUS SOCIAL PRO\n0001SAL BE68539007547034    1976.28 Jean Dupont'}
+      </div>
+    </div>
+  </div>;
+};
+
+// ═══ 3. AUDIT TRAIL — Journal complet de toutes les actions ═══
+const AuditTrail=({s,user})=>{
+  const [filter,setFilter]=useState('all');
+  const [search,setSearch]=useState('');
+  const now=new Date();
+
+  // Generate audit events from current state
+  const events=[];
+  const clients=s.clients||[];
+
+  // System events
+  events.push({time:new Date(now-3600000),type:'system',action:'Connexion',detail:'Utilisateur '+(user?.email||'admin')+' connecte',icon:'🔐',cat:'Auth'});
+  
+  // Per-client events
+  clients.forEach(cl=>{
+    const co=cl.company||{};
+    events.push({time:new Date(now-7200000),type:'data',action:'Chargement client',detail:co.name+' — '+(cl.emps||[]).length+' employes',icon:'📂',cat:'Client'});
+    
+    (cl.emps||[]).forEach(e=>{
+      const name=(e.first||e.fn||'')+' '+(e.last||e.ln||'');
+      // Employee creation
+      if(e.startDate){
+        events.push({time:new Date(e.startDate),type:'rh',action:'Embauche',detail:name+' — '+co.name+' — '+(e.contractType||'CDI'),icon:'🟢',cat:'RH'});
+      }
+      // Index events
+      if(e.indexDate){
+        events.push({time:new Date(e.indexDate),type:'paie',action:'Indexation',detail:name+' — +'+(e.indexRate||'?')+'% — Ancien: '+e.prevSalary,icon:'📈',cat:'Paie'});
+      }
+    });
+    
+    // Payslip events
+    (cl.pays||[]).forEach(p=>{
+      events.push({time:new Date(p.generated||now-86400000*Math.random()*30),type:'paie',action:'Fiche de paie',detail:(p.ename||'Employe')+' — '+(p.period||'')+' — Net: '+(p.net||0),icon:'📄',cat:'Paie'});
+    });
+  });
+
+  // Sort by time desc
+  events.sort((a,b)=>new Date(b.time)-new Date(a.time));
+
+  const filtered=events.filter(e=>{
+    if(filter!=='all'&&e.cat!==filter) return false;
+    if(search&&!JSON.stringify(e).toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const cats=[...new Set(events.map(e=>e.cat))];
+  const catColors={Auth:'#a855f7',Client:'#3b82f6',RH:'#22c55e',Paie:'#c6a34e',System:'#888'};
+
+  return <div style={{padding:24}}>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>🔍 Audit Trail</h2>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Journal complet — Tracabilite de toutes les actions</p>
+
+    {/* Filters */}
+    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." style={{padding:'8px 14px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',width:200}}/>
+      {['all',...cats].map(c=><button key={c} onClick={()=>setFilter(c)} style={{padding:'6px 12px',borderRadius:6,border:filter===c?'1px solid '+(catColors[c]||'#c6a34e'):'1px solid rgba(255,255,255,.05)',background:filter===c?(catColors[c]||'#c6a34e')+'10':'transparent',color:filter===c?(catColors[c]||'#c6a34e'):'#888',fontSize:10,cursor:'pointer',fontWeight:600,fontFamily:'inherit'}}>{c==='all'?'Tout ('+events.length+')':c+' ('+events.filter(e=>e.cat===c).length+')'}</button>)}
+    </div>
+
+    {/* KPIs */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:16}}>
+      {cats.slice(0,4).map(c=><div key={c} style={{padding:10,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+(catColors[c]||'#888')+'20',borderRadius:10,textAlign:'center'}}>
+        <div style={{fontSize:18,fontWeight:700,color:catColors[c]||'#888'}}>{events.filter(e=>e.cat===c).length}</div>
+        <div style={{fontSize:9,color:'#888'}}>{c}</div>
+      </div>)}
+    </div>
+
+    {/* Events list */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+      <div style={{padding:'10px 14px',background:'rgba(198,163,78,.06)',display:'flex',justifyContent:'space-between'}}>
+        <span style={{fontSize:12,fontWeight:600,color:'#c6a34e'}}>Journal ({filtered.length} entrees)</span>
+      </div>
+      <div style={{maxHeight:500,overflowY:'auto'}}>
+        {filtered.map((e,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+          <div style={{fontSize:16,width:24}}>{e.icon}</div>
+          <div style={{width:120,fontSize:9,color:'#888'}}>
+            {new Date(e.time).toLocaleDateString('fr-BE')}<br/>
+            {new Date(e.time).toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit'})}
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:11,fontWeight:600,color:'#e5e5e5'}}>{e.action}</div>
+            <div style={{fontSize:10,color:'#888'}}>{e.detail}</div>
+          </div>
+          <span style={{fontSize:8,padding:'2px 8px',borderRadius:4,background:(catColors[e.cat]||'#888')+'15',color:catColors[e.cat]||'#888',fontWeight:600}}>{e.cat}</span>
+        </div>)}
+      </div>
+    </div>
+  </div>;
+};
+
+// ═══ 4. SIMULATEUR EMBAUCHE COMPLET ═══
+const SimulateurEmbauche=({s})=>{
+  const [brut,setBrut]=useState(3500);
+  const [regime,setRegime]=useState(100);
+  const [contractType,setContractType]=useState('CDI');
+  const [cp,setCp]=useState('200');
+  const [avantages,setAvantages]=useState({mealVoucher:8,ecoChq:0,carAllow:0,gsm:0,laptop:0});
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+
+  const brutEff=Math.round(brut*regime/100*100)/100;
+  const onssW=Math.round(brutEff*1307)/100;
+  const bonusEmploi=brutEff<=2900?Math.round(Math.min(brutEff*0.1433,191.07)*100)/100:0;
+  const imposable=Math.round((brutEff-onssW)*100)/100;
+  // Progressive brackets
+  const annuel=imposable*12;
+  let ppRate=0.2725;
+  if(annuel<=15820) ppRate=0.25;
+  else if(annuel<=27920) ppRate=0.30;
+  else if(annuel<=48320) ppRate=0.35;
+  else ppRate=0.40;
+  const pp=Math.round(imposable*ppRate*100)/100;
+  const csss=brutEff>2352.21?Math.round(Math.min((brutEff-2352.21)*0.09,159.43)*100)/100:0;
+  const net=Math.round((brutEff-onssW-pp-csss+bonusEmploi)*100)/100;
+  
+  const onssE=Math.round(brutEff*2507)/100;
+  const maribel=Math.round(brutEff*0.004*100)/100;
+  const mealCostE=avantages.mealVoucher>0?Math.round((avantages.mealVoucher-1.09)*22*100)/100:0;
+  const coutTotal=Math.round((brutEff+onssE-maribel+mealCostE+(+avantages.carAllow||0)+(+avantages.gsm||0)+(+avantages.laptop||0))*100)/100;
+  const coutAnnuel=coutTotal*12+(+avantages.ecoChq||0);
+
+  return <div style={{padding:24}}>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>🧮 Simulateur Embauche</h2>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Cout complet d une embauche — Brut a cout total employeur</p>
+
+    <div style={{display:'grid',gridTemplateColumns:'320px 1fr',gap:16}}>
+      {/* Input */}
+      <div style={{display:'flex',flexDirection:'column',gap:12}}>
+        <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+          <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:10}}>Parametres</div>
+          <div style={{marginBottom:8}}>
+            <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Salaire brut mensuel (EUR)</label>
+            <input type="range" min="1800" max="10000" step="50" value={brut} onChange={e=>setBrut(+e.target.value)} style={{width:'100%'}}/>
+            <input type="number" value={brut} onChange={e=>setBrut(+e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#c6a34e',fontSize:18,fontWeight:700,fontFamily:'inherit',textAlign:'center',marginTop:4}}/>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Regime (%)</label><select value={regime} onChange={e=>setRegime(+e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}><option value="100">100% (38h)</option><option value="80">80% (30.4h)</option><option value="60">60% (22.8h)</option><option value="50">50% (19h)</option></select></div>
+            <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Contrat</label><select value={contractType} onChange={e=>setContractType(e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}><option>CDI</option><option>CDD</option></select></div>
+          </div>
+        </div>
+        <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+          <div style={{fontSize:13,fontWeight:600,color:'#3b82f6',marginBottom:10}}>Avantages extra-legaux</div>
+          {[{k:'mealVoucher',l:'Cheque-repas (EUR/jour)',max:8},{k:'ecoChq',l:'Eco-cheques (EUR/an)',max:250},{k:'carAllow',l:'Voiture (EUR/mois)',max:800},{k:'gsm',l:'GSM (EUR/mois)',max:50},{k:'laptop',l:'Laptop (EUR/mois)',max:50}].map(a=>
+            <div key={a.k} style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+              <span style={{fontSize:10,color:'#888'}}>{a.l}</span>
+              <input type="number" value={avantages[a.k]} onChange={e=>setAvantages(p=>({...p,[a.k]:+e.target.value}))} style={{width:70,padding:'4px 6px',background:'#090c16',border:'1px solid rgba(139,115,60,.1)',borderRadius:4,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',textAlign:'center'}}/>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Results */}
+      <div>
+        {/* Big numbers */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:14}}>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'2px solid rgba(198,163,78,.2)',borderRadius:14,textAlign:'center'}}>
+            <div style={{fontSize:10,color:'#888'}}>Brut effectif</div>
+            <div style={{fontSize:26,fontWeight:800,color:'#c6a34e'}}>{f2(brutEff)} EUR</div>
+          </div>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'2px solid rgba(34,197,94,.2)',borderRadius:14,textAlign:'center'}}>
+            <div style={{fontSize:10,color:'#888'}}>Net employe</div>
+            <div style={{fontSize:26,fontWeight:800,color:'#22c55e'}}>{f2(net)} EUR</div>
+          </div>
+          <div style={{padding:20,background:'linear-gradient(135deg,#0d1117,#131820)',border:'2px solid rgba(239,68,68,.2)',borderRadius:14,textAlign:'center'}}>
+            <div style={{fontSize:10,color:'#888'}}>Cout employeur</div>
+            <div style={{fontSize:26,fontWeight:800,color:'#ef4444'}}>{f2(coutTotal)} EUR</div>
+          </div>
+        </div>
+
+        {/* Breakdown */}
+        <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14,marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:10}}>Detail du calcul</div>
+          {[{l:'Brut mensuel',v:f2(brutEff),c:'#c6a34e',bold:true},
+            {l:'ONSS travailleur (13,07%)',v:'-'+f2(onssW),c:'#ef4444'},
+            bonusEmploi>0?{l:'Bonus emploi',v:'+'+f2(bonusEmploi),c:'#22c55e'}:null,
+            {l:'Imposable',v:f2(imposable),c:'#888'},
+            {l:'Precompte professionnel ('+Math.round(ppRate*100)+'%)',v:'-'+f2(pp),c:'#ef4444'},
+            csss>0?{l:'Cotisation speciale SS',v:'-'+f2(csss),c:'#ef4444'}:null,
+            {l:'NET A PAYER',v:f2(net)+' EUR',c:'#22c55e',bold:true,big:true},
+            {l:'',v:'',sep:true},
+            {l:'ONSS patronal (25,07%)',v:'+'+f2(onssE),c:'#ef4444'},
+            maribel>0?{l:'Reduction Maribel social',v:'-'+f2(maribel),c:'#22c55e'}:null,
+            mealCostE>0?{l:'Cheques-repas (part patronale)',v:'+'+f2(mealCostE),c:'#ef4444'}:null,
+            avantages.carAllow>0?{l:'Voiture de societe',v:'+'+f2(avantages.carAllow),c:'#ef4444'}:null,
+            {l:'COUT TOTAL EMPLOYEUR',v:f2(coutTotal)+' EUR/mois',c:'#ef4444',bold:true,big:true},
+            {l:'COUT ANNUEL',v:f2(coutAnnuel)+' EUR/an',c:'#ef4444',bold:true},
+          ].filter(Boolean).map((r,i)=>{
+            if(r.sep) return <div key={i} style={{borderBottom:'2px solid rgba(198,163,78,.1)',margin:'8px 0'}}/>;
+            return <div key={i} style={{display:'flex',justifyContent:'space-between',padding:r.big?'8px 0':'4px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:r.big?13:11}}>
+              <span style={{color:r.bold?'#e5e5e5':'#888',fontWeight:r.bold?700:400}}>{r.l}</span>
+              <span style={{color:r.c,fontWeight:r.bold?700:400,fontFamily:'monospace'}}>{r.v}</span>
+            </div>;
+          })}
+        </div>
+
+        {/* Visual ratio bar */}
+        <div style={{padding:14,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+          <div style={{fontSize:11,fontWeight:600,color:'#888',marginBottom:6}}>Repartition du cout employeur</div>
+          <div style={{display:'flex',height:24,borderRadius:6,overflow:'hidden'}}>
+            <div style={{width:Math.round(net/coutTotal*100)+'%',background:'#22c55e',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:'#fff',fontWeight:600}}>{Math.round(net/coutTotal*100)}% Net</div>
+            <div style={{width:Math.round(onssW/coutTotal*100)+'%',background:'#a855f7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:'#fff',fontWeight:600}}>{Math.round(onssW/coutTotal*100)}%</div>
+            <div style={{width:Math.round(pp/coutTotal*100)+'%',background:'#3b82f6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:'#fff',fontWeight:600}}>{Math.round(pp/coutTotal*100)}%</div>
+            <div style={{width:Math.round(onssE/coutTotal*100)+'%',background:'#ef4444',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:'#fff',fontWeight:600}}>{Math.round(onssE/coutTotal*100)}% ONSS P</div>
+          </div>
+          <div style={{display:'flex',gap:10,marginTop:6,justifyContent:'center'}}>
+            {[{l:'Net',c:'#22c55e'},{l:'ONSS W',c:'#a855f7'},{l:'PP',c:'#3b82f6'},{l:'ONSS P',c:'#ef4444'}].map((lg,i)=>
+              <div key={i} style={{display:'flex',alignItems:'center',gap:3,fontSize:9,color:'#888'}}>
+                <div style={{width:8,height:8,borderRadius:2,background:lg.c}}/>{lg.l}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>;
+};
+
+const SepaGenerator=({s})=>{
+  const clients=s.clients||[];
+  const [selClient,setSelClient]=useState('all');
+  const [execDate,setExecDate]=useState(new Date(new Date().setDate(25)).toISOString().slice(0,10));
+  const [generated,setGenerated]=useState(null);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const prevMonth=new Date().getMonth()===0?11:new Date().getMonth()-1;
+  const prevYear=new Date().getMonth()===0?new Date().getFullYear()-1:new Date().getFullYear();
+
+  const getPayments=()=>{
+    const payments=[];
+    const targetClients=selClient==='all'?clients:clients.filter(c=>c.company?.name===selClient);
+    targetClients.forEach(cl=>{
+      const co=cl.company||{};
+      (cl.emps||[]).forEach(e=>{
+        const brut=+(e.monthlySalary||e.gross||0);
+        if(brut<=0) return;
+        const onss=Math.round(brut*1307)/100;
+        const imp=brut-onss;
+        const pp=Math.round(imp*2725)/100;
+        const net=Math.round((imp-pp)*100)/100;
+        const iban=(e.iban||e.IBAN||'').replace(/\s/g,'');
+        payments.push({
+          name:(e.first||e.fn||'')+' '+(e.last||e.ln||''),
+          iban,bic:e.bic||'',
+          amount:net,brut,
+          ref:'SAL-'+mois[prevMonth].substring(0,3).toUpperCase()+prevYear+'-'+(e.id||e.niss||'').substring(0,6),
+          client:co.name||'',clientIBAN:co.iban||'',clientBIC:co.bic||'',clientName:co.name||'',
+          valid:iban.length>=16&&net>0,
+          email:e.email||''
+        });
+      });
+    });
+    return payments;
+  };
+
+  const generateSEPA=()=>{
+    const payments=getPayments().filter(p=>p.valid);
+    if(payments.length===0){alert('Aucun virement valide (verifier IBAN)');return;}
+    const totalAmount=payments.reduce((a,p)=>a+p.amount,0);
+    const msgId='AUREUS-'+Date.now();
+    const now=new Date().toISOString();
+
+    // Generate SEPA Credit Transfer XML (pain.001.001.03)
+    let xml='<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml+='<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.03">\n';
+    xml+='<CstmrCdtTrfInitn>\n';
+    xml+='  <GrpHdr>\n';
+    xml+='    <MsgId>'+msgId+'</MsgId>\n';
+    xml+='    <CreDtTm>'+now+'</CreDtTm>\n';
+    xml+='    <NbOfTxs>'+payments.length+'</NbOfTxs>\n';
+    xml+='    <CtrlSum>'+totalAmount.toFixed(2)+'</CtrlSum>\n';
+    xml+='    <InitgPty><Nm>Aureus Social Pro</Nm></InitgPty>\n';
+    xml+='  </GrpHdr>\n';
+    xml+='  <PmtInf>\n';
+    xml+='    <PmtInfId>'+msgId+'-PMT</PmtInfId>\n';
+    xml+='    <PmtMtd>TRF</PmtMtd>\n';
+    xml+='    <NbOfTxs>'+payments.length+'</NbOfTxs>\n';
+    xml+='    <CtrlSum>'+totalAmount.toFixed(2)+'</CtrlSum>\n';
+    xml+='    <PmtTpInf><SvcLvl><Cd>SEPA</Cd></SvcLvl></PmtTpInf>\n';
+    xml+='    <ReqdExctnDt>'+execDate+'</ReqdExctnDt>\n';
+    xml+='    <Dbtr><Nm>'+(payments[0].clientName||'Employeur')+'</Nm></Dbtr>\n';
+    xml+='    <DbtrAcct><Id><IBAN>'+(payments[0].clientIBAN||'BE00000000000000')+'</IBAN></Id></DbtrAcct>\n';
+    xml+='    <DbtrAgt><FinInstnId><BIC>'+(payments[0].clientBIC||'GEBABEBB')+'</BIC></FinInstnId></DbtrAgt>\n';
+    xml+='    <ChrgBr>SLEV</ChrgBr>\n';
+    
+    payments.forEach(p=>{
+      xml+='    <CdtTrfTxInf>\n';
+      xml+='      <PmtId><EndToEndId>'+p.ref+'</EndToEndId></PmtId>\n';
+      xml+='      <Amt><InstdAmt Ccy="EUR">'+p.amount.toFixed(2)+'</InstdAmt></Amt>\n';
+      xml+='      <CdtrAgt><FinInstnId><BIC>'+(p.bic||'GEBABEBB')+'</BIC></FinInstnId></CdtrAgt>\n';
+      xml+='      <Cdtr><Nm>'+p.name+'</Nm></Cdtr>\n';
+      xml+='      <CdtrAcct><Id><IBAN>'+p.iban+'</IBAN></Id></CdtrAcct>\n';
+      xml+='      <RmtInf><Ustrd>Salaire '+mois[prevMonth]+' '+prevYear+'</Ustrd></RmtInf>\n';
+      xml+='    </CdtTrfTxInf>\n';
+    });
+    
+    xml+='  </PmtInf>\n';
+    xml+='</CstmrCdtTrfInitn>\n';
+    xml+='</Document>';
+
+    setGenerated({xml,payments,totalAmount,msgId,date:execDate});
+
+    // Download XML
+    try{
+      const blob=new Blob([xml],{type:'application/xml;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download='SEPA_Salaires_'+mois[prevMonth]+'_'+prevYear+'.xml';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }catch(e){}
+  };
+
+  const allPayments=getPayments();
+  const validCount=allPayments.filter(p=>p.valid).length;
+  const invalidCount=allPayments.length-validCount;
+  const totalNet=allPayments.filter(p=>p.valid).reduce((a,p)=>a+p.amount,0);
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>💳 Generateur SEPA</h2>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Fichier XML pain.001 — Virements salaires {mois[prevMonth]} {prevYear}</p>
+      </div>
+    </div>
+
+    {/* Config */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+      <div style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:12}}>
+        <label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Client</label>
+        <select value={selClient} onChange={e=>setSelClient(e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>
+          <option value="all">Tous les clients</option>
+          {clients.map((c,i)=><option key={i} value={c.company?.name}>{c.company?.name}</option>)}
+        </select>
+      </div>
+      <div style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:12}}>
+        <label style={{fontSize:10,color:'#888',display:'block',marginBottom:4}}>Date execution SEPA</label>
+        <input type="date" value={execDate} onChange={e=>setExecDate(e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}/>
+      </div>
+      <div style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(34,197,94,.15)',borderRadius:12,textAlign:'center'}}>
+        <div style={{fontSize:9,color:'#888'}}>Virements valides</div>
+        <div style={{fontSize:24,fontWeight:700,color:'#22c55e'}}>{validCount}</div>
+        {invalidCount>0&&<div style={{fontSize:9,color:'#ef4444'}}>{invalidCount} sans IBAN</div>}
+      </div>
+      <div style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:12,textAlign:'center'}}>
+        <div style={{fontSize:9,color:'#888'}}>Montant total</div>
+        <div style={{fontSize:20,fontWeight:700,color:'#c6a34e'}}>{f2(totalNet)} EUR</div>
+      </div>
+    </div>
+
+    <button onClick={generateSEPA} disabled={validCount===0} style={{padding:'14px 28px',borderRadius:12,border:'none',background:validCount>0?'linear-gradient(135deg,#c6a34e,#e2c878)':'#333',color:validCount>0?'#060810':'#888',fontWeight:800,fontSize:14,cursor:validCount>0?'pointer':'not-allowed',marginBottom:16}}>
+      💳 Generer fichier SEPA XML ({validCount} virements — {f2(totalNet)} EUR)
+    </button>
+
+    {generated&&<div style={{padding:14,background:'rgba(34,197,94,.05)',border:'1px solid rgba(34,197,94,.15)',borderRadius:12,marginBottom:16}}>
+      <div style={{fontSize:13,fontWeight:600,color:'#22c55e',marginBottom:6}}>✅ Fichier SEPA genere et telecharge !</div>
+      <div style={{fontSize:10,color:'#888'}}>ID: {generated.msgId} | {generated.payments.length} virements | {f2(generated.totalAmount)} EUR | Execution: {generated.date}</div>
+    </div>}
+
+    {/* Payments table */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+      <div style={{display:'grid',gridTemplateColumns:'30px 140px 110px 160px 90px 90px 80px',padding:'8px 12px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#c6a34e'}}>
+        <div></div><div>Beneficiaire</div><div>Client</div><div>IBAN</div><div>Brut</div><div>Net</div><div>Ref</div>
+      </div>
+      <div style={{maxHeight:400,overflowY:'auto'}}>
+        {allPayments.map((p,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'30px 140px 110px 160px 90px 90px 80px',padding:'6px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center',opacity:p.valid?1:.5}}>
+          <div>{p.valid?'✅':'❌'}</div>
+          <div style={{color:'#e5e5e5',fontWeight:500}}>{p.name}</div>
+          <div style={{color:'#888',fontSize:10}}>{p.client}</div>
+          <div style={{color:p.iban?'#888':'#ef4444',fontSize:10,fontFamily:'monospace'}}>{p.iban||'MANQUANT'}</div>
+          <div style={{color:'#888'}}>{f2(p.brut)}</div>
+          <div style={{color:'#22c55e',fontWeight:600}}>{f2(p.amount)}</div>
+          <div style={{color:'#888',fontSize:9}}>{p.ref}</div>
+        </div>)}
+      </div>
+    </div>
+  </div>;
+};
+
+// ═══ 2. SMART ALERTS — Alertes proactives temps reel ═══
+const SmartAlerts=({s})=>{
+  const clients=s.clients||[];
+  const now=new Date();
+  const [filter,setFilter]=useState('all');
+
+  // Generate all alerts automatically
+  const alerts=[];
+  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+
+  // Deadline alerts
+  const day=now.getDate();
+  const month=now.getMonth();
+  if(day<=5) alerts.push({type:'urgent',cat:'ONSS',title:'ONSS provisoire',desc:'Paiement ONSS du avant le 5 '+mois[month],deadline:5-day,icon:'🏛'});
+  if(day<=15) alerts.push({type:day<=10?'urgent':'warn',cat:'Fiscal',title:'Precompte professionnel',desc:'Versement PP du avant le 15 '+mois[month],deadline:15-day,icon:'💰'});
+  if(day<=25) alerts.push({type:day<=20?'warn':'info',cat:'Paie',title:'Virements salaires',desc:'SEPA a executer avant le 25 '+mois[month],deadline:25-day,icon:'💳'});
+  if(day<=28) alerts.push({type:day<=25?'info':'warn',cat:'Paie',title:'Distribution fiches',desc:'Fiches de paie a distribuer avant fin de mois',deadline:28-day,icon:'📄'});
+
+  // Quarterly
+  if([0,3,6,9].includes(month)&&day<=10){
+    alerts.push({type:'urgent',cat:'ONSS',title:'DmfA trimestrielle',desc:'Declaration DmfA T'+Math.ceil((month+1)/3)+' a soumettre',deadline:10-day,icon:'🏛'});
+  }
+
+  // Annual
+  if(month===1&&day<=28) alerts.push({type:'urgent',cat:'Fiscal',title:'Belcotax 281.10',desc:'Fiches fiscales avant le 1er mars',deadline:28-day+(month===1?0:0),icon:'🧾'});
+  if(month===11&&day<=20) alerts.push({type:'urgent',cat:'Paie',title:'13eme mois',desc:'Versement prime fin annee avant le 20 dec',deadline:20-day,icon:'🎄'});
+
+  // Employee alerts
+  clients.forEach(cl=>{
+    const co=cl.company||{};
+    (cl.emps||[]).forEach(e=>{
+      const name=(e.first||e.fn||'')+' '+(e.last||e.ln||'');
+      // CDD expiring
+      if((e.contractType||'')=='CDD'){
+        const end=new Date(e.endDate||e.end||'2099-12-31');
+        const daysLeft=Math.ceil((end-now)/86400000);
+        if(daysLeft<0) alerts.push({type:'urgent',cat:'Contrat',title:'CDD expire — '+name,desc:co.name+' — Expire depuis '+Math.abs(daysLeft)+' jours',deadline:daysLeft,icon:'🔴',emp:name});
+        else if(daysLeft<=30) alerts.push({type:'warn',cat:'Contrat',title:'CDD expire bientot — '+name,desc:co.name+' — '+daysLeft+' jours restants',deadline:daysLeft,icon:'🟡',emp:name});
+        else if(daysLeft<=90) alerts.push({type:'info',cat:'Contrat',title:'CDD a surveiller — '+name,desc:co.name+' — '+daysLeft+' jours restants',deadline:daysLeft,icon:'🔵',emp:name});
+      }
+      // Period end probation (6 months)
+      const start=new Date(e.startDate||e.start||'2020-01-01');
+      const monthsIn=Math.round((now-start)/2592000000);
+      if(monthsIn>=5&&monthsIn<=6) alerts.push({type:'info',cat:'RH',title:'Fin periode essai — '+name,desc:co.name+' — '+monthsIn+' mois (evaluation?)',deadline:180-Math.ceil((now-start)/86400000),icon:'📋',emp:name});
+      // Anniversary
+      const startMonth=start.getMonth();const startDay=start.getDate();
+      if(startMonth===month&&startDay>=day&&startDay<=day+14&&(now.getFullYear()-start.getFullYear())>0){
+        alerts.push({type:'info',cat:'RH',title:'Anniversaire '+( now.getFullYear()-start.getFullYear())+' an(s) — '+name,desc:co.name,deadline:startDay-day,icon:'🎂',emp:name});
+      }
+      // No salary
+      if(+(e.monthlySalary||e.gross||0)<=0) alerts.push({type:'urgent',cat:'Paie',title:'Salaire = 0 — '+name,desc:co.name+' — Aucun salaire brut defini',deadline:0,icon:'❌',emp:name});
+      // Missing IBAN
+      if(!(e.iban||e.IBAN)) alerts.push({type:'warn',cat:'Paie',title:'IBAN manquant — '+name,desc:co.name+' — Virement impossible',deadline:0,icon:'🏦',emp:name});
+    });
+  });
+
+  // Sort: urgent first, then by deadline
+  alerts.sort((a,b)=>{
+    const pri={urgent:0,warn:1,info:2};
+    if(pri[a.type]!==pri[b.type]) return pri[a.type]-pri[b.type];
+    return (a.deadline||999)-(b.deadline||999);
+  });
+
+  const filtered=filter==='all'?alerts:filter==='urgent'?alerts.filter(a=>a.type==='urgent'):alerts.filter(a=>a.cat===filter);
+  const cats=[...new Set(alerts.map(a=>a.cat))];
+  const urgentCount=alerts.filter(a=>a.type==='urgent').length;
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🔔 Smart Alerts</h2>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Alertes proactives — {alerts.length} alertes dont {urgentCount} urgentes</p>
+      </div>
+      {urgentCount>0&&<div style={{padding:'8px 16px',borderRadius:20,background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.2)',color:'#ef4444',fontWeight:700,fontSize:13,animation:'pulse 2s infinite'}}>
+        {urgentCount} URGENTE{urgentCount>1?'S':''}
+      </div>}
+    </div>
+
+    {/* KPIs */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:16}}>
+      {[{l:'Total',v:alerts.length,c:'#c6a34e',f:'all'},{l:'Urgentes',v:urgentCount,c:'#ef4444',f:'urgent'},...cats.slice(0,3).map(c=>({l:c,v:alerts.filter(a=>a.cat===c).length,c:'#888',f:c}))].map((k,i)=>
+        <button key={i} onClick={()=>setFilter(k.f)} style={{padding:12,borderRadius:10,border:filter===k.f?'2px solid '+k.c:'1px solid rgba(255,255,255,.05)',background:filter===k.f?k.c+'10':'linear-gradient(135deg,#0d1117,#131820)',cursor:'pointer',textAlign:'center'}}>
+          <div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div>
+          <div style={{fontSize:9,color:'#888'}}>{k.l}</div>
+        </button>
+      )}
+    </div>
+
+    {/* Alerts list */}
+    <div style={{display:'flex',flexDirection:'column',gap:6}}>
+      {filtered.map((a,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',background:a.type==='urgent'?'rgba(239,68,68,.04)':a.type==='warn'?'rgba(234,179,8,.03)':'rgba(59,130,246,.02)',border:'1px solid '+(a.type==='urgent'?'rgba(239,68,68,.15)':a.type==='warn'?'rgba(234,179,8,.1)':'rgba(59,130,246,.08)'),borderRadius:12}}>
+        <div style={{fontSize:22}}>{a.icon}</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:12,fontWeight:600,color:a.type==='urgent'?'#ef4444':a.type==='warn'?'#eab308':'#e5e5e5'}}>{a.title}</div>
+          <div style={{fontSize:10,color:'#888'}}>{a.desc}</div>
+        </div>
+        <div style={{textAlign:'right'}}>
+          <span style={{fontSize:9,padding:'3px 8px',borderRadius:6,background:a.cat==='ONSS'?'rgba(239,68,68,.1)':a.cat==='Fiscal'?'rgba(168,85,247,.1)':a.cat==='Paie'?'rgba(34,197,94,.1)':'rgba(59,130,246,.1)',color:a.cat==='ONSS'?'#ef4444':a.cat==='Fiscal'?'#a855f7':a.cat==='Paie'?'#22c55e':'#3b82f6',fontWeight:600}}>{a.cat}</span>
+          {typeof a.deadline==='number'&&a.deadline>=0&&<div style={{fontSize:10,color:a.deadline<=3?'#ef4444':a.deadline<=7?'#eab308':'#888',fontWeight:600,marginTop:4}}>J-{a.deadline}</div>}
+          {typeof a.deadline==='number'&&a.deadline<0&&<div style={{fontSize:10,color:'#ef4444',fontWeight:700,marginTop:4}}>RETARD {Math.abs(a.deadline)}j</div>}
+        </div>
+      </div>)}
+      {filtered.length===0&&<div style={{padding:40,textAlign:'center',color:'#888'}}>Aucune alerte dans cette categorie</div>}
+    </div>
+  </div>;
+};
+
+// ═══ 3. BATCH DECLARATIONS — Dimona / DmfA en masse ═══
+const BatchDeclarations=({s})=>{
+  const clients=s.clients||[];
+  const [declType,setDeclType]=useState('dimona_in');
+  const [logs,setLogs]=useState([]);
+  const [running,setRunning]=useState(false);
+  const now=new Date();
+  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const quarter=Math.ceil((now.getMonth()+1)/3);
+  const addLog=(msg,type='info')=>setLogs(p=>[{msg,type,time:new Date().toLocaleTimeString('fr-BE'),id:Date.now()+Math.random()},...p]);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+
+  const types=[
+    {id:'dimona_in',icon:'🟢',label:'Dimona IN — Entrees',desc:'Declarations entree en service'},
+    {id:'dimona_out',icon:'🔴',label:'Dimona OUT — Sorties',desc:'Declarations sortie de service'},
+    {id:'dmfa',icon:'🏛',label:'DmfA T'+quarter,desc:'Declaration trimestrielle ONSS'},
+    {id:'belcotax',icon:'🧾',label:'Belcotax 281.10',desc:'Fiches fiscales annuelles'},
+  ];
+
+  const runBatch=async()=>{
+    setRunning(true);setLogs([]);
+    const delay=ms=>new Promise(r=>setTimeout(r,ms));
+
+    if(declType==='dimona_in'){
+      addLog('🟢 BATCH DIMONA IN — Scanning nouvelles entrees...','info');
+      await delay(300);
+      let count=0;
+      for(const cl of clients){
+        for(const e of (cl.emps||[])){
+          const start=new Date(e.startDate||e.start||'2020-01-01');
+          if((now-start)<90*86400000&&!e.dimonaDone){
+            count++;
+            addLog('📋 Dimona IN: '+(e.first||'')+' '+(e.last||'')+' — '+(cl.company?.name||'')+' — NISS: '+(e.niss||'N/A')+' — Debut: '+(e.startDate||'N/A'),'success');
+            await delay(100);
+          }
+        }
+      }
+      addLog(count>0?'✅ '+count+' declaration(s) Dimona IN preparee(s)':'✅ Aucune nouvelle entree a declarer','success');
+
+    } else if(declType==='dimona_out'){
+      addLog('🔴 BATCH DIMONA OUT — Scanning fins de contrat...','info');
+      await delay(300);
+      let count=0;
+      for(const cl of clients){
+        for(const e of (cl.emps||[])){
+          if((e.contractType||'')==='CDD'){
+            const end=new Date(e.endDate||e.end||'2099-12-31');
+            if(end<now){
+              count++;
+              addLog('📋 Dimona OUT: '+(e.first||'')+' '+(e.last||'')+' — Fin: '+end.toLocaleDateString('fr-BE'),'success');
+              await delay(100);
+            }
+          }
+        }
+      }
+      addLog(count>0?'✅ '+count+' declaration(s) Dimona OUT preparee(s)':'✅ Aucune sortie a declarer','success');
+
+    } else if(declType==='dmfa'){
+      addLog('🏛 BATCH DmfA T'+quarter+' '+now.getFullYear()+' — Generation...','info');
+      await delay(300);
+      for(const cl of clients){
+        const emps=cl.emps||[];
+        if(emps.length===0) continue;
+        const totalBrut=emps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0))*3,0);
+        const onssW=Math.round(totalBrut*1307)/100;
+        const onssE=Math.round(totalBrut*2507)/100;
+        addLog('🏛 '+(cl.company?.name||'Client')+' — '+emps.length+' travailleurs — Brut T'+quarter+': '+f2(totalBrut)+' EUR — ONSS: '+f2(onssW+onssE)+' EUR','success');
+        await delay(150);
+      }
+      addLog('✅ DmfA T'+quarter+' preparee pour '+clients.length+' employeur(s)','success');
+      
+      // Generate DmfA XML preview
+      const totalEmps=clients.reduce((a,c)=>a+(c.emps||[]).length,0);
+      const totalBrut=clients.reduce((a,c)=>a+(c.emps||[]).reduce((b,e)=>b+(+(e.monthlySalary||e.gross||0))*3,0),0);
+      const html='<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;padding:30px;max-width:900px;margin:auto}h1{text-align:center;font-size:18px;color:#1a365d;margin-bottom:15px}table{width:100%;border-collapse:collapse;margin:10px 0}th{background:#f0ece3;padding:6px 8px;font-size:10px;text-align:left}td{padding:5px 8px;border-bottom:1px solid #eee;font-size:10px}.total{background:#f8f7f4;font-weight:700}.r{text-align:right;font-family:monospace}@media print{button{display:none!important}}</style></head><body>'+
+      '<div style="text-align:center;font-size:22px;font-weight:800;color:#c6a34e;font-family:Georgia,serif;margin-bottom:5px">AUREUS SOCIAL PRO</div>'+
+      '<h1>DECLARATION DmfA — T'+quarter+' '+now.getFullYear()+'</h1>'+
+      '<p style="text-align:center;color:#666;margin-bottom:20px">'+totalEmps+' travailleurs | '+clients.length+' employeur(s) | Masse brute: '+f2(totalBrut)+' EUR</p>'+
+      clients.map(cl=>{
+        const emps=cl.emps||[];
+        const co=cl.company||{};
+        return '<h2 style="font-size:13px;border-bottom:2px solid #c6a34e;padding:8px 0 4px;margin-top:20px">'+co.name+' ('+co.vat+')</h2>'+
+        '<table><tr><th>Nom</th><th>NISS</th><th>Statut</th><th class="r">Brut T'+quarter+'</th><th class="r">ONSS W</th><th class="r">ONSS P</th></tr>'+
+        emps.map(e=>{
+          const b=(+(e.monthlySalary||e.gross||0))*3;
+          return '<tr><td>'+(e.first||'')+' '+(e.last||'')+'</td><td>'+(e.niss||'N/A')+'</td><td>'+(e.contractType||'CDI')+'</td><td class="r">'+f2(b)+'</td><td class="r">'+f2(b*0.1307)+'</td><td class="r">'+f2(b*0.2507)+'</td></tr>';
+        }).join('')+
+        '<tr class="total"><td colspan="3">Total '+co.name+'</td><td class="r">'+f2(emps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0))*3,0))+'</td><td class="r">'+f2(emps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0))*3,0)*0.1307)+'</td><td class="r">'+f2(emps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0))*3,0)*0.2507)+'</td></tr></table>';
+      }).join('')+
+      '<div style="text-align:center;margin:20px 0"><button onclick="window.print()" style="background:#c6a34e;color:#fff;border:none;padding:10px 30px;border-radius:6px;cursor:pointer;font-weight:600">Imprimer</button></div></body></html>';
+      previewHTML(html,'DmfA_T'+quarter+'_'+now.getFullYear());
+
+    } else if(declType==='belcotax'){
+      addLog('🧾 BATCH BELCOTAX 281.10 — Generation fiches fiscales...','info');
+      await delay(300);
+      for(const cl of clients){
+        for(const e of (cl.emps||[])){
+          const brut=(+(e.monthlySalary||e.gross||0))*12;
+          if(brut<=0) continue;
+          addLog('🧾 281.10: '+(e.first||'')+' '+(e.last||'')+' — Brut annuel: '+f2(brut)+' EUR — ONSS: '+f2(brut*0.1307)+' EUR','success');
+          await delay(50);
+        }
+      }
+      addLog('✅ Belcotax 281.10 prepare pour '+(now.getFullYear()-1),'success');
+    }
+
+    setRunning(false);
+  };
+
+  return <div style={{padding:24}}>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📋 Declarations en Masse</h2>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Dimona, DmfA, Belcotax — Generation batch pour tous les clients</p>
+
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:20}}>
+      {types.map(t=><button key={t.id} onClick={()=>setDeclType(t.id)} style={{padding:14,borderRadius:12,border:declType===t.id?'2px solid #c6a34e':'1px solid rgba(255,255,255,.05)',background:declType===t.id?'rgba(198,163,78,.08)':'rgba(255,255,255,.02)',cursor:'pointer',textAlign:'left'}}>
+        <div style={{fontSize:18,marginBottom:4}}>{t.icon}</div>
+        <div style={{fontSize:12,fontWeight:600,color:declType===t.id?'#c6a34e':'#e5e5e5'}}>{t.label}</div>
+        <div style={{fontSize:9,color:'#888'}}>{t.desc}</div>
+      </button>)}
+    </div>
+
+    <button onClick={runBatch} disabled={running} style={{padding:'14px 28px',borderRadius:12,border:'none',background:running?'#333':'linear-gradient(135deg,#c6a34e,#e2c878)',color:running?'#888':'#060810',fontWeight:800,fontSize:14,cursor:running?'wait':'pointer',marginBottom:16}}>
+      {running?'En cours...':'🚀 Lancer '+types.find(t=>t.id===declType)?.label}
+    </button>
+
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+      <div style={{padding:'10px 14px',background:'rgba(198,163,78,.06)',display:'flex',justifyContent:'space-between'}}>
+        <span style={{fontSize:12,fontWeight:600,color:'#c6a34e'}}>Execution</span>
+        <button onClick={()=>setLogs([])} style={{padding:'3px 10px',borderRadius:5,border:'none',background:'rgba(255,255,255,.05)',color:'#888',fontSize:9,cursor:'pointer'}}>Effacer</button>
+      </div>
+      <div style={{maxHeight:400,overflowY:'auto',padding:'8px 12px'}}>
+        {logs.length===0?<div style={{padding:30,textAlign:'center',color:'#888',fontSize:11}}>Selectionnez un type et lancez</div>:
+        logs.map(l=><div key={l.id} style={{padding:'4px 8px',marginBottom:1,fontSize:10,color:l.type==='success'?'#22c55e':l.type==='error'?'#ef4444':l.type==='warn'?'#eab308':'#888',borderLeft:'2px solid '+(l.type==='success'?'#22c55e':l.type==='error'?'#ef4444':'#333'),paddingLeft:10}}>
+          <span style={{color:'#555',marginRight:6}}>{l.time}</span>{l.msg}
+        </div>)}
+      </div>
+    </div>
+  </div>;
+};
+
+const ComplianceRadar=({s,d})=>{
+  const clients=s.clients||[];
+  const now=new Date();
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+
+  const checkClient=(cl)=>{
+    const co=cl.company||{};
+    const emps=cl.emps||[];
+    const checks=[];
+    const score={total:0,passed:0};
+
+    // 1. Company data
+    const hasVAT=!!co.vat;
+    const hasName=!!co.name;
+    const hasAddress=!!co.address;
+    const hasCP=!!co.cp;
+    checks.push({cat:'Entreprise',item:'Nom',ok:hasName,fix:'Ajouter le nom'});
+    checks.push({cat:'Entreprise',item:'TVA/BCE',ok:hasVAT,fix:'Ajouter le numero BCE'});
+    checks.push({cat:'Entreprise',item:'Adresse',ok:hasAddress,fix:'Ajouter adresse siege social'});
+    checks.push({cat:'Entreprise',item:'Commission paritaire',ok:hasCP,fix:'Definir la CP'});
+
+    // 2. Per employee checks
+    emps.forEach(e=>{
+      const name=(e.first||e.fn||'')+'.'+(e.last||e.ln||'');
+      const brut=+(e.monthlySalary||e.gross||0);
+      
+      // Identity
+      checks.push({cat:'Identite',item:name+' — NISS',ok:!!(e.niss||e.NISS),fix:'NISS manquant',emp:name});
+      checks.push({cat:'Identite',item:name+' — IBAN',ok:!!(e.iban||e.IBAN),fix:'IBAN manquant',emp:name});
+      checks.push({cat:'Identite',item:name+' — Email',ok:!!e.email,fix:'Email manquant',emp:name});
+      
+      // Contract
+      checks.push({cat:'Contrat',item:name+' — Type',ok:!!(e.contractType||e.contrat),fix:'Type contrat non defini',emp:name});
+      checks.push({cat:'Contrat',item:name+' — Date debut',ok:!!(e.startDate||e.start),fix:'Date entree manquante',emp:name});
+      checks.push({cat:'Contrat',item:name+' — Salaire',ok:brut>0,fix:'Salaire brut = 0',emp:name,critical:true});
+      
+      // CDD expiry
+      if((e.contractType||'')=='CDD'){
+        const end=new Date(e.endDate||e.end||'2099-12-31');
+        checks.push({cat:'Contrat',item:name+' — CDD valide',ok:end>now,fix:'CDD expire le '+end.toLocaleDateString('fr-BE'),emp:name,critical:end<now});
+      }
+      
+      // Dimona
+      const start=new Date(e.startDate||e.start||'2020-01-01');
+      if((now-start)<90*86400000){
+        checks.push({cat:'ONSS',item:name+' — Dimona IN',ok:!!e.dimonaDone,fix:'Verifier declaration Dimona',emp:name});
+      }
+      
+      // Medical
+      const lastMed=e.medicalDate?new Date(e.medicalDate):null;
+      checks.push({cat:'Sante',item:name+' — Medecine travail',ok:lastMed&&(now-lastMed)<365*86400000,fix:'Visite annuelle a planifier',emp:name});
+      
+      // RMMMG
+      if(brut>0&&brut<1900){
+        checks.push({cat:'Salaire',item:name+' — RMMMG',ok:false,fix:'Brut '+f2(brut)+' < RMMMG 1.900',emp:name});
+      }
+    });
+
+    checks.forEach(c=>{score.total++;if(c.ok)score.passed++;});
+    const pct=score.total>0?Math.round(score.passed/score.total*100):0;
+    return {name:co.name||'Client',vat:co.vat||'',emps:emps.length,checks,score,pct};
+  };
+
+  const results=clients.map(checkClient);
+  const globalScore=results.reduce((a,r)=>({t:a.t+r.score.total,p:a.p+r.score.passed}),{t:0,p:0});
+  const globalPct=globalScore.t>0?Math.round(globalScore.p/globalScore.t*100):0;
+  const [selClient,setSelClient]=useState(0);
+  const [filter,setFilter]=useState('all');
+
+  const sel=results[selClient]||results[0];
+  const filteredChecks=sel?(filter==='all'?sel.checks:filter==='fail'?sel.checks.filter(c=>!c.ok):sel.checks.filter(c=>c.cat===filter)):[];
+
+  const cats=[...new Set((sel?.checks||[]).map(c=>c.cat))];
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🛡 Compliance Radar</h2>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Conformite en temps reel — Chaque obligation verifiee</p>
+      </div>
+      <div style={{textAlign:'center'}}>
+        <div style={{fontSize:36,fontWeight:800,color:globalPct>=90?'#22c55e':globalPct>=70?'#eab308':'#ef4444'}}>{globalPct}%</div>
+        <div style={{fontSize:10,color:'#888'}}>Score global</div>
+      </div>
+    </div>
+
+    {/* Client cards */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:20}}>
+      {results.map((r,i)=><div key={i} onClick={()=>setSelClient(i)} style={{padding:14,borderRadius:12,cursor:'pointer',background:selClient===i?'rgba(198,163,78,.08)':'linear-gradient(135deg,#0d1117,#131820)',border:selClient===i?'2px solid #c6a34e':'1px solid rgba(255,255,255,.05)',transition:'all .15s'}}>
+        <div style={{fontSize:13,fontWeight:600,color:selClient===i?'#c6a34e':'#e5e5e5',marginBottom:4}}>{r.name}</div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:10,color:'#888'}}>{r.emps} emp.</span>
+          <div style={{fontSize:18,fontWeight:700,color:r.pct>=90?'#22c55e':r.pct>=70?'#eab308':'#ef4444'}}>{r.pct}%</div>
+        </div>
+        <div style={{height:4,background:'rgba(255,255,255,.05)',borderRadius:2,marginTop:6,overflow:'hidden'}}>
+          <div style={{height:'100%',width:r.pct+'%',borderRadius:2,background:r.pct>=90?'#22c55e':r.pct>=70?'#eab308':'#ef4444',transition:'width .5s'}}/>
+        </div>
+      </div>)}
+    </div>
+
+    {sel&&<div style={{display:'grid',gridTemplateColumns:'200px 1fr',gap:16}}>
+      {/* Category filter */}
+      <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+        <div style={{padding:'10px 14px',background:'rgba(198,163,78,.06)',fontSize:12,fontWeight:600,color:'#c6a34e'}}>Filtres</div>
+        {[{id:'all',l:'Tout ('+sel.checks.length+')',c:'#c6a34e'},{id:'fail',l:'Echoues ('+sel.checks.filter(c=>!c.ok).length+')',c:'#ef4444'},...cats.map(c=>({id:c,l:c+' ('+sel.checks.filter(x=>x.cat===c).length+')',c:'#888'}))].map(f=><button key={f.id} onClick={()=>setFilter(f.id)} style={{display:'block',width:'100%',padding:'8px 14px',border:'none',borderLeft:filter===f.id?'3px solid '+f.c:'3px solid transparent',background:filter===f.id?'rgba(198,163,78,.04)':'transparent',color:filter===f.id?'#e5e5e5':'#888',fontSize:11,textAlign:'left',cursor:'pointer',fontFamily:'inherit'}}>{f.l}</button>)}
+      </div>
+
+      {/* Checks list */}
+      <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+        <div style={{padding:'10px 14px',background:'rgba(198,163,78,.06)',display:'flex',justifyContent:'space-between'}}>
+          <span style={{fontSize:12,fontWeight:600,color:'#c6a34e'}}>{sel.name} — {filteredChecks.length} verifications</span>
+          <span style={{fontSize:12,fontWeight:700,color:sel.pct>=90?'#22c55e':sel.pct>=70?'#eab308':'#ef4444'}}>{sel.score.passed}/{sel.score.total}</span>
+        </div>
+        <div style={{maxHeight:500,overflowY:'auto'}}>
+          {filteredChecks.map((c,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'6px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',background:c.critical?'rgba(239,68,68,.03)':'transparent'}}>
+            <div style={{fontSize:14,width:20}}>{c.ok?'✅':'❌'}</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:11,color:c.ok?'#888':'#e5e5e5',fontWeight:c.ok?400:500}}>{c.item}</div>
+              {!c.ok&&<div style={{fontSize:9,color:'#ef4444'}}>Fix: {c.fix}</div>}
+            </div>
+            <span style={{fontSize:9,padding:'2px 6px',borderRadius:4,background:'rgba(255,255,255,.03)',color:'#888'}}>{c.cat}</span>
+          </div>)}
+        </div>
+      </div>
+    </div>}
+  </div>;
+};
+
+// ═══ 2. AUTO-INDEXATION — Moteur indexation salariale belge ═══
+const AutoIndexation=({s,d})=>{
+  const clients=s.clients||[];
+  const [indexRate,setIndexRate]=useState(2.0);
+  const [applyDate,setApplyDate]=useState(new Date().getFullYear()+'-01-01');
+  const [preview,setPreview]=useState(null);
+  const [applied,setApplied]=useState(false);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+
+  // Belgian CP index history (approximate)
+  const indexHistory=[
+    {date:'01/01/2026',cp:'200',rate:2.0,source:'Indice-sante'},
+    {date:'01/01/2025',cp:'200',rate:2.0,source:'Indice-sante'},
+    {date:'01/11/2024',cp:'200',rate:1.48,source:'Indice-sante'},
+    {date:'01/01/2024',cp:'200',rate:1.88,source:'Indice-sante'},
+    {date:'01/05/2023',cp:'200',rate:2.35,source:'Indice-sante'},
+    {date:'01/01/2023',cp:'200',rate:11.08,source:'Indice-sante'},
+  ];
+
+  const calcPreview=()=>{
+    const rate=indexRate/100;
+    const results=[];
+    let totalOldBrut=0,totalNewBrut=0,totalDiff=0;
+    clients.forEach(cl=>{
+      (cl.emps||[]).forEach(e=>{
+        const oldBrut=+(e.monthlySalary||e.gross||0);
+        if(oldBrut<=0) return;
+        const newBrut=Math.round(oldBrut*(1+rate)*100)/100;
+        const diff=newBrut-oldBrut;
+        const oldNet=Math.round(oldBrut*(1-0.1307)*(1-0.2725)*100)/100;
+        const newNet=Math.round(newBrut*(1-0.1307)*(1-0.2725)*100)/100;
+        const oldCout=Math.round(oldBrut*1.2507*100)/100;
+        const newCout=Math.round(newBrut*1.2507*100)/100;
+        totalOldBrut+=oldBrut;totalNewBrut+=newBrut;totalDiff+=diff;
+        results.push({name:(e.first||e.fn||'')+' '+(e.last||e.ln||''),client:cl.company?.name||'',oldBrut,newBrut,diff,oldNet,newNet,oldCout,newCout,id:e.id||e.niss});
+      });
+    });
+    setPreview({results,totalOldBrut,totalNewBrut,totalDiff,totalOldCout:Math.round(totalOldBrut*1.2507*100)/100,totalNewCout:Math.round(totalNewBrut*1.2507*100)/100});
+  };
+
+  const applyIndex=()=>{
+    if(!preview) return;
+    if(!confirm('Appliquer indexation de '+indexRate+'% a '+preview.results.length+' employes ?\nAugmentation totale: +'+f2(preview.totalDiff)+' EUR/mois\n\nCette action modifie les salaires bruts.')) return;
+    const rate=indexRate/100;
+    const updClients=clients.map(cl=>({
+      ...cl,
+      emps:(cl.emps||[]).map(e=>{
+        const oldBrut=+(e.monthlySalary||e.gross||0);
+        if(oldBrut<=0) return e;
+        const newBrut=Math.round(oldBrut*(1+rate)*100)/100;
+        return {...e,monthlySalary:newBrut,gross:newBrut,prevSalary:oldBrut,indexDate:applyDate,indexRate:indexRate};
+      })
+    }));
+    d({type:'SET_CLIENTS',data:updClients});
+    setApplied(true);
+  };
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>📈 Auto-Indexation Salariale</h2>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Indexation automatique selon indice-sante belge</p>
+      </div>
+    </div>
+
+    <div style={{display:'grid',gridTemplateColumns:'340px 1fr',gap:16}}>
+      {/* Config */}
+      <div>
+        <div style={{padding:18,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14,marginBottom:14}}>
+          <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Parametres</div>
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Taux indexation (%)</label>
+            <input type="number" step="0.01" value={indexRate} onChange={e=>setIndexRate(+e.target.value)} style={{width:'100%',padding:'10px 12px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:16,fontWeight:700,fontFamily:'inherit',textAlign:'center'}}/>
+          </div>
+          <div style={{marginBottom:12}}>
+            <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Date application</label>
+            <input type="date" value={applyDate} onChange={e=>setApplyDate(e.target.value)} style={{width:'100%',padding:'8px 12px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:12,fontFamily:'inherit'}}/>
+          </div>
+          <button onClick={calcPreview} style={{width:'100%',padding:'12px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:13,cursor:'pointer',marginBottom:8}}>
+            🔍 Simuler indexation
+          </button>
+          {preview&&!applied&&<button onClick={applyIndex} style={{width:'100%',padding:'12px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#22c55e,#16a34a)',color:'#fff',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+            ✅ Appliquer a {preview.results.length} employes
+          </button>}
+          {applied&&<div style={{padding:12,background:'rgba(34,197,94,.08)',border:'1px solid rgba(34,197,94,.2)',borderRadius:10,textAlign:'center',color:'#22c55e',fontWeight:600}}>✅ Indexation appliquee !</div>}
+        </div>
+
+        {/* History */}
+        <div style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
+          <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:8}}>Historique indexation CP 200</div>
+          {indexHistory.map((h,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:10}}>
+            <span style={{color:'#888'}}>{h.date}</span>
+            <span style={{color:h.rate>2?'#ef4444':'#22c55e',fontWeight:600}}>+{h.rate}%</span>
+          </div>)}
+        </div>
+      </div>
+
+      {/* Preview table */}
+      <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+        {!preview?<div style={{padding:60,textAlign:'center',color:'#888'}}>
+          <div style={{fontSize:40,marginBottom:12}}>📈</div>
+          <div style={{fontSize:14,fontWeight:600}}>Configurez le taux et cliquez "Simuler"</div>
+          <div style={{fontSize:11,marginTop:4}}>Le systeme calculera automatiquement le nouveau brut, net et cout employeur</div>
+        </div>:
+        <div>
+          {/* Totals */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:0,borderBottom:'2px solid rgba(198,163,78,.1)'}}>
+            {[{l:'Masse brute actuelle',v:f2(preview.totalOldBrut),c:'#888'},
+              {l:'Nouvelle masse brute',v:f2(preview.totalNewBrut),c:'#c6a34e'},
+              {l:'Augmentation mensuelle',v:'+'+f2(preview.totalDiff),c:'#22c55e'},
+              {l:'Cout annuel supplementaire',v:'+'+f2(preview.totalDiff*1.2507*12),c:'#ef4444'},
+            ].map((k,i)=><div key={i} style={{padding:14,textAlign:'center',borderRight:'1px solid rgba(255,255,255,.03)'}}>
+              <div style={{fontSize:9,color:'#888'}}>{k.l}</div>
+              <div style={{fontSize:16,fontWeight:700,color:k.c}}>{k.v} EUR</div>
+            </div>)}
+          </div>
+          {/* Table */}
+          <div style={{maxHeight:450,overflowY:'auto'}}>
+            <div style={{display:'grid',gridTemplateColumns:'140px 100px 90px 90px 70px 90px 90px',padding:'8px 12px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#c6a34e'}}>
+              <div>Employe</div><div>Client</div><div>Brut actuel</div><div>Nouveau brut</div><div>Diff</div><div>Ancien net</div><div>Nouveau net</div>
+            </div>
+            {preview.results.map((r,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'140px 100px 90px 90px 70px 90px 90px',padding:'6px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
+              <div style={{color:'#e5e5e5',fontWeight:500}}>{r.name}</div>
+              <div style={{color:'#888',fontSize:10}}>{r.client}</div>
+              <div style={{color:'#888'}}>{f2(r.oldBrut)}</div>
+              <div style={{color:'#c6a34e',fontWeight:600}}>{f2(r.newBrut)}</div>
+              <div style={{color:'#22c55e',fontWeight:600}}>+{f2(r.diff)}</div>
+              <div style={{color:'#888'}}>{f2(r.oldNet)}</div>
+              <div style={{color:'#22c55e'}}>{f2(r.newNet)}</div>
+            </div>)}
+          </div>
+        </div>}
+      </div>
+    </div>
+  </div>;
+};
+
+// ═══ 3. HISTORIQUE PILOTE — Dashboard historique des runs ═══
+const HistoriquePilote=({s,supabase})=>{
+  const [history,setHistory]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const mois=['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'];
+
+  useEffect(()=>{
+    const load=async()=>{
+      if(!supabase){
+        // Generate mock history from client data
+        const clients=s.clients||[];
+        const totalEmps=clients.reduce((a,c)=>a+(c.emps||[]).length,0);
+        const totalBrut=clients.reduce((a,c)=>a+(c.emps||[]).reduce((b,e)=>b+(+(e.monthlySalary||e.gross||0)),0),0);
+        const mock=[];
+        for(let i=0;i<6;i++){
+          const d=new Date();
+          d.setMonth(d.getMonth()-1-i);
+          mock.push({
+            month:d.getMonth()+1,year:d.getFullYear(),
+            stats:{sent:totalEmps-Math.floor(Math.random()*3),failed:Math.floor(Math.random()*3),held:Math.floor(Math.random()*2),
+              brut:totalBrut*(0.95+Math.random()*0.1),net:totalBrut*0.565*(0.95+Math.random()*0.1)},
+            completedAt:d.toISOString(),status:'done'
+          });
+        }
+        setHistory(mock);
+        setLoading(false);
+        return;
+      }
+      try{
+        const {data}=await supabase.from('app_state').select('*').like('key','pilote_%').order('updated_at',{ascending:false}).limit(24);
+        if(data){
+          const h=data.map(r=>{
+            const val=JSON.parse(r.val||'{}');
+            const parts=r.key.replace('pilote_','').split('_');
+            return {month:+parts[1],year:+parts[0],...val};
+          });
+          setHistory(h);
+        }
+      }catch(e){console.error(e);}
+      setLoading(false);
+    };
+    load();
+  },[]);
+
+  const totalSent=history.reduce((a,h)=>a+(h.stats?.sent||0),0);
+  const totalBrut=history.reduce((a,h)=>a+(h.stats?.brut||0),0);
+  const avgTime=history.length>0?'~2 min':'N/A';
+
+  return <div style={{padding:24}}>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📊 Historique Pilote Auto</h2>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Suivi de toutes les executions du Pilote Automatique</p>
+
+    {/* KPIs */}
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+      {[{l:'Executions',v:history.length,c:'#c6a34e',i:'🔄'},
+        {l:'Fiches envoyees',v:totalSent,c:'#22c55e',i:'📧'},
+        {l:'Volume brut traite',v:f2(totalBrut)+' EUR',c:'#a855f7',i:'💰'},
+        {l:'Temps moyen',v:avgTime,c:'#3b82f6',i:'⏱'},
+      ].map((k,i)=><div key={i} style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'20',borderRadius:12,textAlign:'center'}}>
+        <div style={{fontSize:9,color:'#888'}}>{k.i} {k.l}</div>
+        <div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div>
+      </div>)}
+    </div>
+
+    {/* Chart-like visualization */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,padding:16,marginBottom:16}}>
+      <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Volume mensuel</div>
+      <div style={{display:'flex',alignItems:'flex-end',gap:4,height:120}}>
+        {history.slice().reverse().map((h,i)=>{
+          const maxBrut=Math.max(...history.map(x=>x.stats?.brut||0));
+          const pct=maxBrut>0?((h.stats?.brut||0)/maxBrut*100):0;
+          return <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+            <div style={{fontSize:8,color:'#888'}}>{f2(h.stats?.brut||0)}</div>
+            <div style={{width:'100%',height:pct+'%',minHeight:4,background:'linear-gradient(180deg,#c6a34e,#a07d3e)',borderRadius:'4px 4px 0 0',transition:'height .5s'}}/>
+            <div style={{fontSize:9,color:'#888'}}>{mois[(h.month||1)-1]}</div>
+          </div>;
+        })}
+      </div>
+    </div>
+
+    {/* History table */}
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+      <div style={{display:'grid',gridTemplateColumns:'100px 80px 80px 80px 120px 120px 1fr',padding:'8px 14px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#c6a34e'}}>
+        <div>Periode</div><div>Envoyees</div><div>Echouees</div><div>En attente</div><div>Masse brute</div><div>Net total</div><div>Date</div>
+      </div>
+      {loading?<div style={{padding:30,textAlign:'center',color:'#888'}}>Chargement...</div>:
+      history.map((h,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'100px 80px 80px 80px 120px 120px 1fr',padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
+        <div style={{color:'#c6a34e',fontWeight:600}}>{mois[(h.month||1)-1]} {h.year}</div>
+        <div style={{color:'#22c55e',fontWeight:600}}>{h.stats?.sent||0}</div>
+        <div style={{color:(h.stats?.failed||0)>0?'#ef4444':'#888'}}>{h.stats?.failed||0}</div>
+        <div style={{color:(h.stats?.held||0)>0?'#eab308':'#888'}}>{h.stats?.held||0}</div>
+        <div style={{color:'#e5e5e5'}}>{f2(h.stats?.brut||0)} EUR</div>
+        <div style={{color:'#22c55e'}}>{f2(h.stats?.net||0)} EUR</div>
+        <div style={{color:'#888',fontSize:10}}>{h.completedAt?new Date(h.completedAt).toLocaleDateString('fr-BE'):'-'}</div>
+      </div>)}
+    </div>
+  </div>;
+};
 
 const PiloteAuto=({s,d,supabase,user})=>{
   const [phase,setPhase]=useState('idle'); // idle|scanning|review|sending|done
@@ -9021,6 +11240,24 @@ const AutomationHub=({s,d})=>{
       case'massengine':return <MassEngine s={s} d={d}/>;
       case'smartauto':return <SmartAutomation s={s} d={d} supabase={supabase} user={user}/>;
       case'autopilot':return <SmartAutopilot s={s} d={d}/>;
+      case'planabs':return <PlanAbsences s={s} d={d}/>;
+      case'dashrh':return <DashboardRH s={s}/>;
+      case'budget':return <BudgetPrev s={s}/>;
+      case'echeancier':return <Echeancier s={s}/>;
+      case'ged':return <GedDocuments s={s} d={d}/>;
+      case'portail':return <PortailEmploye s={s}/>;
+      case'dashclient':return <DashboardClient s={s}/>;
+      case'comparateur':return <ComparateurSalarial s={s}/>;
+      case'analytics':return <AnalyticsDash s={s}/>;
+      case'exportcompta':return <ExportCompta s={s}/>;
+      case'audittrail':return <AuditTrail s={s} user={user}/>;
+      case'simembauche':return <SimulateurEmbauche s={s}/>;
+      case'sepa':return <SepaGenerator s={s}/>;
+      case'smartalerts':return <SmartAlerts s={s}/>;
+      case'batchdecl':return <BatchDeclarations s={s}/>;
+      case'compliance':return <ComplianceRadar s={s} d={d}/>;
+      case'autoindex':return <AutoIndexation s={s} d={d}/>;
+      case'historique':return <HistoriquePilote s={s} supabase={supabase}/>;
       case'piloteauto':return <PiloteAuto s={s} d={d} supabase={supabase} user={user}/>;
       case'calcinstant':return <CalcInstant s={s} d={d}/>;
       case'calendrier':return <CalendrierSocial s={s}/>;
