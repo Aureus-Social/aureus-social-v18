@@ -4409,7 +4409,7 @@ function AppInner({ supabase, user, onLogout }) {
   // ── Sprint 24b: Mobile Responsive ──
   const [mobileMenu,setMobileMenu]=useState(false);
   const [isMobile,setIsMobile]=useState(typeof window!=='undefined'&&window.innerWidth<900);
-  React.useEffect(()=>{
+  useEffect(()=>{
     const onResize=()=>{const m=window.innerWidth<900;setIsMobile(m);if(!m)setMobileMenu(false);};
     window.addEventListener('resize',onResize);
     // Inject viewport meta if missing
@@ -5893,7 +5893,7 @@ const CalcInstant=({s,d})=>{
   const emps=cl.emps||[];
 
   // Auto-calculate when prestations change
-  React.useEffect(()=>{
+  useEffect(()=>{
     if(!autoCalc)return;
     const results=emps.map(e=>{
       const id=e.id||e.niss||((e.first||'')+e.last);
