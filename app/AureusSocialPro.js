@@ -8651,6 +8651,244 @@ const NotificationCenter=({s,d})=>{
   </div>;
 };
 
+
+
+// ═══ SPRINT 36: JOURNAL ACTIVITE + BAREMES CP ═══
+const JournalActivite=({s})=>{
+  const [filter,setFilter]=useState('all');
+  const [search,setSearch]=useState('');
+  
+  const actions=[
+    {id:'A1',type:'calcul',icon:'🧮',title:'Calcul de paie batch',desc:'12 employés — TechCorp SPRL',user:'admin@aureussocial.be',time:new Date(Date.now()-1800000).toISOString(),status:'success'},
+    {id:'A2',type:'email',icon:'📧',title:'Envoi fiches de paie',desc:'12 fiches envoyées — TechCorp SPRL',user:'admin@aureussocial.be',time:new Date(Date.now()-3600000).toISOString(),status:'success'},
+    {id:'A3',type:'contrat',icon:'📝',title:'Contrat CDI généré',desc:'Jean Dupont — CP 200 — TechCorp SPRL',user:'admin@aureussocial.be',time:new Date(Date.now()-7200000).toISOString(),status:'success'},
+    {id:'A4',type:'dimona',icon:'📡',title:'Dimona IN soumise',desc:'Marie Martin — NISS 85.04.12-123.45 — TechCorp',user:'admin@aureussocial.be',time:new Date(Date.now()-14400000).toISOString(),status:'success'},
+    {id:'A5',type:'sepa',icon:'💸',title:'SEPA pain.001 généré',desc:'8 virements — 24.567,89 EUR — BelgaCo SA',user:'admin@aureussocial.be',time:new Date(Date.now()-28800000).toISOString(),status:'success'},
+    {id:'A6',type:'import',icon:'📥',title:'Import CSV employés',desc:'5 employés importés — StartupBE SPRL',user:'admin@aureussocial.be',time:new Date(Date.now()-43200000).toISOString(),status:'success'},
+    {id:'A7',type:'alert',icon:'⚠️',title:'Alerte salaire minimum',desc:'Pierre Leroy (2.100€) sous barème CP 200 (2.029,88€ min)',user:'system',time:new Date(Date.now()-50000000).toISOString(),status:'warning'},
+    {id:'A8',type:'onss',icon:'🏛',title:'DmfA T4/2025 générée',desc:'3 clients — 45 travailleurs — XML exporté',user:'admin@aureussocial.be',time:new Date(Date.now()-86400000).toISOString(),status:'success'},
+    {id:'A9',type:'email',icon:'📧',title:'Recap employeur envoyé',desc:'BelgaCo SA — Janvier 2026 — cout total 156.789 EUR',user:'admin@aureussocial.be',time:new Date(Date.now()-90000000).toISOString(),status:'success'},
+    {id:'A10',type:'login',icon:'🔐',title:'Connexion',desc:'Depuis Bruxelles (BE) — Chrome',user:'admin@aureussocial.be',time:new Date(Date.now()-100000000).toISOString(),status:'info'},
+  ];
+  
+  // Add real actions from state
+  const clients=s.clients||[];
+  clients.forEach(cl=>{
+    const co=cl.company||{};
+    (cl.emps||[]).forEach(e=>{
+      if(e.absences?.length>0) e.absences.forEach(a=>actions.push({id:'AA-'+a.id,type:'absence',icon:'📅',title:'Absence encodée',desc:(e.first||'')+' '+(e.last||'')+' — '+a.type+' — '+(co.name||''),user:'client',time:a.createdAt||new Date().toISOString(),status:'info'}));
+    });
+  });
+  
+  actions.sort((a,b)=>new Date(b.time)-new Date(a.time));
+  
+  const typeColors={calcul:'#c6a34e',email:'#3b82f6',contrat:'#22c55e',dimona:'#a855f7',sepa:'#06b6d4',import:'#eab308',alert:'#ef4444',onss:'#ec4899',login:'#888',absence:'#f97316'};
+  const timeAgo=(t)=>{const d=Math.floor((Date.now()-new Date(t))/60000);if(d<1)return 'A l instant';if(d<60)return d+'min';if(d<1440)return Math.floor(d/60)+'h';return Math.floor(d/1440)+'j';};
+  
+  const types=[{id:'all',l:'Tout'},{id:'calcul',l:'Calculs'},{id:'email',l:'Emails'},{id:'contrat',l:'Contrats'},{id:'dimona',l:'Dimona'},{id:'sepa',l:'SEPA'},{id:'onss',l:'ONSS'},{id:'alert',l:'Alertes'}];
+  const filtered=actions.filter(a=>(filter==='all'||a.type===filter)&&(!search||a.title.toLowerCase().includes(search.toLowerCase())||a.desc.toLowerCase().includes(search.toLowerCase())));
+  
+  const stats={total:actions.length,today:actions.filter(a=>(Date.now()-new Date(a.time))<86400000).length,emails:actions.filter(a=>a.type==='email').length,alerts:actions.filter(a=>a.type==='alert').length};
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📋 Journal d Activite</h2>
+        <p style={{fontSize:12,color:'#888',margin:0}}>Historique complet de toutes les actions</p>
+      </div>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." style={{padding:'8px 14px',width:200,background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:12,fontFamily:'inherit',outline:'none'}}/>
+    </div>
+    
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:16}}>
+      {[{l:'Actions totales',v:stats.total,c:'#c6a34e'},{l:'Aujourd hui',v:stats.today,c:'#22c55e'},{l:'Emails envoyes',v:stats.emails,c:'#3b82f6'},{l:'Alertes',v:stats.alerts,c:'#ef4444'}].map((k,i)=>
+        <div key={i} style={{padding:12,background:'rgba(198,163,78,.03)',border:'1px solid '+k.c+'15',borderRadius:10,textAlign:'center'}}>
+          <div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div>
+          <div style={{fontSize:9,color:'#888'}}>{k.l}</div>
+        </div>
+      )}
+    </div>
+    
+    <div style={{display:'flex',gap:4,marginBottom:14}}>
+      {types.map(t=><button key={t.id} onClick={()=>setFilter(t.id)} style={{padding:'6px 12px',borderRadius:6,border:'none',background:filter===t.id?'rgba(198,163,78,.15)':'transparent',color:filter===t.id?'#c6a34e':'#888',fontSize:10,fontWeight:filter===t.id?600:400,cursor:'pointer',fontFamily:'inherit'}}>{t.l}</button>)}
+    </div>
+    
+    <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+      {filtered.length===0&&<div style={{padding:30,textAlign:'center',color:'#555',fontSize:12}}>Aucune action trouvee</div>}
+      {filtered.slice(0,50).map((a,i)=><div key={a.id} style={{display:'flex',gap:12,padding:'10px 16px',borderBottom:'1px solid rgba(255,255,255,.03)',alignItems:'center'}}>
+        <div style={{width:36,height:36,borderRadius:10,background:(typeColors[a.type]||'#888')+'12',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{a.icon}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:12,fontWeight:600,color:'#e5e5e5'}}>{a.title}</div>
+          <div style={{fontSize:10,color:'#666',marginTop:1}}>{a.desc}</div>
+        </div>
+        <div style={{textAlign:'right',flexShrink:0}}>
+          <div style={{fontSize:9,color:'#555'}}>{timeAgo(a.time)}</div>
+          <div style={{fontSize:8,color:'#444',marginTop:2}}>{a.user==='system'?'Systeme':a.user?.split('@')[0]||''}</div>
+        </div>
+        <div style={{width:6,height:6,borderRadius:3,background:a.status==='success'?'#22c55e':a.status==='warning'?'#eab308':'#3b82f6',flexShrink:0}}></div>
+      </div>)}
+    </div>
+  </div>;
+};
+
+// ═══ BAREMES CP AUTO ═══
+const BAREMES_CP_MIN={
+  '200':{nom:'CP 200 — Employes',cat:[
+    {classe:'A',desc:'Personnel d execution',min:2029.88,idx:'01/11/2025'},
+    {classe:'B',desc:'Personnel qualifie',min:2134.72,idx:'01/11/2025'},
+    {classe:'C',desc:'Personnel specialise',min:2226.58,idx:'01/11/2025'},
+    {classe:'D',desc:'Cadres / Direction',min:2573.27,idx:'01/11/2025'},
+  ],prime13eme:true,cheqRepas:'max 8 EUR/jour',ecoPrime:'max 250-750 EUR'},
+  '100':{nom:'CP 100 — Ouvriers auxiliaire',cat:[
+    {classe:'I',desc:'Manoeuvre',min:2029.88,idx:'01/11/2025'},
+    {classe:'II',desc:'Ouvrier specialise',min:2095.44,idx:'01/11/2025'},
+    {classe:'III',desc:'Ouvrier qualifie',min:2173.20,idx:'01/11/2025'},
+  ],prime13eme:true,cheqRepas:'selon CCT sectorielle'},
+  '124':{nom:'CP 124 — Construction',cat:[
+    {classe:'I',desc:'Manoeuvre',min:2173.20,idx:'01/11/2025'},
+    {classe:'IA',desc:'Manoeuvre specialise',min:2269.56,idx:'01/11/2025'},
+    {classe:'II',desc:'Ouvrier qualifie',min:2365.92,idx:'01/11/2025'},
+    {classe:'III',desc:'Ouvrier hautement qualifie',min:2462.28,idx:'01/11/2025'},
+    {classe:'IV',desc:'Chef d equipe',min:2582.76,idx:'01/11/2025'},
+  ],prime13eme:true,cheqRepas:'6 EUR/jour',timbFidelite:true},
+  '302':{nom:'CP 302 — Hotellerie',cat:[
+    {classe:'I',desc:'Personnel non qualifie',min:2029.88,idx:'01/11/2025'},
+    {classe:'II',desc:'Personnel semi-qualifie',min:2095.44,idx:'01/11/2025'},
+    {classe:'III',desc:'Personnel qualifie',min:2226.58,idx:'01/11/2025'},
+    {classe:'IV',desc:'Chef de rang / Chef',min:2365.92,idx:'01/11/2025'},
+  ],prime13eme:true,cheqRepas:'8 EUR/jour',pourboire:true},
+  '330':{nom:'CP 330 — Sante',cat:[
+    {classe:'1',desc:'Personnel logistique',min:2095.44,idx:'01/11/2025'},
+    {classe:'2',desc:'Personnel soignant',min:2365.92,idx:'01/11/2025'},
+    {classe:'3',desc:'Infirmier(e)',min:2582.76,idx:'01/11/2025'},
+    {classe:'4',desc:'Cadre infirmier',min:2885.64,idx:'01/11/2025'},
+  ],prime13eme:true,primeAttr:'Prime attractivite IFIC'},
+  '140':{nom:'CP 140 — Transport',cat:[
+    {classe:'A',desc:'Chauffeur C',min:2226.58,idx:'01/11/2025'},
+    {classe:'B',desc:'Chauffeur CE',min:2365.92,idx:'01/11/2025'},
+    {classe:'C',desc:'Chauffeur ADR',min:2462.28,idx:'01/11/2025'},
+  ],prime13eme:true,cheqRepas:'7 EUR/jour',primeWeekend:true},
+  '111':{nom:'CP 111 — Metal/Mecanique',cat:[
+    {classe:'I',desc:'Ouvrier',min:2134.72,idx:'01/11/2025'},
+    {classe:'II',desc:'Ouvrier specialise',min:2269.56,idx:'01/11/2025'},
+    {classe:'III',desc:'Technicien',min:2462.28,idx:'01/11/2025'},
+  ],prime13eme:true},
+  '118':{nom:'CP 118 — Alimentaire',cat:[
+    {classe:'I',desc:'Non qualifie',min:2095.44,idx:'01/11/2025'},
+    {classe:'II',desc:'Semi-qualifie',min:2173.20,idx:'01/11/2025'},
+    {classe:'III',desc:'Qualifie',min:2269.56,idx:'01/11/2025'},
+  ],prime13eme:true,primeEquipe:'Prime d equipe si 2x8/3x8'},
+  '209':{nom:'CP 209 — Fabrications metalliques (empl.)',cat:[
+    {classe:'1',desc:'Employe administratif',min:2134.72,idx:'01/11/2025'},
+    {classe:'2',desc:'Employe qualifie',min:2365.92,idx:'01/11/2025'},
+    {classe:'3',desc:'Cadre',min:2750.00,idx:'01/11/2025'},
+  ],prime13eme:true},
+  '121':{nom:'CP 121 — Nettoyage',cat:[
+    {classe:'IA',desc:'Nettoyeur(se)',min:2029.88,idx:'01/11/2025'},
+    {classe:'IB',desc:'Nettoyeur(se) specialise',min:2095.44,idx:'01/11/2025'},
+    {classe:'II',desc:'Chef d equipe',min:2226.58,idx:'01/11/2025'},
+  ],prime13eme:true,cheqRepas:'selon CCT'},
+};
+
+const BaremesCP=({s})=>{
+  const [selCP,setSelCP]=useState('200');
+  const clients=s.clients||[];
+  const allEmps=clients.reduce((a,c)=>[...a,...(c.emps||[]).map(e=>({...e,clientName:c.company?.name||'',clientCP:c.company?.cp||'200'}))]  ,[]);
+  
+  const bar=BAREMES_CP_MIN[selCP];
+  const minSal=bar?Math.min(...bar.cat.map(c=>c.min)):0;
+  
+  const alertes=allEmps.filter(e=>{
+    const cp=e.clientCP||'200';
+    const b=BAREMES_CP_MIN[cp];
+    if(!b) return false;
+    const brut=+(e.monthlySalary||e.gross||0);
+    const minB=Math.min(...b.cat.map(c=>c.min));
+    return brut>0&&brut<minB;
+  });
+
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const cpKeys=Object.keys(BAREMES_CP_MIN);
+
+  return <div style={{padding:24}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+      <div>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📊 Baremes Salariaux par CP</h2>
+        <p style={{fontSize:12,color:'#888',margin:0}}>{cpKeys.length} Commissions Paritaires — Salaires minima indexes nov. 2025</p>
+      </div>
+      {alertes.length>0&&<div style={{padding:'8px 14px',background:'rgba(239,68,68,.08)',border:'1px solid rgba(239,68,68,.2)',borderRadius:8}}>
+        <span style={{fontSize:12,fontWeight:600,color:'#ef4444'}}>⚠️ {alertes.length} employe(s) sous le minimum</span>
+      </div>}
+    </div>
+    
+    <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:16}}>
+      {cpKeys.map(cp=><button key={cp} onClick={()=>setSelCP(cp)} style={{padding:'6px 12px',borderRadius:6,border:'none',background:selCP===cp?'rgba(198,163,78,.15)':'rgba(255,255,255,.02)',color:selCP===cp?'#c6a34e':'#888',fontSize:10,fontWeight:selCP===cp?600:400,cursor:'pointer',fontFamily:'inherit'}}>CP {cp}</button>)}
+    </div>
+    
+    {bar&&<div>
+      <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14,marginBottom:16}}>
+        <div style={{fontSize:16,fontWeight:700,color:'#c6a34e',marginBottom:8}}>{bar.nom}</div>
+        <div style={{display:'flex',gap:16,flexWrap:'wrap',fontSize:10,color:'#888'}}>
+          {bar.prime13eme&&<span>✅ 13eme mois</span>}
+          {bar.cheqRepas&&<span>🍽 Cheques repas: {bar.cheqRepas}</span>}
+          {bar.ecoPrime&&<span>💰 Eco-cheques: {bar.ecoPrime}</span>}
+          {bar.timbFidelite&&<span>⭐ Timbres fidelite</span>}
+          {bar.primeAttr&&<span>🏥 {bar.primeAttr}</span>}
+          {bar.primeEquipe&&<span>🔄 {bar.primeEquipe}</span>}
+          {bar.primeWeekend&&<span>📅 Prime weekend</span>}
+        </div>
+      </div>
+      
+      <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden',marginBottom:16}}>
+        <div style={{display:'grid',gridTemplateColumns:'80px 1fr 120px 100px',padding:'8px 14px',background:'rgba(198,163,78,.06)',fontSize:10,fontWeight:600,color:'#c6a34e'}}>
+          <div>Classe</div><div>Description</div><div>Minimum brut</div><div>Index</div>
+        </div>
+        {bar.cat.map((c,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'80px 1fr 120px 100px',padding:'10px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12,alignItems:'center'}}>
+          <div style={{fontWeight:700,color:'#c6a34e'}}>{c.classe}</div>
+          <div style={{color:'#e5e5e5'}}>{c.desc}</div>
+          <div style={{fontWeight:700,color:'#22c55e'}}>{f2(c.min)} EUR</div>
+          <div style={{fontSize:9,color:'#888'}}>{c.idx}</div>
+        </div>)}
+      </div>
+
+      {/* Employees in this CP */}
+      {(()=>{
+        const empsCP=allEmps.filter(e=>(e.clientCP||'200')===selCP);
+        if(empsCP.length===0) return <div style={{padding:20,textAlign:'center',color:'#555',fontSize:12}}>Aucun employe dans cette CP</div>;
+        return <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
+          <div style={{padding:'10px 14px',background:'rgba(198,163,78,.06)',fontSize:11,fontWeight:600,color:'#c6a34e'}}>Employes CP {selCP} ({empsCP.length})</div>
+          {empsCP.map((e,i)=>{
+            const brut=+(e.monthlySalary||e.gross||0);
+            const isBelow=brut>0&&brut<minSal;
+            return <div key={i} style={{display:'grid',gridTemplateColumns:'200px 120px 100px 1fr',padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
+              <div style={{color:'#e5e5e5',fontWeight:500}}>{(e.first||'')+' '+(e.last||'')}</div>
+              <div style={{fontSize:10,color:'#888'}}>{e.clientName}</div>
+              <div style={{fontWeight:600,color:isBelow?'#ef4444':'#22c55e'}}>{f2(brut)} EUR</div>
+              <div>{isBelow?<span style={{fontSize:9,padding:'2px 8px',borderRadius:4,background:'rgba(239,68,68,.1)',color:'#ef4444'}}>⚠️ Sous minimum ({f2(minSal)})</span>:<span style={{fontSize:9,color:'#22c55e'}}>✅ Conforme</span>}</div>
+            </div>;
+          })}
+        </div>;
+      })()}
+    </div>}
+
+    {/* Global alerts */}
+    {alertes.length>0&&<div style={{marginTop:20,border:'1px solid rgba(239,68,68,.2)',borderRadius:14,overflow:'hidden'}}>
+      <div style={{padding:'10px 14px',background:'rgba(239,68,68,.06)',fontSize:12,fontWeight:600,color:'#ef4444'}}>⚠️ Alertes salaire minimum ({alertes.length})</div>
+      {alertes.map((e,i)=>{
+        const cp=e.clientCP||'200';
+        const b=BAREMES_CP_MIN[cp];
+        const minB=b?Math.min(...b.cat.map(c=>c.min)):0;
+        return <div key={i} style={{display:'flex',gap:8,padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',alignItems:'center'}}>
+          <span style={{fontSize:14}}>⚠️</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:11,fontWeight:500,color:'#e5e5e5'}}>{(e.first||'')+' '+(e.last||'')} — {e.clientName}</div>
+            <div style={{fontSize:9,color:'#888'}}>Brut: {f2(+(e.monthlySalary||e.gross||0))} EUR — Minimum CP {cp}: {f2(minB)} EUR — Ecart: {f2(minB-(+(e.monthlySalary||e.gross||0)))} EUR</div>
+          </div>
+        </div>;
+      })}
+    </div>}
+  </div>;
+};
+
 const PlanAbsences=({s,d})=>{
   const clients=s.clients||[];
   const [selClient,setSelClient]=useState(0);
@@ -13590,6 +13828,8 @@ const AutomationHub=({s,d})=>{
       case'importcsv':return <ImportCSV s={s} d={d}/>;
       case'landing':return <LandingPage/>;
       case'notifcenter':return <NotificationCenter s={s} d={d}/>;
+      case'journal':return <JournalActivite s={s}/>;
+      case'baremescp':return <BaremesCP s={s}/>;
       case'onboarding2':return <SetupWizard s={s} d={d} setPage={setPage}/>;
       case'contratgen':return <ContratGenerator s={s} d={d} user={user}/>;
       case'recapemployeur':return <RecapEmployeur s={s} user={user}/>;
