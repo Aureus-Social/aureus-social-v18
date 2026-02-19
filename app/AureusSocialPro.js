@@ -9131,7 +9131,7 @@ const DashboardClient=({s,d})=>{
                   const isWE=dow===0||dow===6;
                   const abs=isAbsentDay2(emp2,day);
                   if(abs&&!isWE) absDays++;
-                  const absT=abs?absTypes.find(t=>t.id===abs.type):null;
+                  const absT=abs?absTypes2.find(t=>t.id===abs.type):null;
                   return <td key={i} style={{padding:'2px',textAlign:'center',background:isWE?'rgba(255,255,255,.02)':abs?absT?.c+'15':'transparent',cursor:isWE?'default':'pointer',borderRadius:2}} title={abs?(absT?.label+' — '+(abs.motif||'')):(isWE?'Weekend':'Cliquez pour encoder')}>
                     {abs?<span style={{fontSize:8}}>{absT?.icon||'•'}</span>:isWE?<span style={{color:'#333',fontSize:7}}>·</span>:''}
                   </td>;
@@ -9154,7 +9154,7 @@ const DashboardClient=({s,d})=>{
       {allAbsMonth.length>0&&<div style={{marginTop:14,border:'1px solid rgba(198,163,78,.1)',borderRadius:12,overflow:'hidden'}}>
         <div style={{padding:'10px 14px',background:'rgba(198,163,78,.06)',fontSize:11,fontWeight:600,color:'#c6a34e'}}>📋 Absences du mois ({allAbsMonth.length})</div>
         {allAbsMonth.map((a,i)=>{
-          const at=absTypes.find(t=>t.id===a.type);
+          const at=absTypes2.find(t=>t.id===a.type);
           return <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
             <span style={{fontSize:14}}>{at?.icon||'📅'}</span>
             <div style={{flex:1}}>
