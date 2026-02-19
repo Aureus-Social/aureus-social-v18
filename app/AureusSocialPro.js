@@ -8314,6 +8314,239 @@ const SetupWizard=({s,d,setPage})=>{
   </div>;
 };
 
+
+
+// ═══ SPRINT 34: PDF FICHE DE PAIE + LANDING PAGE ═══
+function generateFichePayePDF(emp, client, period, calcResult) {
+  const co=client?.company||{};
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const brut=calcResult?.gross||+(emp.monthlySalary||0);
+  const onssW=calcResult?.onssNet||Math.round(brut*0.1307*100)/100;
+  const imposable=calcResult?.imposable||(brut-onssW);
+  const pp=calcResult?.precompte||calcPrecompteExact(brut,{situation:'isole',enfants:+(emp.depChildren||0)}).pp;
+  const bonus=calcResult?.bonusEmploi||calcBonusEmploi(brut);
+  const css=calcResult?.css||calcCSSS(brut,'isole');
+  const net=calcResult?.net||(brut-onssW-pp-css+bonus);
+  const onssE=calcResult?.onssEmployer||Math.round(brut*0.25*100)/100;
+  const cout=brut+onssE;
+
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fiche de paie - ${(emp.first||'')} ${(emp.last||'')} - ${period}</title>
+<style>
+@page{size:A4;margin:15mm 20mm;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;}
+body{background:#fff;color:#1a1a2e;font-size:10px;line-height:1.4;}
+.page{width:210mm;min-height:297mm;padding:15mm 20mm;margin:0 auto;}
+.header{display:flex;justify-content:space-between;border-bottom:3px solid #c6a34e;padding-bottom:12px;margin-bottom:15px;}
+.header-left{max-width:55%;}
+.company{font-size:16px;font-weight:800;color:#1a1a2e;}
+.company-info{font-size:9px;color:#555;margin-top:4px;line-height:1.6;}
+.header-right{text-align:right;}
+.doc-title{font-size:14px;font-weight:700;color:#c6a34e;text-transform:uppercase;}
+.doc-period{font-size:11px;color:#555;margin-top:4px;}
+.section{margin-bottom:12px;}
+.section-title{font-size:10px;font-weight:700;color:#c6a34e;text-transform:uppercase;letter-spacing:1px;padding:5px 10px;background:#f8f6f0;border-left:3px solid #c6a34e;margin-bottom:6px;}
+table{width:100%;border-collapse:collapse;}
+td,th{padding:5px 10px;text-align:left;font-size:9.5px;}
+.row-alt{background:#fafafa;}
+.label{color:#555;width:55%;}
+.value{text-align:right;font-weight:600;color:#1a1a2e;}
+.value-green{text-align:right;font-weight:700;color:#16a34a;}
+.value-red{text-align:right;font-weight:600;color:#dc2626;}
+.value-blue{text-align:right;font-weight:600;color:#2563eb;}
+.total-row{border-top:2px solid #c6a34e;background:#f8f6f0;}
+.total-row td{font-weight:700;font-size:11px;padding:8px 10px;}
+.net-box{margin-top:15px;padding:15px;background:linear-gradient(135deg,#f0ead2,#faf3e0);border:2px solid #c6a34e;border-radius:8px;text-align:center;}
+.net-label{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;}
+.net-value{font-size:28px;font-weight:800;color:#16a34a;margin:5px 0;}
+.net-words{font-size:9px;color:#888;font-style:italic;}
+.footer{margin-top:20px;border-top:1px solid #ddd;padding-top:10px;display:flex;justify-content:space-between;font-size:8px;color:#888;}
+.emp-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.emp-grid div{padding:4px 10px;}
+.legal{font-size:7.5px;color:#aaa;margin-top:15px;text-align:center;line-height:1.5;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page{padding:0;}}
+</style></head><body>
+<div class="page">
+<div class="header">
+  <div class="header-left">
+    <div class="company">${co.name||'Employeur'}</div>
+    <div class="company-info">
+      BCE: ${co.vat||'-'} — ONSS: ${co.onss||'-'}<br/>
+      ${co.address||'-'}<br/>
+      CP ${co.cp||'200'} — ${co.forme||'SRL'}
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="doc-title">Fiche de Paie</div>
+    <div class="doc-period">${period}</div>
+    <div style="font-size:8px;color:#888;margin-top:4px;">Ref: FP-${Date.now()}</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Identification du travailleur</div>
+  <div class="emp-grid">
+    <div><span class="label">Nom:</span> <strong>${(emp.first||'')} ${(emp.last||'')}</strong></div>
+    <div><span class="label">NISS:</span> ${emp.niss||emp.NISS||'-'}</div>
+    <div><span class="label">Fonction:</span> ${emp.function||emp.fonction||'-'}</div>
+    <div><span class="label">Contrat:</span> ${emp.contractType||'CDI'} - ${emp.whWeek||38}h/sem</div>
+    <div><span class="label">Statut:</span> ${emp.statut||'employe'}</div>
+    <div><span class="label">Date entree:</span> ${emp.startDate||'-'}</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Remuneration</div>
+  <table>
+    <tr><td class="label">Salaire mensuel brut</td><td class="value">${f2(brut)} EUR</td></tr>
+    <tr class="row-alt"><td class="label">Regime de travail</td><td class="value">${emp.whWeek||38}h/sem (${Math.round((emp.whWeek||38)/38*100)}%)</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Retenues travailleur</div>
+  <table>
+    <tr><td class="label">ONSS personnelle (13,07%)</td><td class="value-red">- ${f2(onssW)} EUR</td></tr>
+    <tr class="row-alt"><td class="label">Revenu imposable</td><td class="value">${f2(imposable)} EUR</td></tr>
+    <tr><td class="label">Precompte professionnel</td><td class="value-red">- ${f2(pp)} EUR</td></tr>
+    <tr class="row-alt"><td class="label">Cotisation speciale securite sociale</td><td class="value-red">- ${f2(css)} EUR</td></tr>
+    ${bonus>0?'<tr><td class="label">Bonus a l emploi (Art. 289ter CIR)</td><td class="value-green">+ '+f2(bonus)+' EUR</td></tr>':''}
+    <tr class="total-row"><td>TOTAL RETENUES</td><td class="value-red">- ${f2(onssW+pp+css-bonus)} EUR</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Charges employeur</div>
+  <table>
+    <tr><td class="label">ONSS patronale (25%)</td><td class="value">${f2(onssE)} EUR</td></tr>
+    <tr class="row-alt"><td class="label">Cout total employeur</td><td class="value" style="font-weight:700;color:#dc2626;">${f2(cout)} EUR</td></tr>
+  </table>
+</div>
+
+<div class="net-box">
+  <div class="net-label">Net a payer</div>
+  <div class="net-value">${f2(net)} EUR</div>
+  <div class="net-words">Virement sur compte ${emp.iban||emp.IBAN||'(IBAN non renseigne)'}</div>
+</div>
+
+<div class="footer">
+  <div>Aureus Social Pro — Secretariat social agree<br/>Genere le ${new Date().toLocaleDateString('fr-BE')}</div>
+  <div style="text-align:right;">Document confidentiel<br/>Conservation: 5 ans (Art. 24 AR 08/08/1980)</div>
+</div>
+
+<div class="legal">
+  Ce document est etabli conformement a la Loi du 12/04/1965 relative a la protection de la remuneration des travailleurs.<br/>
+  Precompte professionnel calcule selon l'Annexe III de l'AR/CIR 92 (bareme 2025 indexe).<br/>
+  ONSS: Loi du 27/06/1969 revisant l'arrete-loi du 28/12/1944 concernant la securite sociale des travailleurs.
+</div>
+</div>
+</body></html>`;
+
+  const w=window.open('','_blank','width=800,height=1100');
+  if(w){w.document.write(html);w.document.close();setTimeout(()=>w.print(),500);}
+  return html;
+}
+
+// ═══ LANDING PAGE ═══
+const LandingPage=()=>{
+  const [email,setEmail]=useState('');
+  const [sent,setSent]=useState(false);
+  const features=[
+    {icon:'🏎️',title:'Pilote Auto',desc:'Calcul de paie automatique pour tous vos clients en un clic. ONSS, precompte, net — tout est calcule.'},
+    {icon:'📝',title:'Contrats Legaux',desc:'Generation de contrats par Commission Paritaire avec references legales completes (10 CP integrees).'},
+    {icon:'📧',title:'Distribution Auto',desc:'Envoi des fiches de paie aux employes et recaps aux employeurs en masse via email.'},
+    {icon:'📅',title:'Absences Temps Reel',desc:'Vos clients encodent les absences au quotidien. Impact automatique sur la paie.'},
+    {icon:'📥',title:'Import CSV',desc:'Migration des employes depuis Excel/CSV en 3 etapes avec mapping intelligent.'},
+    {icon:'🔒',title:'RGPD Compliant',desc:'Donnees hebergees en Belgique. Chiffrement. Droit a l oubli. DPO integre.'},
+    {icon:'📊',title:'DmfA / Dimona',desc:'Declarations ONSS generees automatiquement au format XML officiel.'},
+    {icon:'💸',title:'SEPA Virements',desc:'Fichiers pain.001.003.03 generes pour les virements salariaux.'},
+    {icon:'🧠',title:'IA Predictive',desc:'Prediction du turnover, recommandations salariales, detection d anomalies.'},
+  ];
+
+  const pricing=[
+    {name:'Starter',price:'149',period:'/mois',clients:'Jusqu a 5 clients',emps:'50 employes max',features:['Calcul de paie','Fiches de paie','SEPA virements','Support email'],cta:'Essai gratuit 30j',pop:false},
+    {name:'Professional',price:'349',period:'/mois',clients:'Jusqu a 25 clients',emps:'250 employes max',features:['Tout Starter +','Contrats legaux','DmfA/Dimona','Import CSV','Envoi masse','Support prioritaire'],cta:'Commencer',pop:true},
+    {name:'Enterprise',price:'749',period:'/mois',clients:'Clients illimites',emps:'Employes illimites',features:['Tout Professional +','IA predictive','API acces','Multi-utilisateurs','Formation sur site','SLA garanti'],cta:'Nous contacter',pop:false},
+  ];
+
+  const stats=[
+    {v:'10',l:'Commissions Paritaires'},
+    {v:'69',l:'Modules de paie'},
+    {v:'97',l:'Composants React'},
+    {v:'22K',l:'Lignes de code'},
+  ];
+
+  return <div style={{background:'#060810',color:'#e5e5e5',minHeight:'100vh'}}>
+    {/* Hero */}
+    <div style={{textAlign:'center',padding:'60px 20px 40px',maxWidth:800,margin:'0 auto'}}>
+      <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',textTransform:'uppercase',letterSpacing:2,marginBottom:12}}>Secretariat Social Nouvelle Generation</div>
+      <h1 style={{fontSize:38,fontWeight:800,lineHeight:1.2,margin:'0 0 16px'}}>
+        La paie belge,<br/><span style={{background:'linear-gradient(135deg,#c6a34e,#e8d48b)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>automatisee a 100%</span>
+      </h1>
+      <p style={{fontSize:16,color:'#888',maxWidth:550,margin:'0 auto 24px',lineHeight:1.6}}>
+        Aureus Social Pro automatise le calcul de paie, les declarations ONSS, les contrats et la distribution des fiches pour vos clients employeurs.
+      </p>
+      <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
+        <button style={{padding:'14px 32px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:15,cursor:'pointer',fontFamily:'inherit',boxShadow:'0 4px 20px rgba(198,163,78,.3)'}}>Essai gratuit 30 jours</button>
+        <button style={{padding:'14px 32px',borderRadius:10,border:'1px solid rgba(198,163,78,.3)',background:'transparent',color:'#c6a34e',fontWeight:600,fontSize:15,cursor:'pointer',fontFamily:'inherit'}}>Voir la demo</button>
+      </div>
+    </div>
+
+    {/* Stats */}
+    <div style={{display:'flex',justifyContent:'center',gap:30,padding:'20px',flexWrap:'wrap'}}>
+      {stats.map((s,i)=><div key={i} style={{textAlign:'center'}}>
+        <div style={{fontSize:28,fontWeight:800,color:'#c6a34e'}}>{s.v}</div>
+        <div style={{fontSize:10,color:'#888'}}>{s.l}</div>
+      </div>)}
+    </div>
+
+    {/* Features */}
+    <div style={{maxWidth:900,margin:'40px auto',padding:'0 20px'}}>
+      <h2 style={{textAlign:'center',fontSize:24,fontWeight:700,marginBottom:30}}>Tout ce dont votre fiduciaire a besoin</h2>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+        {features.map((ft,i)=><div key={i} style={{padding:20,background:'rgba(198,163,78,.03)',border:'1px solid rgba(198,163,78,.08)',borderRadius:14}}>
+          <div style={{fontSize:28,marginBottom:8}}>{ft.icon}</div>
+          <div style={{fontSize:14,fontWeight:700,color:'#c6a34e',marginBottom:6}}>{ft.title}</div>
+          <div style={{fontSize:11,color:'#888',lineHeight:1.6}}>{ft.desc}</div>
+        </div>)}
+      </div>
+    </div>
+
+    {/* Pricing */}
+    <div style={{maxWidth:900,margin:'50px auto',padding:'0 20px'}}>
+      <h2 style={{textAlign:'center',fontSize:24,fontWeight:700,marginBottom:8}}>Tarifs transparents</h2>
+      <p style={{textAlign:'center',fontSize:12,color:'#888',marginBottom:30}}>Sans engagement. Essai gratuit 30 jours. Facturation mensuelle.</p>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+        {pricing.map((pl,i)=><div key={i} style={{padding:24,background:pl.pop?'linear-gradient(135deg,rgba(198,163,78,.08),rgba(198,163,78,.02))':'rgba(255,255,255,.02)',border:pl.pop?'2px solid rgba(198,163,78,.3)':'1px solid rgba(255,255,255,.05)',borderRadius:16,position:'relative'}}>
+          {pl.pop&&<div style={{position:'absolute',top:-10,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',background:'#c6a34e',color:'#060810',fontSize:9,fontWeight:700,borderRadius:20,textTransform:'uppercase'}}>Populaire</div>}
+          <div style={{fontSize:14,fontWeight:600,color:'#e5e5e5'}}>{pl.name}</div>
+          <div style={{marginTop:8}}><span style={{fontSize:32,fontWeight:800,color:'#c6a34e'}}>{pl.price} EUR</span><span style={{color:'#888',fontSize:11}}>{pl.period}</span></div>
+          <div style={{fontSize:11,color:'#888',marginTop:4}}>{pl.clients} — {pl.emps}</div>
+          <div style={{marginTop:16}}>
+            {pl.features.map((ft2,j)=><div key={j} style={{fontSize:11,color:'#e5e5e5',padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>✓ {ft2}</div>)}
+          </div>
+          <button style={{width:'100%',marginTop:16,padding:'12px',borderRadius:10,border:pl.pop?'none':'1px solid rgba(198,163,78,.2)',background:pl.pop?'linear-gradient(135deg,#c6a34e,#a07d3e)':'transparent',color:pl.pop?'#060810':'#c6a34e',fontWeight:700,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>{pl.cta}</button>
+        </div>)}
+      </div>
+    </div>
+
+    {/* CTA */}
+    <div style={{textAlign:'center',padding:'40px 20px',maxWidth:500,margin:'0 auto'}}>
+      <h2 style={{fontSize:20,fontWeight:700,marginBottom:8}}>Pret a automatiser votre secretariat ?</h2>
+      <p style={{fontSize:12,color:'#888',marginBottom:16}}>Recevez une demo personnalisee en 24h</p>
+      <div style={{display:'flex',gap:8}}>
+        <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="votre@email.be" type="email" style={{flex:1,padding:'12px 16px',borderRadius:10,border:'1px solid rgba(198,163,78,.2)',background:'#090c16',color:'#e5e5e5',fontSize:13,fontFamily:'inherit',outline:'none'}}/>
+        <button onClick={()=>{if(email)setSent(true);}} style={{padding:'12px 24px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>{sent?'✅ Envoye':'Demander une demo'}</button>
+      </div>
+    </div>
+
+    {/* Footer */}
+    <div style={{borderTop:'1px solid rgba(198,163,78,.1)',padding:'20px',textAlign:'center',fontSize:10,color:'#555'}}>
+      Aureus Social Pro — Aureus IA SPRL — BCE BE 1028.230.781 — Saint-Gilles, Bruxelles<br/>
+      Logiciel de gestion de paie belge conforme RGPD — © 2026
+    </div>
+  </div>;
+};
+
 const PlanAbsences=({s,d})=>{
   const clients=s.clients||[];
   const [selClient,setSelClient]=useState(0);
@@ -9201,16 +9434,14 @@ const ComparateurSalarial=({s})=>{
 
   const calc=(p)=>{
     const brut=p.brut*p.regime/100;
+    const ppR=calcPrecompteExact(brut,{situation:'isole',enfants:0});
     const onss=Math.round(brut*1307)/100;
-    const imp=brut-onss;
-    const ann=imp*12;
-    let ppRate=ann<=15820?0.25:ann<=27920?0.30:ann<=48320?0.35:0.40;
-    const pp=Math.round(imp*ppRate*100)/100;
-    const bonus=brut<=2900?Math.round(Math.min(brut*0.1433,191.07)*100)/100:0;
+    const pp=ppR.pp;
+    const bonus=calcBonusEmploi(brut);
     const net=Math.round((brut-onss-pp+bonus)*100)/100;
     const onssE=Math.round(brut*2507)/100;
     const cout=Math.round((brut+onssE)*100)/100;
-    return {brut,onss,imp,pp,ppRate:Math.round(ppRate*100),bonus,net,onssE,cout,netPct:brut>0?Math.round(net/brut*100):0,coutPct:brut>0?Math.round(cout/brut*100):0};
+    return {brut,onss,imp:brut-onss,pp,ppRate:ppR.rate,bonus,net,onssE,cout,netPct:brut>0?Math.round(net/brut*100):0,coutPct:brut>0?Math.round(cout/brut*100):0};
   };
 
   const addProfile=()=>setProfiles(p=>[...p,{brut:3000,regime:100,label:'Profil '+(p.length+1)}]);
@@ -13253,6 +13484,7 @@ const AutomationHub=({s,d})=>{
       case'exportbatch':return <ExportBatch s={s}/>;
       case'rgpd':return <RGPDManager s={s}/>;
       case'importcsv':return <ImportCSV s={s} d={d}/>;
+      case'landing':return <LandingPage/>;
       case'onboarding2':return <SetupWizard s={s} d={d} setPage={setPage}/>;
       case'contratgen':return <ContratGenerator s={s} d={d} user={user}/>;
       case'recapemployeur':return <RecapEmployeur s={s} user={user}/>;
