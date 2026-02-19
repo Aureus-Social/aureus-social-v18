@@ -7457,6 +7457,435 @@ const EnvoiMasse=({s,user})=>{
   </div>;
 };
 
+
+// ══════════════════════════════════════════════════════════════
+// ═══ SPRINT 31: GENERATEUR CONTRATS DE TRAVAIL LÉGAUX       ═══
+// ═══ Par Commission Paritaire — Articles de loi complets    ═══
+// ══════════════════════════════════════════════════════════════
+
+const CP_DATABASE = {
+  '200': { name:'CP 200 — Auxiliaire pour employes', type:'employe', duree:38, indexation:'Annuelle au 1er janvier', classification:'A/B/C/D',
+    preavis_art:'Art. 37/2 Loi 3/7/1978 et CCT du 1/7/2019', prime_fin:'Oui — salaire brut decembre (CCT 23/9/2021 n°167.805)',
+    ecoCheques:'250 EUR/an (CCT 30/5/2023 n°175.869)', formation:'5 jours/2 ans (Loi Peeters 5/3/2017, Art. 50)',
+    transport:'50% abonnement si salaire < 36.688 EUR; velo 0,27 EUR/km max 40km AR (CCT 30/1/2023)',
+    fonds:'Fonds social CP 200 — CEFORA pour formations', rmmmg:'2.070,48 EUR (01/2026 indexe)',
+    specificites:'Clause de non-concurrence possible si salaire > 41.969 EUR/an (Art. 65 Loi 3/7/1978). Eco-cheques obligatoires. Prime pouvoir achat 330,84 EUR brut/an (CCT 2023-2024).'
+  },
+  '100': { name:'CP 100 — Auxiliaire pour ouvriers', type:'ouvrier', duree:38, indexation:'Variable selon sous-secteur',
+    preavis_art:'Art. 37/2 Loi 3/7/1978 — Statut unique 26/12/2013', prime_fin:'Selon CCT sectorielle',
+    ecoCheques:'Selon CCT entreprise', formation:'5 jours/2 ans (Loi Peeters)',
+    transport:'Intervention legale 75% SNCB (AR 28/7/1962)', fonds:'/',
+    rmmmg:'2.070,48 EUR (RMMMG national)', specificites:'Salaire a 108% pour calcul ONSS. Pecule vacances via caisse de vacances.'
+  },
+  '110': { name:'CP 110 — Entretien textile', type:'ouvrier', duree:38, indexation:'Trimestrielle (indice sante)',
+    preavis_art:'Art. 37/2 Loi 3/7/1978', prime_fin:'Oui — CCT sectorielle',
+    ecoCheques:'250 EUR/an', formation:'5 jours/2 ans',
+    transport:'100% transport en commun', fonds:'Fonds social textile',
+    rmmmg:'Selon categorie et anciennete', specificites:'Regimes de travail flexibles possibles. Travail de nuit autorise par CCT sectorielle.'
+  },
+  '124': { name:'CP 124 — Construction', type:'ouvrier', duree:38, indexation:'Variable (indice sante)',
+    preavis_art:'Art. 37/2 et 37/7 Loi 3/7/1978 — Regimes speciaux construction', prime_fin:'Prime intemperies + prime fidelite',
+    ecoCheques:'Selon CCT', formation:'VCA/securite obligatoire (AR 25/1/2001)', 
+    transport:'100% transport en commun', fonds:'Fonds de securite existence Constructiv',
+    rmmmg:'Selon categorie (1 a 4) et anciennete — CCT 12/6/2023',
+    specificites:'Timbres intemperies et fidelite. Carte Constructiv obligatoire. Check-in/out chantier (Loi 4/8/1996 Art. 30bis). Responsabilite solidaire chaine sous-traitance (Loi 12/4/1965 Art. 35/1).'
+  },
+  '140': { name:'CP 140 — Transport et logistique', type:'ouvrier', duree:38, indexation:'Trimestrielle',
+    preavis_art:'Art. 37/2 Loi 3/7/1978', prime_fin:'Oui — CCT sectorielle',
+    ecoCheques:'250 EUR/an', formation:'Code 95 obligatoire chauffeurs (Dir. 2003/59/CE)',
+    transport:'100% transport en commun + indemnite chauffeur', fonds:'Fonds social transport',
+    rmmmg:'Selon categorie et fonction', specificites:'Temps de conduite et repos (Reglement CE 561/2006). Tachygraphe obligatoire. ADR si matieres dangereuses.'
+  },
+  '302': { name:'CP 302 — Industrie hoteliere (Horeca)', type:'mixte', duree:38, indexation:'Annuelle',
+    preavis_art:'Art. 37/2 Loi 3/7/1978', prime_fin:'Oui — CCT sectorielle',
+    ecoCheques:'Selon CCT', formation:'Securite alimentaire AFSCA obligatoire',
+    transport:'Intervention legale', fonds:'Fonds social Horeca',
+    rmmmg:'Selon categorie (1 a 6)', specificites:'Flexibilite horaire importante. Heures supplementaires majorees Art. 29 Loi 16/3/1971. Flexi-jobs possibles (Loi 16/11/2015). Pourboires declares ou forfait.'
+  },
+  '111': { name:'CP 111 — Constructions metalliques', type:'ouvrier', duree:38, indexation:'Trimestrielle',
+    preavis_art:'Art. 37/2 Loi 3/7/1978', prime_fin:'Oui',
+    ecoCheques:'250 EUR/an', formation:'VCA/securite',
+    transport:'100% transport en commun', fonds:'Fonds social metal',
+    rmmmg:'Selon categorie professionnelle', specificites:'Travail postes possible. Prime equipe et prime de nuit selon CCT.'
+  },
+  '209': { name:'CP 209 — Employes metal', type:'employe', duree:38, indexation:'Trimestrielle',
+    preavis_art:'Art. 37/2 Loi 3/7/1978', prime_fin:'Oui — 13eme mois',
+    ecoCheques:'250 EUR/an', formation:'5 jours/2 ans',
+    transport:'100% transport en commun', fonds:'/',
+    rmmmg:'Selon bareme sectoriel', specificites:'Classification sectorielle. Avancement baremique bisannuel.'
+  },
+  '226': { name:'CP 226 — Commerce international, transport, logistique', type:'employe', duree:38, indexation:'Annuelle au 1er janvier',
+    preavis_art:'Art. 37/2 Loi 3/7/1978', prime_fin:'Oui — 13eme mois',
+    ecoCheques:'250 EUR/an', formation:'5 jours/2 ans',
+    transport:'100% transport en commun', fonds:'/',
+    rmmmg:'Selon classification', specificites:'Horaires flexibles possibles. Teletravail structurel (CCT 85, CNT 27/11/2005 et Loi 3/10/2022).'
+  },
+  '330': { name:'CP 330 — Etablissements soins de sante', type:'mixte', duree:38, indexation:'Variable',
+    preavis_art:'Art. 37/2 Loi 3/7/1978', prime_fin:'Oui — prime de fin annee',
+    ecoCheques:'Selon CCT', formation:'Formation continue obligatoire secteur soins',
+    transport:'100% transport en commun', fonds:'Fonds Maribel Social (AR 18/7/2002)',
+    rmmmg:'Baremes IFIC (classification fonctions)', specificites:'IFIC classification obligatoire. Primes de nuit, week-end, jours feries. Maribel social (reduction ONSS Art. 35 Loi 29/6/1981).'
+  }
+};
+
+const ContratGenerator=({s,d,user})=>{
+  const clients=s.clients||[];
+  const [selClient,setSelClient]=useState(null);
+  const [selEmp,setSelEmp]=useState(null);
+  const [contractType,setContractType]=useState('CDI');
+  const [cp,setCp]=useState('200');
+  const [preview,setPreview]=useState(null);
+  const [customClauses,setCustomClauses]=useState([]);
+  const [showAdvanced,setShowAdvanced]=useState(false);
+  const [generating,setGenerating]=useState(false);
+
+  // Contract-specific fields
+  const [cddEnd,setCddEnd]=useState('');
+  const [cddMotif,setCddMotif]=useState('surcroit');
+  const [essai,setEssai]=useState('');
+  const [fonction,setFonction]=useState('');
+  const [horaire,setHoraire]=useState('lundi-vendredi 9h-17h30 (pause 12h30-13h)');
+  const [lieuTravail,setLieuTravail]=useState('');
+  const [nonConcurrence,setNonConcurrence]=useState(false);
+  const [ecolage,setEcolage]=useState(false);
+  const [teletravail,setTeletravail]=useState(false);
+  const [confidentialite,setConfidentialite]=useState(true);
+
+  const cl=selClient?clients.find(c=>c.id===selClient):null;
+  const emp=selEmp&&cl?(cl.emps||[]).find(e=>e.id===selEmp):null;
+  const cpData=CP_DATABASE[cp]||CP_DATABASE['200'];
+
+  const generateContract=()=>{
+    if(!cl||!emp) return null;
+    const co=cl.company||{};
+    const brut=+(emp.monthlySalary||emp.gross||0);
+    const regime=+(emp.whWeek||38);
+    const startDate=emp.startDate||new Date().toISOString().split('T')[0];
+    const statut=cpData.type==='ouvrier'?'ouvrier':(cpData.type==='employe'?'employe':(emp.statut||'employe'));
+    const empName=(emp.first||emp.fn||'')+' '+(emp.last||emp.ln||'');
+    const empAddr=emp.address||emp.adresse||'[adresse du travailleur]';
+    const empNISS=emp.niss||'[NISS]';
+
+    let html='<html><head><meta charset="UTF-8"><style>';
+    html+='body{font-family:"Times New Roman",serif;font-size:12pt;line-height:1.6;color:#000;max-width:750px;margin:0 auto;padding:40px}';
+    html+='h1{text-align:center;font-size:16pt;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:20px}';
+    html+='h2{font-size:13pt;margin-top:20px;margin-bottom:8px;border-left:4px solid #b8960c;padding-left:10px}';
+    html+='h3{font-size:12pt;margin-top:14px;color:#333}';
+    html+='.article{margin:8px 0;text-align:justify}';
+    html+='.ref{font-size:9pt;color:#666;font-style:italic}';
+    html+='.signature{display:inline-block;width:45%;vertical-align:top;margin-top:40px;text-align:center;border-top:1px solid #000;padding-top:8px}';
+    html+='.header-info{font-size:11pt;margin-bottom:5px}';
+    html+='.important{font-weight:bold;text-decoration:underline}';
+    html+='</style></head><body>';
+
+    // HEADER
+    html+='<h1>CONTRAT DE TRAVAIL '+(contractType==='CDD'?'A DUREE DETERMINEE':'A DUREE INDETERMINEE')+'</h1>';
+    html+='<p style="text-align:center;font-size:10pt;color:#666">'+cpData.name+'<br/>Statut: '+(statut==='ouvrier'?'Ouvrier':'Employe')+'</p>';
+    
+    // ENTRE
+    html+='<h2>ENTRE LES PARTIES</h2>';
+    html+='<p class="article"><strong>L EMPLOYEUR :</strong><br/>';
+    html+=(co.name||'[Denomination sociale]')+', '+(co.forme||'SPRL/SRL');
+    html+=',<br/>dont le siege social est etabli a '+(co.address||'[adresse du siege]');
+    html+=',<br/>immatriculee a la Banque-Carrefour des Entreprises sous le numero '+(co.vat||co.bce||'[BCE]');
+    html+=',<br/>numero ONSS : '+(co.onss||'[numero ONSS]');
+    html+=',<br/>Commission paritaire : <strong>'+cp+' — '+cpData.name.split(' — ')[1]+'</strong>';
+    html+=',<br/>representee par '+(co.representant||'[nom du representant]')+', en qualite de '+(co.qualite||'gerant');
+    html+=',<br/>ci-apres denommee "l Employeur";</p>';
+
+    html+='<p class="article"><strong>ET LE TRAVAILLEUR :</strong><br/>';
+    html+=empName+',<br/>domicilie(e) a '+empAddr;
+    html+=',<br/>numero de Registre national (NISS) : '+empNISS;
+    html+=',<br/>de nationalite '+(emp.nationalite||'belge');
+    html+=',<br/>ci-apres denomme(e) "le Travailleur";</p>';
+
+    html+='<p class="article">IL A ETE CONVENU CE QUI SUIT :</p>';
+
+    // ARTICLE 1 — OBJET
+    html+='<h2>ARTICLE 1 — OBJET DU CONTRAT</h2>';
+    html+='<p class="article">Le Travailleur est engage en qualite de <strong>'+(statut==='ouvrier'?'ouvrier':'employe')+'</strong> pour exercer la fonction de <strong>'+(fonction||emp.function||emp.fonction||'[fonction]')+'</strong>, sous l autorite de l Employeur, conformement a l article '+(statut==='ouvrier'?'2':'3')+' de la Loi du 3 juillet 1978 relative aux contrats de travail.</p>';
+    html+='<p class="ref">Ref. legale : Loi du 3 juillet 1978, Titre I, Chapitre I, Art. '+(statut==='ouvrier'?'2 (contrat d ouvrier)':'3 (contrat d employe)')+'</p>';
+
+    // ARTICLE 2 — DUREE
+    html+='<h2>ARTICLE 2 — DUREE DU CONTRAT</h2>';
+    if(contractType==='CDI'){
+      html+='<p class="article">Le present contrat est conclu pour une <strong>duree indeterminee</strong>, conformement aux articles 2 et 3 de la Loi du 3 juillet 1978. Il prend effet le <strong>'+startDate+'</strong>.</p>';
+    } else {
+      html+='<p class="article">Le present contrat est conclu pour une <strong>duree determinee</strong>, conformement a l article 7 de la Loi du 3 juillet 1978. Il prend effet le <strong>'+startDate+'</strong> et prendra fin le <strong>'+(cddEnd||'[date de fin]')+'</strong>, sans qu il soit necessaire de donner un preavis.</p>';
+      html+='<p class="article">Motif du recours au CDD : '+(cddMotif==='surcroit'?'surcroit temporaire de travail':cddMotif==='remplacement'?'remplacement d un travailleur absent':cddMotif==='projet'?'execution d un travail nettement defini':'autre motif legitime')+'.</p>';
+      html+='<p class="ref">Ref. legale : Art. 7 a 10 de la Loi du 3 juillet 1978 — CDD successifs interdits sauf justification (Art. 10)</p>';
+    }
+
+    // ARTICLE 3 — LIEU DE TRAVAIL
+    html+='<h2>ARTICLE 3 — LIEU DE TRAVAIL</h2>';
+    html+='<p class="article">Le lieu de travail habituel est fixe a : <strong>'+(lieuTravail||co.address||'[adresse du lieu de travail]')+'</strong>. L Employeur se reserve le droit de modifier le lieu de travail dans un rayon geographique raisonnable, conformement a l article 25 de la Loi du 3 juillet 1978, pour autant que cette modification ne constitue pas un acte equivoque de rupture.</p>';
+    html+='<p class="ref">Ref. legale : Art. 25 Loi 3/7/1978 — Interdiction de modification unilaterale des conditions essentielles. Directive (UE) 2019/1152 Art. 4 — Obligation d information sur le lieu de travail.</p>';
+
+    // ARTICLE 4 — HORAIRE ET DUREE DU TRAVAIL
+    html+='<h2>ARTICLE 4 — DUREE ET HORAIRE DE TRAVAIL</h2>';
+    html+='<p class="article">La duree hebdomadaire de travail est fixee a <strong>'+regime+' heures</strong> '+(regime<cpData.duree?'(temps partiel — '+Math.round(regime/cpData.duree*100)+'% d un temps plein)':'(temps plein)')+', conformement a la CCT sectorielle applicable dans la '+cpData.name+'.</p>';
+    html+='<p class="article">L horaire de travail est le suivant : <strong>'+horaire+'</strong>.</p>';
+    if(regime<cpData.duree){
+      html+='<p class="article important">Le present contrat etant a temps partiel, il doit imperativement etre constate par ecrit pour chaque travailleur individuellement, au plus tard au moment de l entree en service, conformement a l article 11bis de la Loi du 3 juillet 1978.</p>';
+      html+='<p class="ref">Ref. legale : Art. 11bis Loi 3/7/1978. Loi du 16 mars 1971 sur le travail, Art. 26bis (publicite des horaires). AR 25/6/1990 assimilant travail a temps partiel.</p>';
+    }
+    html+='<p class="article">La duree hebdomadaire maximale de travail est de '+cpData.duree+' heures (Art. 19 Loi du 16 mars 1971 sur le travail). Les heures supplementaires sont remunerees conformement a l article 29 de la meme loi (sursalaire de 50% en semaine, 100% les dimanches et jours feries).</p>';
+    html+='<p class="ref">Ref. legale : Loi du 16/3/1971 sur le travail, Art. 19, 20, 29. '+cpData.preavis_art+'</p>';
+
+    // ARTICLE 5 — REMUNERATION
+    html+='<h2>ARTICLE 5 — REMUNERATION</h2>';
+    html+='<p class="article">Le Travailleur percevra une remuneration mensuelle brute de <strong>'+brut.toFixed(2)+' EUR</strong> pour des prestations a temps plein ('+(regime>=cpData.duree?'100%':Math.round(regime/cpData.duree*100)+'%')+').</p>';
+    html+='<p class="article">Cette remuneration respecte les baremes minima fixes par la '+cpData.name+' (RMMMG sectoriel : '+cpData.rmmmg+').</p>';
+    html+='<p class="article">La remuneration sera payee mensuellement, au plus tard le dernier jour ouvrable du mois, par virement bancaire sur le compte communique par le Travailleur, conformement a l article 5 de la Loi du 12 avril 1965 concernant la protection de la remuneration des travailleurs.</p>';
+    html+='<p class="article"><strong>Indexation :</strong> La remuneration sera indexee selon le mecanisme applicable dans la '+cpData.name+' : <strong>'+cpData.indexation+'</strong>, conformement a la Loi du 2 aout 1971 organisant un regime de liaison a l indice des prix a la consommation (indice sante).</p>';
+    if(cpData.type==='ouvrier'){
+      html+='<p class="article"><strong>Pecule de vacances :</strong> Le pecule de vacances (simple et double) sera verse par la Caisse de vacances competente, conformement aux Lois coordonnees du 28 juin 1971 relatives aux vacances annuelles des travailleurs salaries.</p>';
+    } else {
+      html+='<p class="article"><strong>Pecule de vacances :</strong> Le simple pecule est inclus dans le salaire mensuel. Le double pecule (92% du salaire brut) sera verse en mai-juin conformement a l AR du 30 mars 1967 et aux Lois coordonnees du 28 juin 1971.</p>';
+    }
+    html+='<p class="article"><strong>Prime de fin d annee :</strong> '+cpData.prime_fin+'.</p>';
+    html+='<p class="ref">Ref. legale : Loi 12/4/1965 protection remuneration. Art. 16-20 Loi 3/7/1978 (obligations des parties). Lois coord. 28/6/1971 (vacances annuelles). CCT '+cp+' applicable.</p>';
+
+    // ARTICLE 6 — AVANTAGES
+    html+='<h2>ARTICLE 6 — AVANTAGES COMPLEMENTAIRES</h2>';
+    html+='<p class="article"><strong>Eco-cheques :</strong> '+cpData.ecoCheques+', conformement aux CCT sectorielles de la '+cpData.name+' et a la CCT n°98 du CNT du 20 fevrier 2009.</p>';
+    html+='<p class="article"><strong>Frais de transport :</strong> '+cpData.transport+', conformement a la CCT n°19 octies du CNT du 20 fevrier 2009 et aux dispositions sectorielles applicables.</p>';
+    html+='<p class="article"><strong>Formation :</strong> '+cpData.formation+', conformement aux dispositions de la Loi du 5 mars 2017 concernant le travail faisable et maniable (Loi Peeters), Art. 49-55.</p>';
+    if(cpData.fonds && cpData.fonds!=='/') {
+      html+='<p class="article"><strong>Fonds sectoriel :</strong> Le Travailleur beneficie des avantages accordes par le '+cpData.fonds+'.</p>';
+    }
+
+    // ARTICLE 7 — OBLIGATIONS DES PARTIES
+    html+='<h2>ARTICLE 7 — OBLIGATIONS DES PARTIES</h2>';
+    html+='<h3>7.1 — Obligations du Travailleur (Art. 17 Loi 3/7/1978)</h3>';
+    html+='<p class="article">Le Travailleur s engage a :<br/>- executer son travail avec soin, probite et conscience, au temps, au lieu et dans les conditions convenues (Art. 17, 1°);<br/>- agir conformement aux ordres et instructions de l Employeur en vue de l execution du contrat (Art. 17, 2°);<br/>- s abstenir de tout ce qui pourrait nuire a sa securite, a celle de ses compagnons, de l employeur ou de tiers (Art. 17, 3°);<br/>- restituer en bon etat les instruments de travail et les matieres premieres qui lui sont confies (Art. 17, 4°);<br/>- garder le secret sur toute affaire confidentielle dont il aurait eu connaissance dans l exercice de ses fonctions (Art. 17, 3°bis).</p>';
+    html+='<h3>7.2 — Obligations de l Employeur (Art. 20 Loi 3/7/1978)</h3>';
+    html+='<p class="article">L Employeur s engage a :<br/>- faire travailler le Travailleur dans les conditions, au temps et au lieu convenus (Art. 20, 1°);<br/>- veiller a ce que le travail s accomplisse dans des conditions convenables (Art. 20, 2°);<br/>- payer la remuneration aux conditions, au temps et au lieu convenus (Art. 20, 3°);<br/>- consacrer l attention et les soins necessaires a l accueil du Travailleur (Art. 20, 6°);<br/>- fournir au Travailleur les informations prevues par la Directive (UE) 2019/1152 transposee par la Loi du 7 octobre 2022.</p>';
+
+    // ARTICLE 8 — SUSPENSION
+    html+='<h2>ARTICLE 8 — SUSPENSION DU CONTRAT</h2>';
+    html+='<p class="article">L execution du contrat peut etre suspendue dans les cas prevus par la Loi du 3 juillet 1978 (Chapitre III, Art. 26 a 31/2), notamment :<br/>- Force majeure (Art. 26);<br/>- Incapacite de travail resultant de maladie ou accident (Art. 31 — salaire garanti: '+(statut==='ouvrier'?'7 jours employeur, puis mutuelle (Art. 52 Loi 3/7/1978)':'30 jours employeur (Art. 70 Loi 3/7/1978)')+';<br/>- Vacances annuelles (Lois coord. 28/6/1971);<br/>- Jours feries legaux (Loi du 4 janvier 1974);<br/>- Petit chomage / conge de circonstance (AR 28/8/1963);<br/>- Conge de maternite (Art. 39 Loi 16/3/1971 — 15 semaines);<br/>- Conge de naissance (Art. 30 §2 Loi 3/7/1978 — 20 jours);<br/>- Credit-temps (CCT n°103 du CNT du 27/6/2012).</p>';
+
+    // ARTICLE 9 — PREAVIS ET FIN DE CONTRAT
+    html+='<h2>ARTICLE 9 — PREAVIS ET FIN DE CONTRAT</h2>';
+    html+='<p class="article">Le contrat peut prendre fin conformement aux articles 32 a 42 de la Loi du 3 juillet 1978 :</p>';
+    html+='<p class="article"><strong>a) Preavis (Art. 37/2) :</strong> Les delais de preavis sont fixes par l article 37/2 de la Loi du 3 juillet 1978, tel que modifie par la Loi du 26 decembre 2013 concernant l introduction d un statut unique. Les delais dependent de l anciennete du Travailleur.</p>';
+    html+='<p class="article"><strong>b) Motif grave (Art. 35) :</strong> Chacune des parties peut rompre le contrat sans preavis ni indemnite pour motif grave au sens de l article 35 de la Loi du 3 juillet 1978. La partie qui invoque le motif grave doit en informer l autre partie dans les 3 jours ouvrables.</p>';
+    html+='<p class="article"><strong>c) Rupture de commun accord :</strong> Les parties peuvent a tout moment mettre fin au contrat de commun accord (Art. 1134 du Code civil).</p>';
+    html+='<p class="article"><strong>d) Licenciement manifestement deraisonnable :</strong> Conformement a la CCT n°109 du CNT du 12 fevrier 2014, le licenciement ne peut etre manifestement deraisonnable. L Employeur doit pouvoir justifier le motif du licenciement.</p>';
+    html+='<p class="ref">Ref. legale : Art. 32-42 Loi 3/7/1978. Loi 26/12/2013 statut unique. CCT 109 CNT 12/2/2014. '+cpData.preavis_art+'</p>';
+
+    // ARTICLE 10 — CLAUSE DE CONFIDENTIALITE
+    if(confidentialite){
+      html+='<h2>ARTICLE 10 — CONFIDENTIALITE</h2>';
+      html+='<p class="article">Le Travailleur s engage a ne pas divulguer les secrets d affaires, les secrets de fabrication, ainsi que les affaires a caractere personnel ou confidentiel dont il aurait eu connaissance dans l exercice de ses fonctions, tant pendant la duree du contrat qu apres sa cessation, conformement a l article 17, 3°bis de la Loi du 3 juillet 1978 et a la Loi du 30 juillet 2018 relative a la protection des secrets d affaires.</p>';
+    }
+
+    // ARTICLE 11 — NON-CONCURRENCE
+    let artNum = confidentialite ? 11 : 10;
+    if(nonConcurrence){
+      html+='<h2>ARTICLE '+artNum+' — CLAUSE DE NON-CONCURRENCE</h2>';
+      html+='<p class="article">Conformement aux articles 65 et 86 de la Loi du 3 juillet 1978, et pour autant que la remuneration annuelle brute depasse 41.969 EUR (montant indexe 2026), le Travailleur s engage, en cas de cessation du contrat, a ne pas exercer d activites similaires, soit en exploitant une entreprise personnelle, soit en s engageant chez un employeur concurrent, pendant une duree maximale de <strong>12 mois</strong> a compter de la fin du contrat, dans un rayon geographique de <strong>[zone]</strong>.</p>';
+      html+='<p class="article">En contrepartie, l Employeur versera une indemnite compensatoire unique egale a la moitie de la remuneration brute correspondant a la duree d application de la clause (Art. 65 §2, 4° Loi 3/7/1978).</p>';
+      html+='<p class="ref">Ref. legale : Art. 65 (employes) et Art. 86 (ouvriers) Loi 3/7/1978. Conditions: salaire > 41.969 EUR/an; duree max 12 mois; zone geographique limitee; activites similaires; indemnite compensatoire.</p>';
+      artNum++;
+    }
+
+    // ARTICLE — CLAUSE D'ECOLAGE
+    if(ecolage){
+      html+='<h2>ARTICLE '+artNum+' — CLAUSE D ECOLAGE</h2>';
+      html+='<p class="article">Conformement a l article 22bis de la Loi du 3 juillet 1978, le Travailleur beneficiant d une formation specifique aux frais de l Employeur s engage a rester au service de l Employeur pendant une duree de <strong>[duree]</strong> mois.</p>';
+      html+='<p class="article">En cas de depart anticipe, le Travailleur remboursera les frais de formation selon le bareme degressif legal : 80% (depart avant 1/3 de la periode), 50% (entre 1/3 et 2/3), 20% (au-dela de 2/3). Le montant ne pourra exceder 30% de la remuneration annuelle du Travailleur (Art. 22bis §5).</p>';
+      html+='<p class="ref">Ref. legale : Art. 22bis Loi 3/7/1978. Conditions : remuneration annuelle > 41.969 EUR; formation > 80h ou cout > 2x RMMMG; ecrit obligatoire avant le debut de la formation.</p>';
+      artNum++;
+    }
+
+    // ARTICLE — TELETRAVAIL
+    if(teletravail){
+      html+='<h2>ARTICLE '+artNum+' — TELETRAVAIL</h2>';
+      html+='<p class="article">Conformement a la CCT n°85 du CNT du 27 novembre 2005 concernant le teletravail et a la Loi du 3 octobre 2022, le Travailleur pourra exercer du teletravail structurel selon les modalites suivantes :</p>';
+      html+='<p class="article">- Jours de teletravail : <strong>[nombre] jours par semaine</strong><br/>- Plages horaires de joignabilite : <strong>[horaires]</strong><br/>- Equipement fourni par l Employeur : ordinateur portable, connexion internet<br/>- Indemnite forfaitaire de bureau : <strong>[montant]</strong> EUR/mois</p>';
+      html+='<p class="ref">Ref. legale : CCT n°85 CNT 27/11/2005. Loi 3/10/2022 portant dispositions diverses en matiere de teletravail. AR 2/10/2000 (travail a domicile). Art. 119.1 Loi 3/7/1978 (travailleur a domicile).</p>';
+      artNum++;
+    }
+
+    // ARTICLE — DISPOSITIONS SPECIFIQUES CP
+    html+='<h2>ARTICLE '+artNum+' — DISPOSITIONS SPECIFIQUES A LA '+cp+'</h2>';
+    html+='<p class="article">Le present contrat est soumis aux dispositions specifiques de la <strong>'+cpData.name+'</strong> :</p>';
+    html+='<p class="article">'+cpData.specificites+'</p>';
+    artNum++;
+
+    // ARTICLE — RGPD
+    html+='<h2>ARTICLE '+artNum+' — PROTECTION DES DONNEES (RGPD)</h2>';
+    html+='<p class="article">Conformement au Reglement (UE) 2016/679 du 27 avril 2016 (RGPD) et a la Loi du 30 juillet 2018, l Employeur traite les donnees personnelles du Travailleur aux fins de la gestion de la relation de travail et des obligations legales y afferentes. Le Travailleur dispose d un droit d acces, de rectification, d effacement et de portabilite de ses donnees (Art. 15-20 RGPD).</p>';
+    artNum++;
+
+    // ARTICLE — DROIT APPLICABLE
+    html+='<h2>ARTICLE '+artNum+' — DROIT APPLICABLE ET JURIDICTION</h2>';
+    html+='<p class="article">Le present contrat est regi par le droit belge, et en particulier par :<br/>- La Loi du 3 juillet 1978 relative aux contrats de travail;<br/>- La Loi du 16 mars 1971 sur le travail;<br/>- La Loi du 12 avril 1965 concernant la protection de la remuneration;<br/>- La Loi du 26 decembre 2013 concernant le statut unique;<br/>- Les CCT applicables dans la '+cpData.name+';<br/>- Le reglement de travail de l Employeur.</p>';
+    html+='<p class="article">En cas de litige, les Tribunaux du Travail du ressort du lieu d execution habituel du contrat sont competents (Art. 578 du Code judiciaire).</p>';
+    artNum++;
+
+    // ARTICLE — DISPOSITIONS FINALES
+    html+='<h2>ARTICLE '+artNum+' — DISPOSITIONS FINALES</h2>';
+    html+='<p class="article">Le present contrat est etabli en deux exemplaires, chaque partie reconnaissant avoir recu le sien, conformement a l article 4 de la Directive (UE) 2019/1152 transposee par la Loi du 7 octobre 2022.</p>';
+    html+='<p class="article">Le Travailleur declare avoir pris connaissance du reglement de travail en vigueur au sein de l entreprise et en accepter les dispositions (Loi du 8 avril 1965 instituant les reglements de travail).</p>';
+
+    // Custom clauses
+    if(customClauses.length>0){
+      artNum++;
+      html+='<h2>ARTICLE '+artNum+' — CLAUSES PARTICULIERES</h2>';
+      customClauses.forEach((cc,i)=>{
+        html+='<p class="article">'+(i+1)+'. '+cc+'</p>';
+      });
+    }
+
+    // SIGNATURES
+    html+='<div style="margin-top:40px">';
+    html+='<p class="article">Fait a '+(co.ville||co.city||'[lieu]')+', le '+new Date().toLocaleDateString('fr-BE')+', en deux exemplaires originaux.</p>';
+    html+='<div class="signature">L EMPLOYEUR<br/><br/><br/>'+(co.name||'')+'<br/>'+(co.representant||'[Nom]')+'<br/>'+(co.qualite||'Gerant')+'</div>';
+    html+='<div style="display:inline-block;width:8%"></div>';
+    html+='<div class="signature">LE TRAVAILLEUR<br/><br/><br/>'+empName+'<br/>Precede de la mention manuscrite :<br/>"Lu et approuve"</div>';
+    html+='</div>';
+
+    html+='<div style="margin-top:30px;padding-top:15px;border-top:2px solid #eee;font-size:8pt;color:#888">';
+    html+='Document genere par Aureus Social Pro — aureussocial.be — Ce contrat doit etre adapte par un juriste ou un conseiller en droit social avant signature definitive. '+new Date().toLocaleDateString('fr-BE');
+    html+='</div>';
+
+    html+='</body></html>';
+    return html;
+  };
+
+  return <div style={{padding:24}}>
+    <div style={{marginBottom:20}}>
+      <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>📝 Generateur de Contrats de Travail</h2>
+      <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Contrats legaux par Commission Paritaire — Articles de loi inclus</p>
+    </div>
+
+    {/* Step 1: Select client + employee */}
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,marginBottom:16}}>
+      <div>
+        <div style={{fontSize:10,color:'#888',marginBottom:4}}>Client (employeur)</div>
+        <select value={selClient||''} onChange={e=>{ setSelClient(e.target.value); setSelEmp(null); const c=clients.find(cl2=>cl2.id===e.target.value); if(c?.company?.cp) setCp(c.company.cp); }} style={{width:'100%',padding:'10px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:8,color:'#e5e5e5',fontSize:12,fontFamily:'inherit'}}>
+          <option value="">Selectionnez un client</option>
+          {clients.map((c,i)=><option key={i} value={c.id}>{c.company?.name}</option>)}
+        </select>
+      </div>
+      <div>
+        <div style={{fontSize:10,color:'#888',marginBottom:4}}>Travailleur</div>
+        <select value={selEmp||''} onChange={e=>setSelEmp(e.target.value)} disabled={!selClient} style={{width:'100%',padding:'10px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:8,color:selClient?'#e5e5e5':'#555',fontSize:12,fontFamily:'inherit'}}>
+          <option value="">Selectionnez un employe</option>
+          {cl&&(cl.emps||[]).map((e,i)=><option key={i} value={e.id}>{(e.first||e.fn||'')+' '+(e.last||e.ln||'')}</option>)}
+        </select>
+      </div>
+      <div>
+        <div style={{fontSize:10,color:'#888',marginBottom:4}}>Commission Paritaire</div>
+        <select value={cp} onChange={e=>setCp(e.target.value)} style={{width:'100%',padding:'10px',background:'#090c16',border:'1px solid rgba(139,115,60,.2)',borderRadius:8,color:'#e5e5e5',fontSize:12,fontFamily:'inherit'}}>
+          {Object.entries(CP_DATABASE).map(([k,v])=><option key={k} value={k}>{k} — {v.name.split(' — ')[1]}</option>)}
+        </select>
+      </div>
+    </div>
+
+    {/* CP Info */}
+    <div style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:12,marginBottom:16}}>
+      <div style={{fontSize:13,fontWeight:700,color:'#c6a34e',marginBottom:8}}>{cpData.name}</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+        {[{l:'Statut',v:cpData.type},{l:'Duree travail',v:cpData.duree+'h/sem'},{l:'Indexation',v:cpData.indexation},{l:'RMMMG',v:cpData.rmmmg}].map((k,i)=>
+          <div key={i} style={{padding:6,background:'rgba(255,255,255,.02)',borderRadius:6}}>
+            <div style={{fontSize:8,color:'#888'}}>{k.l}</div>
+            <div style={{fontSize:11,color:'#e5e5e5',fontWeight:500}}>{k.v}</div>
+          </div>
+        )}
+      </div>
+      <div style={{fontSize:10,color:'#888',marginTop:8}}>{cpData.specificites}</div>
+    </div>
+
+    {/* Contract options */}
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+      <div style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:12}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:8}}>Type de contrat</div>
+        <div style={{display:'flex',gap:6}}>
+          {['CDI','CDD'].map(t=><button key={t} onClick={()=>setContractType(t)} style={{flex:1,padding:'8px',borderRadius:6,border:'none',background:contractType===t?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:contractType===t?'#c6a34e':'#888',fontWeight:contractType===t?600:400,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>{t}</button>)}
+        </div>
+        {contractType==='CDD'&&<div style={{marginTop:8}}>
+          <input value={cddEnd} onChange={e=>setCddEnd(e.target.value)} type="date" placeholder="Date de fin" style={{width:'100%',padding:'6px 8px',background:'rgba(255,255,255,.03)',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',boxSizing:'border-box'}}/>
+          <select value={cddMotif} onChange={e=>setCddMotif(e.target.value)} style={{width:'100%',marginTop:4,padding:'6px 8px',background:'rgba(255,255,255,.03)',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>
+            <option value="surcroit">Surcroit de travail</option>
+            <option value="remplacement">Remplacement</option>
+            <option value="projet">Travail nettement defini</option>
+          </select>
+        </div>}
+        <div style={{marginTop:8}}>
+          <input value={fonction} onChange={e=>setFonction(e.target.value)} placeholder="Fonction / poste" style={{width:'100%',padding:'6px 8px',background:'rgba(255,255,255,.03)',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',boxSizing:'border-box'}}/>
+        </div>
+        <div style={{marginTop:4}}>
+          <input value={lieuTravail} onChange={e=>setLieuTravail(e.target.value)} placeholder="Lieu de travail" style={{width:'100%',padding:'6px 8px',background:'rgba(255,255,255,.03)',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',boxSizing:'border-box'}}/>
+        </div>
+        <div style={{marginTop:4}}>
+          <input value={horaire} onChange={e=>setHoraire(e.target.value)} placeholder="Horaire" style={{width:'100%',padding:'6px 8px',background:'rgba(255,255,255,.03)',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',boxSizing:'border-box'}}/>
+        </div>
+      </div>
+
+      <div style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:12}}>
+        <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:8}}>Clauses optionnelles</div>
+        {[{id:'confidentialite',l:'Clause de confidentialite (Art. 17, 3°bis)',v:confidentialite,set:setConfidentialite},
+          {id:'nonConcurrence',l:'Clause de non-concurrence (Art. 65)',v:nonConcurrence,set:setNonConcurrence},
+          {id:'ecolage',l:'Clause d ecolage (Art. 22bis)',v:ecolage,set:setEcolage},
+          {id:'teletravail',l:'Teletravail structurel (CCT 85)',v:teletravail,set:setTeletravail}
+        ].map(c=><div key={c.id} onClick={()=>c.set(!c.v)} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',cursor:'pointer'}}>
+          <div style={{width:16,height:16,borderRadius:4,border:'2px solid '+(c.v?'#c6a34e':'#555'),background:c.v?'rgba(198,163,78,.15)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,color:'#c6a34e',flexShrink:0}}>{c.v?'V':''}</div>
+          <span style={{fontSize:11,color:c.v?'#e5e5e5':'#888'}}>{c.l}</span>
+        </div>)}
+
+        <div style={{marginTop:10,borderTop:'1px solid rgba(255,255,255,.05)',paddingTop:8}}>
+          <div style={{fontSize:10,color:'#888',marginBottom:4}}>Clause personnalisee</div>
+          <div style={{display:'flex',gap:4}}>
+            <input id="custom-clause-input" placeholder="Ajoutez une clause..." style={{flex:1,padding:'6px 8px',background:'rgba(255,255,255,.03)',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:10,fontFamily:'inherit'}}/>
+            <button onClick={()=>{const inp=document.getElementById('custom-clause-input');if(inp?.value){setCustomClauses(p=>[...p,inp.value]);inp.value='';}}} style={{padding:'6px 12px',borderRadius:6,border:'none',background:'rgba(198,163,78,.15)',color:'#c6a34e',fontSize:10,cursor:'pointer',fontFamily:'inherit'}}>+</button>
+          </div>
+          {customClauses.map((cc,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'3px 0',fontSize:10,color:'#e5e5e5'}}>
+            <span>{cc.substring(0,50)}...</span>
+            <span onClick={()=>setCustomClauses(p=>p.filter((_,j)=>j!==i))} style={{color:'#ef4444',cursor:'pointer'}}>x</span>
+          </div>)}
+        </div>
+      </div>
+    </div>
+
+    {/* Generate button */}
+    <div style={{display:'flex',gap:10}}>
+      <button onClick={()=>{const html=generateContract();if(html){const w=window.open('','_blank','width=850,height=900');if(w){w.document.write(html);w.document.close();}}}} disabled={!selClient||!selEmp} style={{flex:1,padding:'14px',borderRadius:12,border:'none',background:(!selClient||!selEmp)?'rgba(198,163,78,.1)':'linear-gradient(135deg,#c6a34e,#a07d3e)',color:(!selClient||!selEmp)?'#555':'#060810',fontWeight:700,fontSize:14,cursor:(!selClient||!selEmp)?'not-allowed':'pointer',fontFamily:'inherit'}}>
+        📄 GENERER LE CONTRAT
+      </button>
+      <button onClick={()=>{const html=generateContract();if(html){const blob=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='contrat_'+(emp?(emp.first||emp.fn||'')+'_'+(emp.last||emp.ln||''):'travailleur')+'_'+new Date().toISOString().split('T')[0]+'.html';a.click();try{logDocument(cl?.id,emp?.id,'contrat','Contrat '+(contractType)+' '+((emp?.first||emp?.fn||'')+' '+(emp?.last||emp?.ln||'')),{cp,contractType});}catch(e){}}}} disabled={!selClient||!selEmp} style={{padding:'14px 24px',borderRadius:12,border:'1px solid rgba(198,163,78,.2)',background:'transparent',color:'#c6a34e',fontWeight:600,fontSize:14,cursor:(!selClient||!selEmp)?'not-allowed':'pointer',fontFamily:'inherit'}}>
+        ⬇ Telecharger
+      </button>
+    </div>
+
+    {/* Reference box */}
+    <div style={{marginTop:16,padding:14,background:'rgba(59,130,246,.04)',border:'1px solid rgba(59,130,246,.1)',borderRadius:12}}>
+      <div style={{fontSize:11,fontWeight:600,color:'#3b82f6',marginBottom:6}}>📚 References legales utilisees</div>
+      <div style={{fontSize:9,color:'#888',lineHeight:1.6}}>
+        Loi du 3/7/1978 relative aux contrats de travail (M.B. 22/8/1978) •
+        Loi du 26/12/2013 concernant le statut unique (M.B. 31/12/2013) •
+        Loi du 16/3/1971 sur le travail •
+        Loi du 12/4/1965 protection de la remuneration •
+        Loi du 8/4/1965 reglements de travail •
+        Loi du 4/1/1974 jours feries •
+        Loi du 5/3/2017 travail faisable et maniable (Peeters) •
+        Loi du 7/10/2022 transposition Directive (UE) 2019/1152 •
+        Loi du 30/7/2018 secrets d affaires •
+        Reglement (UE) 2016/679 (RGPD) •
+        Lois coord. 28/6/1971 vacances annuelles •
+        CCT n°85 CNT 27/11/2005 (teletravail) •
+        CCT n°98 CNT 20/2/2009 (eco-cheques) •
+        CCT n°109 CNT 12/2/2014 (licenciement deraisonnable) •
+        CCT n°103 CNT 27/6/2012 (credit-temps) •
+        CCT sectorielles {cp}
+      </div>
+    </div>
+  </div>;
+};
+
 const PlanAbsences=({s,d})=>{
   const clients=s.clients||[];
   const [selClient,setSelClient]=useState(0);
@@ -12284,6 +12713,7 @@ const AutomationHub=({s,d})=>{
       case'validation':return <ValidationEngine s={s}/>;
       case'exportbatch':return <ExportBatch s={s}/>;
       case'rgpd':return <RGPDManager s={s}/>;
+      case'contratgen':return <ContratGenerator s={s} d={d} user={user}/>;
       case'recapemployeur':return <RecapEmployeur s={s} user={user}/>;
       case'envoiMasse':return <EnvoiMasse s={s} user={user}/>;
       case'planabs':return <PlanAbsences s={s} d={d}/>;
