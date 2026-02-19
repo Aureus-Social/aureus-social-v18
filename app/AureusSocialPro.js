@@ -6678,8 +6678,7 @@ const PiloteAuto=({s,d,supabase,user})=>{
     atts.forEach(docType=>{
       const html=docType==='fiche_paie'?generateFicheHTML(fiche):generateDocHTML(fiche,docType);
       // Extract body content only
-      const bodyMatch=html.match(/<body[^>]*>(.*)<\\/body>/s);
-      const content=bodyMatch?bodyMatch[1]:html;
+      const bodyStart=html.indexOf('<body');const bodyEnd=html.indexOf('</body>');const content=(bodyStart>-1&&bodyEnd>bodyStart)?html.substring(html.indexOf('>',bodyStart)+1,bodyEnd):html;
       packHTML+='<div class="pack-section"><div class="section-title">'+(docLabels[docType]||docType)+'</div>'+content+'</div>';
     });
     
