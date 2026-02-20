@@ -3250,9 +3250,6 @@ const CAR_MODELS={
 'XPeng':['G6',"G9","P7"],
 };
 
-function ErrorDisplay({error}){return <div style={{padding:40,textAlign:'center',fontFamily:'sans-serif',background:'#1a1915',minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{fontSize:20,fontWeight:700,color:'#c6a34e',marginBottom:12}}>Erreur Aureus Social Pro</div><div style={{fontSize:12,color:'#ef4444',padding:16,background:'rgba(239,68,68,.05)',borderRadius:8,fontFamily:'monospace',maxWidth:600,textAlign:'left',wordBreak:'break-word',border:'1px solid rgba(239,68,68,.2)'}}>{String(error)}</div><button onClick={()=>window.location.reload()} style={{marginTop:16,padding:'10px 24px',borderRadius:8,border:'none',background:'rgba(198,163,78,.15)',color:'#c6a34e',cursor:'pointer',fontSize:13,fontWeight:600}}>Recharger</button></div>;}
-function SafeWrapper({children}){const [error,setError]=useState(null);useEffect(()=>{const handler=(e)=>{setError(e.error||e.message||String(e));};window.addEventListener('error',handler);return ()=>window.removeEventListener('error',handler);},[]);if(error)return <ErrorDisplay error={error}/>;return children;}
-
 const COMPANY={name:'',vat:'',addr:'',onss:'',bank:'',cp:'200',contact:'',email:"",phone:'',insurer:'',policyNr:'',secSoc:''};
 const DPER={month:new Date().getMonth()+1,year:new Date().getFullYear(),days:22,sickG:0,holidays:0,overtimeH:0,sundayH:0,nightH:0,bonus:0,y13:0,otherDed:0,advance:0,garnish:0,ppVolontaire:0,
   // Éléments fiscaux complets
@@ -19091,7 +19088,7 @@ const AutomationHub=({s,d})=>{
 
 
   const pg=()=>{
-    try{{ switch(s.page){
+    switch(s.page){
       case'dashboard':return <Dashboard s={s} d={d} userRole={userRole}/>;
       case'employees':return <Employees s={s} d={d}/>;
       case'payslip':return <Payslips s={s} d={d}/>;
@@ -27308,5 +27305,5 @@ function FloatingLegalAgent({onAction}){
 }
 
 export default function AureusSocialPro({ supabase, user, onLogout }) {
-  return <SafeWrapper><LangProvider><AppInner supabase={supabase} user={user} onLogout={onLogout}/></LangProvider></SafeWrapper>;
+  return <LangProvider><AppInner supabase={supabase} user={user} onLogout={onLogout}/></LangProvider>;
 }// clean
