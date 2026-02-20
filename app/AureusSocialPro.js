@@ -26254,8 +26254,7 @@ return <div><PH title="Audit Social Complet" sub={"Score de conformite: "+score+
 <div style={{marginTop:16,textAlign:"center"}}><button onClick={()=>window.print()} style={{padding:"10px 20px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"inherit",background:"rgba(198,163,78,.15)",color:"#c6a34e"}}>🖨 Imprimer / Exporter PDF</button></div></div>
 </C>}
 </div>;}
-function SelfServiceMod({s,d}){const ae=(s.emps||[]).filter(e=>e.status==='active'||!e.status);const empNetData=ae.map(e=>({...e,netCalc:quickNet(+(e.gross||0)),pp:quickPP(+(e.gross||0)),onss:Math.round((+(e.gross||0))*TX_ONSS_W*100)/100}));
-  const ae=s.emps||[];const [sel,setSel]=useState(ae[0]?.id||'');const [tab,setTab]=useState('fiches');
+function SelfServiceMod({s,d}){const ae=(s.emps||[]).filter(e=>e.status==='active'||!e.status);const empNetData=ae.map(e=>({...e,netCalc:quickNet(+(e.gross||0)),pp:quickPP(+(e.gross||0)),onss:Math.round((+(e.gross||0))*TX_ONSS_W*100)/100}));const [sel,setSel]=useState(ae[0]?.id||'');const [tab,setTab]=useState('fiches');
   const emp=ae.find(e=>e.id===sel)||ae[0]||{};
   const p=emp.id?calc(emp,DPER,s.co):{gross:0,net:0,tax:0};
   const tabs=[{v:"fiches",l:"Fiches de paie",ic:'📄'},{v:"conges",l:"Congés",ic:'📅'},{v:"docs",l:"Documents",ic:'📋'},{v:"perso",l:"Données perso",ic:'👤'},{v:"contact",l:"Contact RH",ic:'💬'}];
