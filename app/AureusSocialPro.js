@@ -2,6 +2,321 @@
 "use client"
 import { useState, useReducer, useRef, useMemo, useEffect, createContext, useContext } from "react";
 
+// ═══ SPRINT 37: MOTEUR CENTRAL LOIS BELGES — AUTO-UPDATE 1 CLIC  ═══
+// ══════════════════════════════════════════════════════════════════════
+// Base centralisée de TOUTES les constantes légales belges
+// Un seul endroit à modifier → propage partout automatiquement
+
+const LOIS_BELGES = {
+  _meta: { version: '2026.1.0', dateMAJ: '2026-01-01', source: 'SPF Finances / ONSS / CNT / Moniteur Belge', annee: 2026 },
+
+  // ═══ ONSS ═══
+  onss: {
+    travailleur: 0.1307,
+    employeur: { total: 0.2507, detail: { pension: 0.0886, maladie: 0.0370, chomage: 0.0138, accidents: 0.0087, maladiesPro: 0.0102, fermeture: 0.0012, moderation: 0.0560, cotisationsSpec: 0.0352 }},
+    plafondAnnuel: null, // pas de plafond en Belgique
+    ouvrier108: 1.08, // majoration 8% ouvriers
+    reductionStructurelle: { seuil: 9932.40, forfait: 0, pctAuDessus: 0 },
+    groupeCible: { jeunesNonQualifies: { age: 25, reduc: 1500 }, agees: { age: 55, reduc: 1500 }, handicapes: { reduc: 1500 }},
+  },
+
+  // ═══ PRÉCOMPTE PROFESSIONNEL ═══
+  pp: {
+    tranches: [
+      { min: 0, max: 16710, taux: 0.2675 },
+      { min: 16710, max: 29500, taux: 0.4280 },
+      { min: 29500, max: 51050, taux: 0.4815 },
+      { min: 51050, max: Infinity, taux: 0.5350 },
+    ],
+    fraisPro: { salarie: { pct: 0.30, max: 6070 }, dirigeant: { pct: 0.03, max: 3120 }},
+    quotiteExemptee: { bareme1: 2987.98, bareme2: 5975.96 },
+    quotientConjugal: { pct: 0.30, max: 12520 },
+    reductionsEnfants: [0, 624, 1656, 4404, 7620, 11100, 14592, 18120, 21996],
+    reductionEnfantSupp: 3864,
+    reductionParentIsole: 624,
+    reductionHandicape: 624,
+    reductionConjointHandicape: 624,
+    reductionConjointRevenuLimite: 1698,
+    reductionConjointPensionLimitee: 3390,
+    reductionPersonne65: 1992,
+    reductionAutreCharge: 624,
+    bonusEmploi: { pctReduction: 0.3314, maxMensuel: 194.03, seuilBrut1: 2561.42, seuilBrut2: 2997.59 },
+  },
+
+  // ═══ CSSS — Cotisation Spéciale Sécurité Sociale ═══
+  csss: {
+    isole: [
+      { min: 0, max: 18592.02, montant: 0, taux: 0 },
+      { min: 18592.02, max: 21070.96, montant: 0, taux: 0.076 },
+      { min: 21070.96, max: 37344.02, montant: 9.30, taux: 0.011 },
+      { min: 37344.02, max: 60181.95, montant: 9.30, tauxBase: 0.011, taux: 0.013, palierBase: 37344.02 },
+      { min: 60181.95, max: Infinity, montantFixe: 51.64 },
+    ],
+    menage2revenus: [
+      { min: 0, max: 18592.02, montant: 0, taux: 0 },
+      { min: 18592.02, max: 21070.96, montant: 0, taux: 0.076 },
+      { min: 21070.96, max: 60181.95, montant: 9.30, taux: 0.011 },
+      { min: 60181.95, max: Infinity, montantFixe: 51.64 },
+    ],
+    menage1revenu: [
+      { min: 0, max: 18592.02, montant: 0, taux: 0 },
+      { min: 18592.02, max: 21070.96, montant: 0, taux: 0.076 },
+      { min: 21070.96, max: 37344.02, montant: 9.30, taux: 0.011 },
+      { min: 37344.02, max: 60181.95, montant: 0, taux: 0.013 },
+      { min: 60181.95, max: Infinity, montantFixe: 51.64 },
+    ],
+  },
+
+  // ═══ RÉMUNÉRATION ═══
+  remuneration: {
+    RMMMG: { montant18ans: RMMMG, montant20ans6m: RMMMG, montant21ans12m: RMMMG, source: 'CNT - CCT 43/15' },
+    indexSante: { coeff: 2.0399, pivot: 125.60, dateDerniereIndex: '2024-12-01', prochainPivotEstime: '2026-06-01' },
+    peculeVacances: {
+      simple: { pct: PV_SIMPLE, base: 'brut annuel precedent' },
+      double: { pct: 0.9200, base: 'brut mensuel' },
+      patronal: { pct: (PV_SIMPLE*2+0.001), base: 'brut annuel precedent' },
+    },
+    treizieme: { obligatoire: true, cp200: true, base: 'salaire mensuel brut', onss: true },
+  },
+
+  // ═══ CHÈQUES-REPAS ═══
+  chequesRepas: {
+    partTravailleur: { min: 1.09, max: null },
+    valeurFaciale: { max: 8.00 },
+    partPatronale: { max: CR_PAT },
+    conditions: 'Par jour effectivement preste',
+    exonerationFiscale: true,
+    exonerationONSS: true,
+  },
+
+  // ═══ FRAIS PROPRES EMPLOYEUR ═══
+  fraisPropres: {
+    forfaitBureau: { max: FORF_BUREAU, base: 'mensuel' },
+    forfaitDeplacement: { voiture: FORF_KM, velo: 0.35, transportCommun: 1.00 },
+    forfaitRepresentation: { max: 40, base: 'mensuel sans justificatif' },
+    teletravail: { max: FORF_BUREAU, base: 'mensuel structurel' },
+  },
+
+  // ═══ ATN — AVANTAGES EN NATURE ═══
+  atn: {
+    voiture: { CO2Ref: { essence: 102, diesel: 84, hybride: 84 }, coeff: 0.055, min: 1600, formule: '(catalogue x 6/7 x vetuste) x %CO2 / 12' },
+    logement: { cadastralx100: true, meuble: 1.333 },
+    gsm: { forfait: 3, mensuel: true },
+    pc: { forfait: 6, mensuel: true },
+    internet: { forfait: 5, mensuel: true },
+    electricite: { cadre: 2130, noncadre: 960, annuel: true },
+    chauffage: { cadre: 4720, noncadre: 2130, annuel: true },
+  },
+
+  // ═══ PRÉAVIS (CCT 109 / Loi Statut Unique) ═══
+  preavis: {
+    // Durée en semaines par ancienneté (années)
+    employeur: [
+      { ancMin: 0, ancMax: 0.25, semaines: 1 },
+      { ancMin: 0.25, ancMax: 0.5, semaines: 3 },
+      { ancMin: 0.5, ancMax: 0.75, semaines: 4 },
+      { ancMin: 0.75, ancMax: 1, semaines: 5 },
+      { ancMin: 1, ancMax: 2, semaines: 6 },
+      { ancMin: 2, ancMax: 3, semaines: 7 },
+      { ancMin: 3, ancMax: 4, semaines: 9 },
+      { ancMin: 4, ancMax: 5, semaines: 12 },
+      { ancMin: 5, ancMax: 6, semaines: 15 },
+      { ancMin: 6, ancMax: 7, semaines: 18 },
+      { ancMin: 7, ancMax: 8, semaines: 21 },
+      { ancMin: 8, ancMax: 9, semaines: 24 },
+      { ancMin: 9, ancMax: 10, semaines: 27 },
+      { ancMin: 10, ancMax: 11, semaines: 30 },
+      { ancMin: 11, ancMax: 12, semaines: 33 },
+      { ancMin: 12, ancMax: 13, semaines: 36 },
+      { ancMin: 13, ancMax: 14, semaines: 39 },
+      { ancMin: 14, ancMax: 15, semaines: 42 },
+      { ancMin: 15, ancMax: 16, semaines: 45 },
+      { ancMin: 16, ancMax: 17, semaines: 48 },
+      { ancMin: 17, ancMax: 18, semaines: 51 },
+      { ancMin: 18, ancMax: 19, semaines: 54 },
+      { ancMin: 19, ancMax: 20, semaines: 57 },
+      { ancMin: 20, ancMax: 21, semaines: 60 },
+      { ancMin: 21, ancMax: 22, semaines: 62 },
+      { ancMin: 22, ancMax: 23, semaines: 63 },
+      { ancMin: 23, ancMax: 24, semaines: 64 },
+      { ancMin: 24, ancMax: 25, semaines: 65 },
+    ],
+    parAnSupp: 3, // +3 semaines par année > 25 ans
+    travailleur: { facteur: 0.5, min: 1, max: 13 },
+    motifGrave: 0,
+    outplacement: { seuil: 30, semaines: 4 },
+  },
+
+  // ═══ TEMPS DE TRAVAIL ═══
+  tempsTravail: {
+    dureeHebdoLegale: 38,
+    dureeHebdoMax: 38,
+    heuresSupp: { majoration50: 0.50, majoration100: 1.00, recuperation: true, plafondAnnuel: 120, plafondVolontaire: 360 },
+    nuit: { debut: '20:00', fin: '06:00', majoration: 0 },
+    dimanche: { majoration: 1.00, repos: true },
+    jourFerie: { nombre: 10, majoration: 2.00, remplacement: true },
+    petitChomage: { mariage: 2, deces1: 3, deces2: 1, communion: 1, demenagement: 1 },
+  },
+
+  // ═══ CONTRATS ═══
+  contrats: {
+    periodeEssai: { supprimee: true, exception: 'travail etudiant/interim/occupation temporaire' },
+    clauseNonConcurrence: { dureeMax: 12, brut_min: 42441, indemniteMin: 0.50 },
+    ecolecholage: { dureeMax: 36, brut_min: 39422, formationMin: 80 },
+  },
+
+  // ═══ SEUILS SOCIAUX ═══
+  seuils: {
+    electionsSociales: { cppt: 50, ce: 100 },
+    planFormation: 20,
+    bilanSocial: 20,
+    reglementTravail: 1,
+    delegationSyndicale: { cp200: 50 },
+    servicePPT: { interne: 20 },
+    conseillerPrevention: { interne: 20 },
+  },
+
+  // ═══ ASSURANCES ═══
+  assurances: {
+    accidentTravail: { taux: 0.01, obligatoire: true },
+    medecineTravail: { cout: COUT_MED, parTravailleur: true, annuel: false },
+    assuranceLoi: { obligatoire: true },
+    assuranceGroupe: { deductible: true, plafond80pct: true },
+  },
+
+  // ═══ ALLOCATIONS FAMILIALES (Région Bruxelles) ═══
+  allocFamBxl: {
+    base: { montant: 171.08, parEnfant: true },
+    supplement1218: 29.64,
+    supplementSocial: { plafondRevenu: 35978, montant: 54.38 },
+    primeNaissance: { premier: 1214.73, suivants: 607.37 },
+  },
+
+  // ═══ DIMONA ═══
+  dimona: {
+    delaiIN: 'Avant debut prestations',
+    delaiOUT: 'Le jour meme',
+    types: ['IN','OUT','UPDATE','CANCEL'],
+    canal: 'Portail securite sociale ou batch',
+    sanctionNiveau: 3,
+  },
+
+  // ═══ DMFA ═══
+  dmfa: {
+    periodicite: 'Trimestrielle',
+    delai: 'Dernier jour du mois suivant le trimestre',
+    format: 'XML via batch ou portail',
+    cotisationsPNP: true,
+  },
+
+  // ═══ BELCOTAX ═══
+  belcotax: {
+    delai: '1er mars annee N+1',
+    format: 'XML BelcotaxOnWeb',
+    fiches: ['281.10','281.13','281.14','281.20','281.30','281.50'],
+  },
+
+  // ═══ SOURCES OFFICIELLES ═══
+  sources: [
+    { id: 'spf', nom: 'SPF Finances', url: 'https://finances.belgium.be/fr/entreprises/personnel_et_remuneration/precompte_professionnel', type: 'PP/Fiscal' },
+    { id: 'onss', nom: 'ONSS', url: 'https://www.socialsecurity.be', type: 'Cotisations sociales' },
+    { id: 'cnt', nom: 'Conseil National du Travail', url: 'https://www.cnt-nar.be', type: 'CCT/RMMMG' },
+    { id: 'spf_emploi', nom: 'SPF Emploi', url: 'https://emploi.belgique.be', type: 'Droit du travail' },
+    { id: 'moniteur', nom: 'Moniteur Belge', url: 'https://www.ejustice.just.fgov.be/cgi/summary.pl', type: 'Legislation' },
+    { id: 'statbel', nom: 'Statbel', url: 'https://statbel.fgov.be/fr/themes/prix-la-consommation/indice-sante', type: 'Index/Prix' },
+    { id: 'bnb', nom: 'Banque Nationale', url: 'https://www.nbb.be', type: 'Bilan social' },
+    { id: 'refli', nom: 'Refli.be', url: 'https://refli.be/fr/documentation/computation/tax', type: 'Reference technique' },
+  ],
+};
+
+// Aliases courts pour accès rapide dans tout le code
+const LB=LOIS_BELGES;
+const TX_ONSS_W=LB.onss.travailleur; // 0.1307
+const TX_ONSS_E=LB.onss.employeur.total; // 0.2507
+const TX_OUV108=LB.onss.ouvrier108; // 1.08
+const TX_AT=LB.assurances.accidentTravail.taux; // 0.01
+const COUT_MED=LB.assurances.medecineTravail.cout; // COUT_MED
+const CR_TRAV=LB.chequesRepas.partTravailleur.min; // CR_TRAV
+const PP_EST=0.22; // PP estimation moyenne (~22% de l'imposable)
+const NET_FACTOR=(1-TX_ONSS_W)*(1-PP_EST); // facteur net approx = ~0.5645
+const quickNetEst=(b)=>Math.round(b*NET_FACTOR*100)/100; // estimation rapide net
+const CR_MAX=LB.chequesRepas.valeurFaciale.max; // 8.00
+const CR_PAT=LB.chequesRepas.partPatronale.max; // 6.91
+const FORF_BUREAU=LB.fraisPropres.forfaitBureau.max; // FORF_BUREAU
+const FORF_KM=LB.fraisPropres.forfaitDeplacement.voiture; // 0.4415
+const PV_SIMPLE=LB.remuneration.peculeVacances.simple.pct; // PV_SIMPLE
+const PV_DOUBLE=LB.remuneration.peculeVacances.double.pct; // 0.92
+const RMMMG=LB.remuneration.RMMMG.montant18ans; // RMMMG
+const BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 194.03
+const SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
+const SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
+const HEURES_HEBDO=LB.tempsTravail.dureeHebdoLegale; // 38
+const JOURS_FERIES=LB.tempsTravail.jourFerie.nombre; // 10
+
+
+// Fonction centralisée: obtenir une valeur légale
+function getLoi(path, fallback) {
+  const parts = path.split('.');
+  let val = LOIS_BELGES;
+  for (const p of parts) { val = val?.[p]; if (val === undefined) return fallback; }
+  return val;
+}
+
+
+// Aliases courts pour calculs — connectés à LOIS_BELGES
+// (voir bloc RACCOURCIS CENTRALISÉS plus bas)
+const _PVP = LOIS_BELGES.remuneration.peculeVacances.patronal.pct;
+const _HLEG = LOIS_BELGES.tempsTravail.dureeHebdoLegale;
+
+// Fonction centralisée: calculer PP via LOIS_BELGES
+function calcPPFromLois(brut, opts) {
+  const L = LOIS_BELGES;
+  const onss = Math.round(brut * L.onss.travailleur * 100) / 100;
+  const imposable = brut - onss;
+  const annuel = imposable * 12;
+  const dirigeant = opts?.dirigeant || false;
+  const fp = dirigeant ? L.pp.fraisPro.dirigeant : L.pp.fraisPro.salarie;
+  const forfait = Math.min(annuel * fp.pct, fp.max);
+  const base = Math.max(0, annuel - forfait);
+  const isB2 = opts?.bareme2 || false;
+  let qc = 0, baseNet = base;
+  if (isB2) { qc = Math.min(base * L.pp.quotientConjugal.pct, L.pp.quotientConjugal.max); baseNet = base - qc; }
+  const calcTr = (b) => { let imp = 0, prev = 0; for (const t of L.pp.tranches) { const slice = Math.min(b, t.max) - Math.max(prev, t.min); if (slice > 0) imp += slice * t.taux; prev = t.max; } return imp; };
+  let impot = calcTr(baseNet);
+  if (isB2 && qc > 0) impot += calcTr(qc);
+  const qe = isB2 ? L.pp.quotiteExemptee.bareme2 : L.pp.quotiteExemptee.bareme1;
+  const enf = +(opts?.enfants || 0);
+  const enfH = +(opts?.enfantsHandicapes || 0);
+  const enfFisc = enf + enfH;
+  let redEnf = 0;
+  if (enfFisc > 0) { redEnf = enfFisc <= 8 ? L.pp.reductionsEnfants[enfFisc] : L.pp.reductionsEnfants[8] + (enfFisc - 8) * L.pp.reductionEnfantSupp; }
+  let totalRed = qe + redEnf;
+  if (opts?.parentIsole && enf > 0) totalRed += L.pp.reductionParentIsole;
+  if (opts?.handicape) totalRed += L.pp.reductionHandicape;
+  const taxeCom = (opts?.taxeCom || 7) / 100;
+  const ppAn = Math.max(0, impot - totalRed) * (1 + taxeCom);
+  return Math.round(ppAn / 12 * 100) / 100;
+}
+
+
+// ═══ RACCOURCIS CENTRALISÉS — Toute modif dans LOIS_BELGES se propage ICI ═══
+const _OW = LOIS_BELGES.onss.travailleur; // 0.1307
+const _OE = LOIS_BELGES.onss.employeur.total; // 0.2507
+const _OUV108 = LOIS_BELGES.onss.ouvrier108; // 1.08
+const _AT = LOIS_BELGES.assurances.accidentTravail.taux; // 0.01
+const _MED = LOIS_BELGES.assurances.medecineTravail.cout; // _MED
+const _CR_W = LOIS_BELGES.chequesRepas.partTravailleur.min; // _CR_W
+const _CR_VF = LOIS_BELGES.chequesRepas.valeurFaciale.max; // 8.00
+const _CR_E = LOIS_BELGES.chequesRepas.partPatronale.max; // 6.91
+const _PVS = LOIS_BELGES.remuneration.peculeVacances.simple.pct; // PV_SIMPLE
+const _PVD = LOIS_BELGES.remuneration.peculeVacances.double.pct; // 0.92
+const _PVE = LOIS_BELGES.remuneration.peculeVacances.patronal.pct; // _PVP()
+const _KM = LOIS_BELGES.fraisPropres.forfaitDeplacement.voiture; // _KM
+const _BUREAU = LOIS_BELGES.fraisPropres.forfaitBureau.max; // 154.74
+const _RMMMG = LOIS_BELGES.remuneration.RMMMG.montant18ans; // 2070.48
+const _IDX = LOIS_BELGES.remuneration.indexSante.coeff; // 2.0399
+
+
 // ═══════════════════════════════════════════════════════════════
 //  AUREUS SOCIAL PRO — Logiciel de Paie Belge Professionnel
 //  Modules: ONSS (Dimona/DMFA), Belcotax 281.xx, Formule-clé
@@ -2978,321 +3293,6 @@ async function loadData(supabase, userId){
 
 
 // ══════════════════════════════════════════════════════════════════════
-// ═══ SPRINT 37: MOTEUR CENTRAL LOIS BELGES — AUTO-UPDATE 1 CLIC  ═══
-// ══════════════════════════════════════════════════════════════════════
-// Base centralisée de TOUTES les constantes légales belges
-// Un seul endroit à modifier → propage partout automatiquement
-
-const LOIS_BELGES = {
-  _meta: { version: '2026.1.0', dateMAJ: '2026-01-01', source: 'SPF Finances / ONSS / CNT / Moniteur Belge', annee: 2026 },
-
-  // ═══ ONSS ═══
-  onss: {
-    travailleur: 0.1307,
-    employeur: { total: 0.2507, detail: { pension: 0.0886, maladie: 0.0370, chomage: 0.0138, accidents: 0.0087, maladiesPro: 0.0102, fermeture: 0.0012, moderation: 0.0560, cotisationsSpec: 0.0352 }},
-    plafondAnnuel: null, // pas de plafond en Belgique
-    ouvrier108: 1.08, // majoration 8% ouvriers
-    reductionStructurelle: { seuil: 9932.40, forfait: 0, pctAuDessus: 0 },
-    groupeCible: { jeunesNonQualifies: { age: 25, reduc: 1500 }, agees: { age: 55, reduc: 1500 }, handicapes: { reduc: 1500 }},
-  },
-
-  // ═══ PRÉCOMPTE PROFESSIONNEL ═══
-  pp: {
-    tranches: [
-      { min: 0, max: 16710, taux: 0.2675 },
-      { min: 16710, max: 29500, taux: 0.4280 },
-      { min: 29500, max: 51050, taux: 0.4815 },
-      { min: 51050, max: Infinity, taux: 0.5350 },
-    ],
-    fraisPro: { salarie: { pct: 0.30, max: 6070 }, dirigeant: { pct: 0.03, max: 3120 }},
-    quotiteExemptee: { bareme1: 2987.98, bareme2: 5975.96 },
-    quotientConjugal: { pct: 0.30, max: 12520 },
-    reductionsEnfants: [0, 624, 1656, 4404, 7620, 11100, 14592, 18120, 21996],
-    reductionEnfantSupp: 3864,
-    reductionParentIsole: 624,
-    reductionHandicape: 624,
-    reductionConjointHandicape: 624,
-    reductionConjointRevenuLimite: 1698,
-    reductionConjointPensionLimitee: 3390,
-    reductionPersonne65: 1992,
-    reductionAutreCharge: 624,
-    bonusEmploi: { pctReduction: 0.3314, maxMensuel: 194.03, seuilBrut1: 2561.42, seuilBrut2: 2997.59 },
-  },
-
-  // ═══ CSSS — Cotisation Spéciale Sécurité Sociale ═══
-  csss: {
-    isole: [
-      { min: 0, max: 18592.02, montant: 0, taux: 0 },
-      { min: 18592.02, max: 21070.96, montant: 0, taux: 0.076 },
-      { min: 21070.96, max: 37344.02, montant: 9.30, taux: 0.011 },
-      { min: 37344.02, max: 60181.95, montant: 9.30, tauxBase: 0.011, taux: 0.013, palierBase: 37344.02 },
-      { min: 60181.95, max: Infinity, montantFixe: 51.64 },
-    ],
-    menage2revenus: [
-      { min: 0, max: 18592.02, montant: 0, taux: 0 },
-      { min: 18592.02, max: 21070.96, montant: 0, taux: 0.076 },
-      { min: 21070.96, max: 60181.95, montant: 9.30, taux: 0.011 },
-      { min: 60181.95, max: Infinity, montantFixe: 51.64 },
-    ],
-    menage1revenu: [
-      { min: 0, max: 18592.02, montant: 0, taux: 0 },
-      { min: 18592.02, max: 21070.96, montant: 0, taux: 0.076 },
-      { min: 21070.96, max: 37344.02, montant: 9.30, taux: 0.011 },
-      { min: 37344.02, max: 60181.95, montant: 0, taux: 0.013 },
-      { min: 60181.95, max: Infinity, montantFixe: 51.64 },
-    ],
-  },
-
-  // ═══ RÉMUNÉRATION ═══
-  remuneration: {
-    RMMMG: { montant18ans: RMMMG, montant20ans6m: RMMMG, montant21ans12m: RMMMG, source: 'CNT - CCT 43/15' },
-    indexSante: { coeff: 2.0399, pivot: 125.60, dateDerniereIndex: '2024-12-01', prochainPivotEstime: '2026-06-01' },
-    peculeVacances: {
-      simple: { pct: PV_SIMPLE, base: 'brut annuel precedent' },
-      double: { pct: 0.9200, base: 'brut mensuel' },
-      patronal: { pct: (PV_SIMPLE*2+0.001), base: 'brut annuel precedent' },
-    },
-    treizieme: { obligatoire: true, cp200: true, base: 'salaire mensuel brut', onss: true },
-  },
-
-  // ═══ CHÈQUES-REPAS ═══
-  chequesRepas: {
-    partTravailleur: { min: 1.09, max: null },
-    valeurFaciale: { max: 8.00 },
-    partPatronale: { max: CR_PAT },
-    conditions: 'Par jour effectivement preste',
-    exonerationFiscale: true,
-    exonerationONSS: true,
-  },
-
-  // ═══ FRAIS PROPRES EMPLOYEUR ═══
-  fraisPropres: {
-    forfaitBureau: { max: FORF_BUREAU, base: 'mensuel' },
-    forfaitDeplacement: { voiture: FORF_KM, velo: 0.35, transportCommun: 1.00 },
-    forfaitRepresentation: { max: 40, base: 'mensuel sans justificatif' },
-    teletravail: { max: FORF_BUREAU, base: 'mensuel structurel' },
-  },
-
-  // ═══ ATN — AVANTAGES EN NATURE ═══
-  atn: {
-    voiture: { CO2Ref: { essence: 102, diesel: 84, hybride: 84 }, coeff: 0.055, min: 1600, formule: '(catalogue x 6/7 x vetuste) x %CO2 / 12' },
-    logement: { cadastralx100: true, meuble: 1.333 },
-    gsm: { forfait: 3, mensuel: true },
-    pc: { forfait: 6, mensuel: true },
-    internet: { forfait: 5, mensuel: true },
-    electricite: { cadre: 2130, noncadre: 960, annuel: true },
-    chauffage: { cadre: 4720, noncadre: 2130, annuel: true },
-  },
-
-  // ═══ PRÉAVIS (CCT 109 / Loi Statut Unique) ═══
-  preavis: {
-    // Durée en semaines par ancienneté (années)
-    employeur: [
-      { ancMin: 0, ancMax: 0.25, semaines: 1 },
-      { ancMin: 0.25, ancMax: 0.5, semaines: 3 },
-      { ancMin: 0.5, ancMax: 0.75, semaines: 4 },
-      { ancMin: 0.75, ancMax: 1, semaines: 5 },
-      { ancMin: 1, ancMax: 2, semaines: 6 },
-      { ancMin: 2, ancMax: 3, semaines: 7 },
-      { ancMin: 3, ancMax: 4, semaines: 9 },
-      { ancMin: 4, ancMax: 5, semaines: 12 },
-      { ancMin: 5, ancMax: 6, semaines: 15 },
-      { ancMin: 6, ancMax: 7, semaines: 18 },
-      { ancMin: 7, ancMax: 8, semaines: 21 },
-      { ancMin: 8, ancMax: 9, semaines: 24 },
-      { ancMin: 9, ancMax: 10, semaines: 27 },
-      { ancMin: 10, ancMax: 11, semaines: 30 },
-      { ancMin: 11, ancMax: 12, semaines: 33 },
-      { ancMin: 12, ancMax: 13, semaines: 36 },
-      { ancMin: 13, ancMax: 14, semaines: 39 },
-      { ancMin: 14, ancMax: 15, semaines: 42 },
-      { ancMin: 15, ancMax: 16, semaines: 45 },
-      { ancMin: 16, ancMax: 17, semaines: 48 },
-      { ancMin: 17, ancMax: 18, semaines: 51 },
-      { ancMin: 18, ancMax: 19, semaines: 54 },
-      { ancMin: 19, ancMax: 20, semaines: 57 },
-      { ancMin: 20, ancMax: 21, semaines: 60 },
-      { ancMin: 21, ancMax: 22, semaines: 62 },
-      { ancMin: 22, ancMax: 23, semaines: 63 },
-      { ancMin: 23, ancMax: 24, semaines: 64 },
-      { ancMin: 24, ancMax: 25, semaines: 65 },
-    ],
-    parAnSupp: 3, // +3 semaines par année > 25 ans
-    travailleur: { facteur: 0.5, min: 1, max: 13 },
-    motifGrave: 0,
-    outplacement: { seuil: 30, semaines: 4 },
-  },
-
-  // ═══ TEMPS DE TRAVAIL ═══
-  tempsTravail: {
-    dureeHebdoLegale: 38,
-    dureeHebdoMax: 38,
-    heuresSupp: { majoration50: 0.50, majoration100: 1.00, recuperation: true, plafondAnnuel: 120, plafondVolontaire: 360 },
-    nuit: { debut: '20:00', fin: '06:00', majoration: 0 },
-    dimanche: { majoration: 1.00, repos: true },
-    jourFerie: { nombre: 10, majoration: 2.00, remplacement: true },
-    petitChomage: { mariage: 2, deces1: 3, deces2: 1, communion: 1, demenagement: 1 },
-  },
-
-  // ═══ CONTRATS ═══
-  contrats: {
-    periodeEssai: { supprimee: true, exception: 'travail etudiant/interim/occupation temporaire' },
-    clauseNonConcurrence: { dureeMax: 12, brut_min: 42441, indemniteMin: 0.50 },
-    ecolecholage: { dureeMax: 36, brut_min: 39422, formationMin: 80 },
-  },
-
-  // ═══ SEUILS SOCIAUX ═══
-  seuils: {
-    electionsSociales: { cppt: 50, ce: 100 },
-    planFormation: 20,
-    bilanSocial: 20,
-    reglementTravail: 1,
-    delegationSyndicale: { cp200: 50 },
-    servicePPT: { interne: 20 },
-    conseillerPrevention: { interne: 20 },
-  },
-
-  // ═══ ASSURANCES ═══
-  assurances: {
-    accidentTravail: { taux: 0.01, obligatoire: true },
-    medecineTravail: { cout: COUT_MED, parTravailleur: true, annuel: false },
-    assuranceLoi: { obligatoire: true },
-    assuranceGroupe: { deductible: true, plafond80pct: true },
-  },
-
-  // ═══ ALLOCATIONS FAMILIALES (Région Bruxelles) ═══
-  allocFamBxl: {
-    base: { montant: 171.08, parEnfant: true },
-    supplement1218: 29.64,
-    supplementSocial: { plafondRevenu: 35978, montant: 54.38 },
-    primeNaissance: { premier: 1214.73, suivants: 607.37 },
-  },
-
-  // ═══ DIMONA ═══
-  dimona: {
-    delaiIN: 'Avant debut prestations',
-    delaiOUT: 'Le jour meme',
-    types: ['IN','OUT','UPDATE','CANCEL'],
-    canal: 'Portail securite sociale ou batch',
-    sanctionNiveau: 3,
-  },
-
-  // ═══ DMFA ═══
-  dmfa: {
-    periodicite: 'Trimestrielle',
-    delai: 'Dernier jour du mois suivant le trimestre',
-    format: 'XML via batch ou portail',
-    cotisationsPNP: true,
-  },
-
-  // ═══ BELCOTAX ═══
-  belcotax: {
-    delai: '1er mars annee N+1',
-    format: 'XML BelcotaxOnWeb',
-    fiches: ['281.10','281.13','281.14','281.20','281.30','281.50'],
-  },
-
-  // ═══ SOURCES OFFICIELLES ═══
-  sources: [
-    { id: 'spf', nom: 'SPF Finances', url: 'https://finances.belgium.be/fr/entreprises/personnel_et_remuneration/precompte_professionnel', type: 'PP/Fiscal' },
-    { id: 'onss', nom: 'ONSS', url: 'https://www.socialsecurity.be', type: 'Cotisations sociales' },
-    { id: 'cnt', nom: 'Conseil National du Travail', url: 'https://www.cnt-nar.be', type: 'CCT/RMMMG' },
-    { id: 'spf_emploi', nom: 'SPF Emploi', url: 'https://emploi.belgique.be', type: 'Droit du travail' },
-    { id: 'moniteur', nom: 'Moniteur Belge', url: 'https://www.ejustice.just.fgov.be/cgi/summary.pl', type: 'Legislation' },
-    { id: 'statbel', nom: 'Statbel', url: 'https://statbel.fgov.be/fr/themes/prix-la-consommation/indice-sante', type: 'Index/Prix' },
-    { id: 'bnb', nom: 'Banque Nationale', url: 'https://www.nbb.be', type: 'Bilan social' },
-    { id: 'refli', nom: 'Refli.be', url: 'https://refli.be/fr/documentation/computation/tax', type: 'Reference technique' },
-  ],
-};
-
-// Aliases courts pour accès rapide dans tout le code
-const LB=LOIS_BELGES;
-const TX_ONSS_W=LB.onss.travailleur; // 0.1307
-const TX_ONSS_E=LB.onss.employeur.total; // 0.2507
-const TX_OUV108=LB.onss.ouvrier108; // 1.08
-const TX_AT=LB.assurances.accidentTravail.taux; // 0.01
-const COUT_MED=LB.assurances.medecineTravail.cout; // COUT_MED
-const CR_TRAV=LB.chequesRepas.partTravailleur.min; // CR_TRAV
-const PP_EST=0.22; // PP estimation moyenne (~22% de l'imposable)
-const NET_FACTOR=(1-TX_ONSS_W)*(1-PP_EST); // facteur net approx = ~0.5645
-const quickNetEst=(b)=>Math.round(b*NET_FACTOR*100)/100; // estimation rapide net
-const CR_MAX=LB.chequesRepas.valeurFaciale.max; // 8.00
-const CR_PAT=LB.chequesRepas.partPatronale.max; // 6.91
-const FORF_BUREAU=LB.fraisPropres.forfaitBureau.max; // FORF_BUREAU
-const FORF_KM=LB.fraisPropres.forfaitDeplacement.voiture; // 0.4415
-const PV_SIMPLE=LB.remuneration.peculeVacances.simple.pct; // PV_SIMPLE
-const PV_DOUBLE=LB.remuneration.peculeVacances.double.pct; // 0.92
-const RMMMG=LB.remuneration.RMMMG.montant18ans; // RMMMG
-const BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 194.03
-const SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
-const SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
-const HEURES_HEBDO=LB.tempsTravail.dureeHebdoLegale; // 38
-const JOURS_FERIES=LB.tempsTravail.jourFerie.nombre; // 10
-
-
-// Fonction centralisée: obtenir une valeur légale
-function getLoi(path, fallback) {
-  const parts = path.split('.');
-  let val = LOIS_BELGES;
-  for (const p of parts) { val = val?.[p]; if (val === undefined) return fallback; }
-  return val;
-}
-
-
-// Aliases courts pour calculs — connectés à LOIS_BELGES
-// (voir bloc RACCOURCIS CENTRALISÉS plus bas)
-// _PVD voir RACCOURCIS plus bas
-const _PVP=()=>LOIS_BELGES.remuneration.peculeVacances.patronal.pct; // _PVP()
-// _KM voir RACCOURCIS plus bas
-const _HLEG=()=>LOIS_BELGES.tempsTravail.dureeHebdoLegale; // 38
-
-// Fonction centralisée: calculer PP via LOIS_BELGES
-function calcPPFromLois(brut, opts) {
-  const L = LOIS_BELGES;
-  const onss = Math.round(brut * L.onss.travailleur * 100) / 100;
-  const imposable = brut - onss;
-  const annuel = imposable * 12;
-  const dirigeant = opts?.dirigeant || false;
-  const fp = dirigeant ? L.pp.fraisPro.dirigeant : L.pp.fraisPro.salarie;
-  const forfait = Math.min(annuel * fp.pct, fp.max);
-  const base = Math.max(0, annuel - forfait);
-  const isB2 = opts?.bareme2 || false;
-  let qc = 0, baseNet = base;
-  if (isB2) { qc = Math.min(base * L.pp.quotientConjugal.pct, L.pp.quotientConjugal.max); baseNet = base - qc; }
-  const calcTr = (b) => { let imp = 0, prev = 0; for (const t of L.pp.tranches) { const slice = Math.min(b, t.max) - Math.max(prev, t.min); if (slice > 0) imp += slice * t.taux; prev = t.max; } return imp; };
-  let impot = calcTr(baseNet);
-  if (isB2 && qc > 0) impot += calcTr(qc);
-  const qe = isB2 ? L.pp.quotiteExemptee.bareme2 : L.pp.quotiteExemptee.bareme1;
-  const enf = +(opts?.enfants || 0);
-  const enfH = +(opts?.enfantsHandicapes || 0);
-  const enfFisc = enf + enfH;
-  let redEnf = 0;
-  if (enfFisc > 0) { redEnf = enfFisc <= 8 ? L.pp.reductionsEnfants[enfFisc] : L.pp.reductionsEnfants[8] + (enfFisc - 8) * L.pp.reductionEnfantSupp; }
-  let totalRed = qe + redEnf;
-  if (opts?.parentIsole && enf > 0) totalRed += L.pp.reductionParentIsole;
-  if (opts?.handicape) totalRed += L.pp.reductionHandicape;
-  const taxeCom = (opts?.taxeCom || 7) / 100;
-  const ppAn = Math.max(0, impot - totalRed) * (1 + taxeCom);
-  return Math.round(ppAn / 12 * 100) / 100;
-}
-
-
-// ═══ RACCOURCIS CENTRALISÉS — Toute modif dans LOIS_BELGES se propage ICI ═══
-const _OW = LOIS_BELGES.onss.travailleur; // 0.1307
-const _OE = LOIS_BELGES.onss.employeur.total; // 0.2507
-const _OUV108 = LOIS_BELGES.onss.ouvrier108; // 1.08
-const _AT = LOIS_BELGES.assurances.accidentTravail.taux; // 0.01
-const _MED = LOIS_BELGES.assurances.medecineTravail.cout; // _MED
-const _CR_W = LOIS_BELGES.chequesRepas.partTravailleur.min; // _CR_W
-const _CR_VF = LOIS_BELGES.chequesRepas.valeurFaciale.max; // 8.00
-const _CR_E = LOIS_BELGES.chequesRepas.partPatronale.max; // 6.91
-const _PVS = LOIS_BELGES.remuneration.peculeVacances.simple.pct; // PV_SIMPLE
-const _PVD = LOIS_BELGES.remuneration.peculeVacances.double.pct; // 0.92
-const _PVE = LOIS_BELGES.remuneration.peculeVacances.patronal.pct; // _PVP()
-const _KM = LOIS_BELGES.fraisPropres.forfaitDeplacement.voiture; // _KM
-const _BUREAU = LOIS_BELGES.fraisPropres.forfaitBureau.max; // 154.74
-const _RMMMG = LOIS_BELGES.remuneration.RMMMG.montant18ans; // 2070.48
-const _IDX = LOIS_BELGES.remuneration.indexSante.coeff; // 2.0399
 const _H_HEBDO = LOIS_BELGES.tempsTravail.dureeHebdoLegale; // 38
 const _FERIES = LOIS_BELGES.tempsTravail.jourFerie.nombre; // 10
 const _SEUIL_CPPT = LOIS_BELGES.seuils.electionsSociales.cppt; // 50
