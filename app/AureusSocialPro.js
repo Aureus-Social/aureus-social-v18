@@ -2265,8 +2265,8 @@ function calc(emp, per, co) {
   if (!isOuvrier) {
     // Employé: simple = 1 mois brut (déjà inclus dans salaire normal du mois de vacances)
     r.peculeVacCalc.simple = emp.monthlySalary || 0;
-    // Double = 92% du brut mensuel
-    r.peculeVacCalc.double = (emp.monthlySalary || 0) * 0.92;
+    // Double = 92% du brut mensuel (LOIS_BELGES)
+    r.peculeVacCalc.double = (emp.monthlySalary || 0) * LOIS_BELGES.remuneration.peculeVacances.double.pct;
     r.peculeVacCalc.total = r.peculeVacCalc.simple + r.peculeVacCalc.double;
     // 2ème partie du double pécule (7/92 du double) → ONSS 13,07% + cotis spéciale 1%
     const dp2 = r.peculeVacCalc.double * (7/92);
@@ -2981,7 +2981,9 @@ async function loadData(supabase, userId){
 // ═══ SPRINT 37: MOTEUR CENTRAL LOIS BELGES — AUTO-UPDATE 1 CLIC  ═══
 // ══════════════════════════════════════════════════════════════════════
 // Base centralisée de TOUTES les constantes légales belges
-// Un seul endroit à modifier → propage partout automatiquementconst LOIS_BELGES = {
+// Un seul endroit à modifier → propage partout automatiquement
+
+const LOIS_BELGES = {
   _meta: { version: '2026.1.0', dateMAJ: '2026-01-01', source: 'SPF Finances / ONSS / CNT / Moniteur Belge', annee: 2026 },
 
   // ═══ ONSS ═══
@@ -3446,7 +3448,7 @@ function calcPrecompteExact(brutMensuel, options) {
 }
 // Helper rapide: PP pour un brut donné (defaults isolé, 0 enfant)
 function quickPP(brut,sit,enf){return calcPrecompteExact(brut,{situation:sit||'isole',enfants:enf||0}).pp;}
-function quickNet(brut,sit,enf){const o=Math.round(brut*TX_ONSS_W*100)/100;return Math.round((brut-o-quickPP(brut,sit,enf))*100)/100;}
+function quickNet(brut,sit,enf){const o=Math.round(brut*_OW()*100)/100;return Math.round((brut-o-quickPP(brut,sit,enf))*100)/100;}
 
 // CSSS — Cotisation Spéciale Sécurité Sociale (AR 29/03/2012)
 function calcCSSS(brutMensuel, situation) {
@@ -3455,31 +3457,33 @@ function calcCSSS(brutMensuel, situation) {
   const imposable = brut - onss;
   const annuel = imposable * 12;
   const isole = !situation || situation === 'isole';
-
-  if (isole) {
-    if (annuel <= 18592.02) return 0;
-    if (annuel <= 21070.96) return Math.round((annuel - 18592.02) * 0.076 / 12 * 100) / 100;
-    if (annuel <= 37344.02) return Math.round((9.30 + (annuel - 21070.96) * 0.011) / 12 * 100) / 100;
-    if (annuel <= 60181.95) return Math.round((9.30 + (37344.02 - 21070.96) * 0.011 + (annuel - 37344.02) * 0.013) / 12 * 100) / 100;
-    return Math.round(51.64 * 100) / 100 / 12; // plafond
+  const baremes = isole ? LOIS_BELGES.csss.isole : LOIS_BELGES.csss.menage2revenus;
+  // Seuils CSSS dynamiques depuis LOIS_BELGES
+  const s0=baremes[0].max, s1=baremes[1].max, s2=baremes[2]?.max||60181.95;
+  const t1=baremes[1].taux, t2=baremes[2]?.taux||0.011;
+  const base2=baremes[2]?.montant||9.30;
+  const plafond=baremes[baremes.length-1].montantFixe||51.64;
+  if (annuel <= s0) return 0;
+  if (annuel <= s1) return Math.round((annuel - s0) * t1 / 12 * 100) / 100;
+  if (isole && baremes.length > 4) {
+    const s3=baremes[3]?.min||37344.02, t3=baremes[3]?.taux||0.013;
+    if (annuel <= s3) return Math.round((base2 + (annuel - s1) * t2) / 12 * 100) / 100;
+    if (annuel <= baremes[4]?.min||60181.95) return Math.round((base2 + (s3 - s1) * t2 + (annuel - s3) * t3) / 12 * 100) / 100;
   } else {
-    // Marié/cohabitant 2 revenus
-    if (annuel <= 18592.02) return 0;
-    if (annuel <= 21070.96) return Math.round((annuel - 18592.02) * 0.076 / 12 * 100) / 100;
-    if (annuel <= 60181.95) return Math.round((9.30 + (annuel - 21070.96) * 0.011) / 12 * 100) / 100;
-    return Math.round(51.64 / 12 * 100) / 100;
+    if (annuel <= s2) return Math.round((base2 + (annuel - s1) * t2) / 12 * 100) / 100;
   }
+  return Math.round(plafond / 12 * 100) / 100;
 }
 
-// Bonus emploi (Art. 289ter CIR) — Réduction fiscale max 191.07 EUR/mois (2025)
+// Bonus emploi (Art. 289ter CIR) — Réduction fiscale
 function calcBonusEmploi(brutMensuel) {
   if (brutMensuel <= 0) return 0;
   const onss = Math.round(brutMensuel * _OW() * 100) / 100;
   const refSalaire = brutMensuel;
-  // Plafonds 2025
-  const seuil1 = 2493.57; // 100% bonus
-  const seuil2 = 2900.00; // dégressif
-  const maxBonus = 191.07;
+  const BE = LOIS_BELGES.pp.bonusEmploi;
+  const seuil1 = BE.seuilBrut1;
+  const seuil2 = BE.seuilBrut2;
+  const maxBonus = BE.maxMensuel;
   
   if (refSalaire <= seuil1) return maxBonus;
   if (refSalaire <= seuil2) {
