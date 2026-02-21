@@ -13137,7 +13137,7 @@ const BaremesPPOfficiel=({s})=>{
 
     try{
       safeLS.set('aureus_pp_lastcheck',Date.now().toString());
-      safeLS.set('aureus_pp_history',JSON.stringify([entry,...(()=>{try{return JSON.parse(safeLS.get('aureus_pp_history'))}catch(e){return null}})()||'[]').slice(0,29)]));
+      safeLS.set('aureus_pp_history',JSON.stringify([entry,...(()=>{try{return JSON.parse(safeLS.get('aureus_pp_history'))}catch(e){return null}})()||[]).slice(0,29)]));
     }catch(e){}
   };
 
@@ -16647,7 +16647,7 @@ const HistoriquePilote=({s,supabase})=>{
         const {data}=await supabase.from('app_state').select('*').like('key','pilote_%').order('updated_at',{ascending:false}).limit(24);
         if(data){
           const h=data.map(r=>{
-            const val=(()=>{try{return JSON.parse(r.val||'{}')}catch(e){return null}})();
+            const val=(()=>{try{return JSON.parse(r.val||{})}catch(e){return null}})();
             const parts=r.key.replace('pilote_','').split('_');
             return {month:+parts[1],year:+parts[0],...val};
           });
@@ -17517,7 +17517,7 @@ const CommandCenter=({s,d})=>{
     };
 
     // ═══ 5. DOCUMENT ARCHIVE ═══
-    let docHistory=[];try{docHistory=((()=>{try{return JSON.parse(safeLS.get('aureus_doc_archive'))}catch(e){return null}})()||'[]')).slice(0,100);}catch(e){}
+    let docHistory=[];try{docHistory=((()=>{try{return JSON.parse(safeLS.get('aureus_doc_archive'))}catch(e){return null}})()||[])).slice(0,100);}catch(e){}
 
     const tabs=[
       {id:'alerts',l:'🚨 Alertes ('+alerts.length+')'},
