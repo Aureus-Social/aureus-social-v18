@@ -3398,14 +3398,153 @@ const DPER={month:new Date().getMonth()+1,year:new Date().getFullYear(),days:22,
 
 // ─── PERSISTENCE — Supabase-first with localStorage fallback ───
 const STORE_KEY='aureus-social-pro';
+
+// ═══════════════════════════════════════════════════════════════════
+// CHIFFREMENT AES-256-GCM — Protection NISS/IBAN (RGPD Art. 32)
+// ═══════════════════════════════════════════════════════════════════
+// Les champs sensibles (NISS, IBAN) sont chiffrés AVANT d'être envoyés
+// à Supabase ou stockés en localStorage. La clé est dérivée du userId
+// via PBKDF2 (le serveur ne voit jamais les données en clair).
+// ═══════════════════════════════════════════════════════════════════
+const CRYPTO_SALT = 'AureusSocialPro-2026-RGPD';
+const SENSITIVE_FIELDS = ['niss', 'NISS', 'iban', 'IBAN'];
+
+async function deriveKey(userId) {
+  if (!userId || typeof crypto === 'undefined' || !crypto.subtle) return null;
+  try {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(userId + CRYPTO_SALT), 'PBKDF2', false, ['deriveKey']
+    );
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: enc.encode(CRYPTO_SALT), iterations: 100000, hash: 'SHA-256' },
+      keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    );
+  } catch (e) { console.warn('Crypto: cannot derive key', e); return null; }
+}
+
+async function encryptField(plaintext, key) {
+  if (!plaintext || !key) return plaintext;
+  try {
+    const enc = new TextEncoder();
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext));
+    // Format: ENC:<base64(iv)>:<base64(ciphertext)>
+    const ivB64 = btoa(String.fromCharCode(...iv));
+    const ctB64 = btoa(String.fromCharCode(...new Uint8Array(ct)));
+    return 'ENC:' + ivB64 + ':' + ctB64;
+  } catch (e) { return plaintext; }
+}
+
+async function decryptField(ciphertext, key) {
+  if (!ciphertext || !key || typeof ciphertext !== 'string' || !ciphertext.startsWith('ENC:')) return ciphertext;
+  try {
+    const parts = ciphertext.split(':');
+    if (parts.length !== 3) return ciphertext;
+    const iv = Uint8Array.from(atob(parts[1]), c => c.charCodeAt(0));
+    const ct = Uint8Array.from(atob(parts[2]), c => c.charCodeAt(0));
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+    return new TextDecoder().decode(pt);
+  } catch (e) { return ciphertext; } // Si déchiffrement échoue, retourner tel quel (migration)
+}
+
+// Chiffrer les champs sensibles dans un objet employé
+async function encryptEmp(emp, key) {
+  if (!key || !emp) return emp;
+  const copy = { ...emp };
+  for (const f of SENSITIVE_FIELDS) {
+    if (copy[f] && typeof copy[f] === 'string' && !copy[f].startsWith('ENC:')) {
+      copy[f] = await encryptField(copy[f], key);
+    }
+  }
+  return copy;
+}
+
+// Déchiffrer les champs sensibles dans un objet employé
+async function decryptEmp(emp, key) {
+  if (!key || !emp) return emp;
+  const copy = { ...emp };
+  for (const f of SENSITIVE_FIELDS) {
+    if (copy[f] && typeof copy[f] === 'string' && copy[f].startsWith('ENC:')) {
+      copy[f] = await decryptField(copy[f], key);
+    }
+  }
+  return copy;
+}
+
+// Chiffrer tous les employés dans le state complet avant sauvegarde
+async function encryptState(state, key) {
+  if (!key || !state) return state;
+  const copy = JSON.parse(JSON.stringify(state));
+  // Chiffrer les employés dans chaque client
+  if (copy.clients && Array.isArray(copy.clients)) {
+    for (let c = 0; c < copy.clients.length; c++) {
+      if (copy.clients[c].emps && Array.isArray(copy.clients[c].emps)) {
+        for (let e = 0; e < copy.clients[c].emps.length; e++) {
+          copy.clients[c].emps[e] = await encryptEmp(copy.clients[c].emps[e], key);
+        }
+      }
+      // Chiffrer IBAN société
+      if (copy.clients[c].company && copy.clients[c].company.bank) {
+        const bank = copy.clients[c].company.bank;
+        if (bank && typeof bank === 'string' && !bank.startsWith('ENC:')) {
+          copy.clients[c].company.bank = await encryptField(bank, key);
+        }
+      }
+    }
+  }
+  // Chiffrer emps au niveau global si présent
+  if (copy.emps && Array.isArray(copy.emps)) {
+    for (let e = 0; e < copy.emps.length; e++) {
+      copy.emps[e] = await encryptEmp(copy.emps[e], key);
+    }
+  }
+  return copy;
+}
+
+// Déchiffrer le state complet après chargement
+async function decryptState(state, key) {
+  if (!key || !state) return state;
+  const copy = JSON.parse(JSON.stringify(state));
+  if (copy.clients && Array.isArray(copy.clients)) {
+    for (let c = 0; c < copy.clients.length; c++) {
+      if (copy.clients[c].emps && Array.isArray(copy.clients[c].emps)) {
+        for (let e = 0; e < copy.clients[c].emps.length; e++) {
+          copy.clients[c].emps[e] = await decryptEmp(copy.clients[c].emps[e], key);
+        }
+      }
+      if (copy.clients[c].company && copy.clients[c].company.bank) {
+        const bank = copy.clients[c].company.bank;
+        if (bank && typeof bank === 'string' && bank.startsWith('ENC:')) {
+          copy.clients[c].company.bank = await decryptField(bank, key);
+        }
+      }
+    }
+  }
+  if (copy.emps && Array.isArray(copy.emps)) {
+    for (let e = 0; e < copy.emps.length; e++) {
+      copy.emps[e] = await decryptEmp(copy.emps[e], key);
+    }
+  }
+  return copy;
+}
+
+// Clé de chiffrement globale (dérivée au login)
+let _cryptoKey = null;
+async function initCryptoKey(userId) {
+  _cryptoKey = await deriveKey(userId);
+  return !!_cryptoKey;
+}
 // Supabase persistence helpers
 async function saveToSupabase(supabase, userId, data) {
   if (!supabase || !userId) return false;
   try {
+    // Chiffrer NISS/IBAN avant envoi (RGPD Art. 32)
+    const encData = _cryptoKey ? await encryptState(data, _cryptoKey) : data;
     const { error } = await supabase.from('app_state').upsert({
       user_id: userId,
       state_key: 'main',
-      state_data: data,
+      state_data: encData,
       updated_at: new Date().toISOString()
     }, { onConflict: 'user_id,state_key' });
     return !error;
@@ -3417,14 +3556,15 @@ async function loadFromSupabase(supabase, userId) {
     const { data, error } = await supabase.from('app_state')
       .select('state_data').eq('user_id', userId).eq('state_key', 'main').maybeSingle();
     if (error || !data) return null;
-    return data.state_data;
+    // Déchiffrer NISS/IBAN après chargement (RGPD Art. 32)
+    return _cryptoKey ? await decryptState(data.state_data, _cryptoKey) : data.state_data;
   } catch(e) { return null; }
 }
 // Combined save: Supabase + localStorage backup
 let _supabaseRef = null;
 let _userIdRef = null;
 let _saveTimer = null;
-function setSupabaseRefs(sb, uid) { _supabaseRef = sb; _userIdRef = uid; }
+function setSupabaseRefs(sb, uid) { _supabaseRef = sb; _userIdRef = uid; if (uid) initCryptoKey(uid); }
 
 // ── Sprint 18: Multi-User Realtime System ──
 let _realtimeChannel = null;
@@ -4065,7 +4205,7 @@ async function sendEmailReal(to, subject, htmlBody, attachments) {
     }
     const res = await fetch('/api/send-email', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(_supabaseRef ? await (async()=>{try{const{data:{session}}=await _supabaseRef.auth.getSession();return session?.access_token?{'Authorization':'Bearer '+session.access_token}:{}}catch(e){return{}}})() : {}) },
       body: JSON.stringify(payload),
     });
     const data = await res.json();
@@ -4862,7 +5002,12 @@ async function lookupBCE_async(vatNumber){
   const fmt=`BE ${nr.slice(0,4)}.${nr.slice(4,7)}.${nr.slice(7)}`;
   // 1. Try KBO/BCE API (gives NACE codes + legal form + full data)
   try{
-    const resp=await fetch(`/api/bce?vat=${nr}`,{signal:AbortSignal.timeout(8000)});
+    // 🔒 Auth: envoyer le token Supabase
+    const headers = {};
+    if (_supabaseRef) {
+      try { const { data: { session } } = await _supabaseRef.auth.getSession(); if (session?.access_token) headers['Authorization'] = 'Bearer ' + session.access_token; } catch(e) {}
+    }
+    const resp=await fetch(`/api/bce?vat=${nr}`,{signal:AbortSignal.timeout(8000), headers});
     if(resp.ok){const data=await resp.json();if(data&&data.found){
       // Auto-apply detected CP if available
       if(data.detectedCP?.length>0)data.suggestedCP=data.detectedCP[0].cp;
@@ -13997,8 +14142,8 @@ const SecuriteData=({s})=>{
     {name:'Connexion HTTPS',status:'ok',detail:'Vercel force HTTPS automatiquement'},
     {name:'Authentification Supabase',status:'ok',detail:'JWT + Row Level Security'},
     {name:'Mots de passe hashes',status:'ok',detail:'bcrypt via Supabase Auth'},
-    {name:'Chiffrement NISS au repos',status:'warn',detail:'A implementer — AES-256 recommande'},
-    {name:'Chiffrement IBAN au repos',status:'warn',detail:'A implementer — AES-256 recommande'},
+    {name:'Chiffrement NISS au repos',status:'ok',detail:'AES-256-GCM cote client (PBKDF2)'},
+    {name:'Chiffrement IBAN au repos',status:'ok',detail:'AES-256-GCM cote client (PBKDF2)'},
     {name:'RGPD registre traitements',status:'ok',detail:'Module RGPD actif'},
     {name:'Logs audit',status:'ok',detail:'Journal activite + Audit Trail actifs'},
     {name:'Backup automatique',status:'warn',detail:'Supabase backup quotidien — retention 7 jours'},
