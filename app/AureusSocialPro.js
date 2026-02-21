@@ -17517,7 +17517,7 @@ const CommandCenter=({s,d})=>{
     };
 
     // ═══ 5. DOCUMENT ARCHIVE ═══
-    let docHistory=[];try{docHistory=((()=>{try{return JSON.parse(safeLS.get('aureus_doc_archive'))}catch(e){return null}})()||[])).slice(0,100);}catch(e){}
+    let docHistory=[];try{docHistory=((()=>{try{return JSON.parse(safeLS.get('aureus_doc_archive'))}catch(e){return null}})()||[]).slice(0,100);}catch(e){}
 
     const tabs=[
       {id:'alerts',l:'🚨 Alertes ('+alerts.length+')'},
