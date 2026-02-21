@@ -1,4 +1,4 @@
-// Aureus Social Pro v20.2
+﻿// Aureus Social Pro v20.2
 "use client"
 import { useState, useReducer, useRef, useMemo, useEffect, createContext, useContext } from "react";
 
@@ -14419,6 +14419,51 @@ const GestionPrimes=({s,d})=>{
     {id:'indemnite_teletravail',label:'Indemnite teletravail',icon:'🏠',taxable:false,onss:false,max:FORF_BUREAU,desc:'Forfait bureau max 157,83 EUR/mois (ONSS)'},
     {id:'prime_resultat',label:'Prime de resultat',icon:'📊',taxable:true,onss:true,desc:'Prime liee aux performances individuelles'},
     {id:'avantage_vehicule',label:'Avantage vehicule / ATN',icon:'🚗',taxable:true,onss:false,desc:'ATN calcule selon CO2 et valeur catalogue'},
+    // ═══ NOUVELLES PRIMES AJOUTÉES ═══
+    {id:'cheques_cadeaux',label:'Cheques-cadeaux / Cadeaux',icon:'🎁',taxable:false,onss:false,max:40,desc:'Max 40 EUR/an exonere. Occasions: Noel/St-Nicolas. Mariage=245 EUR, naissance=245 EUR'},
+    {id:'transport_domicile',label:'Intervention transport domicile-travail',icon:'🚌',taxable:false,onss:false,desc:'Obligatoire CP 200 — remboursement abonnement ou 0,15 EUR/km. Exonere jusqu\'a 490 EUR/an'},
+    {id:'prime_equipe_nuit',label:'Prime d\'equipe / nuit / dimanche',icon:'🌙',taxable:true,onss:true,desc:'Supplements horaires: nuit +35%, samedi +50%, dimanche/ferie +100% (selon CP)'},
+    {id:'plan_cafeteria',label:'Plan cafeteria',icon:'☕',taxable:false,onss:false,desc:'Enveloppe flexible — le travailleur choisit ses avantages dans un budget fixe'},
+    {id:'participation_benefices',label:'Participation aux benefices',icon:'💰',taxable:true,onss:false,desc:'Loi du 22/05/2001 — taxee a 7% uniquement (cotisation de solidarite 13,07%)'},
+    {id:'prime_naissance',label:'Prime de naissance / mariage',icon:'👶',taxable:false,onss:false,max:245,desc:'Exoneree si max 245 EUR. Prevue par CCT sectorielle dans beaucoup de CP'},
+    {id:'atn_gsm_pc',label:'GSM / PC / Tablette (ATN)',icon:'💻',taxable:true,onss:true,desc:'ATN forfaitaire: smartphone=3 EUR/mois, PC/tablette=72 EUR/an, internet=5 EUR/mois'},
+    {id:'frais_propres',label:'Frais propres de l\'employeur',icon:'📎',taxable:false,onss:false,desc:'Remboursement frais reels ou forfait. Non imposable si justifie (deplacement, repas, parking)'},
+    {id:'assurance_hospi',label:'Assurance hospitalisation',icon:'🏥',taxable:false,onss:false,desc:'Avantage collectif non imposable si offert a tous. Deductible pour l\'employeur'},
+    {id:'indemnite_velo',label:'Indemnite velo',icon:'🚴',taxable:false,onss:false,max:0.35,desc:'0,35 EUR/km (2026) exonere — max 2.500 EUR/an. Cumulable avec abonnement transport'},
+    {id:'prime_bilinguisme',label:'Prime de bilinguisme',icon:'🗣',taxable:true,onss:true,desc:'Supplement pour connaissance d\'une 2eme langue nationale. Courant a Bruxelles'},
+    {id:'prime_danger',label:'Prime de danger / penibilite',icon:'⚠',taxable:true,onss:true,desc:'Supplement pour travail dangereux, insalubre ou penible. Selon CP et convention'},
+    {id:'bonus_salarial',label:'Bonus salarial (Loi 2008)',icon:'🏆',taxable:true,onss:true,desc:'Prime liee aux resultats collectifs — plan bonus deposable au SPF Emploi'},
+    {id:'prime_depart',label:'Indemnite de depart',icon:'👋',taxable:true,onss:true,desc:'Indemnite de rupture ou preavis non preste. Calcul: anciennete x remuneration'},
+    {id:'pecule_vacances',label:'Pecule de vacances anticipe',icon:'🏖',taxable:true,onss:true,desc:'Simple (92%) + double (92%) verse en mai/juin. Pecule anticipe si depart en cours d\'annee'},
+    {id:'prime_fidelite',label:'Timbres fidelite / Prime sectorielle',icon:'🎖',taxable:true,onss:true,desc:'Prime annuelle sectorielle (ex: CP 124 construction = timbres fidelite/intemperies)'},
+    {id:'supplement_heure_sup',label:'Supplement heures supplementaires',icon:'⏰',taxable:true,onss:true,desc:'Majoration 50% (semaine) ou 100% (dimanche/ferie). 180h/an avec recuperation obligatoire'},
+    {id:'flexi_salaire',label:'Flexi-salaire (Horeca/Commerce)',icon:'🍕',taxable:false,onss:false,desc:'Remuneration flexi-job: cotisation speciale 28% employeur. Exonere IPP pour travailleur'},
+    {id:'prime_chauffage',label:'Prime de chauffage / energie',icon:'🔥',taxable:false,onss:false,max:250,desc:'Intervention dans frais d\'energie. Exoneree si via fonds social sectoriel'},
+    {id:'prime_garde',label:'Prime de garde / astreinte',icon:'📞',taxable:true,onss:true,desc:'Indemnite pour disponibilite en dehors des heures. Forfait ou % du salaire horaire'},
+    {id:'per_diem',label:'Indemnite de sejour / per diem',icon:'🧳',taxable:false,onss:false,desc:'Forfait deplacement professionnel: Belgique max 19,99 EUR/jour, etranger selon pays (SPF)'},
+    {id:'atn_logement',label:'ATN Logement',icon:'🏡',taxable:true,onss:true,desc:'Mise a disposition d\'un logement — ATN forfaitaire = RC indexe x 100/60 x 2 (non-meuble)'},
+    {id:'pret_taux_reduit',label:'Pret a taux reduit (ATN)',icon:'🏦',taxable:true,onss:true,desc:'Pret consenti a un taux inferieur au marche — ATN = difference de taux x capital'},
+    {id:'intervention_creche',label:'Intervention garde d\'enfants / creche',icon:'👧',taxable:false,onss:false,max:15,desc:'Intervention employeur dans frais de creche. Exoneree si max 15 EUR/jour/enfant'},
+    {id:'bonus_bienvenue',label:'Bonus de bienvenue / signing bonus',icon:'🤝',taxable:true,onss:true,desc:'Prime unique a l\'embauche. Entierement imposable et soumise ONSS'},
+    {id:'prime_retention',label:'Prime de retention / fidelisation',icon:'🔒',taxable:true,onss:true,desc:'Prime conditionnee a une duree minimale de service. Imposable + ONSS'},
+    {id:'non_concurrence',label:'Clause de non-concurrence (indemnite)',icon:'🚫',taxable:true,onss:true,desc:'Indemnite = min 50% du salaire brut x duree clause (max 12 mois). Art. 65 loi contrat travail'},
+    {id:'outplacement',label:'Outplacement / reclassement',icon:'🎯',taxable:false,onss:false,desc:'Obligatoire si preavis >= 30 semaines. Valeur min 1.800 EUR / 60h. Non imposable pour travailleur'},
+    {id:'prime_fin_cdd',label:'Prime de fin de contrat (CDD)',icon:'📅',taxable:true,onss:true,desc:'Indemnite si non-renouvellement CDD successifs (selon jurisprudence et convention)'},
+    {id:'petit_chomage',label:'Petit chomage (absences autorisees)',icon:'🗓',taxable:true,onss:true,desc:'Conge remunere: mariage=2j, deces=1-3j, communion=1j, demenagement=1j (AR 28/08/1963)'},
+    {id:'formation_etudes',label:'Remboursement formation / etudes',icon:'🎓',taxable:false,onss:false,desc:'Prise en charge formation professionnelle. Non imposable si liee a l\'activite. 5 jours/an min'},
+    {id:'parking_gratuit',label:'Parking gratuit mis a disposition',icon:'🅿',taxable:false,onss:false,desc:'Pas d\'ATN si parking sur lieu de travail. ATN si parking prive a domicile'},
+    {id:'carte_carburant',label:'Carte carburant / recharge electrique',icon:'⛽',taxable:true,onss:true,desc:'ATN lie au vehicule de societe. Borne de recharge a domicile: ATN possible si usage prive'},
+    {id:'abonnement_fitness',label:'Abonnement fitness / bien-etre',icon:'💪',taxable:true,onss:true,desc:'Avantage imposable sauf si collectif et accessoire. Alternative: cheques sport & culture'},
+    {id:'repas_gratuit',label:'Repas gratuit / cantine',icon:'🍽',taxable:true,onss:true,desc:'ATN forfaitaire: 1,09 EUR/repas (2026). Si participation travailleur >= forfait: pas d\'ATN'},
+    {id:'commission',label:'Commission / Tantieme',icon:'💵',taxable:true,onss:true,desc:'Remuneration variable liee au chiffre d\'affaires ou resultats. Base ONSS + PP'},
+    {id:'prime_productivite',label:'Prime de productivite',icon:'📈',taxable:true,onss:true,desc:'Prime liee au rendement individuel ou collectif. Entierement imposable'},
+    {id:'indemnite_rupture',label:'Indemnite compensatoire de preavis',icon:'⚖',taxable:true,onss:true,desc:'= remuneration x duree preavis non prestee. Soumise ONSS + PP. Calcul selon anciennete'},
+    {id:'atn_electricite',label:'ATN Chauffage / Electricite',icon:'💡',taxable:true,onss:true,desc:'Si fourni gratuitement: ATN forfaitaire 2.280 EUR/an (chauffage) + 1.140 EUR/an (electricite) 2026'},
+    {id:'prime_demenagement',label:'Prime de demenagement',icon:'📦',taxable:false,onss:false,desc:'Si impose par employeur (rapprochement lieu travail). Exoneree si justifiee et raisonnable'},
+    {id:'allocation_familiale_compl',label:'Supplement allocations familiales',icon:'👨‍👩‍👧‍👦',taxable:false,onss:false,desc:'Complement employeur aux allocations familiales regionales. Rare mais existe dans certaines CP'},
+    {id:'prime_brevet',label:'Prime d\'invention / brevet',icon:'💡',taxable:true,onss:false,desc:'Remuneration pour invention brevetable. Regime fiscal avantageux: retenue 15% si cession droits'},
+    {id:'indemnite_licenciement_collectif',label:'Indemnite licenciement collectif (Renault)',icon:'🏭',taxable:true,onss:true,desc:'Loi Renault: information/consultation prealable + plan social. Indemnite supplementaire obligatoire'},
+    {id:'prime_prepension',label:'Complement RCC (prepension)',icon:'🧓',taxable:true,onss:true,desc:'Regime chomage avec complement entreprise. Complement = 50% difference salaire net - allocation chomage'},
   ];
 
   const addPrime=()=>{
@@ -14440,7 +14485,7 @@ const GestionPrimes=({s,d})=>{
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
       <div>
         <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🎁 Gestion Primes & Avantages</h2>
-        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>12 types de primes belges — optimisation fiscale integree</p>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>56 types de primes belges — optimisation fiscale integree</p>
       </div>
       <div style={{display:'flex',gap:8}}>
         <ClientSearch clients={clients} value={selClient} onChange={v=>setSelClient(v)} valueKey="index"/>
@@ -29524,5 +29569,4 @@ function FloatingLegalAgent({onAction}){
 export default function AureusSocialPro({ supabase, user, onLogout }) {
   return <LangProvider><AppInner supabase={supabase} user={user} onLogout={onLogout}/></LangProvider>;
 }// clean
-
 
