@@ -20546,7 +20546,7 @@ function Employees({s,d}) {
   const [form,setF]=useState(null);
   const [ed,setEd]=useState(false);
   const [search,setSearch]=useState('');
-  const [filter,setFilter]=useState('all'); // all, active, sorti, student, ouvrier
+  const [filter,setFilter]=useState('all'); // all, active, sorti, student, indep
   const [viewMode,setViewMode]=useState('list'); // list, grid
   const [empPage,setEmpPage]=useState(0);
   const EMP_PAGE_SIZE=50;
@@ -20712,6 +20712,7 @@ function Employees({s,d}) {
     if(filter==='active'&&e.status==='sorti')return false;
     if(filter==='sorti'&&e.status!=='sorti')return false;
     if(filter==='student'&&e.contract!=='student')return false;
+    if(filter==='indep'&&!['indep_princ','indep_compl','mandataire','freelance'].includes(e.contract))return false;
     if(filter==='ouvrier'&&e.statut!=='ouvrier')return false;
     if(search){
       const q=search.toLowerCase();
@@ -20736,6 +20737,7 @@ function Employees({s,d}) {
   const activeCount=s.emps.filter(e=>e.status!=='sorti').length;
   const sortiCount=s.emps.filter(e=>e.status==='sorti').length;
   const studentCount=s.emps.filter(e=>e.contract==='student').length;
+  const indepCount=s.emps.filter(e=>['indep_princ','indep_compl','mandataire','freelance'].includes(e.contract)).length;
 
   return <div>
     <PH title="Gestion des Employés" sub={`${s.emps.length} employé(s)`} actions={<div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
@@ -20756,6 +20758,10 @@ function Employees({s,d}) {
         {l:'⏰ Mi-temps CP200',p:{fn:'Employé mi-temps',contract:'CDI',regime:'half',whWeek:19,cp:'200',statut:'employe',monthlySalary:1400}},
         {l:'📋 CDD 6 mois',p:{fn:'Employé CDD',contract:'CDD',regime:'full',whWeek:38,cp:'200',statut:'employe',monthlySalary:2600,endD:new Date(Date.now()+180*86400000).toISOString().slice(0,10)}},
         {l:'🎓 Étudiant',p:{fn:'Étudiant',contract:'CDD',regime:'full',whWeek:20,cp:'200',statut:'etudiant',monthlySalary:1200}},
+        {l:'🏢 Indép. principal',p:{fn:'Indépendant',contract:'indep_princ',regime:'full',whWeek:40,cp:'200',statut:'employe',monthlySalary:3500}},
+        {l:'📎 Indép. compl.',p:{fn:'Indépendant compl.',contract:'indep_compl',regime:'full',whWeek:20,cp:'200',statut:'employe',monthlySalary:1500}},
+        {l:'👑 Mandataire',p:{fn:'Gérant',contract:'mandataire',regime:'full',whWeek:40,cp:'200',statut:'dirigeant',monthlySalary:5000}},
+        {l:'💼 Freelance',p:{fn:'Consultant',contract:'freelance',regime:'full',whWeek:40,cp:'200',statut:'employe',monthlySalary:4000}},
       ].map((pr,i)=><button key={i} onClick={()=>{setF({...empty,...pr.p,startD:new Date().toISOString().slice(0,10)});setEd(false);}} style={{padding:'5px 10px',borderRadius:6,border:'1px solid rgba(198,163,78,.12)',background:'rgba(198,163,78,.04)',color:'#c6a34e',fontSize:10,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>{pr.l}</button>)}
     </div>
     {/* Search and filters bar */}
@@ -20770,6 +20776,7 @@ function Employees({s,d}) {
           {id:"active",l:`Actifs (${activeCount})`},
           {id:"sorti",l:`Sortis (${sortiCount})`},
           {id:"student",l:`Étudiants (${studentCount})`},
+          {id:"indep",l:`Indépendants (${indepCount})`},
         ].map(f=>
           <button key={f.id} onClick={()=>setFilter(f.id)} style={{padding:'7px 12px',borderRadius:6,fontSize:11,fontWeight:filter===f.id?600:400,border:'1px solid '+(filter===f.id?'rgba(198,163,78,.3)':'rgba(139,115,60,.1)'),background:filter===f.id?'rgba(198,163,78,.1)':'transparent',color:filter===f.id?'#c6a34e':'#5e5c56',cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>{f.l}</button>
         )}
