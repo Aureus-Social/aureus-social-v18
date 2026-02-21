@@ -100,6 +100,21 @@ var LOIS_BELGES = {
     teletravail: { max: 154.74, base: 'mensuel structurel' },
   },
 
+
+  // ═══ AVANTAGES — ALIAS POUR MODULES ═══
+  avantages: {
+    fraisPropres: {
+      bureau: 154.74,
+      km: 0.4415,
+      repas: 19.22,
+      teletravail: 154.74,
+    },
+    atnGSM: 3,
+    atnPC: 6,
+    atnInternet: 5,
+    ecoMax: 250,
+  },
+
   // ═══ ATN — AVANTAGES EN NATURE ═══
   atn: {
     voiture: { CO2Ref: { essence: 102, diesel: 84, hybride: 84 }, coeff: 0.055, min: 1600, formule: '(catalogue x 6/7 x vetuste) x %CO2 / 12' },
