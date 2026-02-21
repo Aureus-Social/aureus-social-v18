@@ -64,7 +64,7 @@ const lines = fullSrc.split('\n');
 const block1 = lines.slice(0, 923).join('\n');
 const block2 = lines.slice(955, 1140).join('\n');
 const block3 = lines.slice(1959, 3044).join('\n');
-const block4 = lines.slice(3635, 4054).join('\n');
+const block4 = lines.slice(3775, 4194).join('\n');
 
 // Nettoyer les imports/exports
 let src = [block1, block2, block3, block4].join('\n');
