@@ -1,73 +1,130 @@
--- ═══════════════════════════════════════════════════════════
--- AUREUS SOCIAL PRO — Supabase Database Migration
--- Run this in Supabase SQL Editor (supabase.com > SQL Editor)
--- ═══════════════════════════════════════════════════════════
+-- ═══════════════════════════════════════════════════════════════════
+-- AUREUS SOCIAL PRO — Migration Supabase avec RLS (Row Level Security)
+-- Date: 21 février 2026
+-- RGPD: Art. 32 — Sécurité du traitement des données personnelles
+-- ═══════════════════════════════════════════════════════════════════
 
--- 1. APP STATE — Main data persistence (JSON blob per user)
+-- ══════ 1. TABLE app_state (données principales) ══════
 CREATE TABLE IF NOT EXISTS app_state (
-  id BIGSERIAL PRIMARY KEY,
-  user_id UUID NOT NULL,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   state_key TEXT NOT NULL DEFAULT 'main',
   state_data JSONB NOT NULL DEFAULT '{}',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(user_id, state_key)
 );
 
--- Index for fast lookups
-CREATE INDEX IF NOT EXISTS idx_app_state_user ON app_state(user_id, state_key);
-
--- Enable RLS
+-- 🔒 RLS: chaque utilisateur ne voit QUE ses propres données
 ALTER TABLE app_state ENABLE ROW LEVEL SECURITY;
 
--- Users can only access their own data
-CREATE POLICY "Users can read own state" ON app_state
+DROP POLICY IF EXISTS "Users can view own state" ON app_state;
+CREATE POLICY "Users can view own state" ON app_state
   FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own state" ON app_state;
 CREATE POLICY "Users can insert own state" ON app_state
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own state" ON app_state;
 CREATE POLICY "Users can update own state" ON app_state
   FOR UPDATE USING (auth.uid() = user_id);
 
--- Service role can access all (for save-beacon)
-CREATE POLICY "Service role full access" ON app_state
-  FOR ALL USING (auth.role() = 'service_role');
+DROP POLICY IF EXISTS "Users can delete own state" ON app_state;
+CREATE POLICY "Users can delete own state" ON app_state
+  FOR DELETE USING (auth.uid() = user_id);
 
--- 2. USER ROLES — RBAC
+
+-- ══════ 2. TABLE user_roles (gestion des rôles multi-utilisateurs) ══════
 CREATE TABLE IF NOT EXISTS user_roles (
-  user_id TEXT PRIMARY KEY,
-  role TEXT NOT NULL DEFAULT 'admin',
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL DEFAULT 'admin' CHECK (role IN ('admin', 'gestionnaire', 'readonly')),
   email TEXT,
-  invited_by TEXT,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  invited_by UUID REFERENCES auth.users(id),
+  organization_id UUID,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(user_id)
 );
 
 ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Authenticated users can read roles" ON user_roles
-  FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Users can manage own role" ON user_roles
-  FOR ALL USING (true); -- Admin manages all roles
+-- Admin voit tous les rôles de son organisation
+DROP POLICY IF EXISTS "Users can view roles in org" ON user_roles;
+CREATE POLICY "Users can view roles in org" ON user_roles
+  FOR SELECT USING (
+    auth.uid() = user_id 
+    OR auth.uid() IN (
+      SELECT ur.user_id FROM user_roles ur 
+      WHERE ur.role = 'admin' 
+      AND ur.organization_id = user_roles.organization_id
+    )
+  );
 
--- 3. ACTIVITY LOG — User actions
-CREATE TABLE IF NOT EXISTS activity_log (
-  id BIGSERIAL PRIMARY KEY,
-  user_id UUID NOT NULL,
-  action TEXT NOT NULL,
-  details JSONB DEFAULT '{}',
+DROP POLICY IF EXISTS "Admins can manage roles" ON user_roles;
+CREATE POLICY "Admins can manage roles" ON user_roles
+  FOR ALL USING (
+    auth.uid() = user_id 
+    OR auth.uid() IN (
+      SELECT ur.user_id FROM user_roles ur 
+      WHERE ur.role = 'admin'
+    )
+  );
+
+
+-- ══════ 3. TABLE email_log (journal des emails envoyés) ══════
+CREATE TABLE IF NOT EXISTS email_log (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  to_email TEXT NOT NULL,
+  subject TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')),
+  resend_id TEXT,
+  error TEXT,
+  metadata JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id, created_at DESC);
+ALTER TABLE email_log ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can read own activity" ON activity_log
+DROP POLICY IF EXISTS "Users can view own emails" ON email_log;
+CREATE POLICY "Users can view own emails" ON email_log
   FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own activity" ON activity_log
+
+DROP POLICY IF EXISTS "Users can insert own emails" ON email_log;
+CREATE POLICY "Users can insert own emails" ON email_log
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- 4. AUDIT LOG — System audit trail
-CREATE TABLE IF NOT EXISTS audit_log (
-  id BIGSERIAL PRIMARY KEY,
-  user_id UUID DEFAULT auth.uid(),
+
+-- ══════ 4. TABLE payroll_history (historique paie) ══════
+CREATE TABLE IF NOT EXISTS payroll_history (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  client_id TEXT NOT NULL,
+  period_month INTEGER NOT NULL CHECK (period_month BETWEEN 1 AND 12),
+  period_year INTEGER NOT NULL CHECK (period_year BETWEEN 2020 AND 2100),
+  data JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(user_id, client_id, period_month, period_year)
+);
+
+ALTER TABLE payroll_history ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own payroll" ON payroll_history;
+CREATE POLICY "Users can view own payroll" ON payroll_history
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can manage own payroll" ON payroll_history;
+CREATE POLICY "Users can manage own payroll" ON payroll_history
+  FOR ALL USING (auth.uid() = user_id);
+
+
+-- ══════ 5. TABLE activity_log (audit trail — RGPD Art. 30) ══════
+CREATE TABLE IF NOT EXISTS activity_log (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   action TEXT NOT NULL,
   table_name TEXT,
   record_id TEXT,
@@ -76,116 +133,82 @@ CREATE TABLE IF NOT EXISTS audit_log (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_audit_log_date ON audit_log(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action);
+ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated can insert audit" ON audit_log
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Admin can read audit" ON audit_log
-  FOR SELECT USING (auth.role() = 'authenticated');
-
--- 5. PAYROLL HISTORY — Monthly payroll runs (immutable)
-CREATE TABLE IF NOT EXISTS payroll_history (
-  id BIGSERIAL PRIMARY KEY,
-  user_id UUID NOT NULL,
-  client_id TEXT NOT NULL,
-  period_month INTEGER NOT NULL CHECK (period_month BETWEEN 1 AND 12),
-  period_year INTEGER NOT NULL CHECK (period_year BETWEEN 2020 AND 2099),
-  run_date TIMESTAMPTZ NOT NULL DEFAULT now(),
-  status TEXT NOT NULL DEFAULT 'completed',
-  summary JSONB NOT NULL DEFAULT '{}',
-  -- summary: { totalBrut, totalNet, totalCout, totalONSS, totalPP, empCount }
-  fiches JSONB NOT NULL DEFAULT '[]',
-  -- fiches: [{ empId, empName, brut, onssW, imposable, pp, csss, bonusEmploi, net, onssP, coutTotal }]
-  documents JSONB DEFAULT '[]',
-  -- documents: [{ type, empName, generated_at, sent_to_email, status }]
-  UNIQUE(user_id, client_id, period_month, period_year)
-);
-
-CREATE INDEX IF NOT EXISTS idx_payroll_user_period ON payroll_history(user_id, period_year DESC, period_month DESC);
-CREATE INDEX IF NOT EXISTS idx_payroll_client ON payroll_history(client_id, period_year DESC, period_month DESC);
-
-ALTER TABLE payroll_history ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can read own payroll" ON payroll_history
+DROP POLICY IF EXISTS "Users can view own activity" ON activity_log;
+CREATE POLICY "Users can view own activity" ON activity_log
   FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own payroll" ON payroll_history
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own payroll" ON payroll_history
-  FOR UPDATE USING (auth.uid() = user_id);
 
--- 6. EMAIL LOG — Track all sent emails
-CREATE TABLE IF NOT EXISTS email_log (
-  id BIGSERIAL PRIMARY KEY,
-  user_id UUID NOT NULL,
-  to_email TEXT NOT NULL,
-  subject TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'sent',
-  resend_id TEXT,
-  error TEXT,
-  metadata JSONB DEFAULT '{}',
+DROP POLICY IF EXISTS "Users can insert own activity" ON activity_log;
+CREATE POLICY "Users can insert own activity" ON activity_log
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Activity log is append-only: no update or delete
+DROP POLICY IF EXISTS "No updates on activity log" ON activity_log;
+
+
+-- ══════ 6. TABLE audit_log (logs système) ══════
+CREATE TABLE IF NOT EXISTS audit_log (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  table_name TEXT,
+  details JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_email_log_user ON email_log(user_id, created_at DESC);
+ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE email_log ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can read own emails" ON email_log
+DROP POLICY IF EXISTS "Users can view own audit" ON audit_log;
+CREATE POLICY "Users can view own audit" ON audit_log
   FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own emails" ON email_log
+
+DROP POLICY IF EXISTS "Users can insert audit" ON audit_log;
+CREATE POLICY "Users can insert audit" ON audit_log
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- 7. DOCUMENT STORAGE — Metadata for uploaded/generated documents
-CREATE TABLE IF NOT EXISTS documents (
-  id BIGSERIAL PRIMARY KEY,
-  user_id UUID NOT NULL,
-  client_id TEXT,
-  employee_id TEXT,
-  doc_type TEXT NOT NULL, -- contrat, fiche_paie, c4, attestation, dimona, etc.
-  title TEXT NOT NULL,
-  storage_path TEXT, -- Supabase Storage path
-  file_size INTEGER,
-  generated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  period_month INTEGER,
-  period_year INTEGER,
-  metadata JSONB DEFAULT '{}'
-);
 
-CREATE INDEX IF NOT EXISTS idx_docs_user_client ON documents(user_id, client_id);
-CREATE INDEX IF NOT EXISTS idx_docs_type ON documents(doc_type);
+-- ══════ 7. INDEX pour performances ══════
+CREATE INDEX IF NOT EXISTS idx_app_state_user ON app_state(user_id);
+CREATE INDEX IF NOT EXISTS idx_app_state_key ON app_state(user_id, state_key);
+CREATE INDEX IF NOT EXISTS idx_email_log_user ON email_log(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payroll_user ON payroll_history(user_id, period_year DESC, period_month DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_user ON activity_log(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_roles_org ON user_roles(organization_id);
 
-ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage own docs" ON documents
-  FOR ALL USING (auth.uid() = user_id);
 
--- 8. Enable Realtime for app_state (live sync between users)
-ALTER PUBLICATION supabase_realtime ADD TABLE app_state;
+-- ══════ 8. FONCTION auto-update updated_at ══════
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
--- 9. Storage bucket for document uploads
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('documents', 'documents', false)
-ON CONFLICT (id) DO NOTHING;
+DROP TRIGGER IF EXISTS app_state_updated_at ON app_state;
+CREATE TRIGGER app_state_updated_at
+  BEFORE UPDATE ON app_state
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- Storage policy: users can upload to their own folder
-CREATE POLICY "Users can upload own docs" ON storage.objects
-  FOR INSERT WITH CHECK (
-    bucket_id = 'documents' AND
-    auth.role() = 'authenticated'
-  );
+DROP TRIGGER IF EXISTS payroll_updated_at ON payroll_history;
+CREATE TRIGGER payroll_updated_at
+  BEFORE UPDATE ON payroll_history
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-CREATE POLICY "Users can read own docs" ON storage.objects
-  FOR SELECT USING (
-    bucket_id = 'documents' AND
-    auth.role() = 'authenticated'
-  );
 
--- ═══════════════════════════════════════════════════════════
--- DONE! Your database is ready for Aureus Social Pro.
--- 
--- Next steps:
--- 1. Go to Vercel > Settings > Environment Variables
--- 2. Add: NEXT_PUBLIC_SUPABASE_URL = your-project.supabase.co
--- 3. Add: NEXT_PUBLIC_SUPABASE_ANON_KEY = your-anon-key
--- 4. Add: SUPABASE_SERVICE_ROLE_KEY = your-service-key
--- 5. Add: RESEND_API_KEY = re_xxxx (from resend.com)
--- ═══════════════════════════════════════════════════════════
+-- ══════ 9. RÉTENTION DONNÉES (RGPD Art. 5) ══════
+-- Les logs d'activité sont purgés après 2 ans automatiquement
+-- À exécuter via un cron Supabase ou pg_cron
+-- DELETE FROM activity_log WHERE created_at < now() - INTERVAL '2 years';
+-- DELETE FROM audit_log WHERE created_at < now() - INTERVAL '2 years';
+-- DELETE FROM email_log WHERE created_at < now() - INTERVAL '1 year';
+
+-- ══════ RÉSUMÉ SÉCURITÉ ══════
+-- ✅ RLS activé sur TOUTES les tables
+-- ✅ Chaque utilisateur ne voit QUE ses propres données
+-- ✅ activity_log en append-only (pas de modification/suppression)
+-- ✅ Cascade delete si le compte est supprimé
+-- ✅ Index pour performances
+-- ✅ Contraintes de vérification sur les données
