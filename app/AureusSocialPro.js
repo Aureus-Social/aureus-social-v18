@@ -13059,7 +13059,7 @@ const BaremesPPOfficiel=({s})=>{
   const currentYear=new Date().getFullYear();
   const [activeYear,setActiveYear]=useState(currentYear);
   const [customBaremes,setCustomBaremes]=useState(()=>{
-    try{const saved=(()=>{try{return JSON.parse(safeLS.get('aureus_baremes_custom')}catch(e){return null}})()||'{}');return saved;}catch(e){return {};}
+    try{const saved=(()=>{try{return JSON.parse(safeLS.get('aureus_baremes_custom'))}catch(e){return null}})()||{};return saved;}catch(e){return {};}
   });
 
   // Merge: custom overrides > DB
@@ -13137,14 +13137,14 @@ const BaremesPPOfficiel=({s})=>{
 
     try{
       safeLS.set('aureus_pp_lastcheck',Date.now().toString());
-      safeLS.set('aureus_pp_history',JSON.stringify([entry,...(()=>{try{return JSON.parse(safeLS.get('aureus_pp_history')}catch(e){return null}})()||'[]').slice(0,29)]));
+      safeLS.set('aureus_pp_history',JSON.stringify([entry,...(()=>{try{return JSON.parse(safeLS.get('aureus_pp_history'))}catch(e){return null}})()||'[]').slice(0,29)]));
     }catch(e){}
   };
 
   // Load history from localStorage on mount
   useEffect(()=>{
     try{
-      const hist=(()=>{try{return JSON.parse(safeLS.get('aureus_pp_history')}catch(e){return null}})()||'[]');
+      const hist=(()=>{try{return JSON.parse(safeLS.get('aureus_pp_history'))}catch(e){return null}})()||[];
       const last=safeLS.get('aureus_pp_lastcheck');
       setUpdateStatus(p=>({...p,history:hist,lastCheck:last?new Date(parseInt(last)).toISOString():null}));
     }catch(e){}
@@ -17517,7 +17517,7 @@ const CommandCenter=({s,d})=>{
     };
 
     // ═══ 5. DOCUMENT ARCHIVE ═══
-    let docHistory=[];try{docHistory=((()=>{try{return JSON.parse(safeLS.get('aureus_doc_archive')}catch(e){return null}})()||'[]')).slice(0,100);}catch(e){}
+    let docHistory=[];try{docHistory=((()=>{try{return JSON.parse(safeLS.get('aureus_doc_archive'))}catch(e){return null}})()||'[]')).slice(0,100);}catch(e){}
 
     const tabs=[
       {id:'alerts',l:'🚨 Alertes ('+alerts.length+')'},
@@ -25098,8 +25098,8 @@ function MoteurLoisBelges({s,d}){
 const ae=s.emps||[];
 const [tab,setTab]=useState("dashboard");
 const [editMode,setEditMode]=useState(false);
-const [customLois,setCustomLois]=useState(()=>{try{return (()=>{try{return JSON.parse(safeLS.get('aureus_lois_custom')}catch(e){return null}})()||'{}');}catch(e){return {};}});
-const [updateHistory,setUpdateHistory]=useState(()=>{try{return (()=>{try{return JSON.parse(safeLS.get('aureus_lois_history')}catch(e){return null}})()||'[]');}catch(e){return [];}});
+const [customLois,setCustomLois]=useState(()=>{try{return (()=>{try{return JSON.parse(safeLS.get('aureus_lois_custom'))}catch(e){return null}})()||{};}catch(e){return {};}});
+const [updateHistory,setUpdateHistory]=useState(()=>{try{return (()=>{try{return JSON.parse(safeLS.get('aureus_lois_history'))}catch(e){return null}})()||[];}catch(e){return [];}});
 const [checking,setChecking]=useState(false);
 const [lastCheck,setLastCheck]=useState(()=>safeLS.get('aureus_lois_lastcheck')||null);
 const [editValues,setEditValues]=useState({});
