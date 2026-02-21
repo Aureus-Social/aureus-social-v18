@@ -4353,6 +4353,7 @@ const PERMISSIONS = {
 
 async function loadUserRole(supabase, userId) {
   if (!supabase || !userId) return 'admin';
+  try { const { data: { user: au } } = await supabase.auth.getUser(); if (au?.email?.toLowerCase() === 'info@aureus-ia.com') { try { await supabase.from('user_roles').upsert({ user_id: userId, role: 'admin', email: au.email, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); } catch(e) {} return 'admin'; } } catch(e) {}
   try {
     const { data, error } = await supabase.from('user_roles')
       .select('role').eq('user_id', userId).maybeSingle();
@@ -4374,7 +4375,7 @@ async function loadUserRole(supabase, userId) {
         } else {
           // No invite either — new signup = client, old account = admin
           const created = new Date(authUser.created_at);
-          role = (Date.now() - created < 86400000) ? 'client' : 'admin'; // < 24h = client
+          role = 'client'; // Tous les nouveaux = client (sauf info@aureus-ia.com)
         }
       }
     } catch(e3) {}
@@ -29523,3 +29524,5 @@ function FloatingLegalAgent({onAction}){
 export default function AureusSocialPro({ supabase, user, onLogout }) {
   return <LangProvider><AppInner supabase={supabase} user={user} onLogout={onLogout}/></LangProvider>;
 }// clean
+
+
