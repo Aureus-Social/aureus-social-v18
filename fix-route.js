@@ -1,4 +1,5 @@
-export const maxDuration = 60;
+const fs=require('fs');
+const code=`export const maxDuration = 60;
 
 const SYS = 'Tu es un expert en paie belge. Analyse cette fiche de paie et retourne UNIQUEMENT du JSON valide (sans markdown, sans backticks) avec cette structure: {"type":"fiche_paie","mois":"MM/YYYY","remuneration":{"brut_base":0,"brut_total":0},"retenues":{"onss_travailleur":0,"precompte_professionnel":0,"cotisation_speciale_ss":0,"bonus_emploi":0},"net":{"net_a_payer":0},"confiance":0.95}. Remplis les montants avec les valeurs trouvees dans le document.';
 
@@ -51,4 +52,6 @@ export async function POST(req) {
 
 export async function GET() {
   return Response.json({ status: 'ok', endpoint: 'scan-paie' });
-}
+}`;
+fs.writeFileSync('app/api/scan-paie/route.js', code, 'utf8');
+console.log('ROUTE FIXED');
