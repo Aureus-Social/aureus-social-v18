@@ -2,6 +2,31 @@
 "use client"
 import { useState, useReducer, useRef, useMemo, useEffect, createContext, useContext } from "react";
 
+// ═══ SECURITY & UTILITY LAYER ═══════════════════════════════════════
+// XSS Sanitizer
+function _sanitize(str){if(typeof str!=='string')return str;return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');}
+function _sanitizeNISS(v){return v?String(v).replace(/[^0-9.\-]/g,'').substring(0,15):'';}
+function _sanitizeIBAN(v){return v?String(v).replace(/[^A-Z0-9\s]/gi,'').substring(0,20).toUpperCase():'';}
+function _sanitizeEmail(v){if(!v)return '';const c=String(v).trim().toLowerCase();return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)?c:'';}
+function _safeJSON(str,fallback){if(!str)return fallback!==undefined?fallback:null;try{return JSON.parse(str);}catch(e){return fallback!==undefined?fallback:null;}}
+
+// Custom Modal (replace confirm/prompt)
+function _showModal(opts){return new Promise(resolve=>{const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';const bx=document.createElement('div');bx.style.cssText='background:#0d1117;border:1px solid rgba(198,163,78,.2);border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)';const ti=document.createElement('div');ti.style.cssText='font-size:16px;font-weight:700;color:#c6a34e;margin-bottom:12px';ti.textContent=opts.title||'Confirmation';const mg=document.createElement('div');mg.style.cssText='font-size:13px;color:#e8e6e0;margin-bottom:20px;line-height:1.5';mg.textContent=opts.message||'';bx.appendChild(ti);bx.appendChild(mg);let inp=null;if(opts.input){inp=document.createElement('input');inp.type='text';inp.value=opts.defaultValue||'';inp.style.cssText='width:100%;padding:10px 12px;border-radius:8px;background:#090c16;border:1px solid rgba(198,163,78,.15);color:#e8e6e0;font-size:13px;margin-bottom:16px;box-sizing:border-box';bx.appendChild(inp);setTimeout(()=>inp.focus(),100);}const br=document.createElement('div');br.style.cssText='display:flex;gap:10px;justify-content:flex-end';const cb=document.createElement('button');cb.textContent=opts.cancelText||'Annuler';cb.style.cssText='padding:10px 20px;border-radius:8px;border:1px solid rgba(198,163,78,.15);background:transparent;color:#9e9b93;font-size:13px;cursor:pointer';const ob=document.createElement('button');ob.textContent=opts.okText||'Confirmer';ob.style.cssText='padding:10px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,#c6a34e,#a07d3e);color:#060810;font-weight:700;font-size:13px;cursor:pointer';const cl=v=>{ov.remove();resolve(v);};cb.onclick=()=>cl(opts.input?null:false);ob.onclick=()=>cl(opts.input?(inp?inp.value:''):true);ov.onclick=e=>{if(e.target===ov)cl(opts.input?null:false);};br.appendChild(cb);br.appendChild(ob);bx.appendChild(br);ov.appendChild(bx);document.body.appendChild(ov);});}
+async function _confirm(message,title){return _showModal({message,title:title||'Confirmation'});}
+async function _prompt(message,defaultValue,title){return _showModal({message,title:title||'Saisie',input:true,defaultValue:defaultValue||''});}
+
+// Fetch with timeout
+function _fetch(url,opts,ms){ms=ms||15000;const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);return fetch(url,{...opts,signal:c.signal}).finally(()=>clearTimeout(t));}
+
+// Session Timeout (30 min)
+if(typeof window!=='undefined'){let _lastAct=Date.now();const _TIMEOUT=30*60*1000;['mousemove','keydown','click','scroll','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{_lastAct=Date.now();},{passive:true}));setInterval(()=>{if(Date.now()-_lastAct>_TIMEOUT){if(typeof _logErr==='function')_logErr('session','Auto-logout 30min');if(typeof _toast==='function')_toast('Session expirée — déconnexion automatique','warning');setTimeout(()=>window.location.reload(),2000);}},60000);}
+
+// Async Queue Worker
+class AsyncQueueWorker{constructor(sb,opts={}){this.sb=sb;this.concurrency=opts.concurrency||3;this.pollInterval=opts.pollInterval||5000;this.running=false;this.active=0;this.handlers={};}register(type,handler){this.handlers[type]=handler;}async start(){this.running=true;while(this.running){if(this.active<this.concurrency)await this._next();await new Promise(r=>setTimeout(r,this.pollInterval));}}stop(){this.running=false;}async _next(){const{data}=await this.sb.from('declaration_queue').select('*').eq('status','pending').order('created_at').limit(this.concurrency-this.active);if(!data?.length)return;for(const item of data){this.active++;await this.sb.from('declaration_queue').update({status:'processing',started_at:new Date().toISOString()}).eq('id',item.id);this._exec(item).finally(()=>{this.active--;});};}async _exec(item){try{const h=this.handlers[item.type];if(!h)throw new Error('No handler: '+item.type);const r=await h(item);await this.sb.from('declaration_queue').update({status:'completed',result:r,completed_at:new Date().toISOString()}).eq('id',item.id);}catch(e){const retry=(item.retry_count||0)+1;await this.sb.from('declaration_queue').update({status:retry>=3?'failed':'pending',retry_count:retry,error_message:e.message}).eq('id',item.id);}}}
+
+// Realtime Metrics
+class MetricsAggregator{constructor(){this.c={payslips:0,declarations:0,errors:0};this.h=[];this.t0=Date.now();}record(ev){if(ev.type==='payslip')this.c.payslips++;if(ev.type==='declaration')this.c.declarations++;if(ev.type==='error')this.c.errors++;this.h.push({...ev,ts:Date.now()});if(this.h.length>200)this.h=this.h.slice(-100);}snap(){return{...this.c,uptime:Math.round((Date.now()-this.t0)/60000)+'min',epm:Math.round(this.h.filter(x=>Date.now()-x.ts<300000).length/5*10)/10};}}
+
 // ═══ SPRINT 37: MOTEUR CENTRAL LOIS BELGES — AUTO-UPDATE 1 CLIC  ═══
 // ══════════════════════════════════════════════════════════════════════
 // Base centralisée de TOUTES les constantes légales belges
@@ -4354,34 +4379,27 @@ const PERMISSIONS = {
 async function loadUserRole(supabase, userId) {
   if (!supabase || !userId) return 'admin';
   try {
+    // Admin email — toujours admin
+    const ADMIN_EMAIL = 'info@aureus-ia.com';
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const email = authUser?.email || '';
+    
+    // info@aureus-ia.com = toujours admin
+    if (email.toLowerCase() === ADMIN_EMAIL) {
+      try { await supabase.from('user_roles').upsert({ user_id: userId, role: 'admin', email, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); } catch(e2) {}
+      return 'admin';
+    }
+    
+    // Autres utilisateurs: vérifier s'ils ont un rôle assigné
     const { data, error } = await supabase.from('user_roles')
       .select('role').eq('user_id', userId).maybeSingle();
-    if (error) return 'admin';
-    if (data?.role) return data.role;
-    // No role by user_id — check for pending invite by email
-    let role = 'admin';
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser?.email) {
-        const { data: invite } = await supabase.from('user_roles')
-          .select('role,user_id').eq('email', authUser.email).maybeSingle();
-        if (invite?.role) {
-          role = invite.role;
-          // Convert pending invite to real user_id
-          if (invite.user_id?.startsWith('pending_')) {
-            await supabase.from('user_roles').delete().eq('user_id', invite.user_id);
-          }
-        } else {
-          // No invite either — new signup = client, old account = admin
-          const created = new Date(authUser.created_at);
-          role = (Date.now() - created < 86400000) ? 'client' : 'admin'; // < 24h = client
-        }
-      }
-    } catch(e3) {}
-    // Save real role with real user_id
-    try { await supabase.from('user_roles').upsert({ user_id: userId, role, email: (await supabase.auth.getUser()).data?.user?.email || '', updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); } catch(e2) {}
+    if (!error && data?.role) return data.role;
+    
+    // Pas de rôle assigné → client (portail employeur uniquement)
+    let role = 'client';
+    try { await supabase.from('user_roles').upsert({ user_id: userId, role, email, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); } catch(e2) {}
     return role;
-  } catch(e) { return 'admin'; }
+  } catch(e) { return 'client'; }
 }
 
 async function saveUserRole(supabase, userId, role, email) {
@@ -5955,116 +5973,150 @@ function AppInner({ supabase, user, onLogout }) {
 
   const {lang,t} = useLang();
   const nav=[
-    {id:"dashboard",l:t('nav.dashboard'),i:'◫'},
-    {id:"employees",l:t('nav.employees'),i:'◉'},
-    {id:"payslip",l:t('nav.payslip'),i:'◈'},
-    {id:"_sep1",l:"AUTOMATISATION",sep:true},
-    {id:"piloteauto",l:"Pilote Auto Total",i:"🏎️"},
-    {id:"compliance",l:"Compliance Radar",i:"🛡"},
-    {id:"autoindex",l:"Auto-Indexation",i:"📈"},
-    {id:"historique",l:"Historique Runs",i:"📊"},
-    {id:"sepa",l:"SEPA Virements",i:"💳"},
-    {id:"smartalerts",l:"Smart Alerts",i:"🔔"},
-    {id:"batchdecl",l:"Declarations Batch",i:"📋"},
-    {id:"fiduciaire",l:"Hub Fiduciaire",i:"🏢"},
-    {id:"simulicenciement",l:"Simu Licenciement",i:"⚖️"},
-    {id:"couttotal",l:"Cout Total",i:"💰"},
-    {id:"timeline",l:"Timeline Paie",i:"📅"},
-    {id:"portailclient",l:"Portail Client",i:"🌐"},
-    {id:"reportingpro",l:"Reporting Pro",i:"📊"},
-    {id:"integrations",l:"Integrations",i:"🔌"},
-    {id:"veillelegale",l:"Veille Legale",i:"⚖️"},
-    {id:"absencespro",l:"Absences Pro",i:"🏖"},
-    {id:"exportcomptapro",l:"Export Compta Pro",i:"📒"},
-    {id:"tableaudirection",l:"Tableau Direction",i:"🎯"},
-    {id:"primecalc",l:"Primes & Bonus",i:"🎁"},
-    {id:"gestionabs",l:"Gestion Absences",i:"🗓"},
-    {id:"formationsec",l:"Formation & Securite",i:"🎓"},
-    {id:"bilansocial",l:"Bilan Social",i:"📋"},
-    {id:"gestionprimes",l:"Primes & Avantages",i:"🎁"},
-    {id:"tbdirection",l:"TB Direction",i:"📊"},
-    {id:"archives",l:"Archives GED",i:"🗄"},
-    {id:"optifiscale",l:"Opti Fiscale",i:"💡"},
-    {id:"authroles",l:"Roles & Permissions",i:"🔐"},
-    {id:"baremespp",l:"Baremes PP SPF",i:"📋"},
-    {id:"securitedata",l:"Securite Donnees",i:"🔒"},
-    {id:"monitoring",l:"Monitoring",i:"🖥"},
-    {id:"testsuite",l:"Test Suite",i:"🧪"},
-    {id:"onboardwizard",l:"Onboarding Wizard",i:"🚀"},
-    {id:"checklistclient",l:"Checklist Client",i:"✅"},
-    {id:"comparatif",l:"Comparatif Marche",i:"⚔️"},
-    {id:"duediligence",l:"Due Diligence",i:"🔍"},
-    {id:"gendocsjur",l:"Docs Juridiques",i:"📜"},
-    {id:"dashabsent",l:"Dash Absenteisme",i:"📊"},
-    {id:"flexijobs",l:"Flexi-Jobs",i:"⚡"},
-    {id:"chomagetemporaire",l:"Chomage Temporaire",i:"⏸"},
-    {id:"planifconges",l:"Planning Conges",i:"📅"},
-    {id:"registrepersonnel",l:"Registre Personnel",i:"📖"},
-    {id:"calcmaladie",l:"Salaire Garanti",i:"🏥"},
-    {id:"coutsannuel",l:"Couts Annuels",i:"📊"},
-    {id:"echeancier",l:"Echeancier Paiements",i:"💳"},
-    {id:"simutp",l:"Temps Partiel",i:"⏱"},
-    {id:"delegations",l:"Delegations Syndicales",i:"🏛"},
-    {id:"chargessociales",l:"Charges ONSS",i:"🏛"},
-    {id:"vehiculesatn",l:"Vehicules & ATN",i:"🚗"},
-    {id:"simupension",l:"Simulateur Pension",i:"🏖"},
-    {id:"ccts",l:"Conventions CCT",i:"📜"},
-    {id:"interimaires",l:"Interimaires",i:"👷"},
-    {id:"analytics",l:"Analytics",i:"📈"},
-    {id:"exportcompta",l:"Export Comptable",i:"📤"},
-    {id:"audittrail",l:"Audit Trail",i:"🔍"},
-    {id:"simembauche",l:"Simulateur Embauche",i:"🧮"},
-    {id:"ged",l:"GED Documents",i:"📁"},
-    {id:"portail",l:"Portail Employe",i:"👤"},
-    {id:"comparateur",l:"Comparateur Salarial",i:"⚖"},
-    {id:"planabs",l:"Planificateur Absences",i:"📅"},
-    {id:"dashrh",l:"Dashboard RH",i:"👥"},
-    {id:"budget",l:"Budget Previsionnel",i:"💰"},
-    {id:"echeancierdetail",l:"Echeancier Detail",i:"📆"},
-    {id:"facturation",l:"Facturation",i:"🧾"},
-    {id:"validation",l:"Validation Pre-Paie",i:"✅"},
-    {id:"exportbatch",l:"Export Batch",i:"📦"},
-    {id:"rgpd",l:"RGPD Compliance",i:"🔒"},
-    {id:"cloture",l:t("nav.cloture"),i:"🔄"},
-    {id:"notifications",l:t("nav.notifications"),i:"🔔"},
-    {id:"commandcenter",l:t("nav.commandcenter"),i:"🎯"},
-    {id:"autopilot",l:t("nav.autopilot"),i:"🤖"},
-    {id:"massengine",l:t("nav.massengine"),i:"🏭"},
-    {id:"queue",l:t("nav.queue"),i:"📋"},
-    {id:"onboarding",l:t("nav.onboarding"),i:"🆕"},
-    {id:"calcinstant",l:"Calcul Instantané",i:"🔁"},
-    {id:"calendrier",l:"Calendrier Social",i:"📅"},
-    {id:"rapports",l:"Rapports Mensuels",i:"📊"},
-    {id:"actionsrapides",l:"Actions Rapides",i:"⚡"},
-    {id:"importcsv",l:"Import CSV",i:"📥"},
-    {id:"onboarding2",l:"Nouvel Onboarding",i:"🚀"},
-    {id:"contratgen",l:"Contrats Legaux",i:"📝"},
-    {id:"dashclient",l:"Dashboard Client",i:"🏢"},
-    {id:"landing",l:"Page Commerciale",i:"🌐"},
-    {id:"notifcenter",l:"Notifications",i:"🔔"},
-    {id:"journal",l:"Journal Activite",i:"📋"},
-    {id:"baremescp",l:"Baremes CP",i:"📊"},
-    {id:"_sep2",l:"PAIE & SOCIAL",sep:true},
-    {id:"onss",l:t('nav.onss'),i:'◆',sub:[{id:"dimona",l:t('sub.dimona')},{id:"dmfa",l:t('sub.dmfa')},{id:"drs",l:t('sub.drs')},{id:"onss_dash",l:"Dashboard ONSS"}]},
-    {id:"fiscal",l:t('nav.fiscal'),i:'◇',sub:[{id:"belcotax",l:t('sub.belcotax')},{id:"precompte",l:t('sub.precompte')},{id:"atn",l:t('sub.atn')},{id:"baremespp",l:"📋 Baremes PP SPF"}]},
-    {id:"salaires",l:t('nav.salaires'),i:'◈',sub:[{id:"simcout",l:t('sub.simcout')},{id:"netbrut",l:t('sub.netbrut')},{id:"provisions",l:t('sub.provisions')},{id:"cumuls",l:t('sub.cumuls')},{id:"indexauto",l:t('sub.indexauto')},{id:"treizieme",l:t('sub.treizieme')},{id:"bonusemploi",l:t('sub.bonusemploi')}]},
-    {id:"avantages",l:t('nav.avantages'),i:'★',sub:[{id:"cheques",l:t('sub.cheques')},{id:"cafeteria",l:t('sub.cafeteria')},{id:"cct90",l:t('sub.cct90')},{id:"warrants",l:t('sub.warrants')},{id:"budgetmob",l:t('sub.budgetmob')}]},
-    {id:"_sep3",l:"RH & CONTRATS",sep:true},
-    {id:"contratsmenu",l:t('nav.contrats'),i:'▣',sub:[{id:"contrats",l:t('sub.contrats2')},{id:"reglement",l:t('sub.reglement')},{id:"preavis",l:t('sub.preavis')},{id:"pecsortie",l:t('sub.pecsortie')}]},
-    {id:"rh",l:t('nav.rh'),i:'◉',sub:[{id:"wf_embauche",l:"⚡ Embauche"},{id:"wf_licenciement",l:"⚡ Licenciement"},{id:"wf_maladie",l:"⚡ Maladie"},{id:"absences",l:t('sub.absences')},{id:"credittemps",l:t('sub.credittemps')},{id:"pointage",l:t('sub.pointage')},{id:"medtravail",l:t('sub.medtravail')}]},
-    {id:"social",l:t('nav.social'),i:'◆',sub:[{id:"assloi",l:t('sub.assloi')},{id:"assgroupe",l:t('sub.assgroupe')},{id:"syndicales",l:t('sub.syndicales')},{id:"allocfam",l:t('sub.allocfam')},{id:"aidesemploi",l:t('sub.aidesemploi')}]},
-    {id:"legal",l:t('nav.legal'),i:'⚖',sub:[{id:"docsjuridiques",l:t('sub.docsjuridiques')},{id:"alertes",l:t('sub.alertes')},{id:"secteurs",l:t('sub.secteurs')},{id:"moteurlois",l:"⚖ Moteur Lois Belges"}]},
-    {id:"_sep4",l:"OUTILS & ADMIN",sep:true},
-    {id:"reporting",l:t('nav.reporting'),i:'▤',sub:[{id:"accounting",l:t('sub.accounting')},{id:"bilanbnb",l:t('sub.bilanbnb')},{id:"sepa",l:t('sub.sepa')},{id:"envoi",l:t('sub.envoi')},{id:"ged",l:t('sub.ged')}]},
-    {id:"aureussuite",l:"Aureus IA",i:'🔷',sub:[{id:"ia_turnover",l:"🧠 Prédiction Turnover"},{id:"ia_salaire",l:"💡 Reco Salariales"},{id:"ia_anomalies",l:"🔍 Anomalies"},{id:"what_if",l:"🔮 What-If"},{id:"kpi_dashboard",l:"📈 KPI Dashboard"}]},
-    {id:"portalmanager",l:t("nav.portalmanager"),i:"🏢"},
-    {id:"team",l:t('nav.team'),i:'👥'},
-    {id:"admin",l:"Admin",i:'👑',sub:[{id:"config",l:"⚙ Paramètres"},{id:"fraisgestion",l:"💰 Frais gestion"},{id:"audit",l:"📋 Audit"},{id:"admin_billing",l:"🧾 Facturation"},{id:"comparatif",l:"⚔️ Comparatif Marche"},{id:"onboardwizard",l:"🚀 Onboarding"},{id:"checklistclient",l:"✅ Checklist Client"}]},
+    // ═══ 1. TABLEAU DE BORD ═══
+    {id:"_g1",l:"TABLEAU DE BORD",grp:true},
+    {id:"dashboard",l:"Dashboard Principal",i:'◫',g:1},
+    {id:"commandcenter",l:"Command Center",i:'🎯',g:1},
+    {id:"tbdirection",l:"Tableau Direction",i:'📊',g:1},
+    {id:"tableaudirection",l:"Vue Strategique",i:'🎯',g:1},
+    {id:"notifications",l:"Notifications",i:'🔔',g:1},
+    {id:"notifcenter",l:"Centre Notifications",i:'🔔',g:1},
+    {id:"journal",l:"Journal Activite",i:'📋',g:1},
+    {id:"smartalerts",l:"Smart Alerts",i:'🔔',g:1},
+    {id:"landing",l:"Page Commerciale",i:'🌐',g:1},
+
+    // ═══ 2. GESTION PERSONNEL ═══
+    {id:"_g2",l:"GESTION PERSONNEL",grp:true},
+    {id:"employees",l:"Liste Employes",i:'◉',g:2},
+    {id:"onboarding",l:"Onboarding",i:'🆕',g:2},
+    {id:"repriseclient",l:"Reprise Concurrent",i:'🔄',g:2},
+    {id:"onboarding2",l:"Nouvel Onboarding",i:'🚀',g:2},
+    {id:"onboardwizard",l:"Onboarding Wizard",i:'🚀',g:2},
+    {id:"registrepersonnel",l:"Registre Personnel",i:'📖',g:2},
+    {id:"dashrh",l:"Dashboard RH",i:'👥',g:2},
+    {id:"portail",l:"Portail Employe",i:'👤',g:2},
+    {id:"portailclient",l:"Portail Client",i:'🌐',g:2},
+    {id:"dashclient",l:"Dashboard Client",i:'🏢',g:2},
+    {id:"checklistclient",l:"Checklist Client",i:'✅',g:2},
+    {id:"interimaires",l:"Interimaires",i:'👷',g:2},
+    {id:"rh",l:"RH & Workflows",i:'◉',g:2,sub:[{id:"wf_embauche",l:"⚡ Embauche"},{id:"wf_licenciement",l:"⚡ Licenciement"},{id:"wf_maladie",l:"⚡ Maladie"},{id:"absences",l:t('sub.absences')},{id:"credittemps",l:t('sub.credittemps')},{id:"pointage",l:t('sub.pointage')},{id:"medtravail",l:t('sub.medtravail')}]},
+
+    // ═══ 3. PAIE & CALCULS ═══
+    {id:"_g3",l:"PAIE & CALCULS",grp:true},
+    {id:"piloteauto",l:"Pilote Auto Total",i:'🏎️',g:3},
+    {id:"payslip",l:"Fiches de Paie",i:'◈',g:3},
+    {id:"calcinstant",l:"Calcul Instantane",i:'🔁',g:3},
+    {id:"validation",l:"Validation Pre-Paie",i:'✅',g:3},
+    {id:"cloture",l:"Cloture Mensuelle",i:'🔄',g:3},
+    {id:"soldetoutcompte",l:"Solde Tout Compte",i:'📑',g:3},
+    {id:"timeline",l:"Timeline Paie",i:'📅',g:3},
+    {id:"couttotal",l:"Cout Total",i:'💰',g:3},
+    {id:"coutsannuel",l:"Couts Annuels",i:'📊',g:3},
+    {id:"comparateur",l:"Comparateur Salarial",i:'⚖',g:3},
+    {id:"simembauche",l:"Simulateur Embauche",i:'🧮',g:3},
+    {id:"simulicenciement",l:"Simu Licenciement",i:'⚖️',g:3},
+    {id:"simutp",l:"Temps Partiel",i:'⏱',g:3},
+    {id:"simupension",l:"Simulateur Pension",i:'🏖',g:3},
+    {id:"baremescp",l:"Baremes CP",i:'📊',g:3},
+    {id:"baremespp",l:"Baremes PP SPF",i:'📋',g:3},
+    {id:"salaires",l:"Salaires & Calculs",i:'◈',g:3,sub:[{id:"simcout",l:t('sub.simcout')},{id:"netbrut",l:t('sub.netbrut')},{id:"provisions",l:t('sub.provisions')},{id:"cumuls",l:t('sub.cumuls')},{id:"indexauto",l:t('sub.indexauto')},{id:"treizieme",l:t('sub.treizieme')},{id:"bonusemploi",l:t('sub.bonusemploi')}]},
+
+    // ═══ 4. PRIMES & AVANTAGES ═══
+    {id:"_g4",l:"PRIMES & AVANTAGES",grp:true},
+    {id:"gestionprimes",l:"56 Primes & Avantages",i:'🎁',g:4},
+    {id:"primecalc",l:"Primes & Bonus",i:'🎁',g:4},
+    {id:"optifiscale",l:"Opti Fiscale",i:'💡',g:4},
+    {id:"vehiculesatn",l:"Vehicules & ATN",i:'🚗',g:4},
+    {id:"flexijobs",l:"Flexi-Jobs",i:'⚡',g:4},
+    {id:"avantages",l:"Avantages & Remuneration",i:'★',g:4,sub:[{id:"cheques",l:t('sub.cheques')},{id:"cafeteria",l:t('sub.cafeteria')},{id:"cct90",l:t('sub.cct90')},{id:"warrants",l:t('sub.warrants')},{id:"budgetmob",l:t('sub.budgetmob')}]},
+
+    // ═══ 5. DECLARATIONS & ONSS ═══
+    {id:"_g5",l:"DECLARATIONS & ONSS",grp:true},
+    {id:"onss",l:"ONSS / Declarations",i:'◆',g:5,sub:[{id:"dimona",l:t('sub.dimona')},{id:"dmfa",l:t('sub.dmfa')},{id:"drs",l:t('sub.drs')},{id:"onss_dash",l:"Dashboard ONSS"}]},
+    {id:"chargessociales",l:"Charges ONSS",i:'🏛',g:5},
+    {id:"declarations",l:"Déclarations ONSS/SPF",i:'📡',g:5},
+    {id:"batchdecl",l:"Declarations Batch",i:'📋',g:5},
+    {id:"sepa",l:"SEPA Virements",i:'💳',g:5},
+    {id:"echeancier",l:"Echeancier Paiements",i:'💳',g:5},
+    {id:"echeancierdetail",l:"Echeancier Detail",i:'📆',g:5},
+    {id:"chomagetemporaire",l:"Chomage Temporaire",i:'⏸',g:5},
+
+    // ═══ 6. FISCAL & COMPTABLE ═══
+    {id:"_g6",l:"FISCAL & COMPTABLE",grp:true},
+    {id:"fiscal",l:"Fiscal",i:'◇',g:6,sub:[{id:"belcotax",l:t('sub.belcotax')},{id:"precompte",l:t('sub.precompte')},{id:"atn",l:t('sub.atn')},{id:"baremespp",l:"📋 Baremes PP SPF"}]},
+    {id:"exportcompta",l:"Export Comptable",i:'📤',g:6},
+    {id:"exportcomptapro",l:"Export Compta Pro",i:'📒',g:6},
+    {id:"exportbatch",l:"Export Batch",i:'📦',g:6},
+    {id:"facturation",l:"Facturation",i:'🧾',g:6},
+    {id:"budget",l:"Budget Previsionnel",i:'💰',g:6},
+
+    // ═══ 7. ABSENCES & CONGES ═══
+    {id:"_g7",l:"ABSENCES & CONGES",grp:true},
+    {id:"gestionabs",l:"Gestion Absences",i:'🗓',g:7},
+    {id:"absencespro",l:"Absences Pro",i:'🏖',g:7},
+    {id:"planifconges",l:"Planning Conges",i:'📅',g:7},
+    {id:"planabs",l:"Planificateur Absences",i:'📅',g:7},
+    {id:"dashabsent",l:"Dash Absenteisme",i:'📊',g:7},
+    {id:"calcmaladie",l:"Salaire Garanti",i:'🏥',g:7},
+    {id:"calendrier",l:"Calendrier Social",i:'📅',g:7},
+
+    // ═══ 8. CONTRATS & JURIDIQUE ═══
+    {id:"_g8",l:"CONTRATS & JURIDIQUE",grp:true},
+    {id:"contratsmenu",l:"Contrats & Documents",i:'▣',g:8,sub:[{id:"contrats",l:t('sub.contrats2')},{id:"reglement",l:t('sub.reglement')},{id:"preavis",l:t('sub.preavis')},{id:"pecsortie",l:t('sub.pecsortie')}]},
+    {id:"contratgen",l:"Contrats Legaux",i:'📝',g:8},
+    {id:"gendocsjur",l:"Docs Juridiques",i:'📜',g:8},
+    {id:"ccts",l:"Conventions CCT",i:'📜',g:8},
+    {id:"delegations",l:"Delegations Syndicales",i:'🏛',g:8},
+    {id:"legal",l:"Juridique & Veille",i:'⚖',g:8,sub:[{id:"docsjuridiques",l:t('sub.docsjuridiques')},{id:"alertes",l:t('sub.alertes')},{id:"secteurs",l:t('sub.secteurs')},{id:"moteurlois",l:"⚖ Moteur Lois Belges"}]},
+    {id:"social",l:"Social & Assurances",i:'◆',g:8,sub:[{id:"assloi",l:t('sub.assloi')},{id:"assgroupe",l:t('sub.assgroupe')},{id:"syndicales",l:t('sub.syndicales')},{id:"allocfam",l:t('sub.allocfam')},{id:"aidesemploi",l:t('sub.aidesemploi')}]},
+    {id:"veillelegale",l:"Veille Legale",i:'⚖️',g:8},
+
+    // ═══ 9. REPORTING & OUTILS ═══
+    {id:"_g9",l:"REPORTING & OUTILS",grp:true},
+    {id:"reporting",l:"Reporting & Export",i:'▤',g:9,sub:[{id:"accounting",l:t('sub.accounting')},{id:"bilanbnb",l:t('sub.bilanbnb')},{id:"sepa",l:t('sub.sepa')},{id:"envoi",l:t('sub.envoi')},{id:"ged",l:t('sub.ged')}]},
+    {id:"reportingpro",l:"Reporting Pro",i:'📊',g:9},
+    {id:"rapports",l:"Rapports Mensuels",i:'📊',g:9},
+    {id:"bilansocial",l:"Bilan Social",i:'📋',g:9},
+    {id:"analytics",l:"Analytics",i:'📈',g:9},
+    {id:"ged",l:"GED Documents",i:'📁',g:9},
+    {id:"archives",l:"Archives GED",i:'🗄',g:9},
+    {id:"importcsv",l:"Import CSV",i:'📥',g:9},
+    {id:"audittrail",l:"Audit Trail",i:'🔍',g:9},
+    {id:"formationsec",l:"Formation & Securite",i:'🎓',g:9},
+
+    // ═══ 10. AUTOMATISATION & IA ═══
+    {id:"_g10",l:"AUTOMATISATION & IA",grp:true},
+    {id:"autopilot",l:"Autopilot",i:'🤖',g:10},
+    {id:"massengine",l:"Mass Engine",i:'🏭',g:10},
+    {id:"queue",l:"File Traitement",i:'📋',g:10},
+    {id:"autoindex",l:"Auto-Indexation",i:'📈',g:10},
+    {id:"compliance",l:"Compliance Radar",i:'🛡',g:10},
+    {id:"historique",l:"Historique Runs",i:'📊',g:10},
+    {id:"actionsrapides",l:"Actions Rapides",i:'⚡',g:10},
+    {id:"integrations",l:"Integrations",i:'🔌',g:10},
+    {id:"aureussuite",l:"Aureus IA",i:'🔷',g:10,sub:[{id:"ia_turnover",l:"🧠 Prediction Turnover"},{id:"ia_salaire",l:"💡 Reco Salariales"},{id:"ia_anomalies",l:"🔍 Anomalies"},{id:"what_if",l:"🔮 What-If"},{id:"kpi_dashboard",l:"📈 KPI Dashboard"}]},
+
+    // ═══ 11. ADMINISTRATION ═══
+    {id:"_g11",l:"ADMINISTRATION",grp:true},
+    {id:"fiduciaire",l:"Hub Fiduciaire",i:'🏢',g:11},
+    {id:"ia_turnover",l:"IA Turnover",i:'🧠',g:11},
+    {id:"saas_admin",l:"SaaS Multi-Tenant",i:'🌐',g:11},
+    {id:"portalmanager",l:t("nav.portalmanager"),i:'🏢',g:11},
+    {id:"team",l:t('nav.team'),i:'👥',g:11},
+    {id:"authroles",l:"Roles & Permissions",i:'🔐',g:11},
+    {id:"securitedata",l:"Securite Donnees",i:'🔒',g:11},
+    {id:"rgpd",l:"RGPD Compliance",i:'🔒',g:11},
+    {id:"monitoring",l:"Monitoring",i:'🖥',g:11},
+    {id:"testsuite",l:"Test Suite",i:'🧪',g:11},
+    {id:"comparatif",l:"Comparatif Marche",i:'⚔️',g:11},
+    {id:"duediligence",l:"Due Diligence",i:'🔍',g:11},
+    {id:"admin",l:"Admin",i:'👑',g:11,sub:[{id:"config",l:"⚙ Parametres"},{id:"fraisgestion",l:"💰 Frais gestion"},{id:"audit",l:"📋 Audit"},{id:"admin_billing",l:"🧾 Facturation"},{id:"comparatif",l:"⚔️ Comparatif Marche"},{id:"onboardwizard",l:"🚀 Onboarding"},{id:"checklistclient",l:"✅ Checklist Client"}]},
   ];
 
   // ── Spotlight / Recherche globale (ALL HOOKS BEFORE EARLY RETURNS) ──
   const [spotQ,setSpotQ]=useState('');
   const [spotOpen,setSpotOpen]=useState(false);
+  const [collapsed,setCollapsed]=useState({});
   // ── Sprint 24b: Mobile Responsive ──
   const [mobileMenu,setMobileMenu]=useState(false);
   const [isMobile,setIsMobile]=useState(typeof window!=='undefined'&&window.innerWidth<900);
@@ -7791,6 +7843,376 @@ const RapportMensuel=({s})=>{
 };
 
 // ═══ 4. ACTIONS RAPIDES (1 clic = Dimona + Contrat + Fiche) ═══
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 1: DÉCLARATIONS ONSS/SPF
+// ══════════════════════════════════════════════════════════════════════
+const DeclarationsONSS=({s,d,supabase})=>{
+  const [mode,setMode]=useState('simulation');
+  const [history,setHistory]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v||0);
+  const submitDeclaration=async(type,xml,ref)=>{setLoading(true);try{const r=await _fetch('/api/onss',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,xml:xml||'<sim/>',reference:ref||'REF-'+Date.now(),env:mode})});const data=await r.json();setHistory(h=>[{type,ref:data.reference||ref,status:data.status||'PENDING',mode,date:new Date().toISOString(),result:data},...h]);if(typeof _toast==='function')_toast(type+' — '+data.status,'success');}catch(e){if(typeof _toast==='function')_toast('Erreur: '+e.message,'error');}setLoading(false);};
+  const completed=history.filter(h=>h.status==='ACCEPTED').length;
+  const failed=history.filter(h=>h.status==='REJECTED').length;
+  const pending=history.filter(h=>h.status==='PENDING').length;
+  return <div style={{padding:24}}>
+    <PH title='Déclarations ONSS / SPF' sub='Dimona, DmfA, Belcotax — Simulation & Production'/>
+    <div style={{display:'flex',gap:10,marginBottom:20,alignItems:'center'}}>
+      <span style={{fontSize:11,color:'#888'}}>Mode:</span>
+      {['simulation','production'].map(m=><button key={m} onClick={()=>setMode(m)} style={{padding:'8px 18px',borderRadius:8,border:'none',background:mode===m?(m==='production'?'rgba(239,68,68,.15)':'rgba(34,197,94,.15)'):'rgba(255,255,255,.03)',color:mode===m?(m==='production'?'#ef4444':'#22c55e'):'#888',fontWeight:mode===m?700:400,fontSize:12,cursor:'pointer'}}>{m==='simulation'?'🧪 Simulation':'🔴 Production'}</button>)}
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+      {[{l:'Acceptées',v:completed,c:'#22c55e'},{l:'Refusées',v:failed,c:'#ef4444'},{l:'En attente',v:pending,c:'#f97316'},{l:'Total',v:history.length,c:'#c6a34e'}].map((k,i)=><div key={i} style={{padding:14,background:'#0d1117',border:'1px solid '+k.c+'30',borderRadius:12,textAlign:'center'}}><div style={{fontSize:22,fontWeight:700,color:k.c}}>{k.v}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{k.l}</div></div>)}
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:20}}>
+      {[{type:'dimona_in',label:'📋 Dimona IN',desc:'Déclaration entrée travailleur'},{type:'dimona_out',label:'📋 Dimona OUT',desc:'Déclaration sortie travailleur'},{type:'dmfa',label:'🏛 DmfA',desc:'Déclaration trimestrielle ONSS'},{type:'belcotax',label:'📊 Belcotax 281.10',desc:'Fiches fiscales annuelles'},{type:'sepa',label:'💳 SEPA',desc:'Fichier virement salaires'},{type:'bilan_social',label:'📈 Bilan Social',desc:'Bilan social BNB'}].map(t=><button key={t.type} onClick={()=>submitDeclaration(t.type)} disabled={loading} style={{padding:16,borderRadius:12,border:'1px solid rgba(198,163,78,.1)',background:'#0d1117',cursor:'pointer',textAlign:'left'}}><div style={{fontSize:13,fontWeight:600,color:'#e8e6e0'}}>{t.label}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{t.desc}</div></button>)}
+    </div>
+    {history.length>0&&<div style={{padding:16,background:'#0d1117',borderRadius:14,border:'1px solid rgba(198,163,78,.1)'}}>
+      <div style={{fontSize:13,fontWeight:700,color:'#c6a34e',marginBottom:10}}>Historique</div>
+      {history.slice(0,20).map((h,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'100px 120px 80px 80px 1fr',gap:8,padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
+        <span style={{color:'#888'}}>{h.type}</span>
+        <span style={{color:'#e8e6e0'}}>{h.ref}</span>
+        <span style={{color:h.status==='ACCEPTED'?'#22c55e':h.status==='REJECTED'?'#ef4444':'#f97316',fontWeight:600}}>{h.status}</span>
+        <span style={{color:h.mode==='production'?'#ef4444':'#22c55e',fontSize:9}}>{h.mode}</span>
+        <span style={{color:'#555'}}>{new Date(h.date).toLocaleString('fr-BE')}</span>
+      </div>)}
+    </div>}
+  </div>;
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 2: IA PREDICTIVE TURNOVER
+// ══════════════════════════════════════════════════════════════════════
+const MARKET_SALARY={administration:[2400,3200,4000],comptabilite:[2600,3500,4500],developpeur:[3000,3800,5000],rh:[2500,3400,4200],commercial:[2300,3200,4500],manager:[3500,4500,6000],ouvrier:[2000,2600,3200],technicien:[2400,3000,3800],logistique:[2200,2800,3500]};
+function calcTurnoverRisk(emp,payHistory,absHistory){
+  const brut=+(emp.monthlySalary||emp.gross||0);const now=new Date();const start=new Date(emp.startDate||emp.start||now);const ancMois=(now-start)/(30.44*24*3600*1000);const ancAns=ancMois/12;const age=emp.birthDate?Math.floor((now-new Date(emp.birthDate))/(365.25*24*3600*1000)):35;const func=(emp.function||emp.poste||'administration').toLowerCase();
+  const factors=[];let score=0;const maxScore=100;
+  const benchmarks=MARKET_SALARY[func]||MARKET_SALARY.administration;const seniority=ancAns<2?0:ancAns<5?1:2;const benchmark=benchmarks[seniority];
+  if(brut>0&&brut<benchmark*0.85){score+=25;factors.push({id:'salaryBelowMarket',label:'Salaire < marché (-'+(100-Math.round(brut/benchmark*100))+'%)',points:25,action:'Augmentation recommandée: +'+(benchmark-brut).toFixed(0)+'€/mois'});}
+  const absDays=(absHistory||[]).reduce((a,ab)=>a+(ab.days||1),0);if(absDays>15){score+=20;factors.push({id:'highAbsenteeism',label:'Absentéisme élevé ('+absDays+'j/an)',points:20,action:'Entretien de retour et analyse causes'});}
+  if(ancAns>=1&&payHistory&&payHistory.length>=12){const first=+(payHistory[0]?.gross||0);const last=+(payHistory[payHistory.length-1]?.gross||0);if(first>0&&last<=first){score+=15;factors.push({id:'noRaise',label:'Pas d\'augmentation depuis 12+ mois',points:15,action:'Prévoir augmentation indexation + mérite'});}}
+  if(ancAns>=5&&ancAns<=10){score+=10;factors.push({id:'longTenure',label:'Plateau carrière ('+ancAns.toFixed(1)+' ans)',points:10,action:'Proposer mobilité interne ou nouvelles responsabilités'});}
+  if(ancAns<1){score+=10;factors.push({id:'shortTenure',label:'Période critique (<1 an)',points:10,action:'Renforcer intégration et suivi managérial'});}
+  if((emp.contractType||'').toUpperCase()==='CDD'){const endDate=new Date(emp.endDate||emp.contractEnd||'2099-12-31');const daysLeft=(endDate-now)/(24*3600*1000);if(daysLeft<90&&daysLeft>0){score+=20;factors.push({id:'endCDD',label:'CDD fin dans '+Math.round(daysLeft)+' jours',points:20,action:daysLeft<30?'URGENT: Proposer CDI':'Proposer renouvellement ou CDI'});}}
+  if(age>=58){score+=15;factors.push({id:'ageRetirement',label:'Pré-retraite ('+age+' ans)',points:15,action:'Planifier transfert connaissances et succession'});}
+  const pct=Math.min(100,Math.round(score*2.5));const level=pct>=70?'CRITIQUE':pct>=45?'ÉLEVÉ':pct>=25?'MODÉRÉ':'FAIBLE';const color=pct>=70?'#ef4444':pct>=45?'#f97316':pct>=25?'#eab308':'#22c55e';
+  return{employe:(emp.first||emp.fn||'')+' '+(emp.last||emp.ln||''),score:pct,level,color,factors,topAction:factors[0]?.action||'Aucune action requise'};
+}
+
+const IATurnoverMod=({s,d})=>{
+  const [results,setResults]=useState(null);
+  const ae=s.emps||[];
+  const analyze=()=>{const r=ae.map(e=>calcTurnoverRisk(e,[],[]));r.sort((a,b)=>b.score-a.score);const avgRisk=r.length?Math.round(r.reduce((a,x)=>a+x.score,0)/r.length):0;const critical=r.filter(x=>x.level==='CRITIQUE').length;const estimated=r.filter(x=>x.score>=50).length;const avgBrut=ae.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0)),0)/Math.max(ae.length,1);setResults({employees:r,avgRisk,critical,estimated,costEstimate:estimated*avgBrut*6});};
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:0}).format(v||0);
+  return <div style={{padding:24}}>
+    <PH title='IA Prédictive — Risque de Turnover' sub='Analyse des 7 facteurs de risque par employé'/>
+    <button onClick={analyze} style={{padding:'12px 28px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:14,cursor:'pointer',marginBottom:20}}>🧠 Analyser {ae.length} employés</button>
+    {results&&<div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+        {[{l:'Score moyen',v:results.avgRisk+'%',c:results.avgRisk>=50?'#ef4444':'#22c55e'},{l:'Risque critique',v:results.critical,c:'#ef4444'},{l:'Départs estimés 6m',v:results.estimated,c:'#f97316'},{l:'Coût potentiel',v:f2(results.costEstimate)+'€',c:'#ef4444'}].map((k,i)=><div key={i} style={{padding:14,background:'#0d1117',border:'1px solid '+k.c+'30',borderRadius:12,textAlign:'center'}}><div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{k.l}</div></div>)}
+      </div>
+      {results.employees.map((r,i)=><div key={i} style={{padding:14,background:'#0d1117',borderRadius:12,border:'1px solid '+r.color+'20',marginBottom:8}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <span style={{fontSize:13,fontWeight:600,color:'#e8e6e0'}}>{r.employe}</span>
+          <span style={{padding:'4px 12px',borderRadius:6,fontSize:11,fontWeight:700,background:r.color+'20',color:r.color}}>{r.level} {r.score}%</span>
+        </div>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:6}}>{r.factors.map((f,j)=><span key={j} style={{padding:'3px 8px',borderRadius:4,fontSize:9,background:'rgba(255,255,255,.04)',color:'#9e9b93'}}>{f.label}</span>)}</div>
+        <div style={{fontSize:11,color:'#c6a34e'}}>💡 {r.topAction}</div>
+      </div>)}
+    </div>}
+  </div>;
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 3: MULTI-TENANT SAAS
+// ══════════════════════════════════════════════════════════════════════
+const SAAS_PLANS=[{id:'starter',nom:'Starter',prix:149,maxClients:50,maxEmps:500,features:['Paie illimitée','DIMONA auto','Fiches de paie','SEPA','Support email']},{id:'pro',nom:'Pro',prix:349,maxClients:200,maxEmps:2000,features:['Tout Starter','IA predictive','API ONSS réelle','Portail client','Support prioritaire']},{id:'enterprise',nom:'Enterprise',prix:749,maxClients:9999,maxEmps:99999,features:['Tout Pro','White-label','Domaine custom','SLA 99.9%','Account manager']}];
+const MultiTenantAdmin=({s,d})=>{
+  const [tab,setTab]=useState('fiduciaires');
+  const [tenants,setTenants]=useState([{id:'T1',name:'Fiduciaire Demo',slug:'demo',plan:'pro',status:'active',clients:45,emps:380,mrr:349},{id:'T2',name:'Comptable Test',slug:'test',plan:'starter',status:'trial',clients:12,emps:85,mrr:0}]);
+  const [form,setForm]=useState({name:'',slug:'',email:'',plan:'starter'});
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:0}).format(v||0);
+  const totalMRR=tenants.reduce((a,t)=>a+t.mrr,0);
+  const createTenant=()=>{if(!form.name)return;const plan=SAAS_PLANS.find(p=>p.id===form.plan);setTenants(t=>[...t,{id:'T'+Date.now(),name:form.name,slug:form.slug||form.name.toLowerCase().replace(/\s/g,'-'),plan:form.plan,status:'trial',clients:0,emps:0,mrr:0}]);setForm({name:'',slug:'',email:'',plan:'starter'});if(typeof _toast==='function')_toast('Fiduciaire '+form.name+' créée','success');};
+  return <div style={{padding:24}}>
+    <PH title='Administration SaaS Multi-Tenant' sub='Gestion des fiduciaires, plans et facturation'/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+      {[{l:'Fiduciaires',v:tenants.length,c:'#3b82f6'},{l:'MRR',v:f2(totalMRR)+'€',c:'#22c55e'},{l:'ARR estimé',v:f2(totalMRR*12)+'€',c:'#c6a34e'},{l:'Actifs',v:tenants.filter(t=>t.status==='active').length,c:'#4ade80'}].map((k,i)=><div key={i} style={{padding:14,background:'#0d1117',border:'1px solid '+k.c+'30',borderRadius:12,textAlign:'center'}}><div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{k.l}</div></div>)}
+    </div>
+    <div style={{display:'flex',gap:6,marginBottom:20}}>{[{v:'fiduciaires',l:'🏢 Fiduciaires'},{v:'plans',l:'💳 Plans'},{v:'nouveau',l:'➕ Nouveau'}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#888'}}>{t.l}</button>)}</div>
+    {tab==='fiduciaires'&&tenants.map((t,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'2fr 80px 60px 60px 80px 80px',gap:8,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12,alignItems:'center'}}>
+      <span style={{color:'#e8e6e0',fontWeight:600}}>{t.name}</span>
+      <span style={{color:'#c6a34e'}}>{t.plan.toUpperCase()}</span>
+      <span style={{color:'#888'}}>{t.clients} cl.</span>
+      <span style={{color:'#888'}}>{t.emps} emp.</span>
+      <span style={{color:t.status==='active'?'#22c55e':'#f97316'}}>{t.status}</span>
+      <span style={{color:'#c6a34e',fontWeight:600}}>{t.mrr}€/m</span>
+    </div>)}
+    {tab==='plans'&&<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>{SAAS_PLANS.map((p,i)=><div key={i} style={{padding:20,background:'#0d1117',borderRadius:14,border:'1px solid '+(p.id==='pro'?'rgba(198,163,78,.3)':'rgba(255,255,255,.05)')}}>
+      <div style={{fontSize:18,fontWeight:700,color:'#c6a34e'}}>{p.nom}</div>
+      <div style={{fontSize:28,fontWeight:700,color:'#e8e6e0',margin:'10px 0'}}>{p.prix}€<span style={{fontSize:12,color:'#888'}}>/mois</span></div>
+      <div style={{fontSize:11,color:'#888',marginBottom:12}}>{p.maxClients} clients, {p.maxEmps} employés</div>
+      {p.features.map((f,j)=><div key={j} style={{fontSize:11,color:'#9e9b93',padding:'3px 0'}}>✓ {f}</div>)}
+    </div>)}</div>}
+    {tab==='nouveau'&&<div style={{maxWidth:400}}>
+      {[{k:'name',l:'Nom fiduciaire',ph:'Ex: Fiduciaire Dupont'},{k:'slug',l:'Slug URL',ph:'dupont'},{k:'email',l:'Email facturation',ph:'admin@fiduciaire.be'}].map(f=><div key={f.k} style={{marginBottom:12}}>
+        <label style={{fontSize:11,color:'#888',display:'block',marginBottom:4}}>{f.l}</label>
+        <input value={form[f.k]} onChange={e=>setForm({...form,[f.k]:e.target.value})} placeholder={f.ph} style={{width:'100%',padding:10,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:13,boxSizing:'border-box'}}/>
+      </div>)}
+      <div style={{marginBottom:16}}><label style={{fontSize:11,color:'#888',display:'block',marginBottom:4}}>Plan</label>
+        <select value={form.plan} onChange={e=>setForm({...form,plan:e.target.value})} style={{width:'100%',padding:10,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:13}}>
+          {SAAS_PLANS.map(p=><option key={p.id} value={p.id}>{p.nom} — {p.prix}€/mois</option>)}
+        </select>
+      </div>
+      <button onClick={createTenant} style={{padding:'12px 28px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:14,cursor:'pointer'}}>Créer la fiduciaire</button>
+    </div>}
+  </div>;
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 4: SOLDE DE TOUT COMPTE
+// ══════════════════════════════════════════════════════════════════════
+function calcPreavisSemaines(anc){if(anc<0.25)return 1;if(anc<0.5)return 2;if(anc<0.75)return 3;if(anc<1)return 4;if(anc<2)return 5;if(anc<3)return 6;if(anc<4)return 7;if(anc<5)return 9;if(anc<20)return 9+Math.floor(anc-4)*3;if(anc<21)return 57;return 57+Math.floor(anc-20)*2;}
+function calcSoldeToutCompte(emp,co){
+  const brut=+(emp.monthlySalary||emp.gross||0);const now=new Date();const start=new Date(emp.startDate||emp.start||now);const end=new Date(emp.endDate||emp.contractEnd||now);const ancJ=Math.max(1,Math.round((end-start)/(24*3600*1000)));const ancA=ancJ/365.25;const isOuv=(emp.statut||'').toLowerCase()==='ouvrier';const f=v=>Math.round(v*100)/100;
+  const pSem=calcPreavisSemaines(ancA);const preste=emp.preavisPreste===true;const indemP=preste?0:f(brut*pSem/4.33);
+  const jM=new Date(end.getFullYear(),end.getMonth()+1,0).getDate();const jP=end.getDate();const prorata=f(brut*jP/jM);
+  const mP=Math.max(0,end.getMonth()+1);const pecS=isOuv?0:f(brut*12*mP/12*0.0767);const pecD=isOuv?0:f(brut*12*mP/12*0.0680);
+  const m13=f(brut*mP/12);const jCR=+(emp.congesRestants||0);const vJ=f(brut/21.67);const congNP=f(jCR*vJ);
+  const brutT=f(prorata+indemP+pecS+pecD+m13+congNP);const onssW=f(brutT*0.1307);const imp=f(brutT-onssW);const ppE=f(imp*0.30);const netE=f(imp-ppE);const coutE=f(brutT+brutT*0.2507);
+  return{employe:(emp.first||emp.fn||'')+' '+(emp.last||emp.ln||''),preavis:{sem:pSem,j:pSem*7},details:[{label:'Prorata salaire mois en cours',brut:prorata},{label:'Indemnité compensatoire préavis',brut:indemP,note:pSem+' semaines'},{label:'Pécule vacances simple sortie',brut:pecS},{label:'Pécule vacances double sortie',brut:pecD},{label:'13ème mois prorata',brut:m13,note:mP+'/12'},{label:'Congés non pris ('+jCR+'j)',brut:congNP}].filter(d=>d.brut>0),totaux:{brutTotal:brutT,onssTravailleur:onssW,imposable:imp,ppEstime:ppE,netEstime:netE,coutEmployeur:coutE}};
+}
+const SoldeToutCompteMod=({s,d})=>{
+  const [selEmp,setSelEmp]=useState('');const [result,setResult]=useState(null);const ae=(s.emps||[]);const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v||0);
+  const run=()=>{if(!selEmp)return;const emp=ae.find(e=>e.id===selEmp)||ae[0];setResult(calcSoldeToutCompte(emp,s.company||{}));};
+  return <div style={{padding:24}}>
+    <PH title='Solde de tout compte' sub='Calcul automatique — Préavis + pécule + 13ème + congés'/>
+    <div style={{display:'flex',gap:10,marginBottom:20}}>
+      <select value={selEmp} onChange={e=>setSelEmp(e.target.value)} style={{flex:1,padding:10,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:13}}><option value=''>Sélectionnez un employé...</option>{ae.map((e,i)=><option key={i} value={e.id}>{(e.first||e.fn||'')+' '+(e.last||e.ln||'')}</option>)}</select>
+      <button onClick={run} style={{padding:'10px 24px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:13,cursor:'pointer'}}>Calculer</button>
+    </div>
+    {result&&<div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+        {[{l:'Brut total',v:f2(result.totaux.brutTotal)+'€',c:'#c6a34e'},{l:'Net estimé',v:f2(result.totaux.netEstime)+'€',c:'#22c55e'},{l:'Coût employeur',v:f2(result.totaux.coutEmployeur)+'€',c:'#ef4444'},{l:'Préavis',v:result.preavis.sem+' sem.',c:'#3b82f6'}].map((k,i)=><div key={i} style={{padding:14,background:'#0d1117',border:'1px solid '+k.c+'30',borderRadius:12,textAlign:'center'}}><div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{k.l}</div></div>)}
+      </div>
+      <div style={{padding:16,background:'#0d1117',borderRadius:14,border:'1px solid rgba(198,163,78,.1)'}}>
+        <div style={{fontSize:14,fontWeight:700,color:'#c6a34e',marginBottom:12}}>Détail du solde</div>
+        {result.details.map((d,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{color:'#e8e6e0',fontSize:12}}>{d.label}{d.note?<span style={{color:'#888',marginLeft:6,fontSize:10}}>({d.note})</span>:''}</span><span style={{color:'#c6a34e',fontWeight:600}}>{f2(d.brut)} €</span></div>)}
+        <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderTop:'2px solid rgba(198,163,78,.2)',marginTop:8}}><b style={{color:'#e8e6e0'}}>TOTAL BRUT</b><b style={{color:'#c6a34e',fontSize:16}}>{f2(result.totaux.brutTotal)} €</b></div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'6px 0'}}><span style={{color:'#888',fontSize:11}}>ONSS (13,07%)</span><span style={{color:'#ef4444'}}>-{f2(result.totaux.onssTravailleur)} €</span></div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'6px 0'}}><span style={{color:'#888',fontSize:11}}>PP estimé (~30%)</span><span style={{color:'#ef4444'}}>-{f2(result.totaux.ppEstime)} €</span></div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderTop:'2px solid rgba(34,197,94,.2)'}}><b style={{color:'#22c55e'}}>NET ESTIMÉ</b><b style={{color:'#22c55e',fontSize:18}}>{f2(result.totaux.netEstime)} €</b></div>
+      </div>
+    </div>}
+  </div>;
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 5: REPRISE CLIENT CONCURRENT (COMPLET)
+// ══════════════════════════════════════════════════════════════════════
+const CUMUL_FIELDS=[{key:'brutTotal',label:'Brut total imposable',cat:'rem',ob:true},{key:'brutONSS',label:'Brut soumis ONSS',cat:'rem',ob:true},{key:'onssPerso',label:'ONSS personnel (13,07%)',cat:'cot',ob:true},{key:'onssPatron',label:'ONSS patronal',cat:'cot',ob:true},{key:'redStruct',label:'Réduction structurelle',cat:'cot',ob:false},{key:'redGC',label:'Réduction groupes-cibles',cat:'cot',ob:false},{key:'ppRetenu',label:'Précompte professionnel',cat:'fisc',ob:true},{key:'csss',label:'Cotisation spéciale SS',cat:'fisc',ob:true},{key:'bonusEmploi',label:'Bonus à l\'emploi',cat:'fisc',ob:false},{key:'netTotal',label:'Net total payé',cat:'net',ob:true},{key:'peculeS',label:'Pécule simple payé',cat:'vac',ob:true},{key:'peculeD',label:'Pécule double payé',cat:'vac',ob:true},{key:'treiz',label:'13ème mois payé',cat:'prim',ob:false},{key:'atnVoiture',label:'ATN voiture',cat:'atn',ob:false},{key:'cheqRepas',label:'Chèques-repas patronal',cat:'av',ob:false},{key:'fraisPropres',label:'Frais propres employeur',cat:'av',ob:false},{key:'indemTT',label:'Indemnité télétravail',cat:'av',ob:false},{key:'transport',label:'Transport dom-travail',cat:'av',ob:false},{key:'joursPrestes',label:'Jours prestés',cat:'tps',ob:true},{key:'joursVacPris',label:'Jours vacances pris',cat:'tps',ob:true},{key:'joursVacRest',label:'Jours vacances restants',cat:'tps',ob:true},{key:'joursMaladie',label:'Jours maladie cumulés',cat:'tps',ob:false}];
+const CUMUL_CATS=[{id:'rem',l:'💰 Rémunération',c:'#c6a34e'},{id:'cot',l:'🏛 Cotisations',c:'#3b82f6'},{id:'fisc',l:'📊 Fiscal',c:'#ef4444'},{id:'net',l:'💵 Net',c:'#22c55e'},{id:'vac',l:'🏖 Vacances',c:'#06b6d4'},{id:'prim',l:'🎁 Primes',c:'#f97316'},{id:'atn',l:'🚗 ATN',c:'#a78bfa'},{id:'av',l:'🎫 Avantages',c:'#eab308'},{id:'tps',l:'📅 Temps',c:'#ec4899'}];
+const REPRISE_DOCS=[{id:'fiches_paie',ph:1,l:'Fiches de paie (12 mois)',ob:true,src:'Ancien gestionnaire'},{id:'compte_indiv',ph:1,l:'Comptes individuels',ob:true,src:'Ancien gestionnaire'},{id:'fiche_281',ph:1,l:'Fiches 281.10/281.20',ob:true,src:'Ancien gestionnaire'},{id:'cumuls_ytd',ph:1,l:'Cumuls YTD',ob:true,src:'Ancien gestionnaire',critical:true},{id:'dimona_actives',ph:1,l:'Dimona actives',ob:true,src:'Portail ONSS'},{id:'dmfa_derniere',ph:1,l:'Dernière DmfA',ob:true,src:'Ancien gestionnaire'},{id:'registre',ph:1,l:'Registre du personnel',ob:true,src:'Ancien gestionnaire'},{id:'contrats',ph:2,l:'Contrats de travail',ob:true,src:'Client'},{id:'reglement',ph:2,l:'Règlement de travail',ob:true,src:'Client'},{id:'cct',ph:2,l:'CCT applicables',ob:true,src:'Vérification interne'},{id:'car_policy',ph:2,l:'Car policy',ob:false,src:'Client'},{id:'assurance_gr',ph:2,l:'Assurance groupe/pension',ob:false,src:'Client'},{id:'fonds_sect',ph:2,l:'Fonds sectoriels',ob:true,src:'Ancien gestionnaire'},{id:'bce',ph:3,l:'Vérification BCE',ob:true,src:'API BCE'},{id:'onss_check',ph:3,l:'Portail ONSS',ob:true,src:'ONSS'},{id:'med_travail',ph:3,l:'Médecine du travail',ob:true,src:'Client'},{id:'assurance_at',ph:3,l:'Assurance accident travail',ob:true,src:'Client'},{id:'caisse_vac',ph:3,l:'Caisse vacances ouvriers',ob:false,src:'Ancien gestionnaire'}];
+const ERREURS_CONC=[{id:'cp_fausse',l:'Mauvaise CP',g:'critique',d:'NACE vs CP incorrect',v:'Comparer NACE BCE avec CP appliquée'},{id:'index_manque',l:'Indexation manquée',g:'critique',d:'Index sectoriel oublié ou retardé',v:'Salaire actuel vs barème indexé'},{id:'pp_faux',l:'PP mal calculé',g:'haute',d:'Barème PP incorrect',v:'Recalculer avec barèmes SPF 2026'},{id:'bonus_oublie',l:'Bonus emploi oublié',g:'haute',d:'Réduction PP non appliquée',v:'Si brut < plafond: vérifier réduction'},{id:'csss_tranche',l:'CSSS mauvaise tranche',g:'moyenne',d:'Cotisation spéciale SS fausse',v:'Revenu vs tranches CSSS'},{id:'dimona_abs',l:'Dimona absente',g:'critique',d:'Travailleur sans Dimona IN',v:'Vérifier portail ONSS'},{id:'taux_at',l:'Taux AT faux',g:'haute',d:'Taux accident travail incorrect',v:'Taux fiche vs police assurance'},{id:'pecule_d',l:'Pécule double faux',g:'haute',d:'Base de calcul erronée',v:'Vérifier base = brut N-1 × 9,20%'},{id:'sal_garanti',l:'Salaire garanti mal géré',g:'haute',d:'30j employé / 7-14-21j ouvrier',v:'Historique absences vs fiches'},{id:'anciennete',l:'Ancienneté fausse',g:'moyenne',d:'Date entrée erronée',v:'Contrat vs Dimona vs registre'},{id:'red_gc',l:'Réduction GC oubliée',g:'haute',d:'1er engagement, jeune, senior',v:'Éligibilité via critères ONSS'},{id:'atn_faux',l:'ATN mal valorisé',g:'moyenne',d:'CO2/formule/forfait erroné',v:'Recalculer ATN voiture 2026'},{id:'cr_jours',l:'Chèques-repas jours faux',g:'basse',d:'Jours effectifs ≠ jours CR',v:'Ouvrables - absences - vacances'},{id:'flexi_onss',l:'Flexi-job ONSS oublié',g:'haute',d:'28% patronal spécial',v:'Si secteur autorisé: vérifier 28%'}];
+const CONCURRENTS_LIST=[{k:'securex',n:'Securex',diff:2},{k:'sd_worx',n:'SD Worx',diff:3},{k:'partena',n:'Partena',diff:2},{k:'liantis',n:'Liantis',diff:2},{k:'acerta',n:'Acerta',diff:1},{k:'ucm',n:'UCM',diff:1},{k:'easypay',n:'Easypay',diff:1},{k:'attentia',n:'Attentia',diff:2},{k:'gappaie',n:'GapPaie',diff:2},{k:'fiduciaire',n:'Fiduciaire locale',diff:4},{k:'comptable',n:'Comptable',diff:5},{k:'autre',n:'Autre',diff:3}];
+function validateCumulsYTD(cum,emp){
+  const err=[];const warn=[];const brut=+(cum.brutTotal||0);const onss=+(cum.onssPerso||0);const pp=+(cum.ppRetenu||0);const net=+(cum.netTotal||0);const brutM=+(emp?.monthlySalary||emp?.gross||0);const mois=+(cum.moisPrestes||new Date().getMonth()||1);
+  if(brut>0&&onss>0){const tx=onss/brut;if(Math.abs(tx-0.1307)>0.005)err.push('ONSS ('+(tx*100).toFixed(2)+'%) ≠ 13,07%');}
+  if(brutM>0&&mois>0){const att=brutM*mois;if(Math.abs(brut-att)/att>0.15)warn.push('Brut ('+brut.toFixed(0)+'€) diverge >15% du brut attendu ('+att.toFixed(0)+'€)');}
+  const netTh=brut-onss-pp;if(net>0&&Math.abs(net-netTh)>brut*0.10)warn.push('Net diverge >10% du net théorique');
+  if(brut>0&&pp>0){const txPP=pp/(brut-onss);if(txPP<0.10||txPP>0.55)err.push('Taux PP ('+(txPP*100).toFixed(1)+'%) hors norme');}
+  const vp=+(cum.joursVacPris||0);const vr=+(cum.joursVacRest||0);if((vp+vr)>0&&(vp+vr)!==20)warn.push('Vacances: pris('+vp+')+restants('+vr+')='+(vp+vr)+' ≠ 20 jours');
+  CUMUL_FIELDS.filter(f=>f.ob).forEach(f=>{if(!cum[f.key]&&cum[f.key]!==0)err.push(f.label+' — manquant');});
+  return{errors:err,warnings:warn,valid:err.length===0,score:Math.max(0,100-err.length*10-warn.length*5)};
+}
+const RepriseClientMod=({s,d})=>{
+  const [tab,setTab]=useState('checklist');const [conc,setConc]=useState('');const [cumuls,setCumuls]=useState({});const [valid,setValid]=useState(null);const [docs,setDocs]=useState({});const [errs,setErrs]=useState({});const [selEmp,setSelEmp]=useState('');const ae=s.emps||[];
+  const [scanning,setScanning]=useState(false);const [scanResult,setScanResult]=useState(null);const [scanFiles,setScanFiles]=useState([]);const [scanLog,setScanLog]=useState([]);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v||0);
+  const docsOb=REPRISE_DOCS.filter(d=>d.ob);const docsObDone=docsOb.filter(d=>docs[d.id]).length;const errsDone=ERREURS_CONC.filter(e=>errs[e.id]).length;
+  const doValidate=()=>{const emp=ae.find(e=>e.id===selEmp)||ae[0]||{};setValid(validateCumulsYTD(cumuls,emp));};
+
+  // ── SCANNER IA — Upload + analyse fiches ancien gestionnaire ──
+  const handleFileUpload=async(e)=>{
+    const files=Array.from(e.target.files||[]);
+    if(!files.length)return;
+    setScanFiles(files);
+    setScanLog(l=>[...l,'📎 '+files.length+' fichier(s) sélectionné(s): '+files.map(f=>f.name).join(', ')]);
+  };
+
+  const doScan=async()=>{
+    if(!scanFiles.length){if(typeof _toast==='function')_toast('Sélectionnez des fiches de paie','warning');return;}
+    setScanning(true);setScanResult(null);setScanLog(l=>[...l,'🔄 Analyse IA en cours...']);
+    const allResults=[];
+    for(const file of scanFiles){
+      try{
+        setScanLog(l=>[...l,'📄 Analyse: '+file.name]);
+        const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=()=>rej(new Error('Lecture impossible'));r.readAsDataURL(file);});
+        const mediaType=file.type||'application/pdf';
+        const isPDF=file.name.toLowerCase().endsWith('.pdf')||mediaType==='application/pdf';
+        const resp=await fetch('/api/scan-paie',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({documents:[{base64,filename:file.name,mediaType:isPDF?'application/pdf':mediaType}]})});
+        const data=await resp.json();
+        if(data.results&&data.results[0]){
+          const r=data.results[0].extracted;
+          allResults.push(r);
+          setScanLog(l=>[...l,'✅ '+file.name+': '+(r.travailleur?.nom||'?')+' '+(r.travailleur?.prenom||'')+' — Brut: '+(r.remuneration?.brut_total||'?')+'€']);
+        }else{
+          setScanLog(l=>[...l,'⚠️ '+file.name+': Pas de données extraites'+(data.error?' — '+data.error:'')]);
+        }
+      }catch(err){
+        setScanLog(l=>[...l,'❌ '+file.name+': '+err.message]);
+      }
+    }
+    // Mapper les résultats vers les cumuls
+    if(allResults.length>0){
+      const merged={};let totalBrut=0,totalONSS=0,totalPP=0,totalCSS=0,totalNet=0,totalBonus=0,mois=0;
+      let pecS=0,pecD=0,treiz=0,atnV=0,cr=0,fp=0,tt=0,transp=0;
+      for(const r of allResults){
+        const rem=r.remuneration||{};const ret=r.retenues||{};const n=r.net||{};
+        totalBrut+=+(rem.brut_total||0);
+        totalONSS+=+(ret.onss_travailleur||0);
+        totalPP+=+(ret.precompte_professionnel||0);
+        totalCSS+=+(ret.cotisation_speciale_ss||0);
+        totalNet+=+(n.net_a_payer||0);
+        totalBonus+=+(ret.bonus_emploi||0);
+        pecS+=+(rem.pecule_vacances||0);
+        atnV+=+(rem.avantage_nature||0);
+        cr+=+(rem.cheques_repas_jours||0)*(+(rem.cheques_repas_valeur||0));
+        fp+=+(rem.frais_propres||0);
+        mois++;
+      }
+      const newCumuls={
+        ...cumuls,
+        brutTotal:+totalBrut.toFixed(2),
+        brutONSS:+totalBrut.toFixed(2),
+        onssPerso:+totalONSS.toFixed(2),
+        ppRetenu:+totalPP.toFixed(2),
+        csss:+totalCSS.toFixed(2),
+        netTotal:+totalNet.toFixed(2),
+        bonusEmploi:+totalBonus.toFixed(2),
+        peculeS:+pecS.toFixed(2),
+        atnVoiture:+atnV.toFixed(2),
+        cheqRepas:+cr.toFixed(2),
+        fraisPropres:+fp.toFixed(2),
+        moisPrestes:mois,
+      };
+      setCumuls(newCumuls);
+      setScanResult({count:allResults.length,raw:allResults});
+      setScanLog(l=>[...l,'','🎯 RÉSULTAT: '+mois+' fiche(s) analysée(s)','💰 Brut cumulé: '+totalBrut.toFixed(2)+'€','🏛 ONSS cumulé: '+totalONSS.toFixed(2)+'€','📊 PP cumulé: '+totalPP.toFixed(2)+'€','💵 Net cumulé: '+totalNet.toFixed(2)+'€','','✅ Cumuls pré-remplis automatiquement. Vérifiez et complétez les champs manquants.']);
+      if(typeof _toast==='function')_toast(mois+' fiche(s) analysée(s) — cumuls pré-remplis','success');
+    }else{
+      setScanLog(l=>[...l,'❌ Aucune donnée extraite. Vérifiez la qualité des fichiers.']);
+    }
+    setScanning(false);
+  };
+  return <div style={{padding:24}}>
+    <PH title='Reprise Client Concurrent' sub='Transfert depuis un autre gestionnaire de paie'/>
+    <div style={{display:'flex',gap:10,marginBottom:20,alignItems:'center'}}>
+      <label style={{fontSize:11,color:'#888'}}>Ancien gestionnaire:</label>
+      <select value={conc} onChange={e=>setConc(e.target.value)} style={{flex:1,maxWidth:300,padding:8,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:12}}>
+        <option value=''>Sélectionnez...</option>
+        {CONCURRENTS_LIST.map(c=><option key={c.k} value={c.k}>{c.n} ({'⭐'.repeat(c.diff)})</option>)}
+      </select>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+      {[{l:'Documents',v:docsObDone+'/'+docsOb.length,c:docsObDone===docsOb.length?'#22c55e':'#f97316'},{l:'Cumuls',v:valid?valid.score+'%':'—',c:valid?(valid.score>=80?'#22c55e':'#ef4444'):'#888'},{l:'Audit erreurs',v:errsDone+'/'+ERREURS_CONC.length,c:errsDone===ERREURS_CONC.length?'#22c55e':'#3b82f6'},{l:'GO LIVE',v:docsObDone===docsOb.length&&valid?.valid?'✅':'❌',c:docsObDone===docsOb.length&&valid?.valid?'#22c55e':'#ef4444'}].map((k,i)=><div key={i} style={{padding:14,background:'#0d1117',border:'1px solid '+k.c+'30',borderRadius:12,textAlign:'center'}}><div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{k.l}</div></div>)}
+    </div>
+    <div style={{display:'flex',gap:6,marginBottom:20,flexWrap:'wrap'}}>
+      {[{v:'checklist',l:'📋 Checklist'},{v:'cumuls',l:'💰 Cumuls YTD'},{v:'erreurs',l:'⚠️ Audit concurrent'},{v:'timeline',l:'📅 Timeline'},{v:'rapport',l:'📄 Rapport'}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:11,fontWeight:tab===t.v?600:400,background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#888'}}>{t.l}</button>)}
+    </div>
+    {tab==='checklist'&&[1,2,3].map(ph=><div key={ph} style={{marginBottom:20}}>
+      <div style={{fontSize:13,fontWeight:700,color:'#c6a34e',marginBottom:8}}>Phase {ph}: {ph===1?'Ancien gestionnaire':ph===2?'Client':'Vérifications externes'}</div>
+      {REPRISE_DOCS.filter(d=>d.ph===ph).map(d=><div key={d.id} style={{display:'flex',gap:10,padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+        <input type='checkbox' checked={!!docs[d.id]} onChange={e=>{const nd={...docs};nd[d.id]=e.target.checked;setDocs(nd);}} style={{accentColor:'#c6a34e'}}/>
+        <div><span style={{fontSize:12,color:'#e8e6e0'}}>{d.critical?'🔴 ':''}{d.ob?'':'(optionnel) '}{d.l}</span><span style={{fontSize:10,color:'#555',marginLeft:8}}>{d.src}</span></div>
+      </div>)}
+    </div>)}
+    {tab==='cumuls'&&<div>
+      {/* SCANNER IA — Upload fiches ancien gestionnaire */}
+      <div style={{padding:16,background:'linear-gradient(135deg,rgba(198,163,78,.06),rgba(59,130,246,.04))',border:'2px dashed rgba(198,163,78,.25)',borderRadius:14,marginBottom:20}}>
+        <div style={{fontSize:14,fontWeight:700,color:'#c6a34e',marginBottom:8}}>🤖 Scanner IA — Analyse automatique des fiches</div>
+        <div style={{fontSize:11,color:'#888',marginBottom:12}}>Uploadez les fiches de paie de l'ancien gestionnaire (PDF ou photo). L'IA extrait les montants et pré-remplit les cumuls.</div>
+        <div style={{display:'flex',gap:10,alignItems:'center',marginBottom:12}}>
+          <label style={{flex:1,padding:12,borderRadius:10,border:'1px solid rgba(198,163,78,.2)',background:'#090c16',cursor:'pointer',textAlign:'center',fontSize:12,color:'#c6a34e',fontWeight:600}}>
+            <input type='file' multiple accept='.pdf,.jpg,.jpeg,.png,.webp' onChange={handleFileUpload} style={{display:'none'}}/>
+            📤 {scanFiles.length?scanFiles.length+' fichier(s) sélectionné(s)':'Cliquez pour sélectionner des fiches'}
+          </label>
+          <button onClick={doScan} disabled={scanning||!scanFiles.length} style={{padding:'12px 24px',borderRadius:10,border:'none',background:scanning?'rgba(198,163,78,.2)':scanFiles.length?'linear-gradient(135deg,#c6a34e,#a07d3e)':'rgba(198,163,78,.1)',color:scanning?'#888':scanFiles.length?'#060810':'#555',fontWeight:700,fontSize:13,cursor:scanning||!scanFiles.length?'not-allowed':'pointer',minWidth:160}}>
+            {scanning?'⏳ Analyse en cours...':'🧠 Analyser avec IA'}
+          </button>
+        </div>
+        {scanFiles.length>0&&<div style={{marginBottom:8}}>{scanFiles.map((f,i)=><span key={i} style={{display:'inline-block',padding:'3px 10px',borderRadius:6,background:'rgba(198,163,78,.08)',color:'#c6a34e',fontSize:10,marginRight:6,marginBottom:4}}>📄 {f.name} ({(f.size/1024).toFixed(0)} KB)</span>)}</div>}
+        {scanLog.length>0&&<div style={{maxHeight:200,overflow:'auto',padding:10,background:'#060810',borderRadius:8,marginTop:8}}>
+          {scanLog.map((l,i)=><div key={i} style={{fontSize:10,color:l.includes('✅')?'#22c55e':l.includes('❌')?'#ef4444':l.includes('🎯')?'#c6a34e':l.includes('💰')||l.includes('🏛')||l.includes('📊')||l.includes('💵')?'#3b82f6':'#888',padding:'2px 0',fontFamily:'monospace'}}>{l}</div>)}
+        </div>}
+        {scanResult&&<div style={{marginTop:8,padding:8,background:'rgba(34,197,94,.05)',borderRadius:8,border:'1px solid rgba(34,197,94,.15)'}}>
+          <span style={{fontSize:11,color:'#22c55e',fontWeight:600}}>✅ {scanResult.count} fiche(s) scannée(s) — Cumuls pré-remplis ci-dessous. Vérifiez chaque montant.</span>
+        </div>}
+      </div>
+
+      {/* Sélecteur travailleur + validation */}
+      <div style={{display:'flex',gap:10,marginBottom:16}}>
+        <select value={selEmp} onChange={e=>setSelEmp(e.target.value)} style={{flex:1,padding:8,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:12}}><option value=''>Travailleur...</option>{ae.map((e,i)=><option key={i} value={e.id}>{(e.first||e.fn||'')+' '+(e.last||e.ln||'')}</option>)}</select>
+        <input type='number' placeholder='Mois prestés' value={cumuls.moisPrestes||''} onChange={e=>setCumuls({...cumuls,moisPrestes:+e.target.value})} style={{width:120,padding:8,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:12}}/>
+        <button onClick={doValidate} style={{padding:'8px 20px',borderRadius:8,border:'none',background:'#c6a34e',color:'#060810',fontWeight:700,fontSize:12,cursor:'pointer'}}>Valider</button>
+      </div>
+      {CUMUL_CATS.map(cat=><div key={cat.id} style={{marginBottom:14}}>
+        <div style={{fontSize:11,fontWeight:700,color:cat.c,marginBottom:6}}>{cat.l}</div>
+        {CUMUL_FIELDS.filter(f=>f.cat===cat.id).map(f=><div key={f.key} style={{display:'flex',gap:8,marginBottom:3,alignItems:'center'}}>
+          <div style={{width:220,fontSize:11,color:f.ob?'#e8e6e0':'#888'}}>{f.ob?'* ':''}{f.label}</div>
+          <input type='number' step='0.01' value={cumuls[f.key]||''} onChange={e=>setCumuls({...cumuls,[f.key]:+e.target.value})} style={{width:140,padding:'5px 8px',borderRadius:6,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:12,textAlign:'right'}} placeholder='0.00'/>
+        </div>)}
+      </div>)}
+      {valid&&<div style={{marginTop:16,padding:14,background:valid.valid?'rgba(34,197,94,.05)':'rgba(239,68,68,.05)',border:'1px solid '+(valid.valid?'rgba(34,197,94,.2)':'rgba(239,68,68,.2)'),borderRadius:12}}>
+        <div style={{fontSize:13,fontWeight:700,color:valid.valid?'#22c55e':'#ef4444',marginBottom:8}}>Score: {valid.score}% — {valid.valid?'✅ Cohérent':'❌ Écarts'}</div>
+        {valid.errors.map((e,i)=><div key={i} style={{fontSize:11,color:'#ef4444',padding:'3px 0'}}>● {e}</div>)}
+        {valid.warnings.map((w,i)=><div key={i} style={{fontSize:11,color:'#eab308',padding:'3px 0'}}>▲ {w}</div>)}
+      </div>}
+    </div>}
+    {tab==='erreurs'&&<div>
+      <div style={{fontSize:13,fontWeight:700,color:'#c6a34e',marginBottom:12}}>14 erreurs fréquentes des concurrents</div>
+      {ERREURS_CONC.map(e=><div key={e.id} style={{display:'flex',gap:10,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+        <input type='checkbox' checked={!!errs[e.id]} onChange={ev=>{const ne={...errs};ne[e.id]=ev.target.checked;setErrs(ne);}} style={{accentColor:'#c6a34e',marginTop:2}}/>
+        <div><div style={{fontSize:12,color:'#e8e6e0',fontWeight:600}}><span style={{padding:'2px 6px',borderRadius:4,fontSize:9,marginRight:6,background:e.g==='critique'?'rgba(239,68,68,.15)':'rgba(249,115,22,.15)',color:e.g==='critique'?'#ef4444':'#f97316'}}>{e.g.toUpperCase()}</span>{e.l}</div><div style={{fontSize:10,color:'#888',marginTop:2}}>{e.d}</div><div style={{fontSize:10,color:'#3b82f6',marginTop:2}}>🔍 {e.v}</div></div>
+      </div>)}
+    </div>}
+    {tab==='timeline'&&<div>
+      {[{p:'J-60',a:['Mandat signé','Résiliation ancien gestionnaire (6 mois si SS agréé)']},{p:'J-45',a:['Demande formelle documents de transfert']},{p:'J-30',a:['🔴 Réception cumuls YTD','Vérification Dimona portail ONSS']},{p:'J-21',a:['Encodage données dans Aureus','Scanner IA fiches ancien gestionnaire']},{p:'J-14',a:['🔴 Réconciliation calcul parallèle','Audit 14 erreurs concurrent']},{p:'J-7',a:['Validation cumuls avec client','Config SEPA + bancaire']},{p:'J',a:['🟢 GO LIVE — Premier calcul Aureus']},{p:'J+7',a:['Vérification premier SEPA + fiche']},{p:'J+30',a:['Premier DmfA complet']},{p:'J+60',a:['Rapport réconciliation 3 mois']},{p:'J+90',a:['Clôture transfert']}].map((t,i)=><div key={i} style={{display:'flex',gap:12,padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+        <div style={{width:50,fontWeight:700,color:t.p==='J'?'#22c55e':t.p.includes('🔴')?'#ef4444':'#888',fontSize:12}}>{t.p}</div>
+        <div>{t.a.map((a,j)=><div key={j} style={{fontSize:11,color:a.includes('🔴')?'#ef4444':a.includes('🟢')?'#22c55e':'#e8e6e0',padding:'2px 0'}}>{a}</div>)}</div>
+      </div>)}
+    </div>}
+    {tab==='rapport'&&<div style={{padding:16,background:'#0d1117',borderRadius:14,border:'1px solid rgba(198,163,78,.1)'}}>
+      <div style={{fontSize:14,fontWeight:700,color:'#c6a34e',marginBottom:12}}>Rapport de reprise</div>
+      <div style={{fontSize:11,color:'#888',lineHeight:1.8}}>
+        Client: <b style={{color:'#e8e6e0'}}>{s.company?.name||'—'}</b><br/>
+        Ancien: <b style={{color:'#e8e6e0'}}>{conc?CONCURRENTS_LIST.find(c=>c.k===conc)?.n:'Non sélectionné'}</b><br/>
+        Travailleurs: <b style={{color:'#e8e6e0'}}>{ae.length}</b><br/>
+        Documents: <b style={{color:docsObDone===docsOb.length?'#22c55e':'#ef4444'}}>{docsObDone}/{docsOb.length}</b> obligatoires<br/>
+        Cumuls: <b style={{color:valid?.valid?'#22c55e':'#ef4444'}}>{valid?'Score '+valid.score+'%':'Non validés'}</b><br/>
+        Audit: <b style={{color:errsDone===ERREURS_CONC.length?'#22c55e':'#ef4444'}}>{errsDone}/{ERREURS_CONC.length}</b> vérifiés<br/>
+        Statut: <b style={{color:docsObDone===docsOb.length&&valid?.valid?'#22c55e':'#ef4444'}}>{docsObDone===docsOb.length&&valid?.valid?'✅ PRÊT GO LIVE':'❌ INCOMPLET'}</b>
+      </div>
+    </div>}
+  </div>;
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 6: COOKIE BANNER RGPD
+// ══════════════════════════════════════════════════════════════════════
+const CookieBanner=()=>{
+  const [show,setShow]=useState(false);
+  useEffect(()=>{try{if(!localStorage.getItem('aureus_cookie_consent'))setShow(true);}catch(e){}},[]);
+  if(!show)return null;
+  return <div style={{position:'fixed',bottom:0,left:0,right:0,zIndex:99998,background:'#0d1117',borderTop:'1px solid rgba(198,163,78,.2)',padding:'14px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,fontSize:12}}>
+    <div style={{color:'#e8e6e0',flex:1}}><b style={{color:'#c6a34e'}}>🍪 Cookies & Vie privée</b> — Aureus Social Pro utilise des cookies essentiels uniquement. Aucun cookie publicitaire. Conforme RGPD.</div>
+    <div style={{display:'flex',gap:8}}>
+      <button onClick={()=>{try{localStorage.setItem('aureus_cookie_consent','refused');}catch(e){}setShow(false);}} style={{padding:'8px 16px',borderRadius:8,border:'1px solid rgba(198,163,78,.15)',background:'transparent',color:'#888',fontSize:11,cursor:'pointer'}}>Refuser</button>
+      <button onClick={()=>{try{localStorage.setItem('aureus_cookie_consent','accepted');}catch(e){}setShow(false);}} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'#c6a34e',color:'#060810',fontWeight:700,fontSize:11,cursor:'pointer'}}>Accepter</button>
+    </div>
+  </div>;
+};
 const ActionsRapides=({s,d})=>{
   const clients=s.clients||[];
   const [action,setAction]=useState('embauche');
@@ -14418,6 +14840,51 @@ const GestionPrimes=({s,d})=>{
     {id:'indemnite_teletravail',label:'Indemnite teletravail',icon:'🏠',taxable:false,onss:false,max:FORF_BUREAU,desc:'Forfait bureau max 157,83 EUR/mois (ONSS)'},
     {id:'prime_resultat',label:'Prime de resultat',icon:'📊',taxable:true,onss:true,desc:'Prime liee aux performances individuelles'},
     {id:'avantage_vehicule',label:'Avantage vehicule / ATN',icon:'🚗',taxable:true,onss:false,desc:'ATN calcule selon CO2 et valeur catalogue'},
+    // ═══ NOUVELLES PRIMES AJOUTÉES ═══
+    {id:'cheques_cadeaux',label:'Cheques-cadeaux / Cadeaux',icon:'🎁',taxable:false,onss:false,max:40,desc:'Max 40 EUR/an exonere. Occasions: Noel/St-Nicolas. Mariage=245 EUR, naissance=245 EUR'},
+    {id:'transport_domicile',label:'Intervention transport domicile-travail',icon:'🚌',taxable:false,onss:false,desc:'Obligatoire CP 200 — remboursement abonnement ou 0,15 EUR/km. Exonere jusqu\'a 490 EUR/an'},
+    {id:'prime_equipe_nuit',label:'Prime d\'equipe / nuit / dimanche',icon:'🌙',taxable:true,onss:true,desc:'Supplements horaires: nuit +35%, samedi +50%, dimanche/ferie +100% (selon CP)'},
+    {id:'plan_cafeteria',label:'Plan cafeteria',icon:'☕',taxable:false,onss:false,desc:'Enveloppe flexible — le travailleur choisit ses avantages dans un budget fixe'},
+    {id:'participation_benefices',label:'Participation aux benefices',icon:'💰',taxable:true,onss:false,desc:'Loi du 22/05/2001 — taxee a 7% uniquement (cotisation de solidarite 13,07%)'},
+    {id:'prime_naissance',label:'Prime de naissance / mariage',icon:'👶',taxable:false,onss:false,max:245,desc:'Exoneree si max 245 EUR. Prevue par CCT sectorielle dans beaucoup de CP'},
+    {id:'atn_gsm_pc',label:'GSM / PC / Tablette (ATN)',icon:'💻',taxable:true,onss:true,desc:'ATN forfaitaire: smartphone=3 EUR/mois, PC/tablette=72 EUR/an, internet=5 EUR/mois'},
+    {id:'frais_propres',label:'Frais propres de l\'employeur',icon:'📎',taxable:false,onss:false,desc:'Remboursement frais reels ou forfait. Non imposable si justifie (deplacement, repas, parking)'},
+    {id:'assurance_hospi',label:'Assurance hospitalisation',icon:'🏥',taxable:false,onss:false,desc:'Avantage collectif non imposable si offert a tous. Deductible pour l\'employeur'},
+    {id:'indemnite_velo',label:'Indemnite velo',icon:'🚴',taxable:false,onss:false,max:0.35,desc:'0,35 EUR/km (2026) exonere — max 2.500 EUR/an. Cumulable avec abonnement transport'},
+    {id:'prime_bilinguisme',label:'Prime de bilinguisme',icon:'🗣',taxable:true,onss:true,desc:'Supplement pour connaissance d\'une 2eme langue nationale. Courant a Bruxelles'},
+    {id:'prime_danger',label:'Prime de danger / penibilite',icon:'⚠',taxable:true,onss:true,desc:'Supplement pour travail dangereux, insalubre ou penible. Selon CP et convention'},
+    {id:'bonus_salarial',label:'Bonus salarial (Loi 2008)',icon:'🏆',taxable:true,onss:true,desc:'Prime liee aux resultats collectifs — plan bonus deposable au SPF Emploi'},
+    {id:'prime_depart',label:'Indemnite de depart',icon:'👋',taxable:true,onss:true,desc:'Indemnite de rupture ou preavis non preste. Calcul: anciennete x remuneration'},
+    {id:'pecule_vacances',label:'Pecule de vacances anticipe',icon:'🏖',taxable:true,onss:true,desc:'Simple (92%) + double (92%) verse en mai/juin. Pecule anticipe si depart en cours d\'annee'},
+    {id:'prime_fidelite',label:'Timbres fidelite / Prime sectorielle',icon:'🎖',taxable:true,onss:true,desc:'Prime annuelle sectorielle (ex: CP 124 construction = timbres fidelite/intemperies)'},
+    {id:'supplement_heure_sup',label:'Supplement heures supplementaires',icon:'⏰',taxable:true,onss:true,desc:'Majoration 50% (semaine) ou 100% (dimanche/ferie). 180h/an avec recuperation obligatoire'},
+    {id:'flexi_salaire',label:'Flexi-salaire (Horeca/Commerce)',icon:'🍕',taxable:false,onss:false,desc:'Remuneration flexi-job: cotisation speciale 28% employeur. Exonere IPP pour travailleur'},
+    {id:'prime_chauffage',label:'Prime de chauffage / energie',icon:'🔥',taxable:false,onss:false,max:250,desc:'Intervention dans frais d\'energie. Exoneree si via fonds social sectoriel'},
+    {id:'prime_garde',label:'Prime de garde / astreinte',icon:'📞',taxable:true,onss:true,desc:'Indemnite pour disponibilite en dehors des heures. Forfait ou % du salaire horaire'},
+    {id:'per_diem',label:'Indemnite de sejour / per diem',icon:'🧳',taxable:false,onss:false,desc:'Forfait deplacement professionnel: Belgique max 19,99 EUR/jour, etranger selon pays (SPF)'},
+    {id:'atn_logement',label:'ATN Logement',icon:'🏡',taxable:true,onss:true,desc:'Mise a disposition d\'un logement — ATN forfaitaire = RC indexe x 100/60 x 2 (non-meuble)'},
+    {id:'pret_taux_reduit',label:'Pret a taux reduit (ATN)',icon:'🏦',taxable:true,onss:true,desc:'Pret consenti a un taux inferieur au marche — ATN = difference de taux x capital'},
+    {id:'intervention_creche',label:'Intervention garde d\'enfants / creche',icon:'👧',taxable:false,onss:false,max:15,desc:'Intervention employeur dans frais de creche. Exoneree si max 15 EUR/jour/enfant'},
+    {id:'bonus_bienvenue',label:'Bonus de bienvenue / signing bonus',icon:'🤝',taxable:true,onss:true,desc:'Prime unique a l\'embauche. Entierement imposable et soumise ONSS'},
+    {id:'prime_retention',label:'Prime de retention / fidelisation',icon:'🔒',taxable:true,onss:true,desc:'Prime conditionnee a une duree minimale de service. Imposable + ONSS'},
+    {id:'non_concurrence',label:'Clause de non-concurrence (indemnite)',icon:'🚫',taxable:true,onss:true,desc:'Indemnite = min 50% du salaire brut x duree clause (max 12 mois). Art. 65 loi contrat travail'},
+    {id:'outplacement',label:'Outplacement / reclassement',icon:'🎯',taxable:false,onss:false,desc:'Obligatoire si preavis >= 30 semaines. Valeur min 1.800 EUR / 60h. Non imposable pour travailleur'},
+    {id:'prime_fin_cdd',label:'Prime de fin de contrat (CDD)',icon:'📅',taxable:true,onss:true,desc:'Indemnite si non-renouvellement CDD successifs (selon jurisprudence et convention)'},
+    {id:'petit_chomage',label:'Petit chomage (absences autorisees)',icon:'🗓',taxable:true,onss:true,desc:'Conge remunere: mariage=2j, deces=1-3j, communion=1j, demenagement=1j (AR 28/08/1963)'},
+    {id:'formation_etudes',label:'Remboursement formation / etudes',icon:'🎓',taxable:false,onss:false,desc:'Prise en charge formation professionnelle. Non imposable si liee a l\'activite. 5 jours/an min'},
+    {id:'parking_gratuit',label:'Parking gratuit mis a disposition',icon:'🅿',taxable:false,onss:false,desc:'Pas d\'ATN si parking sur lieu de travail. ATN si parking prive a domicile'},
+    {id:'carte_carburant',label:'Carte carburant / recharge electrique',icon:'⛽',taxable:true,onss:true,desc:'ATN lie au vehicule de societe. Borne de recharge a domicile: ATN possible si usage prive'},
+    {id:'abonnement_fitness',label:'Abonnement fitness / bien-etre',icon:'💪',taxable:true,onss:true,desc:'Avantage imposable sauf si collectif et accessoire. Alternative: cheques sport & culture'},
+    {id:'repas_gratuit',label:'Repas gratuit / cantine',icon:'🍽',taxable:true,onss:true,desc:'ATN forfaitaire: 1,09 EUR/repas (2026). Si participation travailleur >= forfait: pas d\'ATN'},
+    {id:'commission',label:'Commission / Tantieme',icon:'💵',taxable:true,onss:true,desc:'Remuneration variable liee au chiffre d\'affaires ou resultats. Base ONSS + PP'},
+    {id:'prime_productivite',label:'Prime de productivite',icon:'📈',taxable:true,onss:true,desc:'Prime liee au rendement individuel ou collectif. Entierement imposable'},
+    {id:'indemnite_rupture',label:'Indemnite compensatoire de preavis',icon:'⚖',taxable:true,onss:true,desc:'= remuneration x duree preavis non prestee. Soumise ONSS + PP. Calcul selon anciennete'},
+    {id:'atn_electricite',label:'ATN Chauffage / Electricite',icon:'💡',taxable:true,onss:true,desc:'Si fourni gratuitement: ATN forfaitaire 2.280 EUR/an (chauffage) + 1.140 EUR/an (electricite) 2026'},
+    {id:'prime_demenagement',label:'Prime de demenagement',icon:'📦',taxable:false,onss:false,desc:'Si impose par employeur (rapprochement lieu travail). Exoneree si justifiee et raisonnable'},
+    {id:'allocation_familiale_compl',label:'Supplement allocations familiales',icon:'👨‍👩‍👧‍👦',taxable:false,onss:false,desc:'Complement employeur aux allocations familiales regionales. Rare mais existe dans certaines CP'},
+    {id:'prime_brevet',label:'Prime d\'invention / brevet',icon:'💡',taxable:true,onss:false,desc:'Remuneration pour invention brevetable. Regime fiscal avantageux: retenue 15% si cession droits'},
+    {id:'indemnite_licenciement_collectif',label:'Indemnite licenciement collectif (Renault)',icon:'🏭',taxable:true,onss:true,desc:'Loi Renault: information/consultation prealable + plan social. Indemnite supplementaire obligatoire'},
+    {id:'prime_prepension',label:'Complement RCC (prepension)',icon:'🧓',taxable:true,onss:true,desc:'Regime chomage avec complement entreprise. Complement = 50% difference salaire net - allocation chomage'},
   ];
 
   const addPrime=()=>{
@@ -14439,7 +14906,7 @@ const GestionPrimes=({s,d})=>{
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
       <div>
         <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🎁 Gestion Primes & Avantages</h2>
-        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>12 types de primes belges — optimisation fiscale integree</p>
+        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>56 types de primes belges — optimisation fiscale integree</p>
       </div>
       <div style={{display:'flex',gap:8}}>
         <ClientSearch clients={clients} value={selClient} onChange={v=>setSelClient(v)} valueKey="index"/>
@@ -14460,7 +14927,13 @@ const GestionPrimes=({s,d})=>{
     {/* Types grid */}
     <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:8}}>Types de primes disponibles</div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:16}}>
-      {primeTypes.map(t=><div key={t.id} style={{padding:12,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.06)',borderRadius:10}}>
+      {primeTypes.map(t=>{
+        const onssTrav=t.onss?13.07:0;
+        const onssPatr=t.onss?25.07:0;
+        const ppEst=t.taxable?30:0; // estimation moyenne PP
+        const coutTotalPatr=t.onss?125.07:100; // pour 100 EUR brut
+        const netTrav=100-(onssTrav+ppEst); // net estimé sur 100 EUR
+        return <div key={t.id} style={{padding:12,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.06)',borderRadius:10}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontSize:14}}>{t.icon}</span>
           <div style={{display:'flex',gap:3}}>
@@ -14471,7 +14944,23 @@ const GestionPrimes=({s,d})=>{
         <div style={{fontSize:11,fontWeight:600,color:'#e5e5e5',marginTop:4}}>{t.label}</div>
         <div style={{fontSize:9,color:'#888',marginTop:2}}>{t.desc}</div>
         {t.max&&<div style={{fontSize:9,color:'#c6a34e',marginTop:2}}>Plafond: {f2(t.max)} EUR</div>}
-      </div>)}
+        <div style={{marginTop:6,padding:'6px 8px',background:'rgba(255,255,255,.02)',borderRadius:6,border:'1px solid rgba(255,255,255,.04)'}}>
+          <div style={{fontSize:8,fontWeight:600,color:'#c6a34e',marginBottom:3}}>Impact pour 100 EUR brut:</div>
+          {t.taxable&&t.onss?<>
+            <div style={{fontSize:8,color:'#ef4444'}}>Travailleur: ONSS -13,07 + PP ~-30 = net ~{f2(netTrav)} EUR</div>
+            <div style={{fontSize:8,color:'#3b82f6'}}>Employeur: +25,07 ONSS = cout total ~{f2(coutTotalPatr)} EUR</div>
+          </>:t.taxable&&!t.onss?<>
+            <div style={{fontSize:8,color:'#fb923c'}}>Travailleur: PP ~-30 = net ~70 EUR (pas ONSS)</div>
+            <div style={{fontSize:8,color:'#22c55e'}}>Employeur: cout = 100 EUR (pas ONSS)</div>
+          </>:!t.taxable&&t.onss?<>
+            <div style={{fontSize:8,color:'#3b82f6'}}>Travailleur: ONSS -13,07 = net ~86,93 EUR (pas PP)</div>
+            <div style={{fontSize:8,color:'#3b82f6'}}>Employeur: +25,07 ONSS = cout total ~125,07 EUR</div>
+          </>:<>
+            <div style={{fontSize:8,color:'#22c55e'}}>Travailleur: net = 100 EUR (aucun prelevement)</div>
+            <div style={{fontSize:8,color:'#22c55e'}}>Employeur: cout = 100 EUR (aucun prelevement)</div>
+          </>}
+        </div>
+      </div>})}
     </div>
 
     {/* Active primes */}
@@ -20112,6 +20601,11 @@ const AutomationHub=({s,d})=>{
       case'reportingpro':return <ReportingAvance s={s}/>;
       case'integrations':return <IntegrationsHub s={s} supabase={supabase}/>;
       case'veillelegale':return <VeilleLegale s={s}/>;
+      case'declarations':return <DeclarationsONSS s={s} d={d} supabase={supabase}/>;
+      case'ia_turnover':return <IATurnoverMod s={s} d={d}/>;
+      case'saas_admin':return <MultiTenantAdmin s={s} d={d}/>;
+      case'soldetoutcompte':return <SoldeToutCompteMod s={s} d={d}/>;
+      case'repriseclient':return <RepriseClientMod s={s} d={d}/>;
       case'fiduciaire':return <FiduciaireHub s={s} d={d}/>;
       case'simulicenciement':return <SimuLicenciement s={s}/>;
       case'couttotal':return <CoutTotalDash s={s}/>;
@@ -20238,6 +20732,12 @@ const AutomationHub=({s,d})=>{
         </div>
         <nav style={{padding:'8px 8px',flex:1,overflowY:'auto',scrollbarWidth:'thin',scrollbarColor:'rgba(198,163,78,.15) transparent'}}>
           {nav.map(it=>{
+            if(it.grp) return <div key={it.id} onClick={()=>{const k='_coll'+it.id;setCollapsed(prev=>({...prev,[k]:!prev[k]}));}} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 12px 4px',marginTop:8,cursor:'pointer',userSelect:'none'}}>
+              <span style={{fontSize:9,fontWeight:700,letterSpacing:'1.5px',color:'#8b7340',textTransform:'uppercase'}}>{it.l}</span>
+              <span style={{fontSize:9,color:'#5e5c56',transform:collapsed['_coll'+it.id]?'rotate(-90deg)':'rotate(0deg)',transition:'transform .2s'}}>▾</span>
+            </div>;
+            const grpKey='_coll_g'+it.g;
+            if(it.g&&collapsed[grpKey]) return null;
             const ac=s.page===it.id;
             return <div key={it.id}>
               <button onClick={()=>{d({type:"NAV",page:it.id,sub:it.sub?.[0]?.id});setMobileMenu(false);}} style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'9px 12px',marginBottom:1,border:'none',borderRadius:8,cursor:'pointer',fontSize:12.5,fontWeight:ac?600:400,color:ac?'#c6a34e':'#9e9b93',background:ac?'rgba(198,163,78,.08)':'transparent',borderLeft:ac?'2px solid #c6a34e':'2px solid transparent',fontFamily:'inherit',textAlign:'left',transition:'all .12s ease'}}
@@ -20263,6 +20763,7 @@ const AutomationHub=({s,d})=>{
       <main className="aureus-main" style={{marginLeft:isMobile?0:268,flex:1,padding:isMobile?'60px 12px 12px':'26px 34px',minHeight:'100vh',animation:'fadeInPage .3s ease'}}>{pg()}</main>
 
       <ToastContainer/>
+      <CookieBanner/>
       {s.modal&&<div style={{position:'fixed',inset:0,background:"rgba(0,0,0,.75)",backdropFilter:'blur(6px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}} onClick={()=>d({type:"MODAL",m:null})}>
         <div onClick={e=>e.stopPropagation()} style={{background:"#0c0f1a",border:'1px solid rgba(139,115,60,.15)',borderRadius:16,padding:28,width:s.modal.w||700,maxHeight:'85vh',overflowY:'auto'}}>{s.modal.c}</div>
       </div>}
