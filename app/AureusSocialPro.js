@@ -1,5 +1,6 @@
 // Aureus Social Pro v20.2
 "use client"
+import React from 'react';
 import { useState, useReducer, useRef, useMemo, useEffect, createContext, useContext } from "react";
 
 // ═══ SECURITY & UTILITY LAYER ═══════════════════════════════════════
