@@ -20439,6 +20439,7 @@ const AutomationHub=({s,d})=>{
   
 
 
+  const setPage=(p)=>d({type:"NAV",page:p,sub:null});
   const pg=()=>{
     switch(s.page){
       case'dashboard':return <Dashboard s={s} d={d} userRole={userRole}/>;
