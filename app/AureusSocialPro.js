@@ -1,6 +1,31 @@
-﻿// Aureus Social Pro v20.2
+// Aureus Social Pro v20.2
 "use client"
 import { useState, useReducer, useRef, useMemo, useEffect, createContext, useContext } from "react";
+
+// ═══ SECURITY & UTILITY LAYER ═══════════════════════════════════════
+// XSS Sanitizer
+function _sanitize(str){if(typeof str!=='string')return str;return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');}
+function _sanitizeNISS(v){return v?String(v).replace(/[^0-9.\-]/g,'').substring(0,15):'';}
+function _sanitizeIBAN(v){return v?String(v).replace(/[^A-Z0-9\s]/gi,'').substring(0,20).toUpperCase():'';}
+function _sanitizeEmail(v){if(!v)return '';const c=String(v).trim().toLowerCase();return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)?c:'';}
+function _safeJSON(str,fallback){if(!str)return fallback!==undefined?fallback:null;try{return JSON.parse(str);}catch(e){return fallback!==undefined?fallback:null;}}
+
+// Custom Modal (replace confirm/prompt)
+function _showModal(opts){return new Promise(resolve=>{const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';const bx=document.createElement('div');bx.style.cssText='background:#0d1117;border:1px solid rgba(198,163,78,.2);border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)';const ti=document.createElement('div');ti.style.cssText='font-size:16px;font-weight:700;color:#c6a34e;margin-bottom:12px';ti.textContent=opts.title||'Confirmation';const mg=document.createElement('div');mg.style.cssText='font-size:13px;color:#e8e6e0;margin-bottom:20px;line-height:1.5';mg.textContent=opts.message||'';bx.appendChild(ti);bx.appendChild(mg);let inp=null;if(opts.input){inp=document.createElement('input');inp.type='text';inp.value=opts.defaultValue||'';inp.style.cssText='width:100%;padding:10px 12px;border-radius:8px;background:#090c16;border:1px solid rgba(198,163,78,.15);color:#e8e6e0;font-size:13px;margin-bottom:16px;box-sizing:border-box';bx.appendChild(inp);setTimeout(()=>inp.focus(),100);}const br=document.createElement('div');br.style.cssText='display:flex;gap:10px;justify-content:flex-end';const cb=document.createElement('button');cb.textContent=opts.cancelText||'Annuler';cb.style.cssText='padding:10px 20px;border-radius:8px;border:1px solid rgba(198,163,78,.15);background:transparent;color:#9e9b93;font-size:13px;cursor:pointer';const ob=document.createElement('button');ob.textContent=opts.okText||'Confirmer';ob.style.cssText='padding:10px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,#c6a34e,#a07d3e);color:#060810;font-weight:700;font-size:13px;cursor:pointer';const cl=v=>{ov.remove();resolve(v);};cb.onclick=()=>cl(opts.input?null:false);ob.onclick=()=>cl(opts.input?(inp?inp.value:''):true);ov.onclick=e=>{if(e.target===ov)cl(opts.input?null:false);};br.appendChild(cb);br.appendChild(ob);bx.appendChild(br);ov.appendChild(bx);document.body.appendChild(ov);});}
+async function _confirm(message,title){return _showModal({message,title:title||'Confirmation'});}
+async function _prompt(message,defaultValue,title){return _showModal({message,title:title||'Saisie',input:true,defaultValue:defaultValue||''});}
+
+// Fetch with timeout
+function _fetch(url,opts,ms){ms=ms||15000;const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);return fetch(url,{...opts,signal:c.signal}).finally(()=>clearTimeout(t));}
+
+// Session Timeout (30 min)
+if(typeof window!=='undefined'){let _lastAct=Date.now();const _TIMEOUT=30*60*1000;['mousemove','keydown','click','scroll','touchstart'].forEach(ev=>window.addEventListener(ev,()=>{_lastAct=Date.now();},{passive:true}));setInterval(()=>{if(Date.now()-_lastAct>_TIMEOUT){if(typeof _logErr==='function')_logErr('session','Auto-logout 30min');if(typeof _toast==='function')_toast('Session expirée — déconnexion automatique','warning');setTimeout(()=>window.location.reload(),2000);}},60000);}
+
+// Async Queue Worker
+class AsyncQueueWorker{constructor(sb,opts={}){this.sb=sb;this.concurrency=opts.concurrency||3;this.pollInterval=opts.pollInterval||5000;this.running=false;this.active=0;this.handlers={};}register(type,handler){this.handlers[type]=handler;}async start(){this.running=true;while(this.running){if(this.active<this.concurrency)await this._next();await new Promise(r=>setTimeout(r,this.pollInterval));}}stop(){this.running=false;}async _next(){const{data}=await this.sb.from('declaration_queue').select('*').eq('status','pending').order('created_at').limit(this.concurrency-this.active);if(!data?.length)return;for(const item of data){this.active++;await this.sb.from('declaration_queue').update({status:'processing',started_at:new Date().toISOString()}).eq('id',item.id);this._exec(item).finally(()=>{this.active--;});};}async _exec(item){try{const h=this.handlers[item.type];if(!h)throw new Error('No handler: '+item.type);const r=await h(item);await this.sb.from('declaration_queue').update({status:'completed',result:r,completed_at:new Date().toISOString()}).eq('id',item.id);}catch(e){const retry=(item.retry_count||0)+1;await this.sb.from('declaration_queue').update({status:retry>=3?'failed':'pending',retry_count:retry,error_message:e.message}).eq('id',item.id);}}}
+
+// Realtime Metrics
+class MetricsAggregator{constructor(){this.c={payslips:0,declarations:0,errors:0};this.h=[];this.t0=Date.now();}record(ev){if(ev.type==='payslip')this.c.payslips++;if(ev.type==='declaration')this.c.declarations++;if(ev.type==='error')this.c.errors++;this.h.push({...ev,ts:Date.now()});if(this.h.length>200)this.h=this.h.slice(-100);}snap(){return{...this.c,uptime:Math.round((Date.now()-this.t0)/60000)+'min',epm:Math.round(this.h.filter(x=>Date.now()-x.ts<300000).length/5*10)/10};}}
 
 // ═══ SPRINT 37: MOTEUR CENTRAL LOIS BELGES — AUTO-UPDATE 1 CLIC  ═══
 // ══════════════════════════════════════════════════════════════════════
@@ -4353,36 +4378,28 @@ const PERMISSIONS = {
 
 async function loadUserRole(supabase, userId) {
   if (!supabase || !userId) return 'admin';
-  try { const { data: { user: au } } = await supabase.auth.getUser(); if (au?.email?.toLowerCase() === 'info@aureus-ia.com') { try { await supabase.from('user_roles').upsert({ user_id: userId, role: 'admin', email: au.email, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); } catch(e) {} return 'admin'; } } catch(e) {}
   try {
+    // Admin email — toujours admin
+    const ADMIN_EMAIL = 'info@aureus-ia.com';
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const email = authUser?.email || '';
+    
+    // info@aureus-ia.com = toujours admin
+    if (email.toLowerCase() === ADMIN_EMAIL) {
+      try { await supabase.from('user_roles').upsert({ user_id: userId, role: 'admin', email, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); } catch(e2) {}
+      return 'admin';
+    }
+    
+    // Autres utilisateurs: vérifier s'ils ont un rôle assigné
     const { data, error } = await supabase.from('user_roles')
       .select('role').eq('user_id', userId).maybeSingle();
-    if (error) return 'admin';
-    if (data?.role) return data.role;
-    // No role by user_id — check for pending invite by email
-    let role = 'admin';
-    try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser?.email) {
-        const { data: invite } = await supabase.from('user_roles')
-          .select('role,user_id').eq('email', authUser.email).maybeSingle();
-        if (invite?.role) {
-          role = invite.role;
-          // Convert pending invite to real user_id
-          if (invite.user_id?.startsWith('pending_')) {
-            await supabase.from('user_roles').delete().eq('user_id', invite.user_id);
-          }
-        } else {
-          // No invite either — new signup = client, old account = admin
-          const created = new Date(authUser.created_at);
-          role = 'client'; // Tous les nouveaux = client (sauf info@aureus-ia.com)
-        }
-      }
-    } catch(e3) {}
-    // Save real role with real user_id
-    try { await supabase.from('user_roles').upsert({ user_id: userId, role, email: (await supabase.auth.getUser()).data?.user?.email || '', updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); } catch(e2) {}
+    if (!error && data?.role) return data.role;
+    
+    // Pas de rôle assigné → client (portail employeur uniquement)
+    let role = 'client';
+    try { await supabase.from('user_roles').upsert({ user_id: userId, role, email, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); } catch(e2) {}
     return role;
-  } catch(e) { return 'admin'; }
+  } catch(e) { return 'client'; }
 }
 
 async function saveUserRole(supabase, userId, role, email) {
@@ -5972,6 +5989,7 @@ function AppInner({ supabase, user, onLogout }) {
     {id:"_g2",l:"GESTION PERSONNEL",grp:true},
     {id:"employees",l:"Liste Employes",i:'◉',g:2},
     {id:"onboarding",l:"Onboarding",i:'🆕',g:2},
+    {id:"repriseclient",l:"Reprise Concurrent",i:'🔄',g:2},
     {id:"onboarding2",l:"Nouvel Onboarding",i:'🚀',g:2},
     {id:"onboardwizard",l:"Onboarding Wizard",i:'🚀',g:2},
     {id:"registrepersonnel",l:"Registre Personnel",i:'📖',g:2},
@@ -5990,6 +6008,7 @@ function AppInner({ supabase, user, onLogout }) {
     {id:"calcinstant",l:"Calcul Instantane",i:'🔁',g:3},
     {id:"validation",l:"Validation Pre-Paie",i:'✅',g:3},
     {id:"cloture",l:"Cloture Mensuelle",i:'🔄',g:3},
+    {id:"soldetoutcompte",l:"Solde Tout Compte",i:'📑',g:3},
     {id:"timeline",l:"Timeline Paie",i:'📅',g:3},
     {id:"couttotal",l:"Cout Total",i:'💰',g:3},
     {id:"coutsannuel",l:"Couts Annuels",i:'📊',g:3},
@@ -6015,6 +6034,7 @@ function AppInner({ supabase, user, onLogout }) {
     {id:"_g5",l:"DECLARATIONS & ONSS",grp:true},
     {id:"onss",l:"ONSS / Declarations",i:'◆',g:5,sub:[{id:"dimona",l:t('sub.dimona')},{id:"dmfa",l:t('sub.dmfa')},{id:"drs",l:t('sub.drs')},{id:"onss_dash",l:"Dashboard ONSS"}]},
     {id:"chargessociales",l:"Charges ONSS",i:'🏛',g:5},
+    {id:"declarations",l:"Déclarations ONSS/SPF",i:'📡',g:5},
     {id:"batchdecl",l:"Declarations Batch",i:'📋',g:5},
     {id:"sepa",l:"SEPA Virements",i:'💳',g:5},
     {id:"echeancier",l:"Echeancier Paiements",i:'💳',g:5},
@@ -6079,6 +6099,8 @@ function AppInner({ supabase, user, onLogout }) {
     // ═══ 11. ADMINISTRATION ═══
     {id:"_g11",l:"ADMINISTRATION",grp:true},
     {id:"fiduciaire",l:"Hub Fiduciaire",i:'🏢',g:11},
+    {id:"ia_turnover",l:"IA Turnover",i:'🧠',g:11},
+    {id:"saas_admin",l:"SaaS Multi-Tenant",i:'🌐',g:11},
     {id:"portalmanager",l:t("nav.portalmanager"),i:'🏢',g:11},
     {id:"team",l:t('nav.team'),i:'👥',g:11},
     {id:"authroles",l:"Roles & Permissions",i:'🔐',g:11},
@@ -7821,6 +7843,278 @@ const RapportMensuel=({s})=>{
 };
 
 // ═══ 4. ACTIONS RAPIDES (1 clic = Dimona + Contrat + Fiche) ═══
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 1: DÉCLARATIONS ONSS/SPF
+// ══════════════════════════════════════════════════════════════════════
+const DeclarationsONSS=({s,d,supabase})=>{
+  const [mode,setMode]=useState('simulation');
+  const [history,setHistory]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v||0);
+  const submitDeclaration=async(type,xml,ref)=>{setLoading(true);try{const r=await _fetch('/api/onss',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,xml:xml||'<sim/>',reference:ref||'REF-'+Date.now(),env:mode})});const data=await r.json();setHistory(h=>[{type,ref:data.reference||ref,status:data.status||'PENDING',mode,date:new Date().toISOString(),result:data},...h]);if(typeof _toast==='function')_toast(type+' — '+data.status,'success');}catch(e){if(typeof _toast==='function')_toast('Erreur: '+e.message,'error');}setLoading(false);};
+  const completed=history.filter(h=>h.status==='ACCEPTED').length;
+  const failed=history.filter(h=>h.status==='REJECTED').length;
+  const pending=history.filter(h=>h.status==='PENDING').length;
+  return <div style={{padding:24}}>
+    <PH title='Déclarations ONSS / SPF' sub='Dimona, DmfA, Belcotax — Simulation & Production'/>
+    <div style={{display:'flex',gap:10,marginBottom:20,alignItems:'center'}}>
+      <span style={{fontSize:11,color:'#888'}}>Mode:</span>
+      {['simulation','production'].map(m=><button key={m} onClick={()=>setMode(m)} style={{padding:'8px 18px',borderRadius:8,border:'none',background:mode===m?(m==='production'?'rgba(239,68,68,.15)':'rgba(34,197,94,.15)'):'rgba(255,255,255,.03)',color:mode===m?(m==='production'?'#ef4444':'#22c55e'):'#888',fontWeight:mode===m?700:400,fontSize:12,cursor:'pointer'}}>{m==='simulation'?'🧪 Simulation':'🔴 Production'}</button>)}
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+      {[{l:'Acceptées',v:completed,c:'#22c55e'},{l:'Refusées',v:failed,c:'#ef4444'},{l:'En attente',v:pending,c:'#f97316'},{l:'Total',v:history.length,c:'#c6a34e'}].map((k,i)=><div key={i} style={{padding:14,background:'#0d1117',border:'1px solid '+k.c+'30',borderRadius:12,textAlign:'center'}}><div style={{fontSize:22,fontWeight:700,color:k.c}}>{k.v}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{k.l}</div></div>)}
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:20}}>
+      {[{type:'dimona_in',label:'📋 Dimona IN',desc:'Déclaration entrée travailleur'},{type:'dimona_out',label:'📋 Dimona OUT',desc:'Déclaration sortie travailleur'},{type:'dmfa',label:'🏛 DmfA',desc:'Déclaration trimestrielle ONSS'},{type:'belcotax',label:'📊 Belcotax 281.10',desc:'Fiches fiscales annuelles'},{type:'sepa',label:'💳 SEPA',desc:'Fichier virement salaires'},{type:'bilan_social',label:'📈 Bilan Social',desc:'Bilan social BNB'}].map(t=><button key={t.type} onClick={()=>submitDeclaration(t.type)} disabled={loading} style={{padding:16,borderRadius:12,border:'1px solid rgba(198,163,78,.1)',background:'#0d1117',cursor:'pointer',textAlign:'left'}}><div style={{fontSize:13,fontWeight:600,color:'#e8e6e0'}}>{t.label}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{t.desc}</div></button>)}
+    </div>
+    {history.length>0&&<div style={{padding:16,background:'#0d1117',borderRadius:14,border:'1px solid rgba(198,163,78,.1)'}}>
+      <div style={{fontSize:13,fontWeight:700,color:'#c6a34e',marginBottom:10}}>Historique</div>
+      {history.slice(0,20).map((h,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'100px 120px 80px 80px 1fr',gap:8,padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
+        <span style={{color:'#888'}}>{h.type}</span>
+        <span style={{color:'#e8e6e0'}}>{h.ref}</span>
+        <span style={{color:h.status==='ACCEPTED'?'#22c55e':h.status==='REJECTED'?'#ef4444':'#f97316',fontWeight:600}}>{h.status}</span>
+        <span style={{color:h.mode==='production'?'#ef4444':'#22c55e',fontSize:9}}>{h.mode}</span>
+        <span style={{color:'#555'}}>{new Date(h.date).toLocaleString('fr-BE')}</span>
+      </div>)}
+    </div>}
+  </div>;
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 2: IA PREDICTIVE TURNOVER
+// ══════════════════════════════════════════════════════════════════════
+const MARKET_SALARY={administration:[2400,3200,4000],comptabilite:[2600,3500,4500],developpeur:[3000,3800,5000],rh:[2500,3400,4200],commercial:[2300,3200,4500],manager:[3500,4500,6000],ouvrier:[2000,2600,3200],technicien:[2400,3000,3800],logistique:[2200,2800,3500]};
+function calcTurnoverRisk(emp,payHistory,absHistory){
+  const brut=+(emp.monthlySalary||emp.gross||0);const now=new Date();const start=new Date(emp.startDate||emp.start||now);const ancMois=(now-start)/(30.44*24*3600*1000);const ancAns=ancMois/12;const age=emp.birthDate?Math.floor((now-new Date(emp.birthDate))/(365.25*24*3600*1000)):35;const func=(emp.function||emp.poste||'administration').toLowerCase();
+  const factors=[];let score=0;const maxScore=100;
+  const benchmarks=MARKET_SALARY[func]||MARKET_SALARY.administration;const seniority=ancAns<2?0:ancAns<5?1:2;const benchmark=benchmarks[seniority];
+  if(brut>0&&brut<benchmark*0.85){score+=25;factors.push({id:'salaryBelowMarket',label:'Salaire < marché (-'+(100-Math.round(brut/benchmark*100))+'%)',points:25,action:'Augmentation recommandée: +'+(benchmark-brut).toFixed(0)+'€/mois'});}
+  const absDays=(absHistory||[]).reduce((a,ab)=>a+(ab.days||1),0);if(absDays>15){score+=20;factors.push({id:'highAbsenteeism',label:'Absentéisme élevé ('+absDays+'j/an)',points:20,action:'Entretien de retour et analyse causes'});}
+  if(ancAns>=1&&payHistory&&payHistory.length>=12){const first=+(payHistory[0]?.gross||0);const last=+(payHistory[payHistory.length-1]?.gross||0);if(first>0&&last<=first){score+=15;factors.push({id:'noRaise',label:'Pas d\'augmentation depuis 12+ mois',points:15,action:'Prévoir augmentation indexation + mérite'});}}
+  if(ancAns>=5&&ancAns<=10){score+=10;factors.push({id:'longTenure',label:'Plateau carrière ('+ancAns.toFixed(1)+' ans)',points:10,action:'Proposer mobilité interne ou nouvelles responsabilités'});}
+  if(ancAns<1){score+=10;factors.push({id:'shortTenure',label:'Période critique (<1 an)',points:10,action:'Renforcer intégration et suivi managérial'});}
+  if((emp.contractType||'').toUpperCase()==='CDD'){const endDate=new Date(emp.endDate||emp.contractEnd||'2099-12-31');const daysLeft=(endDate-now)/(24*3600*1000);if(daysLeft<90&&daysLeft>0){score+=20;factors.push({id:'endCDD',label:'CDD fin dans '+Math.round(daysLeft)+' jours',points:20,action:daysLeft<30?'URGENT: Proposer CDI':'Proposer renouvellement ou CDI'});}}
+  if(age>=58){score+=15;factors.push({id:'ageRetirement',label:'Pré-retraite ('+age+' ans)',points:15,action:'Planifier transfert connaissances et succession'});}
+  const pct=Math.min(100,Math.round(score*2.5));const level=pct>=70?'CRITIQUE':pct>=45?'ÉLEVÉ':pct>=25?'MODÉRÉ':'FAIBLE';const color=pct>=70?'#ef4444':pct>=45?'#f97316':pct>=25?'#eab308':'#22c55e';
+  return{employe:(emp.first||emp.fn||'')+' '+(emp.last||emp.ln||''),score:pct,level,color,factors,topAction:factors[0]?.action||'Aucune action requise'};
+}
+
+const IATurnoverMod=({s,d})=>{
+  const [results,setResults]=useState(null);
+  const ae=s.emps||[];
+  const analyze=()=>{const r=ae.map(e=>calcTurnoverRisk(e,[],[]));r.sort((a,b)=>b.score-a.score);const avgRisk=r.length?Math.round(r.reduce((a,x)=>a+x.score,0)/r.length):0;const critical=r.filter(x=>x.level==='CRITIQUE').length;const estimated=r.filter(x=>x.score>=50).length;const avgBrut=ae.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0)),0)/Math.max(ae.length,1);setResults({employees:r,avgRisk,critical,estimated,costEstimate:estimated*avgBrut*6});};
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:0}).format(v||0);
+  return <div style={{padding:24}}>
+    <PH title='IA Prédictive — Risque de Turnover' sub='Analyse des 7 facteurs de risque par employé'/>
+    <button onClick={analyze} style={{padding:'12px 28px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:14,cursor:'pointer',marginBottom:20}}>🧠 Analyser {ae.length} employés</button>
+    {results&&<div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+        {[{l:'Score moyen',v:results.avgRisk+'%',c:results.avgRisk>=50?'#ef4444':'#22c55e'},{l:'Risque critique',v:results.critical,c:'#ef4444'},{l:'Départs estimés 6m',v:results.estimated,c:'#f97316'},{l:'Coût potentiel',v:f2(results.costEstimate)+'€',c:'#ef4444'}].map((k,i)=><div key={i} style={{padding:14,background:'#0d1117',border:'1px solid '+k.c+'30',borderRadius:12,textAlign:'center'}}><div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{k.l}</div></div>)}
+      </div>
+      {results.employees.map((r,i)=><div key={i} style={{padding:14,background:'#0d1117',borderRadius:12,border:'1px solid '+r.color+'20',marginBottom:8}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <span style={{fontSize:13,fontWeight:600,color:'#e8e6e0'}}>{r.employe}</span>
+          <span style={{padding:'4px 12px',borderRadius:6,fontSize:11,fontWeight:700,background:r.color+'20',color:r.color}}>{r.level} {r.score}%</span>
+        </div>
+        <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:6}}>{r.factors.map((f,j)=><span key={j} style={{padding:'3px 8px',borderRadius:4,fontSize:9,background:'rgba(255,255,255,.04)',color:'#9e9b93'}}>{f.label}</span>)}</div>
+        <div style={{fontSize:11,color:'#c6a34e'}}>💡 {r.topAction}</div>
+      </div>)}
+    </div>}
+  </div>;
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 3: MULTI-TENANT SAAS
+// ══════════════════════════════════════════════════════════════════════
+const SAAS_PLANS=[{id:'starter',nom:'Starter',prix:149,maxClients:50,maxEmps:500,features:['Paie illimitée','DIMONA auto','Fiches de paie','SEPA','Support email']},{id:'pro',nom:'Pro',prix:349,maxClients:200,maxEmps:2000,features:['Tout Starter','IA predictive','API ONSS réelle','Portail client','Support prioritaire']},{id:'enterprise',nom:'Enterprise',prix:749,maxClients:9999,maxEmps:99999,features:['Tout Pro','White-label','Domaine custom','SLA 99.9%','Account manager']}];
+const MultiTenantAdmin=({s,d})=>{
+  const [tab,setTab]=useState('fiduciaires');
+  const [tenants,setTenants]=useState([{id:'T1',name:'Fiduciaire Demo',slug:'demo',plan:'pro',status:'active',clients:45,emps:380,mrr:349},{id:'T2',name:'Comptable Test',slug:'test',plan:'starter',status:'trial',clients:12,emps:85,mrr:0}]);
+  const [form,setForm]=useState({name:'',slug:'',email:'',plan:'starter'});
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:0}).format(v||0);
+  const totalMRR=tenants.reduce((a,t)=>a+t.mrr,0);
+  const createTenant=()=>{if(!form.name)return;const plan=SAAS_PLANS.find(p=>p.id===form.plan);setTenants(t=>[...t,{id:'T'+Date.now(),name:form.name,slug:form.slug||form.name.toLowerCase().replace(/\s/g,'-'),plan:form.plan,status:'trial',clients:0,emps:0,mrr:0}]);setForm({name:'',slug:'',email:'',plan:'starter'});if(typeof _toast==='function')_toast('Fiduciaire '+form.name+' créée','success');};
+  return <div style={{padding:24}}>
+    <PH title='Administration SaaS Multi-Tenant' sub='Gestion des fiduciaires, plans et facturation'/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+      {[{l:'Fiduciaires',v:tenants.length,c:'#3b82f6'},{l:'MRR',v:f2(totalMRR)+'€',c:'#22c55e'},{l:'ARR estimé',v:f2(totalMRR*12)+'€',c:'#c6a34e'},{l:'Actifs',v:tenants.filter(t=>t.status==='active').length,c:'#4ade80'}].map((k,i)=><div key={i} style={{padding:14,background:'#0d1117',border:'1px solid '+k.c+'30',borderRadius:12,textAlign:'center'}}><div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{k.l}</div></div>)}
+    </div>
+    <div style={{display:'flex',gap:6,marginBottom:20}}>{[{v:'fiduciaires',l:'🏢 Fiduciaires'},{v:'plans',l:'💳 Plans'},{v:'nouveau',l:'➕ Nouveau'}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#888'}}>{t.l}</button>)}</div>
+    {tab==='fiduciaires'&&tenants.map((t,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'2fr 80px 60px 60px 80px 80px',gap:8,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:12,alignItems:'center'}}>
+      <span style={{color:'#e8e6e0',fontWeight:600}}>{t.name}</span>
+      <span style={{color:'#c6a34e'}}>{t.plan.toUpperCase()}</span>
+      <span style={{color:'#888'}}>{t.clients} cl.</span>
+      <span style={{color:'#888'}}>{t.emps} emp.</span>
+      <span style={{color:t.status==='active'?'#22c55e':'#f97316'}}>{t.status}</span>
+      <span style={{color:'#c6a34e',fontWeight:600}}>{t.mrr}€/m</span>
+    </div>)}
+    {tab==='plans'&&<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>{SAAS_PLANS.map((p,i)=><div key={i} style={{padding:20,background:'#0d1117',borderRadius:14,border:'1px solid '+(p.id==='pro'?'rgba(198,163,78,.3)':'rgba(255,255,255,.05)')}}>
+      <div style={{fontSize:18,fontWeight:700,color:'#c6a34e'}}>{p.nom}</div>
+      <div style={{fontSize:28,fontWeight:700,color:'#e8e6e0',margin:'10px 0'}}>{p.prix}€<span style={{fontSize:12,color:'#888'}}>/mois</span></div>
+      <div style={{fontSize:11,color:'#888',marginBottom:12}}>{p.maxClients} clients, {p.maxEmps} employés</div>
+      {p.features.map((f,j)=><div key={j} style={{fontSize:11,color:'#9e9b93',padding:'3px 0'}}>✓ {f}</div>)}
+    </div>)}</div>}
+    {tab==='nouveau'&&<div style={{maxWidth:400}}>
+      {[{k:'name',l:'Nom fiduciaire',ph:'Ex: Fiduciaire Dupont'},{k:'slug',l:'Slug URL',ph:'dupont'},{k:'email',l:'Email facturation',ph:'admin@fiduciaire.be'}].map(f=><div key={f.k} style={{marginBottom:12}}>
+        <label style={{fontSize:11,color:'#888',display:'block',marginBottom:4}}>{f.l}</label>
+        <input value={form[f.k]} onChange={e=>setForm({...form,[f.k]:e.target.value})} placeholder={f.ph} style={{width:'100%',padding:10,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:13,boxSizing:'border-box'}}/>
+      </div>)}
+      <div style={{marginBottom:16}}><label style={{fontSize:11,color:'#888',display:'block',marginBottom:4}}>Plan</label>
+        <select value={form.plan} onChange={e=>setForm({...form,plan:e.target.value})} style={{width:'100%',padding:10,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:13}}>
+          {SAAS_PLANS.map(p=><option key={p.id} value={p.id}>{p.nom} — {p.prix}€/mois</option>)}
+        </select>
+      </div>
+      <button onClick={createTenant} style={{padding:'12px 28px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:14,cursor:'pointer'}}>Créer la fiduciaire</button>
+    </div>}
+  </div>;
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 4: SOLDE DE TOUT COMPTE
+// ══════════════════════════════════════════════════════════════════════
+function calcPreavisSemaines(anc){if(anc<0.25)return 1;if(anc<0.5)return 2;if(anc<0.75)return 3;if(anc<1)return 4;if(anc<2)return 5;if(anc<3)return 6;if(anc<4)return 7;if(anc<5)return 9;if(anc<20)return 9+Math.floor(anc-4)*3;if(anc<21)return 57;return 57+Math.floor(anc-20)*2;}
+function calcSoldeToutCompte(emp,co){
+  const brut=+(emp.monthlySalary||emp.gross||0);const now=new Date();const start=new Date(emp.startDate||emp.start||now);const end=new Date(emp.endDate||emp.contractEnd||now);const ancJ=Math.max(1,Math.round((end-start)/(24*3600*1000)));const ancA=ancJ/365.25;const isOuv=(emp.statut||'').toLowerCase()==='ouvrier';const f=v=>Math.round(v*100)/100;
+  const pSem=calcPreavisSemaines(ancA);const preste=emp.preavisPreste===true;const indemP=preste?0:f(brut*pSem/4.33);
+  const jM=new Date(end.getFullYear(),end.getMonth()+1,0).getDate();const jP=end.getDate();const prorata=f(brut*jP/jM);
+  const mP=Math.max(0,end.getMonth()+1);const pecS=isOuv?0:f(brut*12*mP/12*0.0767);const pecD=isOuv?0:f(brut*12*mP/12*0.0680);
+  const m13=f(brut*mP/12);const jCR=+(emp.congesRestants||0);const vJ=f(brut/21.67);const congNP=f(jCR*vJ);
+  const brutT=f(prorata+indemP+pecS+pecD+m13+congNP);const onssW=f(brutT*0.1307);const imp=f(brutT-onssW);const ppE=f(imp*0.30);const netE=f(imp-ppE);const coutE=f(brutT+brutT*0.2507);
+  return{employe:(emp.first||emp.fn||'')+' '+(emp.last||emp.ln||''),preavis:{sem:pSem,j:pSem*7},details:[{label:'Prorata salaire mois en cours',brut:prorata},{label:'Indemnité compensatoire préavis',brut:indemP,note:pSem+' semaines'},{label:'Pécule vacances simple sortie',brut:pecS},{label:'Pécule vacances double sortie',brut:pecD},{label:'13ème mois prorata',brut:m13,note:mP+'/12'},{label:'Congés non pris ('+jCR+'j)',brut:congNP}].filter(d=>d.brut>0),totaux:{brutTotal:brutT,onssTravailleur:onssW,imposable:imp,ppEstime:ppE,netEstime:netE,coutEmployeur:coutE}};
+}
+const SoldeToutCompteMod=({s,d})=>{
+  const [selEmp,setSelEmp]=useState('');const [result,setResult]=useState(null);const ae=(s.emps||[]);const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v||0);
+  const run=()=>{if(!selEmp)return;const emp=ae.find(e=>e.id===selEmp)||ae[0];setResult(calcSoldeToutCompte(emp,s.company||{}));};
+  return <div style={{padding:24}}>
+    <PH title='Solde de tout compte' sub='Calcul automatique — Préavis + pécule + 13ème + congés'/>
+    <div style={{display:'flex',gap:10,marginBottom:20}}>
+      <select value={selEmp} onChange={e=>setSelEmp(e.target.value)} style={{flex:1,padding:10,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:13}}><option value=''>Sélectionnez un employé...</option>{ae.map((e,i)=><option key={i} value={e.id}>{(e.first||e.fn||'')+' '+(e.last||e.ln||'')}</option>)}</select>
+      <button onClick={run} style={{padding:'10px 24px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:13,cursor:'pointer'}}>Calculer</button>
+    </div>
+    {result&&<div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+        {[{l:'Brut total',v:f2(result.totaux.brutTotal)+'€',c:'#c6a34e'},{l:'Net estimé',v:f2(result.totaux.netEstime)+'€',c:'#22c55e'},{l:'Coût employeur',v:f2(result.totaux.coutEmployeur)+'€',c:'#ef4444'},{l:'Préavis',v:result.preavis.sem+' sem.',c:'#3b82f6'}].map((k,i)=><div key={i} style={{padding:14,background:'#0d1117',border:'1px solid '+k.c+'30',borderRadius:12,textAlign:'center'}}><div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{k.l}</div></div>)}
+      </div>
+      <div style={{padding:16,background:'#0d1117',borderRadius:14,border:'1px solid rgba(198,163,78,.1)'}}>
+        <div style={{fontSize:14,fontWeight:700,color:'#c6a34e',marginBottom:12}}>Détail du solde</div>
+        {result.details.map((d,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{color:'#e8e6e0',fontSize:12}}>{d.label}{d.note?<span style={{color:'#888',marginLeft:6,fontSize:10}}>({d.note})</span>:''}</span><span style={{color:'#c6a34e',fontWeight:600}}>{f2(d.brut)} €</span></div>)}
+        <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderTop:'2px solid rgba(198,163,78,.2)',marginTop:8}}><b style={{color:'#e8e6e0'}}>TOTAL BRUT</b><b style={{color:'#c6a34e',fontSize:16}}>{f2(result.totaux.brutTotal)} €</b></div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'6px 0'}}><span style={{color:'#888',fontSize:11}}>ONSS (13,07%)</span><span style={{color:'#ef4444'}}>-{f2(result.totaux.onssTravailleur)} €</span></div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'6px 0'}}><span style={{color:'#888',fontSize:11}}>PP estimé (~30%)</span><span style={{color:'#ef4444'}}>-{f2(result.totaux.ppEstime)} €</span></div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderTop:'2px solid rgba(34,197,94,.2)'}}><b style={{color:'#22c55e'}}>NET ESTIMÉ</b><b style={{color:'#22c55e',fontSize:18}}>{f2(result.totaux.netEstime)} €</b></div>
+      </div>
+    </div>}
+  </div>;
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 5: REPRISE CLIENT CONCURRENT (COMPLET)
+// ══════════════════════════════════════════════════════════════════════
+const CUMUL_FIELDS=[{key:'brutTotal',label:'Brut total imposable',cat:'rem',ob:true},{key:'brutONSS',label:'Brut soumis ONSS',cat:'rem',ob:true},{key:'onssPerso',label:'ONSS personnel (13,07%)',cat:'cot',ob:true},{key:'onssPatron',label:'ONSS patronal',cat:'cot',ob:true},{key:'redStruct',label:'Réduction structurelle',cat:'cot',ob:false},{key:'redGC',label:'Réduction groupes-cibles',cat:'cot',ob:false},{key:'ppRetenu',label:'Précompte professionnel',cat:'fisc',ob:true},{key:'csss',label:'Cotisation spéciale SS',cat:'fisc',ob:true},{key:'bonusEmploi',label:'Bonus à l\'emploi',cat:'fisc',ob:false},{key:'netTotal',label:'Net total payé',cat:'net',ob:true},{key:'peculeS',label:'Pécule simple payé',cat:'vac',ob:true},{key:'peculeD',label:'Pécule double payé',cat:'vac',ob:true},{key:'treiz',label:'13ème mois payé',cat:'prim',ob:false},{key:'atnVoiture',label:'ATN voiture',cat:'atn',ob:false},{key:'cheqRepas',label:'Chèques-repas patronal',cat:'av',ob:false},{key:'fraisPropres',label:'Frais propres employeur',cat:'av',ob:false},{key:'indemTT',label:'Indemnité télétravail',cat:'av',ob:false},{key:'transport',label:'Transport dom-travail',cat:'av',ob:false},{key:'joursPrestes',label:'Jours prestés',cat:'tps',ob:true},{key:'joursVacPris',label:'Jours vacances pris',cat:'tps',ob:true},{key:'joursVacRest',label:'Jours vacances restants',cat:'tps',ob:true},{key:'joursMaladie',label:'Jours maladie cumulés',cat:'tps',ob:false}];
+const CUMUL_CATS=[{id:'rem',l:'💰 Rémunération',c:'#c6a34e'},{id:'cot',l:'🏛 Cotisations',c:'#3b82f6'},{id:'fisc',l:'📊 Fiscal',c:'#ef4444'},{id:'net',l:'💵 Net',c:'#22c55e'},{id:'vac',l:'🏖 Vacances',c:'#06b6d4'},{id:'prim',l:'🎁 Primes',c:'#f97316'},{id:'atn',l:'🚗 ATN',c:'#a78bfa'},{id:'av',l:'🎫 Avantages',c:'#eab308'},{id:'tps',l:'📅 Temps',c:'#ec4899'}];
+const REPRISE_DOCS=[{id:'fiches_paie',ph:1,l:'Fiches de paie (12 mois)',ob:true,src:'Ancien gestionnaire'},{id:'compte_indiv',ph:1,l:'Comptes individuels',ob:true,src:'Ancien gestionnaire'},{id:'fiche_281',ph:1,l:'Fiches 281.10/281.20',ob:true,src:'Ancien gestionnaire'},{id:'cumuls_ytd',ph:1,l:'Cumuls YTD',ob:true,src:'Ancien gestionnaire',critical:true},{id:'dimona_actives',ph:1,l:'Dimona actives',ob:true,src:'Portail ONSS'},{id:'dmfa_derniere',ph:1,l:'Dernière DmfA',ob:true,src:'Ancien gestionnaire'},{id:'registre',ph:1,l:'Registre du personnel',ob:true,src:'Ancien gestionnaire'},{id:'contrats',ph:2,l:'Contrats de travail',ob:true,src:'Client'},{id:'reglement',ph:2,l:'Règlement de travail',ob:true,src:'Client'},{id:'cct',ph:2,l:'CCT applicables',ob:true,src:'Vérification interne'},{id:'car_policy',ph:2,l:'Car policy',ob:false,src:'Client'},{id:'assurance_gr',ph:2,l:'Assurance groupe/pension',ob:false,src:'Client'},{id:'fonds_sect',ph:2,l:'Fonds sectoriels',ob:true,src:'Ancien gestionnaire'},{id:'bce',ph:3,l:'Vérification BCE',ob:true,src:'API BCE'},{id:'onss_check',ph:3,l:'Portail ONSS',ob:true,src:'ONSS'},{id:'med_travail',ph:3,l:'Médecine du travail',ob:true,src:'Client'},{id:'assurance_at',ph:3,l:'Assurance accident travail',ob:true,src:'Client'},{id:'caisse_vac',ph:3,l:'Caisse vacances ouvriers',ob:false,src:'Ancien gestionnaire'}];
+const ERREURS_CONC=[{id:'cp_fausse',l:'Mauvaise CP',g:'critique',d:'NACE vs CP incorrect',v:'Comparer NACE BCE avec CP appliquée'},{id:'index_manque',l:'Indexation manquée',g:'critique',d:'Index sectoriel oublié ou retardé',v:'Salaire actuel vs barème indexé'},{id:'pp_faux',l:'PP mal calculé',g:'haute',d:'Barème PP incorrect',v:'Recalculer avec barèmes SPF 2026'},{id:'bonus_oublie',l:'Bonus emploi oublié',g:'haute',d:'Réduction PP non appliquée',v:'Si brut < plafond: vérifier réduction'},{id:'csss_tranche',l:'CSSS mauvaise tranche',g:'moyenne',d:'Cotisation spéciale SS fausse',v:'Revenu vs tranches CSSS'},{id:'dimona_abs',l:'Dimona absente',g:'critique',d:'Travailleur sans Dimona IN',v:'Vérifier portail ONSS'},{id:'taux_at',l:'Taux AT faux',g:'haute',d:'Taux accident travail incorrect',v:'Taux fiche vs police assurance'},{id:'pecule_d',l:'Pécule double faux',g:'haute',d:'Base de calcul erronée',v:'Vérifier base = brut N-1 × 9,20%'},{id:'sal_garanti',l:'Salaire garanti mal géré',g:'haute',d:'30j employé / 7-14-21j ouvrier',v:'Historique absences vs fiches'},{id:'anciennete',l:'Ancienneté fausse',g:'moyenne',d:'Date entrée erronée',v:'Contrat vs Dimona vs registre'},{id:'red_gc',l:'Réduction GC oubliée',g:'haute',d:'1er engagement, jeune, senior',v:'Éligibilité via critères ONSS'},{id:'atn_faux',l:'ATN mal valorisé',g:'moyenne',d:'CO2/formule/forfait erroné',v:'Recalculer ATN voiture 2026'},{id:'cr_jours',l:'Chèques-repas jours faux',g:'basse',d:'Jours effectifs ≠ jours CR',v:'Ouvrables - absences - vacances'},{id:'flexi_onss',l:'Flexi-job ONSS oublié',g:'haute',d:'28% patronal spécial',v:'Si secteur autorisé: vérifier 28%'}];
+const CONCURRENTS_LIST=[{k:'securex',n:'Securex',diff:2},{k:'sd_worx',n:'SD Worx',diff:3},{k:'partena',n:'Partena',diff:2},{k:'liantis',n:'Liantis',diff:2},{k:'acerta',n:'Acerta',diff:1},{k:'ucm',n:'UCM',diff:1},{k:'easypay',n:'Easypay',diff:1},{k:'attentia',n:'Attentia',diff:2},{k:'gappaie',n:'GapPaie',diff:2},{k:'fiduciaire',n:'Fiduciaire locale',diff:4},{k:'comptable',n:'Comptable',diff:5},{k:'autre',n:'Autre',diff:3}];
+function validateCumulsYTD(cum,emp){
+  const err=[];const warn=[];const brut=+(cum.brutTotal||0);const onss=+(cum.onssPerso||0);const pp=+(cum.ppRetenu||0);const net=+(cum.netTotal||0);const brutM=+(emp?.monthlySalary||emp?.gross||0);const mois=+(cum.moisPrestes||new Date().getMonth()||1);
+  if(brut>0&&onss>0){const tx=onss/brut;if(Math.abs(tx-0.1307)>0.005)err.push('ONSS ('+(tx*100).toFixed(2)+'%) ≠ 13,07%');}
+  if(brutM>0&&mois>0){const att=brutM*mois;if(Math.abs(brut-att)/att>0.15)warn.push('Brut ('+brut.toFixed(0)+'€) diverge >15% du brut attendu ('+att.toFixed(0)+'€)');}
+  const netTh=brut-onss-pp;if(net>0&&Math.abs(net-netTh)>brut*0.10)warn.push('Net diverge >10% du net théorique');
+  if(brut>0&&pp>0){const txPP=pp/(brut-onss);if(txPP<0.10||txPP>0.55)err.push('Taux PP ('+(txPP*100).toFixed(1)+'%) hors norme');}
+  const vp=+(cum.joursVacPris||0);const vr=+(cum.joursVacRest||0);if((vp+vr)>0&&(vp+vr)!==20)warn.push('Vacances: pris('+vp+')+restants('+vr+')='+(vp+vr)+' ≠ 20 jours');
+  CUMUL_FIELDS.filter(f=>f.ob).forEach(f=>{if(!cum[f.key]&&cum[f.key]!==0)err.push(f.label+' — manquant');});
+  return{errors:err,warnings:warn,valid:err.length===0,score:Math.max(0,100-err.length*10-warn.length*5)};
+}
+const RepriseClientMod=({s,d})=>{
+  const [tab,setTab]=useState('checklist');const [conc,setConc]=useState('');const [cumuls,setCumuls]=useState({});const [valid,setValid]=useState(null);const [docs,setDocs]=useState({});const [errs,setErrs]=useState({});const [selEmp,setSelEmp]=useState('');const ae=s.emps||[];
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v||0);
+  const docsOb=REPRISE_DOCS.filter(d=>d.ob);const docsObDone=docsOb.filter(d=>docs[d.id]).length;const errsDone=ERREURS_CONC.filter(e=>errs[e.id]).length;
+  const doValidate=()=>{const emp=ae.find(e=>e.id===selEmp)||ae[0]||{};setValid(validateCumulsYTD(cumuls,emp));};
+  return <div style={{padding:24}}>
+    <PH title='Reprise Client Concurrent' sub='Transfert depuis un autre gestionnaire de paie'/>
+    <div style={{display:'flex',gap:10,marginBottom:20,alignItems:'center'}}>
+      <label style={{fontSize:11,color:'#888'}}>Ancien gestionnaire:</label>
+      <select value={conc} onChange={e=>setConc(e.target.value)} style={{flex:1,maxWidth:300,padding:8,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:12}}>
+        <option value=''>Sélectionnez...</option>
+        {CONCURRENTS_LIST.map(c=><option key={c.k} value={c.k}>{c.n} ({'⭐'.repeat(c.diff)})</option>)}
+      </select>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+      {[{l:'Documents',v:docsObDone+'/'+docsOb.length,c:docsObDone===docsOb.length?'#22c55e':'#f97316'},{l:'Cumuls',v:valid?valid.score+'%':'—',c:valid?(valid.score>=80?'#22c55e':'#ef4444'):'#888'},{l:'Audit erreurs',v:errsDone+'/'+ERREURS_CONC.length,c:errsDone===ERREURS_CONC.length?'#22c55e':'#3b82f6'},{l:'GO LIVE',v:docsObDone===docsOb.length&&valid?.valid?'✅':'❌',c:docsObDone===docsOb.length&&valid?.valid?'#22c55e':'#ef4444'}].map((k,i)=><div key={i} style={{padding:14,background:'#0d1117',border:'1px solid '+k.c+'30',borderRadius:12,textAlign:'center'}}><div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div><div style={{fontSize:10,color:'#888',marginTop:4}}>{k.l}</div></div>)}
+    </div>
+    <div style={{display:'flex',gap:6,marginBottom:20,flexWrap:'wrap'}}>
+      {[{v:'checklist',l:'📋 Checklist'},{v:'cumuls',l:'💰 Cumuls YTD'},{v:'erreurs',l:'⚠️ Audit concurrent'},{v:'timeline',l:'📅 Timeline'},{v:'rapport',l:'📄 Rapport'}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:11,fontWeight:tab===t.v?600:400,background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#888'}}>{t.l}</button>)}
+    </div>
+    {tab==='checklist'&&[1,2,3].map(ph=><div key={ph} style={{marginBottom:20}}>
+      <div style={{fontSize:13,fontWeight:700,color:'#c6a34e',marginBottom:8}}>Phase {ph}: {ph===1?'Ancien gestionnaire':ph===2?'Client':'Vérifications externes'}</div>
+      {REPRISE_DOCS.filter(d=>d.ph===ph).map(d=><div key={d.id} style={{display:'flex',gap:10,padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+        <input type='checkbox' checked={!!docs[d.id]} onChange={e=>{const nd={...docs};nd[d.id]=e.target.checked;setDocs(nd);}} style={{accentColor:'#c6a34e'}}/>
+        <div><span style={{fontSize:12,color:'#e8e6e0'}}>{d.critical?'🔴 ':''}{d.ob?'':'(optionnel) '}{d.l}</span><span style={{fontSize:10,color:'#555',marginLeft:8}}>{d.src}</span></div>
+      </div>)}
+    </div>)}
+    {tab==='cumuls'&&<div>
+      <div style={{display:'flex',gap:10,marginBottom:16}}>
+        <select value={selEmp} onChange={e=>setSelEmp(e.target.value)} style={{flex:1,padding:8,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:12}}><option value=''>Travailleur...</option>{ae.map((e,i)=><option key={i} value={e.id}>{(e.first||e.fn||'')+' '+(e.last||e.ln||'')}</option>)}</select>
+        <input type='number' placeholder='Mois prestés' value={cumuls.moisPrestes||''} onChange={e=>setCumuls({...cumuls,moisPrestes:+e.target.value})} style={{width:120,padding:8,borderRadius:8,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:12}}/>
+        <button onClick={doValidate} style={{padding:'8px 20px',borderRadius:8,border:'none',background:'#c6a34e',color:'#060810',fontWeight:700,fontSize:12,cursor:'pointer'}}>Valider</button>
+      </div>
+      {CUMUL_CATS.map(cat=><div key={cat.id} style={{marginBottom:14}}>
+        <div style={{fontSize:11,fontWeight:700,color:cat.c,marginBottom:6}}>{cat.l}</div>
+        {CUMUL_FIELDS.filter(f=>f.cat===cat.id).map(f=><div key={f.key} style={{display:'flex',gap:8,marginBottom:3,alignItems:'center'}}>
+          <div style={{width:220,fontSize:11,color:f.ob?'#e8e6e0':'#888'}}>{f.ob?'* ':''}{f.label}</div>
+          <input type='number' step='0.01' value={cumuls[f.key]||''} onChange={e=>setCumuls({...cumuls,[f.key]:+e.target.value})} style={{width:140,padding:'5px 8px',borderRadius:6,background:'#090c16',border:'1px solid rgba(198,163,78,.12)',color:'#e8e6e0',fontSize:12,textAlign:'right'}} placeholder='0.00'/>
+        </div>)}
+      </div>)}
+      {valid&&<div style={{marginTop:16,padding:14,background:valid.valid?'rgba(34,197,94,.05)':'rgba(239,68,68,.05)',border:'1px solid '+(valid.valid?'rgba(34,197,94,.2)':'rgba(239,68,68,.2)'),borderRadius:12}}>
+        <div style={{fontSize:13,fontWeight:700,color:valid.valid?'#22c55e':'#ef4444',marginBottom:8}}>Score: {valid.score}% — {valid.valid?'✅ Cohérent':'❌ Écarts'}</div>
+        {valid.errors.map((e,i)=><div key={i} style={{fontSize:11,color:'#ef4444',padding:'3px 0'}}>● {e}</div>)}
+        {valid.warnings.map((w,i)=><div key={i} style={{fontSize:11,color:'#eab308',padding:'3px 0'}}>▲ {w}</div>)}
+      </div>}
+    </div>}
+    {tab==='erreurs'&&<div>
+      <div style={{fontSize:13,fontWeight:700,color:'#c6a34e',marginBottom:12}}>14 erreurs fréquentes des concurrents</div>
+      {ERREURS_CONC.map(e=><div key={e.id} style={{display:'flex',gap:10,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+        <input type='checkbox' checked={!!errs[e.id]} onChange={ev=>{const ne={...errs};ne[e.id]=ev.target.checked;setErrs(ne);}} style={{accentColor:'#c6a34e',marginTop:2}}/>
+        <div><div style={{fontSize:12,color:'#e8e6e0',fontWeight:600}}><span style={{padding:'2px 6px',borderRadius:4,fontSize:9,marginRight:6,background:e.g==='critique'?'rgba(239,68,68,.15)':'rgba(249,115,22,.15)',color:e.g==='critique'?'#ef4444':'#f97316'}}>{e.g.toUpperCase()}</span>{e.l}</div><div style={{fontSize:10,color:'#888',marginTop:2}}>{e.d}</div><div style={{fontSize:10,color:'#3b82f6',marginTop:2}}>🔍 {e.v}</div></div>
+      </div>)}
+    </div>}
+    {tab==='timeline'&&<div>
+      {[{p:'J-60',a:['Mandat signé','Résiliation ancien gestionnaire (6 mois si SS agréé)']},{p:'J-45',a:['Demande formelle documents de transfert']},{p:'J-30',a:['🔴 Réception cumuls YTD','Vérification Dimona portail ONSS']},{p:'J-21',a:['Encodage données dans Aureus','Scanner IA fiches ancien gestionnaire']},{p:'J-14',a:['🔴 Réconciliation calcul parallèle','Audit 14 erreurs concurrent']},{p:'J-7',a:['Validation cumuls avec client','Config SEPA + bancaire']},{p:'J',a:['🟢 GO LIVE — Premier calcul Aureus']},{p:'J+7',a:['Vérification premier SEPA + fiche']},{p:'J+30',a:['Premier DmfA complet']},{p:'J+60',a:['Rapport réconciliation 3 mois']},{p:'J+90',a:['Clôture transfert']}].map((t,i)=><div key={i} style={{display:'flex',gap:12,padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
+        <div style={{width:50,fontWeight:700,color:t.p==='J'?'#22c55e':t.p.includes('🔴')?'#ef4444':'#888',fontSize:12}}>{t.p}</div>
+        <div>{t.a.map((a,j)=><div key={j} style={{fontSize:11,color:a.includes('🔴')?'#ef4444':a.includes('🟢')?'#22c55e':'#e8e6e0',padding:'2px 0'}}>{a}</div>)}</div>
+      </div>)}
+    </div>}
+    {tab==='rapport'&&<div style={{padding:16,background:'#0d1117',borderRadius:14,border:'1px solid rgba(198,163,78,.1)'}}>
+      <div style={{fontSize:14,fontWeight:700,color:'#c6a34e',marginBottom:12}}>Rapport de reprise</div>
+      <div style={{fontSize:11,color:'#888',lineHeight:1.8}}>
+        Client: <b style={{color:'#e8e6e0'}}>{s.company?.name||'—'}</b><br/>
+        Ancien: <b style={{color:'#e8e6e0'}}>{conc?CONCURRENTS_LIST.find(c=>c.k===conc)?.n:'Non sélectionné'}</b><br/>
+        Travailleurs: <b style={{color:'#e8e6e0'}}>{ae.length}</b><br/>
+        Documents: <b style={{color:docsObDone===docsOb.length?'#22c55e':'#ef4444'}}>{docsObDone}/{docsOb.length}</b> obligatoires<br/>
+        Cumuls: <b style={{color:valid?.valid?'#22c55e':'#ef4444'}}>{valid?'Score '+valid.score+'%':'Non validés'}</b><br/>
+        Audit: <b style={{color:errsDone===ERREURS_CONC.length?'#22c55e':'#ef4444'}}>{errsDone}/{ERREURS_CONC.length}</b> vérifiés<br/>
+        Statut: <b style={{color:docsObDone===docsOb.length&&valid?.valid?'#22c55e':'#ef4444'}}>{docsObDone===docsOb.length&&valid?.valid?'✅ PRÊT GO LIVE':'❌ INCOMPLET'}</b>
+      </div>
+    </div>}
+  </div>;
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// MODULE 6: COOKIE BANNER RGPD
+// ══════════════════════════════════════════════════════════════════════
+const CookieBanner=()=>{
+  const [show,setShow]=useState(false);
+  useEffect(()=>{try{if(!localStorage.getItem('aureus_cookie_consent'))setShow(true);}catch(e){}},[]);
+  if(!show)return null;
+  return <div style={{position:'fixed',bottom:0,left:0,right:0,zIndex:99998,background:'#0d1117',borderTop:'1px solid rgba(198,163,78,.2)',padding:'14px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,fontSize:12}}>
+    <div style={{color:'#e8e6e0',flex:1}}><b style={{color:'#c6a34e'}}>🍪 Cookies & Vie privée</b> — Aureus Social Pro utilise des cookies essentiels uniquement. Aucun cookie publicitaire. Conforme RGPD.</div>
+    <div style={{display:'flex',gap:8}}>
+      <button onClick={()=>{try{localStorage.setItem('aureus_cookie_consent','refused');}catch(e){}setShow(false);}} style={{padding:'8px 16px',borderRadius:8,border:'1px solid rgba(198,163,78,.15)',background:'transparent',color:'#888',fontSize:11,cursor:'pointer'}}>Refuser</button>
+      <button onClick={()=>{try{localStorage.setItem('aureus_cookie_consent','accepted');}catch(e){}setShow(false);}} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'#c6a34e',color:'#060810',fontWeight:700,fontSize:11,cursor:'pointer'}}>Accepter</button>
+    </div>
+  </div>;
+};
 const ActionsRapides=({s,d})=>{
   const clients=s.clients||[];
   const [action,setAction]=useState('embauche');
@@ -20209,6 +20503,11 @@ const AutomationHub=({s,d})=>{
       case'reportingpro':return <ReportingAvance s={s}/>;
       case'integrations':return <IntegrationsHub s={s} supabase={supabase}/>;
       case'veillelegale':return <VeilleLegale s={s}/>;
+      case'declarations':return <DeclarationsONSS s={s} d={d} supabase={supabase}/>;
+      case'ia_turnover':return <IATurnoverMod s={s} d={d}/>;
+      case'saas_admin':return <MultiTenantAdmin s={s} d={d}/>;
+      case'soldetoutcompte':return <SoldeToutCompteMod s={s} d={d}/>;
+      case'repriseclient':return <RepriseClientMod s={s} d={d}/>;
       case'fiduciaire':return <FiduciaireHub s={s} d={d}/>;
       case'simulicenciement':return <SimuLicenciement s={s}/>;
       case'couttotal':return <CoutTotalDash s={s}/>;
@@ -20366,6 +20665,7 @@ const AutomationHub=({s,d})=>{
       <main className="aureus-main" style={{marginLeft:isMobile?0:268,flex:1,padding:isMobile?'60px 12px 12px':'26px 34px',minHeight:'100vh',animation:'fadeInPage .3s ease'}}>{pg()}</main>
 
       <ToastContainer/>
+      <CookieBanner/>
       {s.modal&&<div style={{position:'fixed',inset:0,background:"rgba(0,0,0,.75)",backdropFilter:'blur(6px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}} onClick={()=>d({type:"MODAL",m:null})}>
         <div onClick={e=>e.stopPropagation()} style={{background:"#0c0f1a",border:'1px solid rgba(139,115,60,.15)',borderRadius:16,padding:28,width:s.modal.w||700,maxHeight:'85vh',overflowY:'auto'}}>{s.modal.c}</div>
       </div>}
