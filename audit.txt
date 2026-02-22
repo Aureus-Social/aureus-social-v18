@@ -1,0 +1,60 @@
+﻿
+app\AureusSocialPro.js:13870:  const [activeYear,setActiveYear]=useState(currentYear);
+app\AureusSocialPro.js:14141:      {Object.keys(BAREMES_DB).map(y=><button key={y} onClick={()=>setActiveYear(+y)} 
+style={{padding:'4px 12px',borderRadius:6,border:activeYear===+y?'1px solid rgba(198,163,78,.3)':'1px solid rgba(255,25
+5,255,.05)',background:activeYear===+y?'rgba(198,163,78,.1)':'transparent',color:activeYear===+y?'#c6a34e':'#888',fontS
+ize:11,cursor:'pointer',fontWeight:activeYear===+y?700:400}}>{y}</button>)}
+app\AureusSocialPro.js:14142:      {customBaremes[currentYear+1]&&<button onClick={()=>setActiveYear(currentYear+1)} 
+style={{padding:'4px 12px',borderRadius:6,border:'1px solid 
+rgba(168,85,247,.2)',background:'rgba(168,85,247,.06)',color:'#a855f7',fontSize:11,cursor:'pointer'}}>{currentYear+1} 
+(custom)</button>}
+app\AureusSocialPro.js:24367:function PointageMod({s,d}){const ae=s.emps||[];const 
+[tab,setTab]=useState("pointage");return <div><PH title="Pointage et Temps de Travail" sub="Suivi heures prestees - 
+Horaires - Temps partiel"/><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:18}}>{[{
+l:"Effectif",v:ae.length,c:"#c6a34e"},{l:"Heures/sem",v:"38h (CP 200)",c:"#60a5fa"},{l:"Jours/mois",v:"22 
+ouvrables",c:"#4ade80"},{l:"Heures sup.",v:"Voir module HS",c:"#fb923c"}].map((k,i)=><div key={i} 
+style={{padding:"12px 14px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid 
+rgba(198,163,78,.08)"}}><div 
+style={{fontSize:9,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div 
+style={{fontSize:17,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div><div 
+style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"pointage",l:"Heures prestees"},{v:"horaires",l:"Horaires 
+legaux"},{v:"teletravail",l:"Teletravail"},{v:"legal",l:"Obligations"}].map(t=><button key={t.v} 
+onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeig
+ht:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab
+===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>{tab==="pointage"&&<C><ST>Heures prestees</ST><Tbl 
+cols={[{k:"n",l:"Travailleur",b:1,r:r=>(r.fn||"")+" "+(r.ln||"")},{k:"r",l:"Regime",a:"right",r:r=><span 
+style={{color:"#60a5fa"}}>{(+r.regime||100)+"%"}</span>},{k:"h",l:"Heures/sem",a:"right",r:r=><span 
+style={{color:"#c6a34e"}}>{((+r.regime||100)/100*38).toFixed(1)}h</span>},{k:"m",l:"Heures/mois",a:"right",r:r=><span 
+style={{color:"#4ade80"}}>{((+r.regime||100)/100*38*4.33).toFixed(0)}h</span>}]} 
+data={ae}/></C>}{tab==="horaires"&&<C><ST>Horaires legaux</ST>{[{t:"Duree maximale journaliere",v:"8h (9h si semaine 
+5j, 10h accord)"},{t:"Duree maximale hebdomadaire",v:"38h (CP 200) - max 40h legal"},{t:"Repos entre 2 
+prestations",v:"Min. 11 heures consecutives"},{t:"Repos hebdomadaire",v:"Min. 35 heures (dimanche 
+inclus)"},{t:"Travail de nuit",v:"20h-6h. Interdit sauf exceptions sectorielles."},{t:"Dimanche",v:"Repos obligatoire 
+sauf derogations (horeca, sante, etc.)."},{t:"Jours feries",v:"10 jours legaux/an. Remuneration normale ou 
+recup."}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 
+0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#e8e6e0",fontSize:12}}>{r.t}</span><span 
+style={{color:"#c6a34e",fontSize:11}}>{r.v}</span></div>)}</C>}{tab==="teletravail"&&<C><ST>Teletravail</ST>{[{t:"CCT 
+85 (structurel)",d:"Avenant contrat obligatoire. Horaires, lieu, materiel, indemnite bureau (montant indexe 
+annuellement)."},{t:"CCT 149 (occasionnel/recommande)",d:"Cadre souple. Pas avenant obligatoire. Accord sur 
+modalites."},{t:"Indemnite bureau",d:"Montant indexe/mois si min 5j teletravail. ONSS exonere."},{t:"Internet",d:"20 
+EUR/mois forfait. ONSS exonere."},{t:"PC prive",d:"20 EUR/mois si utilisation PC personnel. ONSS 
+exonere."},{t:"Assurance AT",d:"Accident travail couvert pendant teletravail (Loi 21/11/2017)."}].map((r,i)=><div 
+key={i} style={{padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b 
+style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></di
+v>)}</C>}{tab==="legal"&&<C><ST>Obligations</ST>{[{t:"Registre presences",d:"Obligatoire dans certains secteurs 
+(horeca, construction). Pointeuse ou registre."},{t:"Dimona horeca",d:"Declaration quotidienne des heures pour extras 
+et flexi-jobs."},{t:"Controle duree travail",d:"Loi 16/03/1971. Systeme enregistrement si horaires 
+variables."},{t:"Temps partiel",d:"Horaire exact dans contrat. Affichage horaire. Derogations 
+ecrites."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b 
+style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div 
+style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}</C>}</div>;}
+app\AureusSocialPro.js:26474:  const [activeEndpoint,setActiveEndpoint]=useState('auth');
+app\AureusSocialPro.js:26514:        {endpoints.map(ep=><button key={ep.id} onClick={()=>setActiveEndpoint(ep.id)} 
+style={{display:'block',width:'100%',padding:'8px 
+12px',marginBottom:3,borderRadius:6,border:activeEndpoint===ep.id?'1px solid rgba(198,163,78,.3)':'1px solid rgba(198,1
+63,78,.05)',background:activeEndpoint===ep.id?'rgba(198,163,78,.1)':'transparent',color:activeEndpoint===ep.id?'#c6a34e
+':'#9e9b93',cursor:'pointer',fontSize:11,textAlign:'left',fontFamily:'inherit'}}>{ep.cat}</button>)}
+app\AureusSocialPro.js:26621:          <B v={m.status==='coming'?'outline':'gold'} style={{fontSize:11,padding:'6px 
+16px'}} onClick={()=>{if(m.status==='available')alert(`✅ Module "${m.name}" activé ! (${m.price}€/mois)`)}}>
+
+

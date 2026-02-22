@@ -1,0 +1,140 @@
+﻿
+app\AureusSocialPro.js:968:        
+color:lang===l?'#c6a34e':'#9e9b93',fontFamily:'inherit',textTransform:'uppercase',letterSpacing:1
+app\AureusSocialPro.js:4305:    case'SET_COMPANY':return{...s,co:{...s.co,...a.data}};
+app\AureusSocialPro.js:4306:    case'SET_EMPS':return{...s,emps:a.data};
+app\AureusSocialPro.js:4307:    case'ADD_EMPS_BATCH':return{...s,emps:[...s.emps,...(a.data||[])]};
+app\AureusSocialPro.js:4308:    case'SET_PAYS':return{...s,pays:a.data};
+app\AureusSocialPro.js:4309:    case'SET_CLIENTS':return{...s,clients:a.data||[]};
+app\AureusSocialPro.js:4310:    case'NAV':if(a.page==='sprint10'){window.location.href='/sprint10/auth';return 
+s;}const s9map={s9_dimona:'/sprint9/dimona',s9_precompte:'/sprint9/precompte',s9_onss:'/sprint9/onss',s9_bilan:'/sprint
+9/bilan-social',s9_netbrut:'/sprint9/net-brut',s9_od:'/sprint9/od-comptables',s9_cheques:'/sprint9/cheques-repas',s9_tr
+ilingue:'/sprint9/trilingue',s9_vacances:'/sprint9/vacances',s9_enfants:'/sprint9/enfants',s9_attestations:'/sprint9/at
+testations',s9_exports:'/sprint9/exports',s9_baremes:'/sprint9/baremes',s9_provisions:'/sprint9/provisions',s9_heures:'
+/sprint9/heures-sup',s9_primes:'/sprint9/primes',s9_saisies:'/sprint9/saisies'};ns={...s,page:a.page,sub:a.sub||null};b
+reak;
+app\AureusSocialPro.js:4311:    case'ADD_E':ns={...s,emps:[...s.emps,{...a.d,id:"E-"+uid()}]};break;
+app\AureusSocialPro.js:4312:    case'UPD_E':ns={...s,emps:s.emps.map(e=>e.id===a.d.id?a.d:e)};break;
+app\AureusSocialPro.js:4313:    case'DEL_E':ns={...s,emps:s.emps.filter(e=>e.id!==a.id)};break;
+app\AureusSocialPro.js:4314:    case'ADD_P':ns={...s,pays:[...s.pays,{...a.d,id:"P-"+uid()}]};break;
+app\AureusSocialPro.js:4315:    case'ADD_DIM':ns={...s,dims:[...s.dims,{...a.d,id:"D-"+uid()}]};break;
+app\AureusSocialPro.js:4316:    case'ADD_DMFA':ns={...s,dmfas:[...s.dmfas,{...a.d,id:"M-"+uid()}]};break;
+app\AureusSocialPro.js:4317:    case'ADD_F':ns={...s,fiches:[...s.fiches,{...a.d,id:"F-"+uid()}]};break;
+app\AureusSocialPro.js:4318:    case'ADD_DOC':ns={...s,docs:[...s.docs,{...a.d,id:"DC-"+uid()}]};break;
+app\AureusSocialPro.js:4319:    case'UPD_CO':ns={...s,co:{...s.co,...a.d}};break;
+app\AureusSocialPro.js:4320:    case'MODAL':ns={...s,modal:a.m};break;
+app\AureusSocialPro.js:4322:    case'ADD_CLIENT':ns={...s,clients:[...s.clients,{...a.d,id:"CL-"+uid(),createdAt:new 
+Date().toISOString()}]};break;
+app\AureusSocialPro.js:4323:    
+case'UPD_CLIENT':ns={...s,clients:s.clients.map(c=>c.id===a.d.id?{...c,...a.d}:c)};break;
+app\AureusSocialPro.js:4324:    
+case'DEL_CLIENT':if(a.role==='readonly'){ns=s;break;}ns={...s,clients:s.clients.filter(c=>c.id!==a.id)};break;
+app\AureusSocialPro.js:4325:    case'SELECT_CLIENT':{
+app\AureusSocialPro.js:4329:    case'SAVE_CLIENT_DATA':{
+app\AureusSocialPro.js:4335:    case'BACK_TO_CLIENTS':ns={...s,activeClient:null,page:'clients',sub:null};break;
+app\AureusSocialPro.js:4336:    case'LOAD_ALL':ns={...s,...a.d};break;
+app\AureusSocialPro.js:4593:    {label&&<label style={{fontSize:10.5,fontWeight:600,color:'#9e9b93',display:'block',mar
+ginBottom:5,textTransform:'uppercase',letterSpacing:'.7px'}}>{label}</label>}
+app\AureusSocialPro.js:4609:  return <div style={{fontSize:11.5,color:'#c6a34e',fontWeight:600,marginBottom:12,marginTo
+p:18,textTransform:'uppercase',letterSpacing:'1.5px',...(style||{})}}>{txt}</div>;
+app\AureusSocialPro.js:4611:const SC=({label,value,color='#c6a34e',sub})=><C style={{padding:'18px 16px'}}><div 
+style={{fontSize:10,color:'#5e5c56',marginBottom:6,textTransform:'uppercase',letterSpacing:'1px'}}>{label}</div><div 
+style={{fontSize:22,fontWeight:700,color}}>{value}</div>{sub&&<div 
+style={{fontSize:10,color:'#5e5c56',marginTop:3}}>{sub}</div>}</C>;
+app\AureusSocialPro.js:4641:        {cols.map(c=><th key={c.k} style={{textAlign:c.a||'left',padding:'11px 
+14px',fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'1px',fontWeight:600}}>{c.l}</th>)}
+app\AureusSocialPro.js:4712:        {cols.map(c=><th key={c.k} style={{textAlign:'left',padding:'10px 
+14px',fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'1px',fontWeight:600}}>{c.l}</th>)}
+app\AureusSocialPro.js:4760:          <div 
+style={{fontSize:10,color:'#8b7340',marginTop:6,letterSpacing:'4px',textTransform:'uppercase'}}>Logiciel de Gestion de 
+la Paie</div>
+app\AureusSocialPro.js:5229:        <div style={{fontSize:10,color:step>=st.n?'#c6a34e':'#5e5c56',fontWeight:600,textTr
+ansform:'uppercase',letterSpacing:'1px'}}>{st.n}. {st.l}</div>
+app\AureusSocialPro.js:5313:              <th style={{textAlign:'left',padding:'8px 
+10px',fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>NACE</th>
+app\AureusSocialPro.js:5314:              <th style={{textAlign:'left',padding:'8px 
+10px',fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>Activité</th>
+app\AureusSocialPro.js:5315:              <th style={{textAlign:'left',padding:'8px 
+10px',fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>CP Employés</th>
+app\AureusSocialPro.js:5316:              <th style={{textAlign:'left',padding:'8px 
+10px',fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>CP Ouvriers</th>
+app\AureusSocialPro.js:5405:        <div style={{fontSize:11,color:'#c6a34e',fontWeight:600,marginBottom:8,textTransfor
+m:'uppercase',letterSpacing:'1px'}}>Profils suggérés pour {selType?.l}</div>
+app\AureusSocialPro.js:5427:            {['Prénom',"Nom","NISS","Fonction","Anc.","Brut 
+min.","Contrat","Situation","Enf.",""].map(h=><th key={h} style={{textAlign:'left',padding:'8px 
+10px',fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{h}</th>)}
+app\AureusSocialPro.js:5462:          <div style={{fontSize:11,color:'#c6a34e',fontWeight:600,textTransform:'uppercase'
+,letterSpacing:'1px',marginBottom:10}}>Société</div>
+app\AureusSocialPro.js:5472:          <div style={{fontSize:11,color:'#c6a34e',fontWeight:600,textTransform:'uppercase'
+,letterSpacing:'1px',marginBottom:10}}>Activité</div>
+app\AureusSocialPro.js:5487:        <div style={{fontSize:11,color:'#c6a34e',fontWeight:600,textTransform:'uppercase',l
+etterSpacing:'1px',marginBottom:8}}>Travailleurs ({data.emps.length})</div>
+app\AureusSocialPro.js:5503:        <div style={{fontSize:11,color:'#4ade80',fontWeight:600,textTransform:'uppercase',l
+etterSpacing:'1px',marginBottom:8}}>Avantages sectoriels CP {autoCP}</div>
+app\AureusSocialPro.js:5564:            <div 
+style={{fontSize:9,color:'#8b7340',letterSpacing:'3px',textTransform:'uppercase'}}>Gestion des dossiers clients</div>
+app\AureusSocialPro.js:6203:      <div 
+style={{color:'#8b7340',fontSize:11,letterSpacing:3,textTransform:'uppercase'}}>Chargement des données...</div>
+app\AureusSocialPro.js:7296:      case'verify':return runVerify();
+app\AureusSocialPro.js:7297:      case'calculate':return runCalculate();
+app\AureusSocialPro.js:7298:      case'generate':return runGenerate();
+app\AureusSocialPro.js:7299:      case'validate':return runValidate();
+app\AureusSocialPro.js:7300:      case'send':return runSend();
+app\AureusSocialPro.js:7301:      case'close':return runClose();
+app\AureusSocialPro.js:10054:      <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',textTransform:'uppercase',le
+tterSpacing:2,marginBottom:12}}>Secretariat Social Nouvelle Generation</div>
+app\AureusSocialPro.js:10093:          {pl.pop&&<div 
+style={{position:'absolute',top:-10,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',background:'#c6a34e',col
+or:'#060810',fontSize:9,fontWeight:700,borderRadius:20,textTransform:'uppercase'}}>Populaire</div>}
+app\AureusSocialPro.js:13545:        <div style={{padding:'6px 12px',background:'rgba(255,255,255,.02)',fontSize:10,fon
+tWeight:600,color:'#888',textTransform:'uppercase',letterSpacing:1}}>{cat.cat}</div>
+app\AureusSocialPro.js:13745:        <div 
+style={{fontSize:11,fontWeight:600,color:'#888',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Roles</div>
+app\AureusSocialPro.js:14182:                <div 
+style={{fontSize:9,color:'#888',textTransform:'uppercase',letterSpacing:.5}}>{k.l}</div>
+app\AureusSocialPro.js:14603:        <div style={{fontSize:8,color:'#888',textTransform:'uppercase'}}>{k}</div>
+app\AureusSocialPro.js:14618:          <span style={{fontSize:8,padding:'2px 6px',borderRadius:4,background:h.status===
+'up'?'rgba(34,197,94,.1)':h.status==='config'?'rgba(234,179,8,.1)':'rgba(239,68,68,.1)',color:h.status==='up'?'#22c55e'
+:h.status==='config'?'#eab308':'#ef4444',textTransform:'uppercase',fontWeight:600}}>{h.status}</span>
+app\AureusSocialPro.js:14714:      <div 
+style={{fontSize:11,fontWeight:600,color:'#888',marginBottom:6,textTransform:'uppercase',letterSpacing:1}}>{cat}</div>
+app\AureusSocialPro.js:14949:          <span 
+style={{fontSize:9,color:'#888',textTransform:'uppercase',letterSpacing:1}}>{k.l}</span>
+app\AureusSocialPro.js:15100:          <span style={{fontSize:8,padding:'2px 5px',borderRadius:3,background:d.type==='p
+df'?'rgba(239,68,68,.1)':d.type==='xml'?'rgba(168,85,247,.1)':'rgba(34,197,94,.1)',color:d.type==='pdf'?'#ef4444':d.typ
+e==='xml'?'#a855f7':'#22c55e',textTransform:'uppercase',fontWeight:600}}>{d.type}</span>
+app\AureusSocialPro.js:15164:        <div 
+style={{fontSize:10,color:'#ef4444',textTransform:'uppercase',letterSpacing:1}}>Situation actuelle</div>
+app\AureusSocialPro.js:15171:        <div 
+style={{fontSize:10,color:'#22c55e',textTransform:'uppercase',letterSpacing:1}}>Apres optimisation</div>
+app\AureusSocialPro.js:16079:      <div 
+style={{fontSize:12,fontWeight:600,color:'#888',marginBottom:8,textTransform:'uppercase',letterSpacing:1}}>{cat}</div>
+app\AureusSocialPro.js:16441:            <div style={{padding:'4px 10px',borderRadius:6,background:conf.status==='conne
+cted'?'rgba(34,197,94,.1)':conf.status==='configured'?'rgba(234,179,8,.1)':'rgba(239,68,68,.1)',color:conf.status==='co
+nnected'?'#22c55e':conf.status==='configured'?'#eab308':'#ef4444',fontSize:10,fontWeight:600,textTransform:'uppercase'}
+}>{conf.status||'Non connecte'}</div>
+app\AureusSocialPro.js:20420:      case'dashboard':return <Dashboard s={s} d={d} userRole={userRole}/>;
+app\AureusSocialPro.js:20421:      case'employees':return <Employees s={s} d={d}/>;
+app\AureusSocialPro.js:20422:      case'payslip':return <Payslips s={s} d={d}/>;
+app\AureusSocialPro.js:20423:      case'onss':return s.sub==='dmfa'?<DMFAPage s={s} d={d}/>:s.sub==='drs'?<DRSMod 
+s={s} d={d}/>:s.sub==='onssapl'?<ONSSAPLMod s={s} d={d}/>:s.sub==='onss_dash'?<ONSSDashMod s={s} 
+d={d}/>:s.sub==='guide_portail'?<GuidePortailMod s={s} d={d}/>:s.sub==='portail_employeur'?<PortailEmployeurMod s={s} 
+d={d}/>:<DimonaPage s={s} d={d}/>;
+app\AureusSocialPro.js:20424:      case'fiscal':return s.sub==='precompte'?<PrecomptePage s={s} 
+d={d}/>:s.sub==='fiches_ext'?<FichesMod s={s} d={d}/>:s.sub==='co2'?<CO2Mod s={s} d={d}/>:s.sub==='atn'?<ATNMod s={s} 
+d={d}/>:<BelcotaxPage s={s} d={d}/>;
+app\AureusSocialPro.js:20425:      case'salaires':return <SalairesPage s={s} d={d}/>;
+app\AureusSocialPro.js:20426:      case'avantages':return <AvantagesPage s={s} d={d}/>;
+app\AureusSocialPro.js:20427:      case'contratsmenu':return <ContratsMenuPage s={s} d={d}/>;
+app\AureusSocialPro.js:20428:      case'rh':return <RHPage s={s} d={d}/>;
+app\AureusSocialPro.js:20429:      case'social':return <SocialPage s={s} d={d}/>;
+app\AureusSocialPro.js:20430:      case'bienetre':return <BienetrePage s={s} d={d}/>;
+app\AureusSocialPro.js:20431:      case'reporting':return <ReportingPage s={s} d={d}/>;
+app\AureusSocialPro.js:20432:      case'legal':return <LegalPage s={s} d={d}/>;
+app\AureusSocialPro.js:20433:      case'aureussuite':return <AureusSuitePage s={s} d={d}/>;
+app\AureusSocialPro.js:20434:      case'documents':return <DocsPage s={s} d={d}/>;
+app\AureusSocialPro.js:20435:      case'reports':return <ReportsPage s={s} d={d}/>;
+app\AureusSocialPro.js:20436:      case'settings':return s.sub==='fraisgestion'?<FraisGestionMod s={s} 
+d={d}/>:<SettingsPage s={s} d={d}/>;
+
+

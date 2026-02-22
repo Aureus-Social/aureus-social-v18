@@ -1,0 +1,228 @@
+﻿        color:lang===l?'#c6a34e':'#9e9b93',fontFamily:'inherit',textTransform:'uppercase',letterSpacing:1
+    case'SET_COMPANY':return{...s,co:{...s.co,...a.data}};
+    case'SET_EMPS':return{...s,emps:a.data};
+    case'ADD_EMPS_BATCH':return{...s,emps:[...s.emps,...(a.data||[])]};
+    case'SET_PAYS':return{...s,pays:a.data};
+    case'SET_CLIENTS':return{...s,clients:a.data||[]};
+    case'NAV':if(a.page==='sprint10'){window.location.href='/sprint10/auth';return s;}const s9map={s9_dimona:'/sprint9/d
+    case'ADD_E':ns={...s,emps:[...s.emps,{...a.d,id:"E-"+uid()}]};break;
+    case'UPD_E':ns={...s,emps:s.emps.map(e=>e.id===a.d.id?a.d:e)};break;
+    case'DEL_E':ns={...s,emps:s.emps.filter(e=>e.id!==a.id)};break;
+    case'ADD_P':ns={...s,pays:[...s.pays,{...a.d,id:"P-"+uid()}]};break;
+    case'ADD_DIM':ns={...s,dims:[...s.dims,{...a.d,id:"D-"+uid()}]};break;
+    case'ADD_DMFA':ns={...s,dmfas:[...s.dmfas,{...a.d,id:"M-"+uid()}]};break;
+    case'ADD_F':ns={...s,fiches:[...s.fiches,{...a.d,id:"F-"+uid()}]};break;
+    case'ADD_DOC':ns={...s,docs:[...s.docs,{...a.d,id:"DC-"+uid()}]};break;
+    case'UPD_CO':ns={...s,co:{...s.co,...a.d}};break;
+    case'MODAL':ns={...s,modal:a.m};break;
+    case'ADD_CLIENT':ns={...s,clients:[...s.clients,{...a.d,id:"CL-"+uid(),createdAt:new Date().toISOString()}]};break;
+    case'UPD_CLIENT':ns={...s,clients:s.clients.map(c=>c.id===a.d.id?{...c,...a.d}:c)};break;
+    case'DEL_CLIENT':if(a.role==='readonly'){ns=s;break;}ns={...s,clients:s.clients.filter(c=>c.id!==a.id)};break;
+    case'SELECT_CLIENT':{
+    case'SAVE_CLIENT_DATA':{
+    case'BACK_TO_CLIENTS':ns={...s,activeClient:null,page:'clients',sub:null};break;
+    case'LOAD_ALL':ns={...s,...a.d};break;
+    {label&&<label style={{fontSize:10.5,fontWeight:600,color:'#9e9b93',display:'block',marginBottom:5,textTransform:'up
+  return <div style={{fontSize:11.5,color:'#c6a34e',fontWeight:600,marginBottom:12,marginTop:18,textTransform:'uppercase
+const SC=({label,value,color='#c6a34e',sub})=><C style={{padding:'18px 16px'}}><div style={{fontSize:10,color:'#5e5c56',
+        {cols.map(c=><th key={c.k} style={{textAlign:c.a||'left',padding:'11px 14px',fontSize:10,color:'#5e5c56',textTra
+        {cols.map(c=><th key={c.k} style={{textAlign:'left',padding:'10px 14px',fontSize:10,color:'#5e5c56',textTransfor
+          <div style={{fontSize:10,color:'#8b7340',marginTop:6,letterSpacing:'4px',textTransform:'uppercase'}}>Logiciel 
+        <div style={{fontSize:10,color:step>=st.n?'#c6a34e':'#5e5c56',fontWeight:600,textTransform:'uppercase',letterSpa
+              <th style={{textAlign:'left',padding:'8px 10px',fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>NA
+              <th style={{textAlign:'left',padding:'8px 10px',fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>Ac
+              <th style={{textAlign:'left',padding:'8px 10px',fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>CP
+              <th style={{textAlign:'left',padding:'8px 10px',fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>CP
+        <div style={{fontSize:11,color:'#c6a34e',fontWeight:600,marginBottom:8,textTransform:'uppercase',letterSpacing:'
+            {['Prénom',"Nom","NISS","Fonction","Anc.","Brut min.","Contrat","Situation","Enf.",""].map(h=><th key={h} st
+          <div style={{fontSize:11,color:'#c6a34e',fontWeight:600,textTransform:'uppercase',letterSpacing:'1px',marginBo
+          <div style={{fontSize:11,color:'#c6a34e',fontWeight:600,textTransform:'uppercase',letterSpacing:'1px',marginBo
+        <div style={{fontSize:11,color:'#c6a34e',fontWeight:600,textTransform:'uppercase',letterSpacing:'1px',marginBott
+        <div style={{fontSize:11,color:'#4ade80',fontWeight:600,textTransform:'uppercase',letterSpacing:'1px',marginBott
+            <div style={{fontSize:9,color:'#8b7340',letterSpacing:'3px',textTransform:'uppercase'}}>Gestion des dossiers
+      <div style={{color:'#8b7340',fontSize:11,letterSpacing:3,textTransform:'uppercase'}}>Chargement des données...</di
+      case'verify':return runVerify();
+      case'calculate':return runCalculate();
+      case'generate':return runGenerate();
+      case'validate':return runValidate();
+      case'send':return runSend();
+      case'close':return runClose();
+      <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',textTransform:'uppercase',letterSpacing:2,marginBottom:12}
+          {pl.pop&&<div style={{position:'absolute',top:-10,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',b
+        <div style={{padding:'6px 12px',background:'rgba(255,255,255,.02)',fontSize:10,fontWeight:600,color:'#888',textT
+        <div style={{fontSize:11,fontWeight:600,color:'#888',marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>
+                <div style={{fontSize:9,color:'#888',textTransform:'uppercase',letterSpacing:.5}}>{k.l}</div>
+        <div style={{fontSize:8,color:'#888',textTransform:'uppercase'}}>{k}</div>
+          <span style={{fontSize:8,padding:'2px 6px',borderRadius:4,background:h.status==='up'?'rgba(34,197,94,.1)':h.st
+      <div style={{fontSize:11,fontWeight:600,color:'#888',marginBottom:6,textTransform:'uppercase',letterSpacing:1}}>{c
+          <span style={{fontSize:9,color:'#888',textTransform:'uppercase',letterSpacing:1}}>{k.l}</span>
+          <span style={{fontSize:8,padding:'2px 5px',borderRadius:3,background:d.type==='pdf'?'rgba(239,68,68,.1)':d.typ
+        <div style={{fontSize:10,color:'#ef4444',textTransform:'uppercase',letterSpacing:1}}>Situation actuelle</div>
+        <div style={{fontSize:10,color:'#22c55e',textTransform:'uppercase',letterSpacing:1}}>Apres optimisation</div>
+      <div style={{fontSize:12,fontWeight:600,color:'#888',marginBottom:8,textTransform:'uppercase',letterSpacing:1}}>{c
+            <div style={{padding:'4px 10px',borderRadius:6,background:conf.status==='connected'?'rgba(34,197,94,.1)':con
+      case'dashboard':return <Dashboard s={s} d={d} userRole={userRole}/>;
+      case'employees':return <Employees s={s} d={d}/>;
+      case'payslip':return <Payslips s={s} d={d}/>;
+      case'onss':return s.sub==='dmfa'?<DMFAPage s={s} d={d}/>:s.sub==='drs'?<DRSMod s={s} d={d}/>:s.sub==='onssapl'?<ON
+      case'fiscal':return s.sub==='precompte'?<PrecomptePage s={s} d={d}/>:s.sub==='fiches_ext'?<FichesMod s={s} d={d}/>
+      case'salaires':return <SalairesPage s={s} d={d}/>;
+      case'avantages':return <AvantagesPage s={s} d={d}/>;
+      case'contratsmenu':return <ContratsMenuPage s={s} d={d}/>;
+      case'rh':return <RHPage s={s} d={d}/>;
+      case'social':return <SocialPage s={s} d={d}/>;
+      case'bienetre':return <BienetrePage s={s} d={d}/>;
+      case'reporting':return <ReportingPage s={s} d={d}/>;
+      case'legal':return <LegalPage s={s} d={d}/>;
+      case'aureussuite':return <AureusSuitePage s={s} d={d}/>;
+      case'documents':return <DocsPage s={s} d={d}/>;
+      case'reports':return <ReportsPage s={s} d={d}/>;
+      case'settings':return s.sub==='fraisgestion'?<FraisGestionMod s={s} d={d}/>:<SettingsPage s={s} d={d}/>;
+      case'admin':if(s.sub==='audit')return <AuditMod s={s} d={d}/>;if(s.sub==='config')return <SettingsPage s={s} d={d}
+      case'modules':return <ModulesProPage s={s} d={d}/>;
+      case'sprint9':return <ModulesProPage s={s} d={d}/>;
+      case'automatisation':return <AutomationHub s={s} d={d}/>;
+      case'massengine':return <MassEngine s={s} d={d}/>;
+      case'smartauto':return <SmartAutomation s={s} d={d} supabase={supabase} user={user}/>;
+      case'autopilot':return <SmartAutopilot s={s} d={d}/>;
+      case'facturation':return <Facturation s={s}/>;
+      case'validation':return <ValidationEngine s={s}/>;
+      case'exportbatch':return <ExportBatch s={s}/>;
+      case'rgpd':return <RGPDManager s={s}/>;
+      case'importcsv':return <ImportCSV s={s} d={d}/>;
+      case'landing':return <LandingPage/>;
+      case'notifcenter':return <NotificationCenter s={s} d={d}/>;
+      case'journal':return <JournalActivite s={s}/>;
+      case'baremescp':return <BaremesCP s={s}/>;
+      case'onboarding2':return <SetupWizard s={s} d={d} setPage={setPage}/>;
+      case'contratgen':return <ContratGenerator s={s} d={d} user={user}/>;
+      case'recapemployeur':return <RecapEmployeur s={s} user={user}/>;
+      case'envoiMasse':return <EnvoiMasse s={s} user={user}/>;
+      case'planabs':return <PlanAbsences s={s} d={d}/>;
+      case'dashrh':return <DashboardRH s={s}/>;
+      case'budget':return <BudgetPrev s={s}/>;
+      case'vehiculesatn':return <GestionVehicules s={s}/>;
+      case'simupension':return <SimuPension s={s}/>;
+      case'ccts':return <ConventionsCollectives/>;
+      case'interimaires':return <GestionInterimaires s={s}/>;
+      case'echeancier':return <Echeancier s={s}/>;
+      case'ged':return <GedDocuments s={s} d={d}/>;
+      case'portail':return <PortailEmploye s={s}/>;
+      case'dashclient':return <DashboardClient s={s} d={d}/>;
+      case'comparateur':return <ComparateurSalarial s={s}/>;
+      case'analytics':return <AnalyticsDash s={s}/>;
+      case'exportcompta':return <ExportCompta s={s}/>;
+      case'audittrail':return <AuditTrail s={s} user={user}/>;
+      case'simembauche':return <SimulateurEmbauche s={s}/>;
+      case'echeancierdetail':return <EcheancierPaiements s={s}/>;
+      case'simutp':return <SimuTempsPartiel s={s}/>;
+      case'delegations':return <GestionDelegations s={s}/>;
+      case'chargessociales':return <TableauChargesSociales s={s}/>;
+      case'planifconges':return <PlanifCongesEquipe s={s}/>;
+      case'registrepersonnel':return <RegistrePersonnel s={s}/>;
+      case'calcmaladie':return <CalcMaladie s={s}/>;
+      case'coutsannuel':return <DashCoutsAnnuel s={s}/>;
+      case'gendocsjur':return <GenDocsJuridiques s={s} d={d}/>;
+      case'dashabsent':return <DashAbsenteisme s={s}/>;
+      case'flexijobs':return <GestionFlexiJobs s={s} d={d}/>;
+      case'chomagetemporaire':return <SimuChomageTemp s={s}/>;
+      case'onboardwizard':return <OnboardingWizard s={s} d={d}/>;
+      case'checklistclient':return <ChecklistClient s={s}/>;
+      case'comparatif':return <ComparatifConcurrents/>;
+      case'duediligence':return <DueDiligenceSociale s={s}/>;
+      case'authroles':return <AuthMultiRoles s={s} d={d}/>;
+      case'baremespp':return <BaremesPPOfficiel s={s}/>;
+      case'moteurlois':return <MoteurLoisBelges s={s} d={d}/>;
+      case'securitedata':return <SecuriteData s={s}/>;
+      case'monitoring':return <MonitoringSante s={s}/>;
+      case'testsuite':return <TestSuiteDash s={s}/>;
+      case'gestionprimes':return <GestionPrimes s={s} d={d}/>;
+      case'tbdirection':return <TableauBordDirection s={s}/>;
+      case'archives':return <ArchivesNumeriques s={s}/>;
+      case'optifiscale':return <SimuOptiFiscale s={s}/>;
+      case'gestionabs':return <GestionAbsences s={s} d={d}/>;
+      case'formationsec':return <FormationSecurite s={s}/>;
+      case'bilansocial':return <BilanSocial s={s}/>;
+      case'absencespro':return <GestionAbsences s={s} d={d}/>;
+      case'exportcomptapro':return <ExportComptaPro s={s}/>;
+      case'tableaudirection':return <TableauDirection s={s}/>;
+      case'primecalc':return <PrimeCalculator s={s} d={d}/>;
+      case'portailclient':return <PortailClientSS s={s} d={d}/>;
+      case'reportingpro':return <ReportingAvance s={s}/>;
+      case'integrations':return <IntegrationsHub s={s} supabase={supabase}/>;
+      case'veillelegale':return <VeilleLegale s={s}/>;
+      case'declarations':return <DeclarationsONSS s={s} d={d} supabase={supabase}/>;
+      case'ia_turnover':return <IATurnoverMod s={s} d={d}/>;
+      case'saas_admin':return <MultiTenantAdmin s={s} d={d}/>;
+      case'soldetoutcompte':return <SoldeToutCompteMod s={s} d={d}/>;
+      case'repriseclient':return <RepriseClientMod s={s} d={d}/>;
+      case'fiduciaire':return <FiduciaireHub s={s} d={d}/>;
+      case'simulicenciement':return <SimuLicenciement s={s}/>;
+      case'couttotal':return <CoutTotalDash s={s}/>;
+      case'timeline':return <PayrollTimeline s={s}/>;
+      case'sepa':return <SepaGenerator s={s}/>;
+      case'smartalerts':return <SmartAlerts s={s} d={d}/>;
+      case'batchdecl':return <BatchDeclarations s={s}/>;
+      case'compliance':return <ComplianceRadar s={s} d={d}/>;
+      case'autoindex':return <AutoIndexation s={s} d={d}/>;
+      case'historique':return <HistoriquePilote s={s} supabase={supabase}/>;
+      case'piloteauto':return <PiloteAuto s={s} d={d} supabase={supabase} user={user}/>;
+      case'calcinstant':return <CalcInstant s={s} d={d}/>;
+      case'calendrier':return <CalendrierSocial s={s}/>;
+      case'rapports':return <RapportMensuel s={s}/>;
+      case'actionsrapides':return <ActionsRapides s={s} d={d}/>;
+      case'cloture':return <ClotureMensuelle s={s} d={d} supabase={supabase} user={user}/>;
+      case'notifications':return <NotificationCenter s={s} d={d}/>;
+      case'commandcenter':return <CommandCenter s={s} d={d}/>;
+      case'queue':return <ProcessingQueue s={s} d={d}/>;
+      case'onboarding':return <OnboardingWizard s={s} d={d}/>;
+      case'portalmanager':return <PortalManager s={s} d={d} supabase={supabase}/>;
+      case'team':return <TeamManagement supabase={supabase} user={user} userRole={userRole}/>;
+              <div style={{fontSize:9,color:'#8b7340',letterSpacing:'3px',textTransform:'uppercase',fontWeight:500}}>{t(
+              <span style={{fontSize:9,fontWeight:700,letterSpacing:'1.5px',color:'#8b7340',textTransform:'uppercase'}}>
+          <div style={{fontSize:10,color:'#5e5c56',marginBottom:8,textTransform:'uppercase',letterSpacing:'1.2px',fontWe
+                <span style={{fontSize:8.5,padding:'1px 6px',borderRadius:4,fontWeight:600,textTransform:'uppercase',let
+            <span style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'1px'}}>Ratio net/brut</sp
+            <span style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'1px'}}>Coût/brut</span>
+  const PS=({t})=><tr style={{background:"#f8f7f2"}}><td colSpan={3} style={{padding:'11px 0 5px',fontWeight:700,fontSiz
+          <div style={{textAlign:'right'}}><div style={{fontSize:14,fontWeight:700,color:'#c6a34e',textTransform:'upperc
+          <div><div style={{fontSize:9.5,color:'#aaa',textTransform:'uppercase',letterSpacing:'1px',marginBottom:3}}>Tra
+          <div><div style={{fontSize:9.5,color:'#aaa',textTransform:'uppercase',letterSpacing:'1px',marginBottom:3}}>Con
+          <thead><tr style={{borderBottom:'2px solid #c6a34e'}}><th style={{textAlign:'left',padding:'7px 0',fontSize:9.
+          <div style={{fontSize:9.5,color:'#aaa',textTransform:'uppercase',letterSpacing:'1px',fontWeight:600,marginBott
+          <div style={{fontSize:9,color:'#c6a34e',textTransform:'uppercase',letterSpacing:'1px',fontWeight:600,marginBot
+            <div key={i} style={{textAlign:'center'}}><div style={{fontSize:9.5,color:'#999',textTransform:'uppercase'}}
+          <div style={{fontSize:8.5,color:'#bbb',textTransform:'uppercase',letterSpacing:'1.5px',fontWeight:600,marginBo
+          <div style={{fontSize:9.5,color:'#999',textTransform:'uppercase',letterSpacing:'1px',fontWeight:600,marginBott
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{st.l}</div>
+        <div style={{display:'grid',gridTemplateColumns:'2fr 2fr 1fr 1fr 1.5fr 1.5fr 1fr',padding:'10px 14px',background
+        <div style={{display:'grid',gridTemplateColumns:'2.5fr 1.5fr 1fr 1fr 1fr 1fr 1fr',padding:'10px 14px',background
+        <div style={{display:'grid',gridTemplateColumns:'1.5fr 1.5fr 2fr 2fr 2fr',padding:'10px 14px',background:"rgba(1
+        <div style={{display:'grid',gridTemplateColumns:'2.5fr 1fr 1fr 1fr 1fr 1fr',padding:'10px 14px',background:"rgba
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{st.l}</div>
+          <div style={{fontSize:10.5,color:'#9e9b93',textTransform:'uppercase',letterSpacing:'1px'}}>Total à verser</div
+          <div key={i} style={{textAlign:'center',padding:14,background:`${x.c}08`,borderRadius:8}}><div style={{fontSiz
+                  <th key={h} style={{textAlign:'left',padding:'10px 10px',fontSize:10,color:'#5e5c56',textTransform:'up
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+            <div style={{fontSize:11,fontWeight:600,color:'#9e9b93',marginBottom:6,textTransform:'uppercase',letterSpaci
+            <div style={{fontSize:8,color:'#5e5c56',textTransform:'uppercase'}}>score</div>
+          <div style={{fontSize:11,fontWeight:600,color:'#9e9b93',textTransform:'uppercase',letterSpacing:'.5px',marginB
+              <div style={{fontSize:9,color:'#5e5c56',textTransform:'uppercase',marginBottom:3}}>Request Body</div>
+              <div style={{fontSize:9,color:'#5e5c56',textTransform:'uppercase',marginBottom:3}}>Response</div>
+          <div style={{fontSize:9,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+            <div style={{padding:10,background:"rgba(198,163,78,.04)",borderRadius:8,textAlign:'center'}}><div style={{f
+            <div style={{padding:10,background:"rgba(198,163,78,.04)",borderRadius:8,textAlign:'center'}}><div style={{f
+            <div style={{fontSize:9.5,color:'#5e5c56',textTransform:'uppercase'}}>Économie totale estimée / trimestre</d
+        <div style={{fontSize:11,fontWeight:600,color:sel.color,marginBottom:10,textTransform:'uppercase',letterSpacing:
+            <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>Statut</div>
+            <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>Développeur</div>
+            <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase'}}>Compatible</div>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+          <div style={{fontSize:11,fontWeight:600,color:'#c6a34e',textTransform:'uppercase',letterSpacing:'.5px',marginB
+          <div style={{fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'.5px'}}>{k.l}</div>
+            textTransform:'uppercase',letterSpacing:.5,fontFamily:'inherit',
+              <span style={{fontSize:10,color:'#c6a34e',fontWeight:600,letterSpacing:.5,textTransform:'uppercase'}}>Aure

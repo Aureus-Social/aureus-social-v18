@@ -1165,6 +1165,30 @@ var LEGAL={ONSS_W:_OW,ONSS_E:_OE,BONUS_2026:{
 
 const fmt=n=>new Intl.NumberFormat('fr-BE',{style:'currency',currency:'EUR'}).format(n||0);
 const fmtP=n=>`${((n||0)*100).toFixed(2)}%`;
+// === ERROR BOUNDARY (audit fix 22/02/2026) ===
+class ErrorBoundary extends React.Component{
+  constructor(p){super(p);this.state={hasError:false,error:null,info:null};}
+  static getDerivedStateFromError(e){return{hasError:true,error:e};}
+  componentDidCatch(e,info){this.setState({info});console.error("MODULE CRASH:",e,info);}
+  render(){
+    if(this.state.hasError){
+      return React.createElement("div",{style:{padding:40,textAlign:"center",background:"#060810",minHeight:"60vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
+        React.createElement("div",{style:{fontSize:48,marginBottom:16}},"⚠️"),
+        React.createElement("div",{style:{fontSize:18,fontWeight:700,color:"#ef4444",marginBottom:12}},"Module en erreur"),
+        React.createElement("div",{style:{fontSize:12,color:"#9e9b93",marginBottom:8,maxWidth:500,wordBreak:"break-all"}},String(this.state.error||"")),
+        React.createElement("div",{style:{fontSize:10,color:"#666",marginBottom:20,maxWidth:500,wordBreak:"break-all"}},this.state.info&&this.state.info.componentStack?this.state.info.componentStack.slice(0,300):""),
+        React.createElement("div",{style:{display:"flex",gap:10}},
+          React.createElement("button",{onClick:function(){this.setState({hasError:false,error:null,info:null});}.bind(this),
+            style:{padding:"10px 24px",background:"rgba(198,163,78,.15)",border:"1px solid rgba(198,163,78,.3)",borderRadius:8,color:"#c6a34e",cursor:"pointer",fontSize:13,fontWeight:600}},"↩ Retour"),
+          React.createElement("button",{onClick:function(){location.reload();},
+            style:{padding:"10px 24px",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.2)",borderRadius:8,color:"#ef4444",cursor:"pointer",fontSize:13,fontWeight:600}},"🔄 Recharger")
+        )
+      );
+    }
+    return this.props.children;
+  }
+}
+// === END ERROR BOUNDARY ===
 const uid=()=>`${Date.now()}-${Math.random().toString(36).substr(2,5)}`;
 const MN_FR=['Janvier',"Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const MN_NL=['Januari',"Februari","Maart","April","Mei","Juni","Juli","Augustus","September","Oktober","November","December"];
@@ -4307,7 +4331,7 @@ function reducer(s,a){
     case'ADD_EMPS_BATCH':return{...s,emps:[...s.emps,...(a.data||[])]};
     case'SET_PAYS':return{...s,pays:a.data};
     case'SET_CLIENTS':return{...s,clients:a.data||[]};
-    case'NAV':if(a.page==='sprint10'){window.location.href='/sprint10/auth';return s;}const s9map={s9_dimona:'/sprint9/dimona',s9_precompte:'/sprint9/precompte',s9_onss:'/sprint9/onss',s9_bilan:'/sprint9/bilan-social',s9_netbrut:'/sprint9/net-brut',s9_od:'/sprint9/od-comptables',s9_cheques:'/sprint9/cheques-repas',s9_trilingue:'/sprint9/trilingue',s9_vacances:'/sprint9/vacances',s9_enfants:'/sprint9/enfants',s9_attestations:'/sprint9/attestations',s9_exports:'/sprint9/exports',s9_baremes:'/sprint9/baremes',s9_provisions:'/sprint9/provisions',s9_heures:'/sprint9/heures-sup',s9_primes:'/sprint9/primes',s9_saisies:'/sprint9/saisies'};ns={...s,page:a.page,sub:a.sub||null};break;
+    case'NAV':/* sprint10 redirect removed - audit fix 22/02/2026 */const s9map={s9_dimona:'/sprint9/dimona',s9_precompte:'/sprint9/precompte',s9_onss:'/sprint9/onss',s9_bilan:'/sprint9/bilan-social',s9_netbrut:'/sprint9/net-brut',s9_od:'/sprint9/od-comptables',s9_cheques:'/sprint9/cheques-repas',s9_trilingue:'/sprint9/trilingue',s9_vacances:'/sprint9/vacances',s9_enfants:'/sprint9/enfants',s9_attestations:'/sprint9/attestations',s9_exports:'/sprint9/exports',s9_baremes:'/sprint9/baremes',s9_provisions:'/sprint9/provisions',s9_heures:'/sprint9/heures-sup',s9_primes:'/sprint9/primes',s9_saisies:'/sprint9/saisies'};ns={...s,page:a.page,sub:a.sub||null};break;
     case'ADD_E':ns={...s,emps:[...s.emps,{...a.d,id:"E-"+uid()}]};break;
     case'UPD_E':ns={...s,emps:s.emps.map(e=>e.id===a.d.id?a.d:e)};break;
     case'DEL_E':ns={...s,emps:s.emps.filter(e=>e.id!==a.id)};break;
@@ -20666,7 +20690,7 @@ const AutomationHub=({s,d})=>{
         </div>
       </aside>
 
-      <main className="aureus-main" style={{marginLeft:isMobile?0:268,flex:1,padding:isMobile?'60px 12px 12px':'26px 34px',minHeight:'100vh',animation:'fadeInPage .3s ease'}}>{pg()}</main>
+      <main className="aureus-main" style={{marginLeft:isMobile?0:268,flex:1,padding:isMobile?'60px 12px 12px':'26px 34px',minHeight:'100vh',animation:'fadeInPage .3s ease'}}><ErrorBoundary key={s.page+(s.sub||"")}>{pg()}</ErrorBoundary></main>
 
       <ToastContainer/>
       <CookieBanner/>

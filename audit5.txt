@@ -1,0 +1,213 @@
+﻿
+app\AureusSocialPro.js:246:    { id: 'spf', nom: 'SPF Finances', url: 
+'https://finances.belgium.be/fr/entreprises/personnel_et_remuneration/precompte_professionnel', type: 'PP/Fiscal' },
+app\AureusSocialPro.js:247:    { id: 'onss', nom: 'ONSS', url: 'https://www.socialsecurity.be', type: 'Cotisations 
+sociales' },
+app\AureusSocialPro.js:248:    { id: 'cnt', nom: 'Conseil National du Travail', url: 'https://www.cnt-nar.be', type: 
+'CCT/RMMMG' },
+app\AureusSocialPro.js:249:    { id: 'spf_emploi', nom: 'SPF Emploi', url: 'https://emploi.belgique.be', type: 'Droit 
+du travail' },
+app\AureusSocialPro.js:250:    { id: 'moniteur', nom: 'Moniteur Belge', url: 
+'https://www.ejustice.just.fgov.be/cgi/summary.pl', type: 'Legislation' },
+app\AureusSocialPro.js:251:    { id: 'statbel', nom: 'Statbel', url: 
+'https://statbel.fgov.be/fr/themes/prix-la-consommation/indice-sante', type: 'Index/Prix' },
+app\AureusSocialPro.js:252:    { id: 'bnb', nom: 'Banque Nationale', url: 'https://www.nbb.be', type: 'Bilan social' },
+app\AureusSocialPro.js:253:    { id: 'refli', nom: 'Refli.be', url: 
+'https://refli.be/fr/documentation/computation/tax', type: 'Reference technique' },
+app\AureusSocialPro.js:254:    { id: 'inasti', nom: 'INASTI/NISSE', url: 'https://www.nisse.be', type: 'Cotisations 
+indépendants' },
+app\AureusSocialPro.js:4467:          user_id: 'pending_' + Date.now(),
+app\AureusSocialPro.js:4701:  return{id:'EMP-'+Date.now()+'-'+Math.random().toString(36).substr(2,5),first:'',last:'',n
+iss:'',email:'',phone:'',iban:'',
+app\AureusSocialPro.js:6364:        {[{id:'pending',l:'⏳ En attente ('+pending.length+')'},{id:'processed',l:'✅ 
+Traités ('+processed.length+')'},{id:'stats',l:'📊 Statistiques'}].map(tb=>
+app\AureusSocialPro.js:6458:    const 
+[demandeForm,setDemandeForm]=useState({type:'conge',empId:'',dateDebut:'',dateFin:'',motif:'',jours:1});
+app\AureusSocialPro.js:6500:      const 
+msg={id:'MSG-'+Date.now(),from:'client',fromEmail:user?.email||'',category:msgCategory,text:newMsg.trim(),date:new 
+Date().toISOString(),read:false};
+app\AureusSocialPro.js:6511:      const 
+dem={id:'DEM-'+Date.now(),type:demandeForm.type,empId:demandeForm.empId,empName:(emp?.first||emp?.fn||'')+' '+(emp?.las
+t||emp?.ln||''),dateDebut:demandeForm.dateDebut,dateFin:demandeForm.dateFin||demandeForm.dateDebut,motif:demandeForm.mo
+tif,jours:+demandeForm.jours||1,status:'pending',createdAt:new Date().toISOString(),createdBy:user?.email||''};
+app\AureusSocialPro.js:6514:      setDemandeForm({type:'conge',empId:'',dateDebut:'',dateFin:'',motif:'',jours:1});
+app\AureusSocialPro.js:6537:      const mod={id:'MOD-'+Date.now(),type,data,status:'pending',createdAt:new 
+Date().toISOString(),createdBy:user?.email||''};
+app\AureusSocialPro.js:6547:      {id:'accueil',icon:'🏠',label:'Accueil'},
+app\AureusSocialPro.js:6548:      {id:'prestations',icon:'📝',label:'Prestations'},
+app\AureusSocialPro.js:6549:      {id:'absences',icon:'🏖',label:'Congés & Absences'},
+app\AureusSocialPro.js:6550:      {id:'fiches',icon:'📄',label:'Fiches de paie'},
+app\AureusSocialPro.js:6551:      
+{id:'messages',icon:'💬',label:'Messages'+(messages.filter(m=>m.from==='secretariat'&&!m.read).length>0?' 
+('+messages.filter(m=>m.from==='secretariat'&&!m.read).length+')':'')},
+app\AureusSocialPro.js:6552:      {id:'modifications',icon:'✏️',label:'Modifications'},
+app\AureusSocialPro.js:6553:      {id:'kpi',icon:'📊',label:'Dashboard'},
+app\AureusSocialPro.js:6943:        const msg={id:'MSG-'+Date.now(),from:'secretariat',text,date:new 
+Date().toISOString(),category:'general'};
+app\AureusSocialPro.js:6957:        {[{id:'demandes',l:'🏖 Demandes 
+('+allDemandes.filter(d2=>d2.status==='pending').length+')'},{id:'messages',l:'💬 Messages 
+('+allMessages.filter(m=>m.from==='client').length+')'},{id:'modifications',l:'✏️ Modifications 
+('+allModifications.filter(m=>m.status==='pending').length+')'},{id:'prestations',l:'📝 Prestations'}].map(tb=>
+app\AureusSocialPro.js:7057:    {id:'verify',label:'Vérifier les prestations',icon:'🔍',desc:'Contrôler que toutes les 
+prestations sont encodées'},
+app\AureusSocialPro.js:7058:    {id:'calculate',label:'Calculer les fiches de paie',icon:'🧮',desc:'Calcul batch ONSS, 
+précompte, net pour tous les employés'},
+app\AureusSocialPro.js:7059:    {id:'generate',label:'Générer les documents',icon:'📄',desc:'Fiches de paie, SEPA, 
+DmfA, Dimona'},
+app\AureusSocialPro.js:7060:    {id:'validate',label:'Validation',icon:'✅',desc:'Vérifier et approuver avant envoi'},
+app\AureusSocialPro.js:7061:    {id:'send',label:'Distribuer',icon:'📧',desc:'Envoyer les fiches par email + 
+notifications'},
+app\AureusSocialPro.js:7062:    {id:'close',label:'Clôturer le mois',icon:'🔒',desc:'Archiver et passer au mois 
+suivant'},
+app\AureusSocialPro.js:7111:          id:'PAY-'+Date.now()+'-'+count,
+app\AureusSocialPro.js:7477:            {[{id:'simulate',l:'🧪 Simulation'},{id:'resend',l:'📧 Resend API'}].map(m=>
+app\AureusSocialPro.js:7602:        const pays=calcResults.map(r=>({id:'PAY-'+Date.now()+'-'+Math.random().toString(36)
+.substr(2,6),ename:r.name,period:mois[selMonth]+' '+selYear,gross:r.brutEffectif,onssNet:r.onssW,imposable:r.imposable,
+precompte:r.pp,net:r.net,onssEmployer:r.onssE,coutTotal:r.cout,empEmail:r.email,empId:r.id,generated:new 
+Date().toISOString(),status:'calculated'}));
+app\AureusSocialPro.js:7892:  
+if(brut>0&&brut<benchmark*0.85){score+=25;factors.push({id:'salaryBelowMarket',label:'Salaire < marché 
+(-'+(100-Math.round(brut/benchmark*100))+'%)',points:25,action:'Augmentation recommandée: 
++'+(benchmark-brut).toFixed(0)+'€/mois'});}
+app\AureusSocialPro.js:7893:  const absDays=(absHistory||[]).reduce((a,ab)=>a+(ab.days||1),0);if(absDays>15){score+=20;
+factors.push({id:'highAbsenteeism',label:'Absentéisme élevé ('+absDays+'j/an)',points:20,action:'Entretien de retour 
+et analyse causes'});}
+app\AureusSocialPro.js:7894:  if(ancAns>=1&&payHistory&&payHistory.length>=12){const 
+first=+(payHistory[0]?.gross||0);const last=+(payHistory[payHistory.length-1]?.gross||0);if(first>0&&last<=first){score
++=15;factors.push({id:'noRaise',label:'Pas d\'augmentation depuis 12+ mois',points:15,action:'Prévoir augmentation 
+indexation + mérite'});}}
+app\AureusSocialPro.js:7895:  if(ancAns>=5&&ancAns<=10){score+=10;factors.push({id:'longTenure',label:'Plateau 
+carrière ('+ancAns.toFixed(1)+' ans)',points:10,action:'Proposer mobilité interne ou nouvelles responsabilités'});}
+app\AureusSocialPro.js:7896:  if(ancAns<1){score+=10;factors.push({id:'shortTenure',label:'Période critique (<1 
+an)',points:10,action:'Renforcer intégration et suivi managérial'});}
+app\AureusSocialPro.js:7897:  if((emp.contractType||'').toUpperCase()==='CDD'){const endDate=new 
+Date(emp.endDate||emp.contractEnd||'2099-12-31');const 
+daysLeft=(endDate-now)/(24*3600*1000);if(daysLeft<90&&daysLeft>0){score+=20;factors.push({id:'endCDD',label:'CDD fin 
+dans '+Math.round(daysLeft)+' jours',points:20,action:daysLeft<30?'URGENT: Proposer CDI':'Proposer renouvellement ou 
+CDI'});}}
+app\AureusSocialPro.js:7898:  if(age>=58){score+=15;factors.push({id:'ageRetirement',label:'Pré-retraite ('+age+' 
+ans)',points:15,action:'Planifier transfert connaissances et succession'});}
+app\AureusSocialPro.js:7930:const 
+SAAS_PLANS=[{id:'starter',nom:'Starter',prix:149,maxClients:50,maxEmps:500,features:['Paie illimitée','DIMONA 
+auto','Fiches de paie','SEPA','Support 
+email']},{id:'pro',nom:'Pro',prix:349,maxClients:200,maxEmps:2000,features:['Tout Starter','IA predictive','API ONSS 
+réelle','Portail client','Support 
+prioritaire']},{id:'enterprise',nom:'Enterprise',prix:749,maxClients:9999,maxEmps:99999,features:['Tout 
+Pro','White-label','Domaine custom','SLA 99.9%','Account manager']}];
+app\AureusSocialPro.js:7933:  const [tenants,setTenants]=useState([{id:'T1',name:'Fiduciaire 
+Demo',slug:'demo',plan:'pro',status:'active',clients:45,emps:380,mrr:349},{id:'T2',name:'Comptable 
+Test',slug:'test',plan:'starter',status:'trial',clients:12,emps:85,mrr:0}]);
+app\AureusSocialPro.js:7937:  const createTenant=()=>{if(!form.name)return;const plan=SAAS_PLANS.find(p=>p.id===form.pl
+an);setTenants(t=>[...t,{id:'T'+Date.now(),name:form.name,slug:form.slug||form.name.toLowerCase().replace(/\s/g,'-'),pl
+an:form.plan,status:'trial',clients:0,emps:0,mrr:0}]);setForm({name:'',slug:'',email:'',plan:'starter'});if(typeof 
+_toast==='function')_toast('Fiduciaire '+form.name+' créée','success');};
+app\AureusSocialPro.js:8015:const CUMUL_CATS=[{id:'rem',l:'💰 Rémunération',c:'#c6a34e'},{id:'cot',l:'🏛 
+Cotisations',c:'#3b82f6'},{id:'fisc',l:'📊 Fiscal',c:'#ef4444'},{id:'net',l:'💵 Net',c:'#22c55e'},{id:'vac',l:'🏖 
+Vacances',c:'#06b6d4'},{id:'prim',l:'🎁 Primes',c:'#f97316'},{id:'atn',l:'🚗 ATN',c:'#a78bfa'},{id:'av',l:'🎫 
+Avantages',c:'#eab308'},{id:'tps',l:'📅 Temps',c:'#ec4899'}];
+app\AureusSocialPro.js:8016:const REPRISE_DOCS=[{id:'fiches_paie',ph:1,l:'Fiches de paie (12 
+mois)',ob:true,src:'Ancien gestionnaire'},{id:'compte_indiv',ph:1,l:'Comptes individuels',ob:true,src:'Ancien 
+gestionnaire'},{id:'fiche_281',ph:1,l:'Fiches 281.10/281.20',ob:true,src:'Ancien 
+gestionnaire'},{id:'cumuls_ytd',ph:1,l:'Cumuls YTD',ob:true,src:'Ancien 
+gestionnaire',critical:true},{id:'dimona_actives',ph:1,l:'Dimona actives',ob:true,src:'Portail 
+ONSS'},{id:'dmfa_derniere',ph:1,l:'Dernière DmfA',ob:true,src:'Ancien gestionnaire'},{id:'registre',ph:1,l:'Registre 
+du personnel',ob:true,src:'Ancien gestionnaire'},{id:'contrats',ph:2,l:'Contrats de 
+travail',ob:true,src:'Client'},{id:'reglement',ph:2,l:'Règlement de 
+travail',ob:true,src:'Client'},{id:'cct',ph:2,l:'CCT applicables',ob:true,src:'Vérification 
+interne'},{id:'car_policy',ph:2,l:'Car policy',ob:false,src:'Client'},{id:'assurance_gr',ph:2,l:'Assurance 
+groupe/pension',ob:false,src:'Client'},{id:'fonds_sect',ph:2,l:'Fonds sectoriels',ob:true,src:'Ancien 
+gestionnaire'},{id:'bce',ph:3,l:'Vérification BCE',ob:true,src:'API BCE'},{id:'onss_check',ph:3,l:'Portail 
+ONSS',ob:true,src:'ONSS'},{id:'med_travail',ph:3,l:'Médecine du 
+travail',ob:true,src:'Client'},{id:'assurance_at',ph:3,l:'Assurance accident 
+travail',ob:true,src:'Client'},{id:'caisse_vac',ph:3,l:'Caisse vacances ouvriers',ob:false,src:'Ancien gestionnaire'}];
+app\AureusSocialPro.js:8017:const ERREURS_CONC=[{id:'cp_fausse',l:'Mauvaise CP',g:'critique',d:'NACE vs CP 
+incorrect',v:'Comparer NACE BCE avec CP appliquée'},{id:'index_manque',l:'Indexation manquée',g:'critique',d:'Index 
+sectoriel oublié ou retardé',v:'Salaire actuel vs barème indexé'},{id:'pp_faux',l:'PP mal calculé',g:'haute',d:'Barème 
+PP incorrect',v:'Recalculer avec barèmes SPF 2026'},{id:'bonus_oublie',l:'Bonus emploi oublié',g:'haute',d:'Réduction 
+PP non appliquée',v:'Si brut < plafond: vérifier réduction'},{id:'csss_tranche',l:'CSSS mauvaise 
+tranche',g:'moyenne',d:'Cotisation spéciale SS fausse',v:'Revenu vs tranches CSSS'},{id:'dimona_abs',l:'Dimona 
+absente',g:'critique',d:'Travailleur sans Dimona IN',v:'Vérifier portail ONSS'},{id:'taux_at',l:'Taux AT 
+faux',g:'haute',d:'Taux accident travail incorrect',v:'Taux fiche vs police assurance'},{id:'pecule_d',l:'Pécule 
+double faux',g:'haute',d:'Base de calcul erronée',v:'Vérifier base = brut N-1 × 9,20%'},{id:'sal_garanti',l:'Salaire 
+garanti mal géré',g:'haute',d:'30j employé / 7-14-21j ouvrier',v:'Historique absences vs 
+fiches'},{id:'anciennete',l:'Ancienneté fausse',g:'moyenne',d:'Date entrée erronée',v:'Contrat vs Dimona vs 
+registre'},{id:'red_gc',l:'Réduction GC oubliée',g:'haute',d:'1er engagement, jeune, senior',v:'Éligibilité via 
+critères ONSS'},{id:'atn_faux',l:'ATN mal valorisé',g:'moyenne',d:'CO2/formule/forfait erroné',v:'Recalculer ATN 
+voiture 2026'},{id:'cr_jours',l:'Chèques-repas jours faux',g:'basse',d:'Jours effectifs ≠ jours CR',v:'Ouvrables - 
+absences - vacances'},{id:'flexi_onss',l:'Flexi-job ONSS oublié',g:'haute',d:'28% patronal spécial',v:'Si secteur 
+autorisé: vérifier 28%'}];
+app\AureusSocialPro.js:8132:    {id:'embauche',icon:'🟢',label:'Nouvelle embauche',desc:'Dimona IN + Contrat + Fiche 
+employé + Calcul premier salaire',color:'#22c55e'},
+app\AureusSocialPro.js:8133:    {id:'depart',icon:'🔴',label:'Départ employé',desc:'Dimona OUT + C4 + Solde de tout 
+compte + Attestation',color:'#ef4444'},
+app\AureusSocialPro.js:8134:    {id:'modification',icon:'🔵',label:'Modification contrat',desc:'Avenant + Mise à jour 
+fiche + Recalcul salaire',color:'#3b82f6'},
+app\AureusSocialPro.js:8135:    {id:'maladie',icon:'🟡',label:'Déclaration maladie',desc:'Attestation maladie + Calcul 
+salaire garanti + Mutuelle',color:'#eab308'},
+app\AureusSocialPro.js:8154:    const newEmp={id:'EMP-'+Date.now(),first:fd.first,last:fd.last,niss:fd.niss,email:fd.em
+ail,phone:fd.phone,startDate:fd.startDate,contractType:fd.contractType,monthlySalary:fd.brut,function:fd.fonction,whWee
+k:fd.whWeek,statut:'employe',status:'actif'};
+app\AureusSocialPro.js:8334:      id:'FACT-'+selYear+'-'+(selMonth+1+'').padStart(2,'0')+'-'+(i+1+'').padStart(3,'0'),
+app\AureusSocialPro.js:9407:        {[{id:'confidentialite',l:'Clause de confidentialite (Art. 17, 
+3°bis)',v:confidentialite,set:setConfidentialite},
+app\AureusSocialPro.js:9408:          {id:'nonConcurrence',l:'Clause de non-concurrence (Art. 
+65)',v:nonConcurrence,set:setNonConcurrence},
+app\AureusSocialPro.js:9409:          {id:'ecolage',l:'Clause d ecolage (Art. 22bis)',v:ecolage,set:setEcolage},
+app\AureusSocialPro.js:9410:          {id:'teletravail',l:'Teletravail structurel (CCT 
+85)',v:teletravail,set:setTeletravail}
+app\AureusSocialPro.js:9570:      const emp={id:'IMP-'+Date.now()+'-'+idx};
+app\AureusSocialPro.js:9731:      id:'CL-'+Date.now(),
+app\AureusSocialPro.js:9734:        id:'EMP-'+Date.now()+'-'+i,
+app\AureusSocialPro.js:10252:      emps.filter(e=>!e.niss&&!e.NISS).forEach(e=>n.push({id:'N-'+Math.random().toString(3
+6).substr(2,6),type:'warning',icon:'🆔',title:'NISS manquant',desc:(e.first||'')+' '+(e.last||'')+' — 
+'+(co.name||''),time:new Date(now-3600000).toISOString(),read:false,action:'employees'}));
+app\AureusSocialPro.js:10255:      emps.filter(e=>!e.iban&&!e.IBAN).forEach(e=>n.push({id:'N-'+Math.random().toString(3
+6).substr(2,6),type:'warning',icon:'🏦',title:'IBAN manquant',desc:(e.first||'')+' '+(e.last||'')+' — 
+'+(co.name||''),time:new Date(now-7200000).toISOString(),read:false,action:'employees'}));
+app\AureusSocialPro.js:10258:      emps.filter(e=>+(e.monthlySalary||e.gross||0)<=0).forEach(e=>n.push({id:'N-'+Math.ra
+ndom().toString(36).substr(2,6),type:'error',icon:'⚠️',title:'Salaire non renseigne',desc:(e.first||'')+' 
+'+(e.last||'')+' — '+(co.name||''),time:new Date(now-1800000).toISOString(),read:false,action:'employees'}));
+app\AureusSocialPro.js:10263:    if(day<=5) n.push({id:'N-onss',type:'urgent',icon:'🏛',title:'ONSS — Provisions dues 
+le 5',desc:'Provisions mensuelles ONSS a verser avant le 5 du 
+mois',time:now.toISOString(),read:false,action:'echeancier'});
+app\AureusSocialPro.js:10264:    if(day<=15) n.push({id:'N-pp',type:'info',icon:'💰',title:'Precompte professionnel — 
+274',desc:'Declaration PP a soumettre avant le 15 du mois',time:now.toISOString(),read:false,action:'echeancier'});
+app\AureusSocialPro.js:10265:    if(day<=25) n.push({id:'N-sepa',type:'info',icon:'💸',title:'Virements SEPA 
+salaires',desc:'Virements nets a effectuer avant le 25',time:now.toISOString(),read:false,action:'sepa'});
+app\AureusSocialPro.js:10268:    n.push({id:'N-sprint34',type:'success',icon:'🚀',title:'Sprint 35 
+deploye',desc:'Emails pro + Centre de notifications',time:now.toISOString(),read:false});
+app\AureusSocialPro.js:10295:      {[{id:'all',l:'Toutes ('+notifs.length+')'},{id:'unread',l:'Non lues 
+('+unread+')'},{id:'error',l:'Erreurs'},{id:'warning',l:'Alertes'},{id:'info',l:'Infos'}].map(f2=>
+app\AureusSocialPro.js:10334:  if(totalClients>0)actions.push({id:'DA1',type:'info',icon:'📊',title:'Portefeuille 
+actif',desc:totalClients+' client'+(totalClients>1?'s':'')+' · '+totalEmps+' 
+employé'+(totalEmps>1?'s':''),user:'system',time:new Date().toISOString(),status:'info'});
+app\AureusSocialPro.js:10337:    if(cl.createdAt)actions.push({id:'DC-'+cl.id,type:'import',icon:'🏢',title:'Dossier 
+créé',desc:(co.name||'Sans nom')+' — '+(co.vat||'pas de TVA'),user:'admin',time:cl.createdAt,status:'success'});
+app\AureusSocialPro.js:10338:    
+if(cl.updatedAt&&cl.updatedAt!==cl.createdAt)actions.push({id:'DU-'+cl.id,type:'calcul',icon:'✏️',title:'Dossier 
+modifié',desc:(co.name||'Sans nom'),user:'admin',time:cl.updatedAt,status:'info'});
+app\AureusSocialPro.js:10339:    
+(cl.pays||[]).forEach(p=>actions.push({id:'DP-'+(p.id||Math.random()),type:'calcul',icon:'🧮',title:'Calcul de 
+paie',desc:(p.empName||'Employé')+' — '+(co.name||''),user:'admin',time:p.date||p.createdAt||new 
+Date().toISOString(),status:'success'}));
+app\AureusSocialPro.js:10340:    
+(cl.dims||[]).forEach(dm=>actions.push({id:'DD-'+(dm.id||Math.random()),type:'dimona',icon:'📡',title:'Dimona 
+'+dm.type,desc:(dm.empName||'Employé')+' — '+(co.name||''),user:'admin',time:dm.date||new 
+Date().toISOString(),status:'success'}));
+app\AureusSocialPro.js:10342:      if(e.absences?.length>0) 
+e.absences.forEach(a=>actions.push({id:'AA-'+a.id,type:'absence',icon:'📅',title:'Absence 
+encodée',desc:(e.first||'')+' '+(e.last||'')+' — '+a.type+' — '+(co.name||''),user:'client',time:a.createdAt||new 
+Date().toISOString(),status:'info'}));
+app\AureusSocialPro.js:10346:  if(actions.length===0)actions.push({id:'EMPTY',type:'info',icon:'💡',title:'Aucune 
+activité',desc:'Le journal se remplira automatiquement quand vous commencerez à gérer des 
+dossiers',user:'system',time:new Date().toISOString(),status:'info'});
+app\AureusSocialPro.js:10353:  const types=[{id:'all',l:'Tout'},{id:'calcul',l:'Calculs'},{id:'email',l:'Emails'},{id:'
+contrat',l:'Contrats'},{id:'dimona',l:'Dimona'},{id:'sepa',l:'SEPA'},{id:'onss',l:'ONSS'},{id:'alert',l:'Alertes'}];
+app\AureusSocialPro.js:10565:  const absTypes=[{id:'conge',icon:'🏖',label:'Conge',c:'#22c55e'},{id:'maladie',icon:'🤒'
+,label:'Maladie',c:'#ef4444'},{id:'formation',icon:'📚',label:'Formation',c:'#3b82f6'},{id:'teletravail',icon:'🏠',labe
+l:'Teletravail',c:'#a855f7'},{id:'recup',icon:'⏰',label:'Recup',c:'#eab308'},{id:'sans_solde',icon:'⚪',label:'Sans 
+solde',c:'#888'}];
+app\AureusSocialPro.js:10963:    {id:'contrat',icon:'📝',label:'Contrat de travail',auto:true,obligatoire:true},
+app\AureusSocialPro.js:10964:    {id:'avenant',icon:'📝',label:'Avenant au contrat',auto:true},
+
+

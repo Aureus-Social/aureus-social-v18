@@ -1,0 +1,23 @@
+﻿
+app\AureusSocialPro.js:5978:    {id:"dashboard",l:"Dashboard Principal",i:'◫',g:1},
+app\AureusSocialPro.js:5993:    {id:"onboarding2",l:"Nouvel Onboarding",i:'🚀',g:2},
+app\AureusSocialPro.js:6574:        {/* SIDEBAR PORTAL */}
+app\AureusSocialPro.js:9711:const SetupWizard=({s,d,setPage})=>{
+app\AureusSocialPro.js:9880:        ].map((a,i)=><div key={i} onClick={()=>setPage&&setPage(a.page)} style={{display:'f
+lex',alignItems:'center',gap:8,padding:'8px',borderRadius:6,cursor:'pointer',marginBottom:4,background:'rgba(255,255,25
+5,.02)'}}>
+app\AureusSocialPro.js:13743:      {/* Roles sidebar */}
+app\AureusSocialPro.js:20453:      case'onboarding2':return <SetupWizard s={s} d={d} setPage={setPage}/>;
+app\AureusSocialPro.js:20558:      {/* SIDEBAR */}
+app\AureusSocialPro.js:20649:              <button 
+onClick={()=>{d({type:"NAV",page:it.id,sub:it.sub?.[0]?.id});setMobileMenu(false);}} 
+style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'9px 12px',marginBottom:1,border:'none',borderRa
+dius:8,cursor:'pointer',fontSize:12.5,fontWeight:ac?600:400,color:ac?'#c6a34e':'#9e9b93',background:ac?'rgba(198,163,78
+,.08)':'transparent',borderLeft:ac?'2px solid #c6a34e':'2px solid 
+transparent',fontFamily:'inherit',textAlign:'left',transition:'all .12s ease'}}
+app\AureusSocialPro.js:21025:          <button key={i} onClick={()=>d({type:"NAV",page:a.p,sub:a.sb})} 
+style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 
+12px',marginBottom:4,background:"rgba(198,163,78,.03)",border:'1px solid rgba(198,163,78,.06)',borderRadius:8,color:'#d
+4d0c8',cursor:'pointer',fontSize:12,fontWeight:500,textAlign:'left',fontFamily:'inherit',transition:'all .15s'}}
+
+

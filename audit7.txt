@@ -1,0 +1,93 @@
+﻿
+app\AureusSocialPro.js:20420:      case'dashboard':return <Dashboard s={s} d={d} userRole={userRole}/>;
+app\AureusSocialPro.js:20421:      case'employees':return <Employees s={s} d={d}/>;
+app\AureusSocialPro.js:20422:      case'payslip':return <Payslips s={s} d={d}/>;
+app\AureusSocialPro.js:20423:      case'onss':return s.sub==='dmfa'?<DMFAPage s={s} d={d}/>:s.sub==='drs'?<DRSMod 
+s={s} d={d}/>:s.sub==='onssapl'?<ONSSAPLMod s={s} d={d}/>:s.sub==='onss_dash'?<ONSSDashMod s={s} 
+d={d}/>:s.sub==='guide_portail'?<GuidePortailMod s={s} d={d}/>:s.sub==='portail_employeur'?<PortailEmployeurMod s={s} 
+d={d}/>:<DimonaPage s={s} d={d}/>;
+app\AureusSocialPro.js:20424:      case'fiscal':return s.sub==='precompte'?<PrecomptePage s={s} 
+d={d}/>:s.sub==='fiches_ext'?<FichesMod s={s} d={d}/>:s.sub==='co2'?<CO2Mod s={s} d={d}/>:s.sub==='atn'?<ATNMod s={s} 
+d={d}/>:<BelcotaxPage s={s} d={d}/>;
+app\AureusSocialPro.js:20425:      case'salaires':return <SalairesPage s={s} d={d}/>;
+app\AureusSocialPro.js:20426:      case'avantages':return <AvantagesPage s={s} d={d}/>;
+app\AureusSocialPro.js:20427:      case'contratsmenu':return <ContratsMenuPage s={s} d={d}/>;
+app\AureusSocialPro.js:20428:      case'rh':return <RHPage s={s} d={d}/>;
+app\AureusSocialPro.js:20429:      case'social':return <SocialPage s={s} d={d}/>;
+app\AureusSocialPro.js:20430:      case'bienetre':return <BienetrePage s={s} d={d}/>;
+app\AureusSocialPro.js:20431:      case'reporting':return <ReportingPage s={s} d={d}/>;
+app\AureusSocialPro.js:20432:      case'legal':return <LegalPage s={s} d={d}/>;
+app\AureusSocialPro.js:20433:      case'aureussuite':return <AureusSuitePage s={s} d={d}/>;
+app\AureusSocialPro.js:20434:      case'documents':return <DocsPage s={s} d={d}/>;
+app\AureusSocialPro.js:20435:      case'reports':return <ReportsPage s={s} d={d}/>;
+app\AureusSocialPro.js:20436:      case'settings':return s.sub==='fraisgestion'?<FraisGestionMod s={s} 
+d={d}/>:<SettingsPage s={s} d={d}/>;
+app\AureusSocialPro.js:20437:      case'admin':if(s.sub==='audit')return <AuditMod s={s} 
+d={d}/>;if(s.sub==='config')return <SettingsPage s={s} d={d}/>;if(s.sub==='fraisgestion')return <FraisGestionMod s={s} 
+d={d}/>;return <AdminDashboard s={s} d={d}/>;
+app\AureusSocialPro.js:20438:      case'modules':return <ModulesProPage s={s} d={d}/>;
+app\AureusSocialPro.js:20439:      case'sprint9':return <ModulesProPage s={s} d={d}/>;
+app\AureusSocialPro.js:20440:      case'automatisation':return <AutomationHub s={s} d={d}/>;
+app\AureusSocialPro.js:20441:      case'massengine':return <MassEngine s={s} d={d}/>;
+app\AureusSocialPro.js:20442:      case'smartauto':return <SmartAutomation s={s} d={d} supabase={supabase} 
+user={user}/>;
+app\AureusSocialPro.js:20443:      case'autopilot':return <SmartAutopilot s={s} d={d}/>;
+app\AureusSocialPro.js:20444:      case'facturation':return <Facturation s={s}/>;
+app\AureusSocialPro.js:20445:      case'validation':return <ValidationEngine s={s}/>;
+app\AureusSocialPro.js:20446:      case'exportbatch':return <ExportBatch s={s}/>;
+app\AureusSocialPro.js:20447:      case'rgpd':return <RGPDManager s={s}/>;
+app\AureusSocialPro.js:20448:      case'importcsv':return <ImportCSV s={s} d={d}/>;
+app\AureusSocialPro.js:20449:      case'landing':return <LandingPage/>;
+app\AureusSocialPro.js:20450:      case'notifcenter':return <NotificationCenter s={s} d={d}/>;
+app\AureusSocialPro.js:20451:      case'journal':return <JournalActivite s={s}/>;
+app\AureusSocialPro.js:20452:      case'baremescp':return <BaremesCP s={s}/>;
+app\AureusSocialPro.js:20453:      case'onboarding2':return <SetupWizard s={s} d={d} setPage={setPage}/>;
+app\AureusSocialPro.js:20454:      case'contratgen':return <ContratGenerator s={s} d={d} user={user}/>;
+app\AureusSocialPro.js:20455:      case'recapemployeur':return <RecapEmployeur s={s} user={user}/>;
+app\AureusSocialPro.js:20456:      case'envoiMasse':return <EnvoiMasse s={s} user={user}/>;
+app\AureusSocialPro.js:20457:      case'planabs':return <PlanAbsences s={s} d={d}/>;
+app\AureusSocialPro.js:20458:      case'dashrh':return <DashboardRH s={s}/>;
+app\AureusSocialPro.js:20459:      case'budget':return <BudgetPrev s={s}/>;
+app\AureusSocialPro.js:20460:      case'vehiculesatn':return <GestionVehicules s={s}/>;
+app\AureusSocialPro.js:20461:      case'simupension':return <SimuPension s={s}/>;
+app\AureusSocialPro.js:20462:      case'ccts':return <ConventionsCollectives/>;
+app\AureusSocialPro.js:20463:      case'interimaires':return <GestionInterimaires s={s}/>;
+app\AureusSocialPro.js:20464:      case'echeancier':return <Echeancier s={s}/>;
+app\AureusSocialPro.js:20465:      case'ged':return <GedDocuments s={s} d={d}/>;
+app\AureusSocialPro.js:20466:      case'portail':return <PortailEmploye s={s}/>;
+app\AureusSocialPro.js:20467:      case'dashclient':return <DashboardClient s={s} d={d}/>;
+app\AureusSocialPro.js:20468:      case'comparateur':return <ComparateurSalarial s={s}/>;
+app\AureusSocialPro.js:20469:      case'analytics':return <AnalyticsDash s={s}/>;
+app\AureusSocialPro.js:20470:      case'exportcompta':return <ExportCompta s={s}/>;
+app\AureusSocialPro.js:20471:      case'audittrail':return <AuditTrail s={s} user={user}/>;
+app\AureusSocialPro.js:20472:      case'simembauche':return <SimulateurEmbauche s={s}/>;
+app\AureusSocialPro.js:20473:      case'echeancierdetail':return <EcheancierPaiements s={s}/>;
+app\AureusSocialPro.js:20474:      case'simutp':return <SimuTempsPartiel s={s}/>;
+app\AureusSocialPro.js:20475:      case'delegations':return <GestionDelegations s={s}/>;
+app\AureusSocialPro.js:20476:      case'chargessociales':return <TableauChargesSociales s={s}/>;
+app\AureusSocialPro.js:20477:      case'planifconges':return <PlanifCongesEquipe s={s}/>;
+app\AureusSocialPro.js:20478:      case'registrepersonnel':return <RegistrePersonnel s={s}/>;
+app\AureusSocialPro.js:20479:      case'calcmaladie':return <CalcMaladie s={s}/>;
+app\AureusSocialPro.js:20480:      case'coutsannuel':return <DashCoutsAnnuel s={s}/>;
+app\AureusSocialPro.js:20481:      case'gendocsjur':return <GenDocsJuridiques s={s} d={d}/>;
+app\AureusSocialPro.js:20482:      case'dashabsent':return <DashAbsenteisme s={s}/>;
+app\AureusSocialPro.js:20483:      case'flexijobs':return <GestionFlexiJobs s={s} d={d}/>;
+app\AureusSocialPro.js:20484:      case'chomagetemporaire':return <SimuChomageTemp s={s}/>;
+app\AureusSocialPro.js:20485:      case'onboardwizard':return <OnboardingWizard s={s} d={d}/>;
+app\AureusSocialPro.js:20486:      case'checklistclient':return <ChecklistClient s={s}/>;
+app\AureusSocialPro.js:20487:      case'comparatif':return <ComparatifConcurrents/>;
+app\AureusSocialPro.js:20488:      case'duediligence':return <DueDiligenceSociale s={s}/>;
+app\AureusSocialPro.js:20489:      case'authroles':return <AuthMultiRoles s={s} d={d}/>;
+app\AureusSocialPro.js:20490:      case'baremespp':return <BaremesPPOfficiel s={s}/>;
+app\AureusSocialPro.js:20491:      case'moteurlois':return <MoteurLoisBelges s={s} d={d}/>;
+app\AureusSocialPro.js:20492:      case'securitedata':return <SecuriteData s={s}/>;
+app\AureusSocialPro.js:20493:      case'monitoring':return <MonitoringSante s={s}/>;
+app\AureusSocialPro.js:20494:      case'testsuite':return <TestSuiteDash s={s}/>;
+app\AureusSocialPro.js:20495:      case'gestionprimes':return <GestionPrimes s={s} d={d}/>;
+app\AureusSocialPro.js:20496:      case'tbdirection':return <TableauBordDirection s={s}/>;
+app\AureusSocialPro.js:20497:      case'archives':return <ArchivesNumeriques s={s}/>;
+app\AureusSocialPro.js:20498:      case'optifiscale':return <SimuOptiFiscale s={s}/>;
+app\AureusSocialPro.js:20499:      case'gestionabs':return <GestionAbsences s={s} d={d}/>;
+app\AureusSocialPro.js:20500:      case'formationsec':return <FormationSecurite s={s}/>;
+
+
