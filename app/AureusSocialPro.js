@@ -66,7 +66,21 @@ var LOIS_BELGES = {
     reductionConjointPensionLimitee: 3390,
     reductionPersonne65: 1992,
     reductionAutreCharge: 624,
-    bonusEmploi: { pctReduction: 0.3314, maxMensuel: 194.03, seuilBrut1: 2561.42, seuilBrut2: 2997.59 },
+    bonusEmploi: {
+      // Volet A+B depuis 01/04/2024 — Montants indexés 01/01/2026 (Partena/ONSS)
+      jan2026: {
+        voletA: { employes: { seuilBas: 2833.36, seuilHaut: 3271.48, max: 123.00, coeff: 0.2807 }, ouvriers: { seuilBas: 2833.36, seuilHaut: 3271.48, max: 132.84, coeff: 0.3032 }},
+        voletB: { employes: { seuilBas: 2218.73, seuilHaut: 2833.36, max: 165.87, coeff: 0.2699 }, ouvriers: { seuilBas: 2218.73, seuilHaut: 2833.36, max: 179.14, coeff: 0.2915 }},
+      },
+      mars2026: {
+        voletA: { employes: { seuilBas: 2833.36, seuilHaut: 3336.98, max: 123.00, coeff: 0.2442 }, ouvriers: { seuilBas: 2833.36, seuilHaut: 3336.98, max: 132.84, coeff: 0.2638 }},
+        voletB: { employes: { seuilBas: 2218.73, seuilHaut: 2833.36, max: 165.87, coeff: 0.2699 }, ouvriers: { seuilBas: 2218.73, seuilHaut: 2833.36, max: 179.14, coeff: 0.2915 }},
+      },
+      fiscalTauxA: 0.3314,  // 33.14% du volet A social
+      fiscalTauxB: 0.5254,  // 52.54% du volet B social
+      // Rétro-compatibilité (ancien format pour BONUS_MAX etc.)
+      pctReduction: 0.3314, maxMensuel: 288.87, seuilBrut1: 2833.36, seuilBrut2: 3336.98,
+    },
   },
 
   // ═══ CSSS — Cotisation Spéciale Sécurité Sociale ═══
@@ -542,7 +556,7 @@ var FORF_KM=LB.fraisPropres.forfaitDeplacement.voiture; // 0.4415
 var PV_SIMPLE=LB.remuneration.peculeVacances.simple.pct; // PV_SIMPLE
 var PV_DOUBLE=LB.remuneration.peculeVacances.double.pct; // 0.92
 var RMMMG=LB.remuneration.RMMMG.montant18ans; // RMMMG
-var BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 194.03
+var BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 288.87 (volet A 123 + volet B 165.87, jan 2026)
 var SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
 var SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
 var HEURES_HEBDO=LB.tempsTravail.dureeHebdoLegale; // 38
@@ -3933,7 +3947,9 @@ function calcPrecompteExact(brutMensuel, options) {
   const impotAvecTaxeCom = Math.round(impotApresReduc * (1 + taxeCom) * 100) / 100;
 
   // Bonus emploi fiscal (33.14% réduction sur bonus social ONSS)
-  const bonusEmploi = 0; // calculé séparément si nécessaire
+  // C3: Bonus fiscal déduit du PP (33.14% volet A + 52.54% volet B)
+  const _bonusDetail = calcBonusEmploiDetail(brutMensuel, opts.typeWorker || 'employe', opts.fractionOccupation || 1.0, opts.moisPaie || null);
+  const bonusEmploi = _bonusDetail.totalFiscal;
 
   // PP mensuel
   const ppMensuel = Math.round(impotAvecTaxeCom / 12 * 100) / 100;
@@ -3990,21 +4006,75 @@ function calcCSSS(brutMensuel, situation) {
   return Math.round(plafond / 12 * 100) / 100;
 }
 
-// Bonus emploi (Art. 289ter CIR) — Réduction fiscale
-function calcBonusEmploi(brutMensuel) {
-  if (brutMensuel <= 0) return 0;
-  const onss = Math.round(brutMensuel * _OW * 100) / 100;
-  const refSalaire = brutMensuel;
-  const BE = LOIS_BELGES.pp.bonusEmploi;
-  const seuil1 = BE.seuilBrut1;
-  const seuil2 = BE.seuilBrut2;
-  const maxBonus = BE.maxMensuel;
-  
-  if (refSalaire <= seuil1) return maxBonus;
-  if (refSalaire <= seuil2) {
-    return Math.round(maxBonus * (1 - (refSalaire - seuil1) / (seuil2 - seuil1)) * 100) / 100;
+// Bonus emploi 2026 — Volet A (bas salaires) + Volet B (très bas salaires)
+// Source: Partena Professional 08/01/2026, AR 27/03/2023, ONSS
+// Retourne le bonus SOCIAL (réduction ONSS) — rétro-compatible (nombre)
+function calcBonusEmploi(brutMensuel, typeWorker, fractionOccupation, moisPaie) {
+  const detail = calcBonusEmploiDetail(brutMensuel, typeWorker, fractionOccupation, moisPaie);
+  return detail.totalSocial;
+}
+
+// Version détaillée — retourne { voletA, voletB, totalSocial, fiscalA, fiscalB, totalFiscal }
+function calcBonusEmploiDetail(brutMensuel, typeWorker, fractionOccupation, moisPaie) {
+  const r = { voletA: 0, voletB: 0, totalSocial: 0, fiscalA: 0, fiscalB: 0, totalFiscal: 0 };
+  if (!brutMensuel || brutMensuel <= 0) return r;
+
+  const tw = typeWorker || 'employe';
+  const frac = fractionOccupation || 1.0;
+
+  // Déterminer période (jan/fév = jan2026, mars+ = mars2026)
+  let periode = 'mars2026';
+  if (moisPaie) {
+    const d = typeof moisPaie === 'string' ? new Date(moisPaie) : moisPaie;
+    if (d.getMonth() <= 1) periode = 'jan2026'; // 0=jan, 1=fev
   }
-  return 0;
+
+  const BE = LOIS_BELGES.pp.bonusEmploi;
+  const params = BE[periode] || BE.mars2026;
+  const type = tw === 'ouvrier' ? 'ouvriers' : 'employes';
+
+  // Salaire de référence temps plein
+  const S = frac > 0 ? brutMensuel / frac : brutMensuel;
+
+  // ── VOLET A (bas salaires) ──
+  const pA = params.voletA[type];
+  let vA = 0;
+  if (S <= pA.seuilBas) vA = pA.max;
+  else if (S <= pA.seuilHaut) vA = Math.max(0, pA.max - (pA.coeff * (S - pA.seuilBas)));
+
+  // ── VOLET B (très bas salaires) ──
+  const pB = params.voletB[type];
+  let vB = 0;
+  if (S <= pB.seuilBas) vB = pB.max;
+  else if (S <= pB.seuilHaut) vB = Math.max(0, pB.max - (pB.coeff * (S - pB.seuilBas)));
+
+  // Proratiser temps partiel
+  vA = Math.round(vA * frac * 100) / 100;
+  vB = Math.round(vB * frac * 100) / 100;
+
+  // Écrêtement: bonus social ≤ cotisations ONSS personnelles
+  const onssPerso = Math.round(brutMensuel * _OW * 100) / 100;
+  const totalBrut = vA + vB;
+  const totalSocial = Math.round(Math.min(totalBrut, onssPerso) * 100) / 100;
+
+  // Si écrêtement, réduire volet B d'abord, puis volet A
+  if (totalBrut > onssPerso) {
+    const excedent = totalBrut - onssPerso;
+    if (excedent <= vB) { vB = Math.round((vB - excedent) * 100) / 100; }
+    else { vA = Math.round(Math.max(0, vA - (excedent - vB)) * 100) / 100; vB = 0; }
+  }
+
+  // Bonus fiscal: 33.14% volet A + 52.54% volet B
+  const fA = Math.round(vA * (BE.fiscalTauxA || 0.3314) * 100) / 100;
+  const fB = Math.round(vB * (BE.fiscalTauxB || 0.5254) * 100) / 100;
+
+  r.voletA = vA;
+  r.voletB = vB;
+  r.totalSocial = totalSocial;
+  r.fiscalA = fA;
+  r.fiscalB = fB;
+  r.totalFiscal = Math.round((fA + fB) * 100) / 100;
+  return r;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
