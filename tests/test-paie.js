@@ -54,6 +54,17 @@ const srcPath = path.join(__dirname, '..', 'app', 'AureusSocialPro.js');
 const fullSrc = fs.readFileSync(srcPath, 'utf-8');
 const lines = fullSrc.split('\n');
 
+// ═══ HELPERS ═══
+
+// Cherche un pattern UNIQUEMENT au début de ligne (top-level, pas indenté)
+function _findTopLevel(pat, after) {
+  for (let i = (after || 0); i < lines.length; i++) {
+    if (lines[i].startsWith(pat)) return i;
+  }
+  return -1;
+}
+
+// Cherche n'importe où dans la ligne
 function _findLine(pat, after) {
   for (let i = (after || 0); i < lines.length; i++) if (lines[i].includes(pat)) return i;
   return -1;
@@ -88,24 +99,21 @@ function _extractBalanced(startIdx) {
   return { text: lines.slice(startIdx, Math.min(startIdx + 300, lines.length)).join('\n'), endIdx: startIdx + 300 };
 }
 
-// ═══ EXTRACTION CIBLÉE PAR WHITELIST ═══
+// ═══ EXTRACTION CIBLÉE ═══
 const parts = [];
 
-// 1. LOIS_BELGES (le gros objet)
-for (let i = 0; i < lines.length; i++) {
-  if (lines[i].includes('var LOIS_BELGES') && !lines[i].includes('TIMELINE') && !lines[i].includes('CURRENT')) {
-    const { text } = _extractBalanced(i);
-    if (text.split('\n').length > 10) {
-      parts.push(text);
-      console.log(`  ✓ LOIS_BELGES: ligne ${i+1} (${text.split('\n').length} lignes)`);
-      break;
-    }
+// 1. LOIS_BELGES (le gros objet, au top-level)
+const loisIdx = _findTopLevel('var LOIS_BELGES');
+if (loisIdx >= 0 && !lines[loisIdx].includes('TIMELINE') && !lines[loisIdx].includes('CURRENT')) {
+  const { text } = _extractBalanced(loisIdx);
+  if (text.split('\n').length > 10) {
+    parts.push(text);
+    console.log(`  ✓ LOIS_BELGES: ligne ${loisIdx+1} (${text.split('\n').length} lignes)`);
   }
 }
 
-// 2. WHITELIST des éléments nécessaires entre LOIS_BELGES et LEGAL
-// Dépendances: LEGAL a besoin de _OW, _OE; _OW a besoin de TX_ONSS_W;
-// calcPrecompteExact a besoin de calcPPFromLois
+// 2. WHITELIST: uniquement les vars/fonctions nécessaires, au TOP-LEVEL uniquement
+const legalIdx = _findTopLevel('var LEGAL=');
 const middleWhitelist = [
   'var TX_ONSS_W',
   'var TX_ONSS_E',
@@ -116,9 +124,9 @@ const middleWhitelist = [
   'var _BE',
   'var _BONUS',
 ];
-const legalIdx = _findLine('var LEGAL=');
 for (const pat of middleWhitelist) {
-  const idx = _findLine(pat);
+  // CRITIQUE: _findTopLevel cherche UNIQUEMENT les lignes sans indentation
+  const idx = _findTopLevel(pat);
   if (idx >= 0 && idx < legalIdx) {
     if (lines[idx].trim().endsWith(';')) {
       parts.push(lines[idx]);
@@ -138,7 +146,7 @@ if (legalIdx >= 0) {
   console.log(`  ✓ LEGAL: ligne ${legalIdx+1} (${text.split('\n').length} lignes)`);
 }
 
-// 4. Fonctions métier ciblées (APRÈS LEGAL)
+// 4. Fonctions métier (APRÈS LEGAL, au top-level)
 const afterLegal = legalIdx > 0 ? legalIdx + 100 : 1000;
 const targets = [
   'function calc(',
@@ -149,11 +157,9 @@ const targets = [
   'function calcIndependant(',
 ];
 for (const sig of targets) {
-  const idx = _findLine(sig, afterLegal);
+  const idx = _findTopLevel(sig, afterLegal);
   if (idx === -1) continue;
-  let start = idx;
-  while (start > 0 && lines[start-1].trim().startsWith('//')) start--;
-  const { text } = _extractBalanced(start);
+  const { text } = _extractBalanced(idx);
   const name = sig.replace('function ', '').replace('(', '');
   console.log(`  ✓ ${name}: ligne ${idx+1} (${text.split('\n').length} lignes)`);
   parts.push(text);
@@ -165,6 +171,13 @@ src = src.replace(/^['"]use client['"];?\s*/gm, '');
 src = src.replace(/import\s+.*?from\s+['"].*?['"];?\s*/gm, '');
 src = src.replace(/export\s+default\s+/gm, 'var __exported__ = ');
 src = src.replace(/export\s+/gm, '');
+
+// BLACKLIST: supprimer toute ligne qui référence des fonctions non-extraites
+src = src.replace(/^.*\bapplyTimeline\b.*$/gm, '// [removed]');
+src = src.replace(/^.*\bsyncLoisBelges\b.*$/gm, '// [removed]');
+src = src.replace(/^.*\bcheckLoisBelgesOutdated\b.*$/gm, '// [removed]');
+src = src.replace(/^.*\bLangProvider\b.*$/gm, '// [removed]');
+
 // Filet JSX
 src = src.replace(/^.*return\s+\(?<[A-Za-z].*$/gm, '// [JSX]');
 src = src.replace(/^.*<\/[a-zA-Z].*>.*$/gm, '// [JSX]');
