@@ -17,12 +17,12 @@ var LOIS_BELGES = {
   // ═══ PRÉCOMPTE PROFESSIONNEL ═══
   pp: {
     tranches: [
-      { min: 0, max: 16710, taux: 0.2675 },
-      { min: 16710, max: 29500, taux: 0.4280 },
-      { min: 29500, max: 51050, taux: 0.4815 },
-      { min: 51050, max: Infinity, taux: 0.5350 },
+      { min: 0, max: 16310, taux: 0.2675 },
+      { min: 16310, max: 28790, taux: 0.4280 },
+      { min: 28790, max: 49820, taux: 0.4815 },
+      { min: 49820, max: Infinity, taux: 0.5350 },
     ],
-    fraisPro: { salarie: { pct: 0.30, max: 6070 }, dirigeant: { pct: 0.03, max: 3120 }},
+    fraisPro: { salarie: { pct: 0.30, max: 5930 }, dirigeant: { pct: 0.03, max: 3120 }},
     quotiteExemptee: { bareme1: 2987.98, bareme2: 5975.96 },
     quotientConjugal: { pct: 0.30, max: 12520 },
     reductionsEnfants: [0, 624, 1656, 4404, 7620, 11100, 14592, 18120, 21996],
@@ -374,7 +374,7 @@ var LOIS_BELGES_TIMELINE = [
     cct90: { plafondONSS: 4255, plafondFiscal: 3701 },
     chequesRepas: { valeurMax: 10.00, partPatronaleMax: 8.91, partTravailleurMin: 1.09, deductibilite: 4.00 },
     seuils: { ecolage: 44447, nonConcurrenceBas: 44447, nonConcurrenceHaut: 88895, arbitrage: 88895, supplementChomTemp: 4284 },
-    pp: { fraisProMax: 6070, quotiteExemptee1: 2987.98 },
+    pp: { fraisProMax: 5930, quotiteExemptee1: 2987.98 },
     rmmmg: { montant18: 2070.48 },
   },
   // Le forfait télétravail n'a PAS changé en mars 2026 (reste 157,83 depuis mars 2025)
@@ -390,7 +390,7 @@ var LOIS_BELGES_CURRENT = {
   teletravail: { forfaitBureau: 157.83, internet: 20, pc: 20, ecran: 5 },
   rmmmg: { montant18: 2070.48 },
   indemKm: { voiture: 0.4415, velo: 0.35 },
-  pp: { fraisProMax: 6070, quotiteExemptee1: 2987.98 },
+  pp: { fraisProMax: 5930, quotiteExemptee1: 2987.98 },
   _lastApplied: '2026-01-01',
 };
 
