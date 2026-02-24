@@ -1037,8 +1037,8 @@ var LEGAL={ONSS_W:_OW,ONSS_E:_OE,BONUS_2026:{
     // Barème progressif ANNUEL (tranches 2026 indexées)
     TRANCHES:[
       {lim:16310,rate:0.2675},
-      {lim:29940,rate:0.4280},
-      {lim:41370,rate:0.4815},
+      {lim:28790,rate:0.4280},
+      {lim:49820,rate:0.4815},
       {lim:Infinity,rate:0.5350}
     ],
     // Quotité exemptée d'impôt 2026
