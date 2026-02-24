@@ -2,14 +2,11 @@
 // ══════════════════════════════════════════════════════════════════════
 // AUREUS SOCIAL PRO — TESTS UNITAIRES CALCULS PAIE BELGE 2026
 // ══════════════════════════════════════════════════════════════════════
-// Vérifie: ONSS, PP (précompte), bonus emploi, CSSS, net, coût employeur
-// Référence: SPF Finances Annexe III AR/CIR 92, Instructions ONSS T1/2026
-// ══════════════════════════════════════════════════════════════════════
 
 const fs = require('fs');
 const path = require('path');
 
-// ═══ STUBS pour charger AureusSocialPro.js dans Node.js ═══
+// ═══ STUBS ═══
 global.React = { createElement: ()=>null };
 global.useState = (v) => [typeof v === 'function' ? v() : v, ()=>{}];
 global.useEffect = ()=>{};
@@ -51,170 +48,147 @@ global.CSS = { supports:()=>false };
 global.matchMedia = ()=>({matches:false});
 global.supabase = null;
 
-// ═══ CHARGER ET EXTRAIRE ═══
+// ═══ CHARGER ═══
 console.log('⏳ Chargement AureusSocialPro.js...');
 const srcPath = path.join(__dirname, '..', 'app', 'AureusSocialPro.js');
 const fullSrc = fs.readFileSync(srcPath, 'utf-8');
 const lines = fullSrc.split('\n');
 
 function _findLine(pat, after) {
-  const start = after || 0;
-  for (let i = start; i < lines.length; i++) if (lines[i].includes(pat)) return i;
+  for (let i = (after || 0); i < lines.length; i++) if (lines[i].includes(pat)) return i;
   return -1;
 }
 
-// ═══ STRATÉGIE: Extraire uniquement les blocs nécessaires par nom ═══
-// On cible exactement ce qu'il faut, avec brace-balancing aware des strings/comments
-
-function _extractBB(startIdx) {
+// ═══ BRACKET BALANCER: gère {} ET [] ET strings ET comments ═══
+function _extractBalanced(startIdx) {
   if (startIdx < 0) return { text: '', endIdx: startIdx };
-  let depth = 0, started = false, inStr = 0; // inStr: 0=no, 1=single, 2=double, 3=template
+  let dBrace = 0, dBrack = 0, started = false, inStr = 0;
   for (let i = startIdx; i < lines.length; i++) {
     const line = lines[i];
     for (let j = 0; j < line.length; j++) {
       const c = line[j], prev = j > 0 ? line[j-1] : '';
-      // Skip escaped chars
       if (prev === '\\') continue;
-      // String tracking
       if (inStr === 0) {
-        if (c === "'" ) { inStr = 1; continue; }
-        if (c === '"' ) { inStr = 2; continue; }
-        if (c === '`' ) { inStr = 3; continue; }
-        if (c === '/' && j + 1 < line.length && line[j+1] === '/') break; // rest is comment
-        if (c === '{') { depth++; started = true; }
-        if (c === '}') depth--;
-      } else if (inStr === 1 && c === "'") { inStr = 0; }
-      else if (inStr === 2 && c === '"') { inStr = 0; }
-      else if (inStr === 3 && c === '`') { inStr = 0; }
+        if (c === "'") { inStr = 1; continue; }
+        if (c === '"') { inStr = 2; continue; }
+        if (c === '`') { inStr = 3; continue; }
+        if (c === '/' && j+1 < line.length && line[j+1] === '/') break;
+        if (c === '{') { dBrace++; started = true; }
+        if (c === '}') dBrace--;
+        if (c === '[') { dBrack++; started = true; }
+        if (c === ']') dBrack--;
+      } else if (inStr === 1 && c === "'") inStr = 0;
+      else if (inStr === 2 && c === '"') inStr = 0;
+      else if (inStr === 3 && c === '`') inStr = 0;
     }
-    if (started && depth === 0) {
+    if (started && dBrace === 0 && dBrack === 0) {
       return { text: lines.slice(startIdx, i + 1).join('\n'), endIdx: i + 1 };
     }
   }
   return { text: lines.slice(startIdx, Math.min(startIdx + 300, lines.length)).join('\n'), endIdx: startIdx + 300 };
 }
 
-function _extractFunc(signature, afterLine) {
-  const idx = _findLine(signature, afterLine || 0);
-  if (idx === -1) return null;
-  // Include comment lines before
-  let start = idx;
-  while (start > 0 && lines[start - 1].trim().startsWith('//')) start--;
-  const { text, endIdx } = _extractBB(start);
-  return { text, startIdx: idx, endIdx, lines: text.split('\n').length };
-}
-
+// ═══ EXTRACTION CIBLÉE ═══
 const parts = [];
 
-// ── 1. LOIS_BELGES: chercher le GROS objet (pas une réassignation d'1 ligne) ──
-let loisIdx = -1;
+// 1. LOIS_BELGES (le gros objet >10 lignes)
 for (let i = 0; i < lines.length; i++) {
-  if (lines[i].includes('var LOIS_BELGES') && lines[i].includes('{')) {
-    // Vérifier que c'est le gros (>10 lignes)
-    const { text } = _extractBB(i);
+  if (lines[i].includes('var LOIS_BELGES') && !lines[i].includes('TIMELINE') && !lines[i].includes('CURRENT')) {
+    const { text, endIdx } = _extractBalanced(i);
     if (text.split('\n').length > 10) {
-      loisIdx = i;
       parts.push(text);
-      console.log(`  ✓ LOIS_BELGES: ligne ${i + 1} (${text.split('\n').length} lignes)`);
+      console.log(`  ✓ LOIS_BELGES: ligne ${i+1} (${text.split('\n').length} lignes)`);
       break;
     }
   }
 }
 
-// ── 2. Tout le code entre LOIS_BELGES et la section i18n/React ──
-// On prend var/const/function MAIS on skip les fonctions React (PascalCase)
-if (loisIdx >= 0) {
-  const loisText = parts[0];
-  let afterLois = loisIdx + loisText.split('\n').length;
-  const legalIdx = _findLine('var LEGAL=');
-  const endZone = legalIdx > 0 ? legalIdx : afterLois + 800;
-
-  let i = afterLois;
-  while (i < endZone) {
-    const t = lines[i].trim();
-
-    // Skip blanks and lone comments
-    if (t === '' || (t.startsWith('//') && !t.includes('function'))) { i++; continue; }
-
-    // React/JSX → skip
-    if (/<[a-zA-Z]/.test(t) || t.includes('.Provider') || t.includes('changeLan') ||
-        /^\s*'[^']+':\s*\{.*fr:/.test(t) || /^\s*"[^"]+":\s*\{.*fr:/.test(t)) { i++; continue; }
-
-    // PascalCase function → skip entire body
-    if (/^function\s+[A-Z]/.test(t)) {
-      const { endIdx } = _extractBB(i);
-      i = endIdx;
-      continue;
-    }
-
-    // const/var/let assigned to React → skip
-    if (/^(var|const|let)\s+\w+\s*=\s*(React|createContext|useContext|useState)/.test(t)) { i++; continue; }
-    if (t.includes('createContext') || t.includes('useContext')) { i++; continue; }
-
-    // var/const/let declaration
-    if (/^(var|const|let)\s+/.test(t)) {
-      if (t.endsWith(';')) {
-        parts.push(lines[i]);
-        i++;
-      } else {
-        const { text, endIdx } = _extractBB(i);
-        parts.push(text);
-        i = endIdx;
-      }
-      continue;
-    }
-
-    // Lowercase function
-    if (/^function\s+[a-z_]/.test(t)) {
-      const { text, endIdx } = _extractBB(i);
-      const name = t.match(/function\s+([a-z_]\w*)/)?.[1];
-      if (name) console.log(`  ✓ ${name}: ligne ${i + 1} (${text.split('\n').length} lignes)`);
-      parts.push(text);
-      i = endIdx;
-      continue;
-    }
-
-    i++;
-  }
-}
-
-// ── 3. var LEGAL ──
+// 2. Helpers entre LOIS_BELGES end et section React/i18n
+// On scanne jusqu'à LEGAL, on prend var/const/function lowercase
+const loisEndLine = parts[0] ? parts[0].split('\n').length + _findLine('var LOIS_BELGES') : 380;
 const legalIdx = _findLine('var LEGAL=');
-if (legalIdx >= 0) {
-  const { text } = _extractBB(legalIdx);
-  parts.push(text);
-  console.log(`  ✓ LEGAL: ligne ${legalIdx + 1} (${text.split('\n').length} lignes)`);
+let i = loisEndLine;
+while (i < (legalIdx > 0 ? legalIdx : loisEndLine + 800)) {
+  const t = lines[i].trim();
+
+  if (t === '' || t.startsWith('//')) { i++; continue; }
+
+  // React/JSX → skip
+  if (/<[a-zA-Z]/.test(t) || t.includes('.Provider') || t.includes('changeLan') ||
+      t.includes('createContext') || t.includes('useContext') || t.includes('useState(') ||
+      t.includes('setLang') || t.includes('LangProvider') ||
+      /^\s*'[^']+':\s*\{.*fr:/.test(t) || /^\s*"[^"]+":\s*\{.*fr:/.test(t)) { i++; continue; }
+
+  // PascalCase function → skip whole body
+  if (/^function\s+[A-Z]/.test(t)) {
+    const { endIdx } = _extractBalanced(i);
+    i = endIdx;
+    continue;
+  }
+
+  // var/const/let
+  if (/^(var|const|let)\s+/.test(t)) {
+    if (t.endsWith(';')) {
+      parts.push(lines[i]);
+      i++;
+    } else {
+      const { text, endIdx } = _extractBalanced(i);
+      parts.push(text);
+      const name = t.match(/(var|const|let)\s+(\w+)/)?.[2] || '?';
+      console.log(`  ✓ ${name}: ligne ${i+1} (${text.split('\n').length} lignes)`);
+      i = endIdx;
+    }
+    continue;
+  }
+
+  // Lowercase function
+  if (/^function\s+[a-z_]/.test(t)) {
+    const { text, endIdx } = _extractBalanced(i);
+    const name = t.match(/function\s+([a-z_]\w*)/)?.[1] || '?';
+    console.log(`  ✓ ${name}: ligne ${i+1} (${text.split('\n').length} lignes)`);
+    parts.push(text);
+    i = endIdx;
+    continue;
+  }
+
+  i++;
 }
 
-// ── 4. Fonctions métier ciblées (après LEGAL seulement!) ──
+// 3. var LEGAL
+if (legalIdx >= 0) {
+  const { text } = _extractBalanced(legalIdx);
+  parts.push(text);
+  console.log(`  ✓ LEGAL: ligne ${legalIdx+1} (${text.split('\n').length} lignes)`);
+}
+
+// 4. Fonctions métier (APRÈS LEGAL uniquement!)
+const afterLegal = legalIdx > 0 ? legalIdx + 100 : 1000;
 const targets = [
-  'function calc(',          // Le VRAI calc (~ligne 2024, pas 26287)
+  'function calc(',
   'function calcPrecompteExact(',
   'function calcCSSS(',
   'function calcBonusEmploi(',
   'function calcBonusEmploiDetail(',
   'function calcIndependant(',
 ];
-const afterLegal = legalIdx > 0 ? legalIdx + 100 : 1000;
 for (const sig of targets) {
-  const r = _extractFunc(sig, afterLegal);
-  if (r) {
-    const name = sig.replace('function ', '').replace('(', '');
-    console.log(`  ✓ ${name}: ligne ${r.startIdx + 1} (${r.lines} lignes)`);
-    parts.push(r.text);
-  }
+  const idx = _findLine(sig, afterLegal);
+  if (idx === -1) continue;
+  let start = idx;
+  while (start > 0 && lines[start-1].trim().startsWith('//')) start--;
+  const { text } = _extractBalanced(start);
+  const name = sig.replace('function ', '').replace('(', '');
+  console.log(`  ✓ ${name}: ligne ${idx+1} (${text.split('\n').length} lignes)`);
+  parts.push(text);
 }
 
-// ── 5. Assembler ──
+// 5. Assembler et nettoyer
 let src = parts.join('\n\n');
-
-// Nettoyage basique
 src = src.replace(/^['"]use client['"];?\s*/gm, '');
 src = src.replace(/import\s+.*?from\s+['"].*?['"];?\s*/gm, '');
 src = src.replace(/export\s+default\s+/gm, 'var __exported__ = ');
 src = src.replace(/export\s+/gm, '');
-
-// Filet de sécurité: toute ligne avec du JSX
+// Filet JSX
 src = src.replace(/^.*return\s+\(?<[A-Za-z].*$/gm, '// [JSX]');
 src = src.replace(/^.*<\/[a-zA-Z].*>.*$/gm, '// [JSX]');
 src = src.replace(/^\s*<[a-zA-Z].*$/gm, '// [JSX]');
@@ -225,13 +199,10 @@ src = src.replace(/^.*\.Provider\b.*$/gm, '// [JSX]');
 try {
   const vm = require('vm');
   const sandbox = {
-    ...global,
-    console,
+    ...global, console,
     Math, Date, Number, String, Array, Object, JSON, parseInt, parseFloat, isNaN, isFinite,
-    Infinity, NaN, undefined, null: null,
-    Intl,
-    module: { exports: {} },
-    exports: {},
+    Infinity, NaN, undefined, null: null, Intl,
+    module: { exports: {} }, exports: {},
     React: global.React, useState: global.useState, useEffect: global.useEffect,
     useRef: global.useRef, useCallback: global.useCallback, useMemo: global.useMemo,
     useContext: global.useContext, createContext: global.createContext,
@@ -285,41 +256,40 @@ try {
   console.log('\n═══ 3. PRÉCOMPTE PROFESSIONNEL ═══');
   test('calcPrecompteExact existe', () => { assert(typeof calcPrecompteExact === 'function', 'non trouvé'); });
   test('PP sur 0€ = 0€', () => { eq(calcPrecompteExact(0, { situation: 'isole' }).pp, 0, 'PP 0€'); });
-  test('PP sur 2.000€ isolé — structure', () => {
+  test('PP 2000€ isolé structure', () => {
     const r = calcPrecompteExact(2000, { situation: 'isole', enfants: 0 });
     assert(r.pp !== undefined && r.rate !== undefined && r.detail !== undefined, 'structure incomplète');
-    assert(r.pp >= 0 && r.rate >= 0, `PP négatif: ${r.pp}`);
   });
-  test('PP sur 2.000€ isolé ≈ 30-300€', () => {
-    const r = calcPrecompteExact(2000, { situation: 'isole', enfants: 0 });
-    assert(r.pp >= 30 && r.pp <= 300, `PP 2000€ = ${r.pp} hors fourchette`);
+  test('PP 2000€ isolé ≈ 30-300€', () => {
+    assert(calcPrecompteExact(2000, { situation: 'isole', enfants: 0 }).pp >= 30, 'trop bas');
+    assert(calcPrecompteExact(2000, { situation: 'isole', enfants: 0 }).pp <= 300, 'trop haut');
   });
-  test('PP sur 3.500€ isolé ≈ 500-800€', () => {
-    const r = calcPrecompteExact(3500, { situation: 'isole', enfants: 0 });
-    assert(r.pp >= 500 && r.pp <= 800, `PP 3500€ = ${r.pp} hors fourchette`);
+  test('PP 3500€ isolé ≈ 500-800€', () => {
+    const pp = calcPrecompteExact(3500, { situation: 'isole', enfants: 0 }).pp;
+    assert(pp >= 500 && pp <= 800, `PP 3500€ = ${pp}`);
   });
-  test('PP sur 5.000€ isolé ≈ 900-1500€', () => {
-    const r = calcPrecompteExact(5000, { situation: 'isole', enfants: 0 });
-    assert(r.pp >= 900 && r.pp <= 1500, `PP 5000€ = ${r.pp} hors fourchette`);
+  test('PP 5000€ isolé ≈ 900-1500€', () => {
+    const pp = calcPrecompteExact(5000, { situation: 'isole', enfants: 0 }).pp;
+    assert(pp >= 900 && pp <= 1500, `PP 5000€ = ${pp}`);
   });
-  test('PP sur 8.000€ isolé ≈ 2000-3000€', () => {
-    const r = calcPrecompteExact(8000, { situation: 'isole', enfants: 0 });
-    assert(r.pp >= 2000 && r.pp <= 3000, `PP 8000€ = ${r.pp} hors fourchette`);
+  test('PP 8000€ isolé ≈ 2000-3000€', () => {
+    const pp = calcPrecompteExact(8000, { situation: 'isole', enfants: 0 }).pp;
+    assert(pp >= 2000 && pp <= 3000, `PP 8000€ = ${pp}`);
   });
   test('PP marié 1r < isolé', () => {
     const i = calcPrecompteExact(4000, { situation: 'isole', enfants: 0 }).pp;
     const m = calcPrecompteExact(4000, { situation: 'marie_1r', enfants: 0 }).pp;
-    assert(m < i, `Marié ${m} devrait être < isolé ${i}`);
+    assert(m < i, `Marié ${m} >= isolé ${i}`);
   });
   test('PP 2 enfants < 0 enfant', () => {
     const p0 = calcPrecompteExact(3500, { situation: 'isole', enfants: 0 }).pp;
     const p2 = calcPrecompteExact(3500, { situation: 'isole', enfants: 2 }).pp;
-    assert(p2 < p0, `2 enf ${p2} devrait être < 0 enf ${p0}`);
+    assert(p2 < p0, `2enf ${p2} >= 0enf ${p0}`);
   });
   test('PP 4 enfants < 2 enfants', () => {
     const p2 = calcPrecompteExact(4000, { situation: 'isole', enfants: 2 }).pp;
     const p4 = calcPrecompteExact(4000, { situation: 'isole', enfants: 4 }).pp;
-    assert(p4 < p2, `4 enf ${p4} devrait être < 2 enf ${p2}`);
+    assert(p4 < p2, `4enf ${p4} >= 2enf ${p2}`);
   });
   test('PP progressivité', () => {
     const r1 = calcPrecompteExact(2500, { situation: 'isole' });
@@ -331,88 +301,72 @@ try {
     const r0 = calcPrecompteExact(3500, { situation: 'isole', taxeCom: 0 }).pp;
     const r7 = calcPrecompteExact(3500, { situation: 'isole', taxeCom: 7 }).pp;
     const r10 = calcPrecompteExact(3500, { situation: 'isole', taxeCom: 10 }).pp;
-    assert(r7 >= r0 && r10 >= r7, 'Taxe communale pas croissante');
+    assert(r7 >= r0 && r10 >= r7, 'pas croissante');
   });
   test('PP dirigeant > salarié', () => {
     const s = calcPrecompteExact(5000, { situation: 'isole', dirigeant: false }).pp;
     const d = calcPrecompteExact(5000, { situation: 'isole', dirigeant: true }).pp;
-    assert(d > s, `Dirigeant ${d} devrait être > salarié ${s}`);
+    assert(d > s, `Dir ${d} <= Sal ${s}`);
   });
 
   // ═══ 4. BONUS À L'EMPLOI ═══
   console.log('\n═══ 4. BONUS À L\'EMPLOI ═══');
   test('calcBonusEmploi existe', () => { assert(typeof calcBonusEmploi === 'function', 'non trouvé'); });
-  test('Bonus 2000€ > 0 et ≤ 350', () => {
-    const b = calcBonusEmploi(2000);
-    assert(b > 0 && b <= 350, `Bonus ${b} hors fourchette`);
-  });
+  test('Bonus 2000€ > 0', () => { const b = calcBonusEmploi(2000); assert(b > 0 && b <= 350, `${b}`); });
   test('Bonus 5000€ = 0', () => { eq(calcBonusEmploi(5000), 0, 'Bonus 5000€'); });
   test('Bonus dégressif', () => {
-    assert(calcBonusEmploi(2000) >= calcBonusEmploi(2500), 'pas dégressif 2000→2500');
-    assert(calcBonusEmploi(2500) >= calcBonusEmploi(3000), 'pas dégressif 2500→3000');
+    assert(calcBonusEmploi(2000) >= calcBonusEmploi(2500), '2000→2500');
+    assert(calcBonusEmploi(2500) >= calcBonusEmploi(3000), '2500→3000');
   });
   test('Bonus 0€ = 0', () => { eq(calcBonusEmploi(0), 0, 'Bonus 0€'); });
   if (typeof calcBonusEmploiDetail === 'function') {
-    test('BonusDetail volet A+B', () => {
+    test('BonusDetail A+B', () => {
       const d = calcBonusEmploiDetail(2500);
-      assert(d.voletA >= 0 && d.voletB >= 0 && d.totalSocial >= 0, 'valeurs négatives');
-      eq(d.totalSocial, d.voletA + d.voletB, 'totalSocial = A+B', 0.02);
+      assert(d.voletA >= 0 && d.voletB >= 0, 'négatif');
+      eq(d.totalSocial, d.voletA + d.voletB, 'A+B', 0.02);
     });
   }
 
   // ═══ 5. CSSS ═══
   if (typeof calcCSSS === 'function') {
     console.log('\n═══ 5. CSSS ═══');
-    test('calcCSSS existe', () => { assert(typeof calcCSSS === 'function', 'non trouvé'); });
-    test('CSSS 1500€ ≈ 0-40€', () => {
-      const c = calcCSSS(1500, 'isole');
-      assert(c >= 0 && c <= 40, `CSSS ${c} hors fourchette`);
-    });
-    test('CSSS progressive', () => {
-      assert(calcCSSS(4000, 'isole') >= calcCSSS(2000, 'isole'), 'pas progressive');
-    });
+    test('CSSS existe', () => { assert(typeof calcCSSS === 'function'); });
+    test('CSSS 1500€ ≈ 0-40€', () => { const c = calcCSSS(1500, 'isole'); assert(c >= 0 && c <= 40, `${c}`); });
+    test('CSSS progressive', () => { assert(calcCSSS(4000, 'isole') >= calcCSSS(2000, 'isole')); });
   }
 
   // ═══ 6. CALCUL INTÉGRÉ ═══
   if (typeof calc === 'function') {
     console.log('\n═══ 6. CALCUL INTÉGRÉ ═══');
-    test('calc existe', () => { assert(typeof calc === 'function', 'non trouvé'); });
-    test('calc 3500€ → objet', () => {
-      const r = calc(emp3500, per0, co0);
-      assert(r && typeof r === 'object', 'pas un objet');
-    });
-    test('net < brut', () => {
-      const r = calc(emp3500, per0, co0);
-      const net = r.net || r.netSalary || 0;
-      assert(net > 0 && net < 3500, `Net ${net} incohérent`);
-    });
+    test('calc existe', () => { assert(typeof calc === 'function'); });
+    test('calc 3500€ → objet', () => { const r = calc(emp3500, per0, co0); assert(r && typeof r === 'object'); });
+    test('net < brut', () => { const n = calc(emp3500, per0, co0).net || 0; assert(n > 0 && n < 3500, `${n}`); });
     test('net croissant', () => {
-      const n1 = (calc({ ...emp3500, monthlySalary: 2500 }, per0, co0).net || 0);
-      const n2 = (calc({ ...emp3500, monthlySalary: 4000 }, per0, co0).net || 0);
-      assert(n2 > n1, `Net 4000 (${n2}) devrait > net 2500 (${n1})`);
+      const n1 = calc({ ...emp3500, monthlySalary: 2500 }, per0, co0).net || 0;
+      const n2 = calc({ ...emp3500, monthlySalary: 4000 }, per0, co0).net || 0;
+      assert(n2 > n1, `${n2} <= ${n1}`);
     });
   }
 
   // ═══ 7. EDGE CASES ═══
   console.log('\n═══ 7. EDGE CASES ═══');
-  test('PP négatif → ≥ 0', () => { assert(calcPrecompteExact(-100, { situation: 'isole' }).pp >= 0, 'PP négatif'); });
-  test('PP 15000€ ok', () => { assert(calcPrecompteExact(15000, { situation: 'isole' }).pp > 0, 'PP 15k = 0'); });
-  test('Bonus -500€ = 0', () => { eq(calcBonusEmploi(-500), 0, 'Bonus négatif'); });
+  test('PP négatif → ≥ 0', () => { assert(calcPrecompteExact(-100, { situation: 'isole' }).pp >= 0); });
+  test('PP 15000€ ok', () => { assert(calcPrecompteExact(15000, { situation: 'isole' }).pp > 0); });
+  test('Bonus -500€ = 0', () => { eq(calcBonusEmploi(-500), 0, 'négatif'); });
 
   // ═══ 8. INDÉPENDANTS ═══
   if (typeof calcIndependant === 'function') {
     console.log('\n═══ 8. INDÉPENDANTS ═══');
-    test('calcIndependant existe', () => { assert(typeof calcIndependant === 'function', 'non trouvé'); });
+    test('calcIndependant existe', () => { assert(typeof calcIndependant === 'function'); });
     test('Indep 40k structure', () => {
       const r = calcIndependant({ revenuNet: 40000, type: 'principal', situation: 'isole' });
-      assert(r.cotisAnnuelle !== undefined && r.ippAnnuel !== undefined, 'structure incomplète');
+      assert(r.cotisAnnuelle !== undefined && r.ippAnnuel !== undefined);
     });
     test('Cotis croissantes', () => {
       const r1 = calcIndependant({ revenuNet: 20000, type: 'principal', situation: 'isole' });
       const r2 = calcIndependant({ revenuNet: 50000, type: 'principal', situation: 'isole' });
-      assert(r2.cotisAnnuelle > r1.cotisAnnuelle, 'pas croissant');
+      assert(r2.cotisAnnuelle > r1.cotisAnnuelle);
     });
-
     console.log('\n═══ TABLEAU INDÉPENDANTS ═══');
     console.log('  Revenu net  │ Cotis soc.  │ Frais gest │ IPP        │ Net dispo  │ Taux');
     console.log('  ────────────┼─────────────┼────────────┼────────────┼────────────┼──────');
@@ -436,7 +390,7 @@ try {
     }
   }
 
-  // ═══ RAPPORT FINAL ═══
+  // ═══ RAPPORT ═══
   console.log('\n' + '═'.repeat(60));
   console.log(`  RÉSULTAT: ${passed}/${total} tests passés`);
   if (failed > 0) {
