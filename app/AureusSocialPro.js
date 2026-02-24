@@ -2483,7 +2483,7 @@ function calc(emp, per, co) {
   r.taxNet = revNetImposable / 12;
   r.tax = Math.max(0, r.baseTax);
   // ── Taxe communale (Art. 466 CIR 92) ──
-  const _taxCom = (emp.taxeCom || 7) / 100;
+  const _taxCom = (emp.taxeCom ?? 7) / 100;
   r.tax = Math.round(r.tax * (1 + _taxCom) * 100) / 100;
   // ── Bonus à l'emploi FISCAL (réduction précompte professionnel) ──
   // 33,14% du volet A + 52,54% du volet B (depuis 01/04/2024)
