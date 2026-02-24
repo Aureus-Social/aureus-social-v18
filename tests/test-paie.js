@@ -57,89 +57,141 @@ const srcPath = path.join(__dirname, '..', 'app', 'AureusSocialPro.js');
 const fullSrc = fs.readFileSync(srcPath, 'utf-8');
 const lines = fullSrc.split('\n');
 
-// ═══ EXTRACTION DYNAMIQUE PAR MARQUEURS ═══
-function _findLine(ls, pat) { for (let i = 0; i < ls.length; i++) if (ls[i].includes(pat)) return i; return -1; }
+// ═══ EXTRACTION PAR WHITELIST — chaque pièce extraite individuellement ═══
+// Plus de blocs de lignes! On extrait chaque fonction/var par son nom avec brace-balancing.
 
-// Block1: Du début jusqu'à la fin de LOIS_BELGES (brace-balanced, ~ligne 378)
-// On s'arrête ICI pour éviter tout le code i18n/React/JSX qui suit
-const _loisStart = _findLine(lines, 'var LOIS_BELGES');
-let _loisEnd = _loisStart, _d = 0;
-for (let i = _loisStart; i < lines.length; i++) {
-  for (const c of lines[i]) { if (c === '{') _d++; if (c === '}') _d--; }
-  if (_d === 0 && i > _loisStart) { _loisEnd = i + 1; break; }
+function _findLine(pat) {
+  for (let i = 0; i < lines.length; i++) if (lines[i].includes(pat)) return i;
+  return -1;
 }
 
-// Aussi récupérer les var/const standalone entre LOIS_BELGES et le i18n
-let _safeEnd = _loisEnd;
-for (let i = _loisEnd; i < lines.length; i++) {
-  const t = lines[i].trim();
-  if (t === '' || t.startsWith('//')) {
-    _safeEnd = i + 1;
-  } else if ((t.startsWith('var ') || t.startsWith('const ') || t.startsWith('let ')) && !t.includes('createContext') && !t.includes('useContext') && !t.includes('Provider') && !t.includes('changeLan') && !t.includes('setLang') && !t.includes("'cli.") && !t.includes('<')) {
-    _safeEnd = i + 1;
-  } else if (t.startsWith('function ') && !t.includes('LangProvider') && !t.includes('return') && !t.includes('<')) {
-    let fd = 0, fEnd = i;
-    for (let j = i; j < lines.length; j++) {
-      for (const c of lines[j]) { if (c === '{') fd++; if (c === '}') fd--; }
-      if (fd === 0 && j > i) { fEnd = j + 1; break; }
+function _extractBraceBalanced(startIdx) {
+  if (startIdx < 0) return '';
+  let depth = 0, started = false;
+  for (let i = startIdx; i < lines.length; i++) {
+    for (const c of lines[i]) {
+      if (c === '{') { depth++; started = true; }
+      if (c === '}') depth--;
     }
-    _safeEnd = fEnd;
-  } else {
-    break;
+    if (started && depth === 0) return lines.slice(startIdx, i + 1).join('\n');
+  }
+  return lines.slice(startIdx, Math.min(startIdx + 200, lines.length)).join('\n');
+}
+
+function _extractFunction(signature) {
+  const idx = _findLine(signature);
+  if (idx === -1) return '';
+  // Include preceding comment lines
+  let start = idx;
+  while (start > 0 && lines[start - 1].trim().startsWith('//')) start--;
+  return _extractBraceBalanced(start);
+}
+
+function _extractOneLiner(pattern) {
+  const idx = _findLine(pattern);
+  if (idx === -1) return '';
+  const line = lines[idx];
+  // If it ends with ; it's a one-liner
+  if (line.trim().endsWith(';')) return line;
+  // Otherwise brace-balanced
+  return _extractBraceBalanced(idx);
+}
+
+const parts = [];
+
+// ── 1. LOIS_BELGES (grosse constante ~340 lignes) ──
+const loisIdx = _findLine('var LOIS_BELGES');
+if (loisIdx >= 0) {
+  parts.push(_extractBraceBalanced(loisIdx));
+  console.log(`  ✓ LOIS_BELGES trouvé ligne ${loisIdx + 1}`);
+}
+
+// ── 2. Helper vars entre LOIS_BELGES et la section React/i18n ──
+// Ce sont les var _OW, _OE, BONUS_MAX, etc. nécessaires aux fonctions calc
+const loisEnd = parts[0] ? loisIdx + parts[0].split('\n').length : 0;
+for (let i = loisEnd; i < lines.length && i < loisEnd + 800; i++) {
+  const t = lines[i].trim();
+  // Arrêter dès qu'on touche du React/i18n
+  if (t.includes('createContext') || t.includes('useContext') || t.includes('Provider') ||
+      t.includes('changeLan') || t.includes('setLang') || t.includes("'cli.") ||
+      t.includes('"cli.') || /<[a-zA-Z]/.test(t) || t.includes('.Provider') ||
+      t.includes('LangProvider') || t.includes('translations')) break;
+  
+  if (t === '' || t.startsWith('//')) continue;
+  
+  // var/const/let one-liners
+  if ((t.startsWith('var ') || t.startsWith('const ') || t.startsWith('let ')) && t.endsWith(';')) {
+    parts.push(lines[i]);
+    continue;
+  }
+  
+  // var/const/let multi-line (brace-balanced)
+  if (t.startsWith('var ') || t.startsWith('const ') || t.startsWith('let ')) {
+    const extracted = _extractBraceBalanced(i);
+    parts.push(extracted);
+    i += extracted.split('\n').length - 1; // skip ahead
+    continue;
+  }
+  
+  // function declarations (not React components)
+  if (t.startsWith('function ') && !/^function\s+[A-Z]/.test(t)) {
+    const extracted = _extractBraceBalanced(i);
+    parts.push(extracted);
+    i += extracted.split('\n').length - 1;
+    continue;
+  }
+  
+  // Anything else that's not empty/comment = we've hit React territory, stop
+  if (t.length > 0 && !t.startsWith('//')) break;
+}
+console.log(`  ✓ Helper vars extraits (${parts.length - 1} éléments après LOIS_BELGES)`);
+
+// ── 3. var LEGAL ──
+const legalIdx = _findLine('var LEGAL=');
+if (legalIdx >= 0) {
+  parts.push(_extractBraceBalanced(legalIdx));
+  console.log(`  ✓ var LEGAL trouvé ligne ${legalIdx + 1}`);
+}
+
+// ── 4. Fonctions métier (chacune extraite par brace-balancing) ──
+const funcSignatures = [
+  'function calc(',
+  'function calcPrecompteExact(',
+  'function calcCSSS(',
+  'function calcBonusEmploi(',
+  'function calcBonusEmploiDetail(',
+  'function calcIndependant(',
+  'function calcPPFromLois(',
+];
+for (const sig of funcSignatures) {
+  const extracted = _extractFunction(sig);
+  if (extracted) {
+    const name = sig.replace('function ', '').replace('(', '');
+    const lineNum = _findLine(sig) + 1;
+    console.log(`  ✓ ${name} trouvé ligne ${lineNum} (${extracted.split('\n').length} lignes)`);
+    parts.push(extracted);
   }
 }
 
-const _legIdx = _findLine(lines, 'var LEGAL=');
-const _calcIdx = _findLine(lines, 'function calc(');
-const _ppIdx = _findLine(lines, 'function calcPrecompteExact(');
-const _indepIdx = _findLine(lines, 'function calcIndependant(');
+// ── 5. Assembler et nettoyer ──
+let src = parts.join('\n\n');
 
-console.log(`  LOIS_BELGES: 0-${_loisEnd}, safe: 0-${_safeEnd}`);
-console.log(`  Marqueurs: LEGAL=${_legIdx + 1}, calc=${_calcIdx + 1}, PP=${_ppIdx + 1}, Indep=${_indepIdx + 1}`);
-
-const block1 = lines.slice(0, _safeEnd).join('\n');
-const block2 = _legIdx > -1 ? lines.slice(_legIdx, _legIdx + 200).join('\n') : '';
-const block3 = (_calcIdx > -1 && _ppIdx > -1) ? lines.slice(_calcIdx, _ppIdx).join('\n') : '';
-const block4 = _ppIdx > -1 ? lines.slice(_ppIdx, _indepIdx > -1 ? _indepIdx + 300 : _ppIdx + 600).join('\n') : '';
-
-// ═══ NETTOYAGE IMPORTS/EXPORTS ═══
-let src = [block1, block2, block3, block4].join('\n');
+// Nettoyage basique
 src = src.replace(/^['"]use client['"];?\s*/gm, '');
 src = src.replace(/import\s+.*?from\s+['"].*?['"];?\s*/gm, '');
 src = src.replace(/export\s+default\s+/gm, 'var __exported__ = ');
 src = src.replace(/export\s+/gm, '');
 
-// ═══ NETTOYAGE JSX / REACT AGRESSIF ═══
+// Filet de sécurité: supprimer tout JSX résiduel (ne devrait pas en avoir)
 src = src.replace(/^.*return\s+\(?<.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*<\/[a-zA-Z].*>.*$/gm, '// [JSX removed]');
 src = src.replace(/^\s*<[a-zA-Z][a-zA-Z0-9.]*[\s{/>].*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\bonClick\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\bonChange\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\bonSubmit\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\bonKeyDown\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\bonBlur\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\bstyle\s*=\s*\{\{.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\bclassName[=\s:{].*$/gm, '// [JSX removed]');
-src = src.replace(/^\s+padding:.*borderRadius.*$/gm, '// [JSX removed]');
-src = src.replace(/^\s+padding:.*cursor.*$/gm, '// [JSX removed]');
-src = src.replace(/^\s+fontWeight:.*$/gm, '// [JSX removed]');
-src = src.replace(/^\s+fontSize:.*fontWeight.*$/gm, '// [JSX removed]');
-src = src.replace(/^\s+background(?:Color)?:.*color:.*$/gm, '// [JSX removed]');
-src = src.replace(/^\s+cursor:.*border:.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\bcreateContext\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\buseContext\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\buseState\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\buseEffect\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\buseRef\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\buseCallback\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\buseMemo\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\.Provider\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\.Consumer\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^.*\bsetLang\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\bchangeLan\b.*$/gm, '// [JSX removed]');
+src = src.replace(/^.*\bsetLang\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^\s*'[^']+':.*\{\s*fr:.*$/gm, '// [JSX removed]');
-src = src.replace(/^\s*"[^"]+":.*\{\s*fr:.*$/gm, '// [JSX removed]');
-src = src.replace(/^function LangProvider\b.*$/gm, '// [JSX removed]');
 
 try {
   const vm = require('vm');
@@ -163,7 +215,7 @@ try {
 
   const ctx = vm.createContext(sandbox);
   fs.writeFileSync(path.join(__dirname, 'extracted-logic.js'), src);
-  console.log(`  Extracted: ${src.split('\n').length} lignes → extracted-logic.js`);
+  console.log(`\n  Extracted: ${src.split('\n').length} lignes → extracted-logic.js`);
   vm.runInContext(src, ctx);
   console.log('✅ Code chargé avec succès\n');
 
