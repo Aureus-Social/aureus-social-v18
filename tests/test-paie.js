@@ -116,10 +116,6 @@ const middleWhitelist = [
   'var _BE',
   'var _BONUS',
 ];
-  'var _BM',
-  'var _BE',
-  'var _BONUS',
-];
 for (const pat of middleWhitelist) {
   const idx = _findTopLevel(pat);
   if (idx >= 0 && idx < legalIdx) {
@@ -167,7 +163,7 @@ src = src.replace(/import\s+.*?from\s+['"].*?['"];?\s*/gm, '');
 src = src.replace(/export\s+default\s+/gm, 'var __exported__ = ');
 src = src.replace(/export\s+/gm, '');
 
-// ═══ BLACKLIST AGRESSIF: supprimer TOUTE ligne contenant ces patterns ═══
+// ═══ BLACKLIST AGRESSIF ═══
 const blacklist = [
   'applyTimeline', 'syncLoisBelges', 'checkLoisBelgesOutdated',
   'LangProvider', 'LangCtx', 'createContext', 'useContext',
@@ -180,12 +176,8 @@ for (const pat of blacklist) {
   const escaped = pat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   src = src.replace(new RegExp('^.*' + escaped + '.*$', 'gm'), '// [removed]');
 }
-
-// i18n translations
 src = src.replace(/^\s*'[^']+':.*\{\s*fr:.*$/gm, '// [removed]');
 src = src.replace(/^\s*"[^"]+":.*\{\s*fr:.*$/gm, '// [removed]');
-
-// JSX tags
 src = src.replace(/^.*return\s+\(?<[A-Za-z].*$/gm, '// [removed]');
 src = src.replace(/^.*<\/[a-zA-Z].*>.*$/gm, '// [removed]');
 src = src.replace(/^\s*<[a-zA-Z].*$/gm, '// [removed]');
