@@ -55,8 +55,6 @@ const fullSrc = fs.readFileSync(srcPath, 'utf-8');
 const lines = fullSrc.split('\n');
 
 // ═══ HELPERS ═══
-
-// Cherche un pattern UNIQUEMENT au début de ligne (top-level, pas indenté)
 function _findTopLevel(pat, after) {
   for (let i = (after || 0); i < lines.length; i++) {
     if (lines[i].startsWith(pat)) return i;
@@ -64,13 +62,6 @@ function _findTopLevel(pat, after) {
   return -1;
 }
 
-// Cherche n'importe où dans la ligne
-function _findLine(pat, after) {
-  for (let i = (after || 0); i < lines.length; i++) if (lines[i].includes(pat)) return i;
-  return -1;
-}
-
-// Bracket balancer: {} ET [] ET strings ET comments
 function _extractBalanced(startIdx) {
   if (startIdx < 0) return { text: '', endIdx: startIdx };
   let dB = 0, dK = 0, started = false, inStr = 0;
@@ -102,7 +93,7 @@ function _extractBalanced(startIdx) {
 // ═══ EXTRACTION CIBLÉE ═══
 const parts = [];
 
-// 1. LOIS_BELGES (le gros objet, au top-level)
+// 1. LOIS_BELGES (le gros objet)
 const loisIdx = _findTopLevel('var LOIS_BELGES');
 if (loisIdx >= 0 && !lines[loisIdx].includes('TIMELINE') && !lines[loisIdx].includes('CURRENT')) {
   const { text } = _extractBalanced(loisIdx);
@@ -112,7 +103,7 @@ if (loisIdx >= 0 && !lines[loisIdx].includes('TIMELINE') && !lines[loisIdx].incl
   }
 }
 
-// 2. WHITELIST: uniquement les vars/fonctions nécessaires, au TOP-LEVEL uniquement
+// 2. WHITELIST top-level entre LOIS_BELGES et LEGAL
 const legalIdx = _findTopLevel('var LEGAL=');
 const middleWhitelist = [
   'var TX_ONSS_W',
@@ -125,7 +116,6 @@ const middleWhitelist = [
   'var _BONUS',
 ];
 for (const pat of middleWhitelist) {
-  // CRITIQUE: _findTopLevel cherche UNIQUEMENT les lignes sans indentation
   const idx = _findTopLevel(pat);
   if (idx >= 0 && idx < legalIdx) {
     if (lines[idx].trim().endsWith(';')) {
@@ -146,7 +136,7 @@ if (legalIdx >= 0) {
   console.log(`  ✓ LEGAL: ligne ${legalIdx+1} (${text.split('\n').length} lignes)`);
 }
 
-// 4. Fonctions métier (APRÈS LEGAL, au top-level)
+// 4. Fonctions métier (APRÈS LEGAL, top-level)
 const afterLegal = legalIdx > 0 ? legalIdx + 100 : 1000;
 const targets = [
   'function calc(',
@@ -172,19 +162,28 @@ src = src.replace(/import\s+.*?from\s+['"].*?['"];?\s*/gm, '');
 src = src.replace(/export\s+default\s+/gm, 'var __exported__ = ');
 src = src.replace(/export\s+/gm, '');
 
-// BLACKLIST: supprimer toute ligne qui référence des fonctions non-extraites
-src = src.replace(/^.*\bapplyTimeline\b.*$/gm, '// [removed]');
-src = src.replace(/^.*\bsyncLoisBelges\b.*$/gm, '// [removed]');
-src = src.replace(/^.*\bcheckLoisBelgesOutdated\b.*$/gm, '// [removed]');
-src = src.replace(/^.*\bLangProvider\b.*$/gm, '// [removed]');
+// ═══ BLACKLIST AGRESSIF: supprimer TOUTE ligne contenant ces patterns ═══
+const blacklist = [
+  'applyTimeline', 'syncLoisBelges', 'checkLoisBelgesOutdated',
+  'LangProvider', 'LangCtx', 'createContext', 'useContext',
+  'setLang', 'changeLan', 'useState', 'useEffect', 'useRef',
+  'useCallback', 'useMemo', '.Provider', '.Consumer',
+  'onClick', 'onChange', 'onSubmit', 'onKeyDown', 'onBlur',
+  'className', 'style={{',
+];
+for (const pat of blacklist) {
+  const escaped = pat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  src = src.replace(new RegExp('^.*' + escaped + '.*$', 'gm'), '// [removed]');
+}
 
-// Filet JSX
-src = src.replace(/^.*return\s+\(?<[A-Za-z].*$/gm, '// [JSX]');
-src = src.replace(/^.*<\/[a-zA-Z].*>.*$/gm, '// [JSX]');
-src = src.replace(/^\s*<[a-zA-Z].*$/gm, '// [JSX]');
-src = src.replace(/^.*\bonClick\b.*$/gm, '// [JSX]');
-src = src.replace(/^.*\bclassName[=\s].*$/gm, '// [JSX]');
-src = src.replace(/^.*\.Provider\b.*$/gm, '// [JSX]');
+// i18n translations
+src = src.replace(/^\s*'[^']+':.*\{\s*fr:.*$/gm, '// [removed]');
+src = src.replace(/^\s*"[^"]+":.*\{\s*fr:.*$/gm, '// [removed]');
+
+// JSX tags
+src = src.replace(/^.*return\s+\(?<[A-Za-z].*$/gm, '// [removed]');
+src = src.replace(/^.*<\/[a-zA-Z].*>.*$/gm, '// [removed]');
+src = src.replace(/^\s*<[a-zA-Z].*$/gm, '// [removed]');
 
 try {
   const vm = require('vm');
