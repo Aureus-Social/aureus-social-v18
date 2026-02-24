@@ -106,11 +106,16 @@ if (loisIdx >= 0 && !lines[loisIdx].includes('TIMELINE') && !lines[loisIdx].incl
 // 2. WHITELIST top-level entre LOIS_BELGES et LEGAL
 const legalIdx = _findTopLevel('var LEGAL=');
 const middleWhitelist = [
+  'var LB',
   'var TX_ONSS_W',
   'var TX_ONSS_E',
   'function calcPPFromLois',
   'var _OW',
   'var _OE',
+  'var _BM',
+  'var _BE',
+  'var _BONUS',
+];
   'var _BM',
   'var _BE',
   'var _BONUS',
