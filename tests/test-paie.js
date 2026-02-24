@@ -57,24 +57,49 @@ const srcPath = path.join(__dirname, '..', 'app', 'AureusSocialPro.js');
 const fullSrc = fs.readFileSync(srcPath, 'utf-8');
 const lines = fullSrc.split('\n');
 
-// ═══ EXTRACTION DYNAMIQUE PAR MARQUEURS (résiste aux changements de taille) ═══
+// ═══ EXTRACTION DYNAMIQUE PAR MARQUEURS ═══
 function _findLine(ls, pat) { for (let i = 0; i < ls.length; i++) if (ls[i].includes(pat)) return i; return -1; }
+
+// Block1: Du début jusqu'à la fin de LOIS_BELGES (brace-balanced, ~ligne 378)
+// On s'arrête ICI pour éviter tout le code i18n/React/JSX qui suit
+const _loisStart = _findLine(lines, 'var LOIS_BELGES');
+let _loisEnd = _loisStart, _d = 0;
+for (let i = _loisStart; i < lines.length; i++) {
+  for (const c of lines[i]) { if (c === '{') _d++; if (c === '}') _d--; }
+  if (_d === 0 && i > _loisStart) { _loisEnd = i + 1; break; }
+}
+
+// Aussi récupérer les var/const standalone entre LOIS_BELGES et le i18n
+let _safeEnd = _loisEnd;
+for (let i = _loisEnd; i < lines.length; i++) {
+  const t = lines[i].trim();
+  if (t === '' || t.startsWith('//')) {
+    _safeEnd = i + 1;
+  } else if ((t.startsWith('var ') || t.startsWith('const ') || t.startsWith('let ')) && !t.includes('createContext') && !t.includes('useContext') && !t.includes('Provider') && !t.includes('changeLan') && !t.includes('setLang') && !t.includes("'cli.") && !t.includes('<')) {
+    _safeEnd = i + 1;
+  } else if (t.startsWith('function ') && !t.includes('LangProvider') && !t.includes('return') && !t.includes('<')) {
+    let fd = 0, fEnd = i;
+    for (let j = i; j < lines.length; j++) {
+      for (const c of lines[j]) { if (c === '{') fd++; if (c === '}') fd--; }
+      if (fd === 0 && j > i) { fEnd = j + 1; break; }
+    }
+    _safeEnd = fEnd;
+  } else {
+    break;
+  }
+}
 
 const _legIdx = _findLine(lines, 'var LEGAL=');
 const _calcIdx = _findLine(lines, 'function calc(');
 const _ppIdx = _findLine(lines, 'function calcPrecompteExact(');
 const _indepIdx = _findLine(lines, 'function calcIndependant(');
 
-console.log(`  Marqueurs: LEGAL=${_legIdx+1}, calc=${_calcIdx+1}, PP=${_ppIdx+1}, Indep=${_indepIdx+1}`);
+console.log(`  LOIS_BELGES: 0-${_loisEnd}, safe: 0-${_safeEnd}`);
+console.log(`  Marqueurs: LEGAL=${_legIdx + 1}, calc=${_calcIdx + 1}, PP=${_ppIdx + 1}, Indep=${_indepIdx + 1}`);
 
-// Block1: Tout avant LEGAL (LOIS_BELGES + constantes + helpers)
-// Le JSX sera nettoyé ci-dessous
-const block1 = lines.slice(0, _legIdx).join('\n');
-// Block2: LEGAL constant (200 lignes)
+const block1 = lines.slice(0, _safeEnd).join('\n');
 const block2 = _legIdx > -1 ? lines.slice(_legIdx, _legIdx + 200).join('\n') : '';
-// Block3: calc() jusqu'à calcPrecompteExact
 const block3 = (_calcIdx > -1 && _ppIdx > -1) ? lines.slice(_calcIdx, _ppIdx).join('\n') : '';
-// Block4: calcPrecompteExact → fin calcIndependant
 const block4 = _ppIdx > -1 ? lines.slice(_ppIdx, _indepIdx > -1 ? _indepIdx + 300 : _ppIdx + 600).join('\n') : '';
 
 // ═══ NETTOYAGE IMPORTS/EXPORTS ═══
@@ -85,12 +110,9 @@ src = src.replace(/export\s+default\s+/gm, 'var __exported__ = ');
 src = src.replace(/export\s+/gm, '');
 
 // ═══ NETTOYAGE JSX / REACT AGRESSIF ═══
-// Phase 1: Tags JSX
 src = src.replace(/^.*return\s+\(?<.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*<\/[a-zA-Z].*>.*$/gm, '// [JSX removed]');
 src = src.replace(/^\s*<[a-zA-Z][a-zA-Z0-9.]*[\s{/>].*$/gm, '// [JSX removed]');
-
-// Phase 2: Event handlers React et props JSX
 src = src.replace(/^.*\bonClick\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\bonChange\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\bonSubmit\b.*$/gm, '// [JSX removed]');
@@ -98,16 +120,12 @@ src = src.replace(/^.*\bonKeyDown\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\bonBlur\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\bstyle\s*=\s*\{\{.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\bclassName[=\s:{].*$/gm, '// [JSX removed]');
-
-// Phase 3: CSS inline (entre tags JSX)
 src = src.replace(/^\s+padding:.*borderRadius.*$/gm, '// [JSX removed]');
 src = src.replace(/^\s+padding:.*cursor.*$/gm, '// [JSX removed]');
 src = src.replace(/^\s+fontWeight:.*$/gm, '// [JSX removed]');
 src = src.replace(/^\s+fontSize:.*fontWeight.*$/gm, '// [JSX removed]');
 src = src.replace(/^\s+background(?:Color)?:.*color:.*$/gm, '// [JSX removed]');
 src = src.replace(/^\s+cursor:.*border:.*$/gm, '// [JSX removed]');
-
-// Phase 4: React hooks et context
 src = src.replace(/^.*\bcreateContext\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\buseContext\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\buseState\b.*$/gm, '// [JSX removed]');
@@ -119,21 +137,9 @@ src = src.replace(/^.*\.Provider\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\.Consumer\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\bsetLang\b.*$/gm, '// [JSX removed]');
 src = src.replace(/^.*\bchangeLan\b.*$/gm, '// [JSX removed]');
-
-// Phase 5: i18n (objets traduction fr/nl)
 src = src.replace(/^\s*'[^']+':.*\{\s*fr:.*$/gm, '// [JSX removed]');
 src = src.replace(/^\s*"[^"]+":.*\{\s*fr:.*$/gm, '// [JSX removed]');
-
-// Phase 6: Composants React (function XxxYyy)
 src = src.replace(/^function LangProvider\b.*$/gm, '// [JSX removed]');
-src = src.replace(/^function [A-Z][a-zA-Z]*\s*\(\s*\{.*\}\s*\)\s*\{.*$/gm, '// [JSX removed]');
-
-// Phase 7: Artéfacts JSX restants
-src = src.replace(/^\s*\}\)\}\s*$/gm, '// [JSX removed]');
-src = src.replace(/^\s*\}\);\s*$/gm, function(m, o, s) {
-  // Garder si c'est un vrai JS (fin de bloc), supprimer si c'est du JSX résiduel
-  return m;
-});
 
 try {
   const vm = require('vm');
@@ -145,7 +151,6 @@ try {
     Intl,
     module: { exports: {} },
     exports: {},
-    // React stubs
     React: global.React,
     useState: global.useState,
     useEffect: global.useEffect,
@@ -157,7 +162,6 @@ try {
   };
 
   const ctx = vm.createContext(sandbox);
-  // Écrire le code extrait pour debug
   fs.writeFileSync(path.join(__dirname, 'extracted-logic.js'), src);
   console.log(`  Extracted: ${src.split('\n').length} lignes → extracted-logic.js`);
   vm.runInContext(src, ctx);
@@ -460,9 +464,6 @@ try {
       assert(r2.cotisAnnuelle > r1.cotisAnnuelle, `Cotis 50k (${r2.cotisAnnuelle}) > 20k (${r1.cotisAnnuelle})`);
     });
 
-    // ══════════════════════════════════════════════════════════════
-    // TABLEAU INDÉPENDANTS
-    // ══════════════════════════════════════════════════════════════
     console.log('\n═══ TABLEAU INDÉPENDANTS ═══');
     console.log('  Revenu net  │ Cotis soc.  │ Frais gest │ IPP        │ Net dispo  │ Taux');
     console.log('  ────────────┼─────────────┼────────────┼────────────┼────────────┼──────');
@@ -484,12 +485,8 @@ try {
       try {
         const emp = { ...emp3500, monthlySalary: brut };
         const r = calc(emp, per0, co0);
-        const pp = r.pp || r.tax || 0;
-        const csss = r.csss || r.css || 0;
-        const net = r.net || 0;
-        const costTotal = r.coutTotal || r.costTotal || 0;
-        const pctNet = net > 0 ? (net / brut * 100).toFixed(1) : '0.0';
-        console.log(`  ${String(fmt(brut)).padEnd(9)}│ ${String(fmt(r.onssW || 0)).padEnd(11)} │ ${String(fmt(pp)).padEnd(9)} │ ${String(fmt(csss)).padEnd(8)} │ ${String(fmt(net)).padEnd(9)} │ ${String(fmt(costTotal)).padEnd(9)} │ ${pctNet}%`);
+        const pctNet = (r.net / brut * 100).toFixed(1);
+        console.log(`  ${String(fmt(brut)).padEnd(9)}│ ${String(fmt(r.onssW)).padEnd(11)} │ ${String(fmt(r.tax)).padEnd(9)} │ ${String(fmt(r.css)).padEnd(8)} │ ${String(fmt(r.net)).padEnd(9)} │ ${String(fmt(r.costTotal)).padEnd(9)} │ ${pctNet}%`);
       } catch (e) {
         console.log(`  ${String(fmt(brut)).padEnd(9)}│ ERREUR: ${e.message}`);
       }
