@@ -59,10 +59,10 @@ function _findLine(pat, after) {
   return -1;
 }
 
-// ═══ BRACKET BALANCER: gère {} ET [] ET strings ET comments ═══
+// Bracket balancer: {} ET [] ET strings ET comments
 function _extractBalanced(startIdx) {
   if (startIdx < 0) return { text: '', endIdx: startIdx };
-  let dBrace = 0, dBrack = 0, started = false, inStr = 0;
+  let dB = 0, dK = 0, started = false, inStr = 0;
   for (let i = startIdx; i < lines.length; i++) {
     const line = lines[i];
     for (let j = 0; j < line.length; j++) {
@@ -73,28 +73,28 @@ function _extractBalanced(startIdx) {
         if (c === '"') { inStr = 2; continue; }
         if (c === '`') { inStr = 3; continue; }
         if (c === '/' && j+1 < line.length && line[j+1] === '/') break;
-        if (c === '{') { dBrace++; started = true; }
-        if (c === '}') dBrace--;
-        if (c === '[') { dBrack++; started = true; }
-        if (c === ']') dBrack--;
+        if (c === '{') { dB++; started = true; }
+        if (c === '}') dB--;
+        if (c === '[') { dK++; started = true; }
+        if (c === ']') dK--;
       } else if (inStr === 1 && c === "'") inStr = 0;
       else if (inStr === 2 && c === '"') inStr = 0;
       else if (inStr === 3 && c === '`') inStr = 0;
     }
-    if (started && dBrace === 0 && dBrack === 0) {
+    if (started && dB === 0 && dK === 0) {
       return { text: lines.slice(startIdx, i + 1).join('\n'), endIdx: i + 1 };
     }
   }
   return { text: lines.slice(startIdx, Math.min(startIdx + 300, lines.length)).join('\n'), endIdx: startIdx + 300 };
 }
 
-// ═══ EXTRACTION CIBLÉE ═══
+// ═══ EXTRACTION CIBLÉE PAR WHITELIST ═══
 const parts = [];
 
-// 1. LOIS_BELGES (le gros objet >10 lignes)
+// 1. LOIS_BELGES (le gros objet)
 for (let i = 0; i < lines.length; i++) {
   if (lines[i].includes('var LOIS_BELGES') && !lines[i].includes('TIMELINE') && !lines[i].includes('CURRENT')) {
-    const { text, endIdx } = _extractBalanced(i);
+    const { text } = _extractBalanced(i);
     if (text.split('\n').length > 10) {
       parts.push(text);
       console.log(`  ✓ LOIS_BELGES: ligne ${i+1} (${text.split('\n').length} lignes)`);
@@ -103,55 +103,32 @@ for (let i = 0; i < lines.length; i++) {
   }
 }
 
-// 2. Helpers entre LOIS_BELGES end et section React/i18n
-// On scanne jusqu'à LEGAL, on prend var/const/function lowercase
-const loisEndLine = parts[0] ? parts[0].split('\n').length + _findLine('var LOIS_BELGES') : 380;
+// 2. WHITELIST des éléments nécessaires entre LOIS_BELGES et LEGAL
+// Dépendances: LEGAL a besoin de _OW, _OE; _OW a besoin de TX_ONSS_W;
+// calcPrecompteExact a besoin de calcPPFromLois
+const middleWhitelist = [
+  'var TX_ONSS_W',
+  'var TX_ONSS_E',
+  'function calcPPFromLois',
+  'var _OW',
+  'var _OE',
+  'var _BM',
+  'var _BE',
+  'var _BONUS',
+];
 const legalIdx = _findLine('var LEGAL=');
-let i = loisEndLine;
-while (i < (legalIdx > 0 ? legalIdx : loisEndLine + 800)) {
-  const t = lines[i].trim();
-
-  if (t === '' || t.startsWith('//')) { i++; continue; }
-
-  // React/JSX → skip
-  if (/<[a-zA-Z]/.test(t) || t.includes('.Provider') || t.includes('changeLan') ||
-      t.includes('createContext') || t.includes('useContext') || t.includes('useState(') ||
-      t.includes('setLang') || t.includes('LangProvider') ||
-      /^\s*'[^']+':\s*\{.*fr:/.test(t) || /^\s*"[^"]+":\s*\{.*fr:/.test(t)) { i++; continue; }
-
-  // PascalCase function → skip whole body
-  if (/^function\s+[A-Z]/.test(t)) {
-    const { endIdx } = _extractBalanced(i);
-    i = endIdx;
-    continue;
-  }
-
-  // var/const/let
-  if (/^(var|const|let)\s+/.test(t)) {
-    if (t.endsWith(';')) {
-      parts.push(lines[i]);
-      i++;
+for (const pat of middleWhitelist) {
+  const idx = _findLine(pat);
+  if (idx >= 0 && idx < legalIdx) {
+    if (lines[idx].trim().endsWith(';')) {
+      parts.push(lines[idx]);
+      console.log(`  ✓ ${pat}: ligne ${idx+1} (1 ligne)`);
     } else {
-      const { text, endIdx } = _extractBalanced(i);
+      const { text } = _extractBalanced(idx);
+      console.log(`  ✓ ${pat}: ligne ${idx+1} (${text.split('\n').length} lignes)`);
       parts.push(text);
-      const name = t.match(/(var|const|let)\s+(\w+)/)?.[2] || '?';
-      console.log(`  ✓ ${name}: ligne ${i+1} (${text.split('\n').length} lignes)`);
-      i = endIdx;
     }
-    continue;
   }
-
-  // Lowercase function
-  if (/^function\s+[a-z_]/.test(t)) {
-    const { text, endIdx } = _extractBalanced(i);
-    const name = t.match(/function\s+([a-z_]\w*)/)?.[1] || '?';
-    console.log(`  ✓ ${name}: ligne ${i+1} (${text.split('\n').length} lignes)`);
-    parts.push(text);
-    i = endIdx;
-    continue;
-  }
-
-  i++;
 }
 
 // 3. var LEGAL
@@ -161,7 +138,7 @@ if (legalIdx >= 0) {
   console.log(`  ✓ LEGAL: ligne ${legalIdx+1} (${text.split('\n').length} lignes)`);
 }
 
-// 4. Fonctions métier (APRÈS LEGAL uniquement!)
+// 4. Fonctions métier ciblées (APRÈS LEGAL)
 const afterLegal = legalIdx > 0 ? legalIdx + 100 : 1000;
 const targets = [
   'function calc(',
@@ -261,8 +238,8 @@ try {
     assert(r.pp !== undefined && r.rate !== undefined && r.detail !== undefined, 'structure incomplète');
   });
   test('PP 2000€ isolé ≈ 30-300€', () => {
-    assert(calcPrecompteExact(2000, { situation: 'isole', enfants: 0 }).pp >= 30, 'trop bas');
-    assert(calcPrecompteExact(2000, { situation: 'isole', enfants: 0 }).pp <= 300, 'trop haut');
+    const pp = calcPrecompteExact(2000, { situation: 'isole', enfants: 0 }).pp;
+    assert(pp >= 30 && pp <= 300, `PP 2000€ = ${pp}`);
   });
   test('PP 3500€ isolé ≈ 500-800€', () => {
     const pp = calcPrecompteExact(3500, { situation: 'isole', enfants: 0 }).pp;
