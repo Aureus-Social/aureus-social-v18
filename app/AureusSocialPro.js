@@ -5264,6 +5264,17 @@ function ClientsPage({s,d,user,userRole,onLogout,veilleNotif,setVeilleNotif}){
 function AppInner({ supabase, user, onLogout }) {
   const [loggedIn,setLoggedIn]=useState(true);
   const [userRole,setUserRole]=useState('admin');
+  const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('aureus_theme')||'dark'}catch(e){return 'dark'}});
+  const toggleTheme=()=>{const next=theme==='dark'?'light':'dark';setTheme(next);try{localStorage.setItem('aureus_theme',next)}catch(e){}};
+  const isDark=theme==='dark';
+  const T={
+    bg:isDark?'#060810':'#f5f3ee',bg2:isDark?'#0a0e1a':'#eae7e0',bg3:isDark?'rgba(255,255,255,.02)':'rgba(0,0,0,.03)',
+    sidebar:isDark?'#060810':'#1a1a2e',sidebarText:isDark?'#9e9b93':'#d4d0c8',
+    text:isDark?'#e8e6e0':'#1a1a1a',textSub:isDark?'#9e9b93':'#555',textMuted:isDark?'#5e5c56':'#999',
+    card:isDark?'rgba(255,255,255,.02)':'rgba(0,0,0,.02)',cardBorder:isDark?'rgba(255,255,255,.04)':'rgba(0,0,0,.08)',
+    gold:'#c6a34e',goldBg:isDark?'rgba(198,163,78,.04)':'rgba(198,163,78,.08)',
+    inputBg:isDark?'rgba(0,0,0,.3)':'#fff',inputBorder:isDark?'rgba(198,163,78,.2)':'rgba(0,0,0,.15)',
+  };
   const [loading,setLoading]=useState(true);
   const [saved,setSaved]=useState(null);
   
@@ -5585,7 +5596,7 @@ function AppInner({ supabase, user, onLogout }) {
 
   // ── Early returns (AFTER all hooks) ──
   // Client portal detection moved after component definition (see below)
-  if(loading)return <div style={{minHeight:'100vh',background:"#060810",display:'flex',alignItems:'center',justifyContent:'center'}}>
+  if(loading)return <div style={{minHeight:'100vh',background:T.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
     <div style={{textAlign:'center'}}>
       <div style={{width:56,height:56,borderRadius:14,background:"linear-gradient(135deg,#c6a34e,#a68a3c)",display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,fontWeight:800,color:'#060810',fontFamily:"'Cormorant Garamond',serif",margin:'0 auto 16px',animation:'pulse 2s ease infinite'}}>A</div>
       <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:32,fontWeight:700,background:"linear-gradient(135deg,#c6a34e,#e2c878,#c6a34e)",WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',marginBottom:8}}>AUREUS SOCIAL</div>
@@ -19405,13 +19416,27 @@ const pg=()=>{
   if(userRole==='client') return <PortailClientSS s={s} d={d} supabase={supabase} user={user} clientData={s.clients?.find(c=>c.company?.email===user?.email)||s.clients?.[0]||{}}/>;
 
   return (
-    <div style={{minHeight:'100vh',background:"#060810",color:'#d4d0c8',fontFamily:`'Outfit','DM Sans',system-ui,sans-serif`,display:'flex'}}>
+    <div data-theme={theme} style={{minHeight:'100vh',background:T.bg,color:isDark?'#d4d0c8':'#333',fontFamily:`'Outfit','DM Sans',system-ui,sans-serif`,display:'flex',transition:'background .3s,color .3s'}}>
       <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"/>
       <style>{`
         *{box-sizing:border-box}
         ::-webkit-scrollbar{width:6px}
         ::-webkit-scrollbar-track{background:transparent}
         ::-webkit-scrollbar-thumb{background:rgba(198,163,78,.15);border-radius:3px}
+        [data-theme="light"] .aureus-main{background:#f5f3ee!important;color:#1a1a1a!important}
+        [data-theme="light"] .aureus-main div,[data-theme="light"] .aureus-main span,[data-theme="light"] .aureus-main p,[data-theme="light"] .aureus-main td,[data-theme="light"] .aureus-main th,[data-theme="light"] .aureus-main label{color:inherit}
+        [data-theme="light"] .aureus-main h1,[data-theme="light"] .aureus-main h2,[data-theme="light"] .aureus-main h3{color:#1a1a1a!important}
+        [data-theme="light"] .aureus-main [style*="color: rgb(232, 230, 224)"],[data-theme="light"] .aureus-main [style*="color:#e8e6e0"]{color:#1a1a1a!important}
+        [data-theme="light"] .aureus-main [style*="background: rgba(255, 255, 255, 0.02)"],[data-theme="light"] .aureus-main [style*="background:rgba(255,255,255,.02)"]{background:rgba(0,0,0,.03)!important}
+        [data-theme="light"] .aureus-main [style*="background: rgba(198, 163, 78, 0.04)"],[data-theme="light"] .aureus-main [style*="background:rgba(198,163,78,.04)"]{background:rgba(198,163,78,.08)!important}
+        [data-theme="light"] .aureus-main [style*="border: 1px solid rgba(255, 255, 255"],[data-theme="light"] .aureus-main [style*="border:1px solid rgba(255,255,255"]{border-color:rgba(0,0,0,.1)!important}
+        [data-theme="light"] .aureus-main [style*="border-bottom: 1px solid rgba(255, 255, 255"],[data-theme="light"] .aureus-main [style*="borderBottom:\"1px solid rgba(255,255,255"]{border-bottom-color:rgba(0,0,0,.08)!important}
+        [data-theme="light"] .aureus-main [style*="color: rgb(94, 92, 86)"],[data-theme="light"] .aureus-main [style*="color:#5e5c56"]{color:#888!important}
+        [data-theme="light"] .aureus-main [style*="color: rgb(158, 155, 147)"],[data-theme="light"] .aureus-main [style*="color:#9e9b93"]{color:#555!important}
+        [data-theme="light"] .aureus-main input,[data-theme="light"] .aureus-main select,[data-theme="light"] .aureus-main textarea{background:#fff!important;color:#1a1a1a!important;border-color:rgba(0,0,0,.15)!important}
+        [data-theme="light"] .aureus-main table{background:#fff}
+        [data-theme="light"] .aureus-main button{transition:all .15s}
+        [data-theme="light"]{scrollbar-color:rgba(198,163,78,.25) #f5f3ee}
         ::-webkit-scrollbar-thumb:hover{background:rgba(198,163,78,.25)}
         @keyframes fadeInPage{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
         input:focus,select:focus{border-color:rgba(198,163,78,.3)!important;outline:none}
@@ -19517,14 +19542,20 @@ const pg=()=>{
           })}
         </nav>
         <div style={{padding:'12px 16px',borderTop:'1px solid rgba(139,115,60,.1)',fontSize:9,color:'#5e5c56'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <button onClick={toggleTheme} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 12px',borderRadius:8,border:'1px solid rgba(198,163,78,.2)',background:isDark?'rgba(255,255,255,.03)':'rgba(198,163,78,.1)',color:isDark?'#c6a34e':'#8b6914',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',transition:'all .2s'}}>
+              {isDark?'☀️ Mode Jour':'🌙 Mode Nuit'}
+            </button>
+            <span style={{color:'#8b7340',fontWeight:600,fontSize:9}}>{AUREUS_INFO.version}</span>
+          </div>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <span>{s.co.vat||'Aureus IA SPRL'}</span>
-            <span style={{color:'#8b7340',fontWeight:600}}>{AUREUS_INFO.version} Pro — {AUREUS_INFO.sprint}</span>
+            <span style={{color:'#8b7340',fontWeight:600}}>{AUREUS_INFO.sprint}</span>
           </div>
         </div>
       </aside>
 
-      <main className="aureus-main" style={{marginLeft:isMobile?0:268,flex:1,padding:isMobile?'60px 12px 12px':'26px 34px',minHeight:'100vh',animation:'fadeInPage .3s ease'}}>{pg()}</main>
+      <main className="aureus-main" style={{marginLeft:isMobile?0:268,flex:1,padding:isMobile?'60px 12px 12px':'26px 34px',minHeight:'100vh',animation:'fadeInPage .3s ease',background:T.bg,color:T.text,transition:'background .3s,color .3s'}}>{pg()}</main>
 
       <ToastContainer/>
       {s.modal&&<div style={{position:'fixed',inset:0,background:"rgba(0,0,0,.75)",backdropFilter:'blur(6px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}} onClick={()=>d({type:"MODAL",m:null})}>
