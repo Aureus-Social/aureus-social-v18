@@ -27015,7 +27015,7 @@ function FloatingLegalAgent({onAction}){
     const actionMatch=text.match(/\|\|\|ACTION\|\|\|([\s\S]*?)\|\|\|END\|\|\|/);
     if(actionMatch){
       try{
-        const actionData=(()=>{try{return JSON.parse(actionMatch[1].trim())}catch(e){return null}})());
+        const actionData=(()=>{try{return JSON.parse(actionMatch[1].trim()}catch(e){return null}})());
         if(onAction){
           onAction(actionData);
           setActionLog(prev=>[...prev,{time:new Date().toISOString(),action:actionData.action,data:actionData.data}]);
