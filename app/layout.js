@@ -10,12 +10,7 @@ export const metadata = {
     statusBarStyle: 'black-translucent',
     title: 'AureusPro',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
+
   icons: {
     icon: [
       { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
@@ -23,6 +18,13 @@ export const metadata = {
     ],
     apple: '/apple-touch-icon.png',
   },
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({ children }) {
@@ -149,11 +151,7 @@ export default function RootLayout({ children }) {
             }
           };
           
-          // Geo-IP for security
-          window._geoInfo = null;
-          fetch('https://ipapi.co/json/').then(r=>r.json()).then(d=>{
-            window._geoInfo = { ip: d.ip, country: d.country_code, city: d.city, region: d.region, org: d.org };
-          }).catch(()=>{});
+          // Geo-IP disabled (CSP restriction)
           
           // Online/offline indicator
           window.addEventListener('online', () => {

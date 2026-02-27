@@ -43,7 +43,7 @@ const CSP_POLICY = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https://*.supabase.co https://*.googleapis.com",
-  "connect-src 'self' https://*.supabase.co https://*.vercel.app wss://*.supabase.co",
+  "connect-src 'self' https://*.supabase.co https://*.vercel.app wss://*.supabase.co https://ipapi.co https://*.aureussocial.be",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
