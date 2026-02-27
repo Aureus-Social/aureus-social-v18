@@ -3,6 +3,9 @@
 import { useState, useReducer, useRef, useMemo, useEffect, useCallback, createContext, useContext } from "react";
 import AccessManagement from "./modules/AccessManagement";
 import CommissionsModule from "./modules/CommissionsModule";
+import dynamic from "next/dynamic";
+const ProceduresRHHub = dynamic(() => import("./modules/ProceduresRHHub"), { ssr: false });
+const AdminBaremes = dynamic(() => import("./modules/AdminBaremes"), { ssr: false });
 
 // ═══ SPRINT 37: MOTEUR CENTRAL LOIS BELGES — AUTO-UPDATE 1 CLIC  ═══
 // ══════════════════════════════════════════════════════════════════════
@@ -5372,128 +5375,145 @@ function AppInner({ supabase, user, onLogout }) {
 
   const {lang,t} = useLang();
   const nav=[
-    {id:"dashboard",l:t('nav.dashboard'),i:'◫'},
-    {id:"employees",l:t('nav.employees'),i:'◉'},
-    {id:"payslip",l:t('nav.payslip'),i:'◈'},
-    {id:"_sep1",l:"AUTOMATISATION",sep:true},
-    {id:"piloteauto",l:"Pilote Auto Total",i:"🏎️"},
-    {id:"compliance",l:"Compliance Radar",i:"🛡"},
-    {id:"autoindex",l:"Auto-Indexation",i:"📈"},
-    {id:"historique",l:"Historique Runs",i:"📊"},
-    {id:"sepa",l:"SEPA Virements",i:"💳"},
-    {id:"joursPrestes",l:"Jours Prestes",i:"📅"},
-    {id:"workflowAbs",l:"Workflow Absences",i:"🏖"},
-    {id:"regulPP",l:"Regularisation PP",i:"📊"},
-    {id:"exportWinbooks",l:"Export Winbooks/BOB",i:"📤"},
-    {id:"parserConcurrent",l:"Audit Concurrent",i:"🔍"},
-    {id:"smartalerts",l:"Smart Alerts",i:"🔔"},
-    {id:"batchdecl",l:"Declarations Batch",i:"📋"},
-    {id:"fiduciaire",l:"Hub Fiduciaire",i:"🏢"},
-    {id:"simulicenciement",l:"Simu Licenciement",i:"⚖️"},
-    {id:"couttotal",l:"Cout Total",i:"💰"},
-    {id:"timeline",l:"Timeline Paie",i:"📅"},
-    {id:"portailclient",l:"Portail Client",i:"🌐"},
-    {id:"reportingpro",l:"Reporting Pro",i:"📊"},
-    {id:"integrations",l:"Integrations",i:"🔌"},
-    {id:"absencespro",l:"Absences Pro",i:"🏖"},
-    {id:"exportcomptapro",l:"Export Compta",i:"📒"},
-    {id:"tableaudirection",l:"Tableau Direction",i:"🎯"},
-    {id:"primecalc",l:"Primes & Bonus",i:"🎁"},
-    {id:"gestionabs",l:"Gestion Absences",i:"🗓"},
-    {id:"formationsec",l:"Formation & Securite",i:"🎓"},
-    {id:"aidesemploi",l:"Aides a l'Emploi",i:"💶"},
-    {id:"elections",l:"Elections Sociales",i:"🗳"},
-    {id:"alcool",l:"Politique Alcool/Drogues",i:"🚫"},
-    {id:"risquespsycho",l:"Risques Psychosociaux",i:"🧠"},
-    {id:"paa",l:"Plan Action Annuel",i:"📋"},
-    {id:"planglobal",l:"Plan Global Prevention",i:"🛡"},
-    {id:"bilansocial",l:"Bilan Social",i:"📋"},
-    {id:"compteIndividuel",l:"Compte Individuel",i:"📄"},
-    {id:"formC4",l:"Formulaire C4",i:"📋"},
-    {id:"formC131",l:"Certificat Vacances C131",i:"🏖"},
-    {id:"accidentTravail",l:"Accident du Travail",i:"🚑"},
-    {id:"annexeReglement",l:"Annexe Reglement",i:"📜"},
-    {id:"belcotax281",l:"Belcotax 281.10 XML",i:"📊"},
-    {id:"exportcomptapro",l:"Export Compta Pro",i:"📒"},
-    {id:"gestionprimes",l:"Primes & Avantages",i:"🎁"},
-    {id:"tbdirection",l:"TB Direction",i:"📊"},
-    {id:"archives",l:"Archives GED",i:"🗄"},
-    {id:"optifiscale",l:"Opti Fiscale",i:"💡"},
-    {id:"authroles",l:"Roles & Permissions",i:"🔐"},
-    {id:"baremespp",l:"Baremes PP SPF",i:"📋"},
-    {id:"securitedata",l:"Securite Donnees",i:"🔒"},
-    {id:"monitoring",l:"Monitoring",i:"🖥"},
-    {id:"testsuite",l:"Test Suite",i:"🧪"},
-    {id:"onboardwizard",l:"Onboarding Wizard",i:"🚀"},
-    {id:"checklistclient",l:"Checklist Client",i:"✅"},
-    {id:"comparatif",l:"Comparatif Marche",i:"⚔️"},
-    {id:"duediligence",l:"Due Diligence",i:"🔍"},
-    {id:"gendocsjur",l:"Docs Juridiques",i:"📜"},
-    {id:"dashabsent",l:"Dash Absenteisme",i:"📊"},
-    {id:"flexijobs",l:"Flexi-Jobs",i:"⚡"},
-    {id:"chomagetemporaire",l:"Chomage Temporaire",i:"⏸"},
-    {id:"planifconges",l:"Planning Conges",i:"📅"},
-    {id:"registrepersonnel",l:"Registre Personnel",i:"📖"},
-    {id:"calcmaladie",l:"Salaire Garanti",i:"🏥"},
-    {id:"coutsannuel",l:"Couts Annuels",i:"📊"},
-    {id:"echeancier",l:"Echeancier Paiements",i:"💳"},
-    {id:"simutp",l:"Temps Partiel",i:"⏱"},
-    {id:"delegations",l:"Delegations Syndicales",i:"🏛"},
-    {id:"chargessociales",l:"Charges ONSS",i:"🏛"},
-    {id:"vehiculesatn",l:"Vehicules & ATN",i:"🚗"},
-    {id:"simupension",l:"Simulateur Pension",i:"🏖"},
-    {id:"ccts",l:"Conventions CCT",i:"📜"},
-    {id:"interimaires",l:"Interimaires",i:"👷"},
-    {id:"analytics",l:"Analytics",i:"📈"},
-    {id:"exportcompta",l:"Export Comptable",i:"📤"},
-    {id:"audittrail",l:"Audit Trail",i:"🔍"},
-    {id:"simembauche",l:"Simulateur Embauche",i:"🧮"},
-    {id:"ged",l:"GED Documents",i:"📁"},
-    {id:"portail",l:"Portail Employe",i:"👤"},
-    {id:"comparateur",l:"Comparateur Salarial",i:"⚖"},
-    {id:"planabs",l:"Planificateur Absences",i:"📅"},
-    {id:"dashrh",l:"Dashboard RH",i:"👥"},
-    {id:"budget",l:"Budget Previsionnel",i:"💰"},
-    {id:"echeancier",l:"Echeancier Paiements",i:"📆"},
-    {id:"facturation",l:"Facturation",i:"🧾"},
-    {id:"validation",l:"Validation Pre-Paie",i:"✅"},
-    {id:"exportbatch",l:"Export Batch",i:"📦"},
-    {id:"rgpd",l:"RGPD Compliance",i:"🔒"},
-    {id:"cloture",l:t("nav.cloture"),i:"🔄"},
-    {id:"notifications",l:t("nav.notifications"),i:"🔔"},
-    {id:"commandcenter",l:t("nav.commandcenter"),i:"🎯"},
-    {id:"autopilot",l:t("nav.autopilot"),i:"🤖"},
-    {id:"massengine",l:t("nav.massengine"),i:"🏭"},
-    {id:"queue",l:t("nav.queue"),i:"📋"},
-    {id:"onboarding",l:t("nav.onboarding"),i:"🆕"},
-    {id:"calcinstant",l:"Calcul Instantané",i:"🔁"},
-    {id:"calendrier",l:"Calendrier Social",i:"📅"},
-    {id:"rapports",l:"Rapports Mensuels",i:"📊"},
-    {id:"actionsrapides",l:"Actions Rapides",i:"⚡"},
-    {id:"importcsv",l:"Import CSV",i:"📥"},
-    {id:"onboarding2",l:"Nouvel Onboarding",i:"🚀"},
-    {id:"contratgen",l:"Contrats Legaux",i:"📝"},
-    {id:"dashclient",l:"Dashboard Client",i:"🏢"},
-    {id:"landing",l:"Page Commerciale",i:"🌐"},
-    {id:"notifcenter",l:"Notifications",i:"🔔"},
-    {id:"journal",l:"Journal Activite",i:"📋"},
-    {id:"baremescp",l:"Baremes CP",i:"📊"},
-    {id:"_sep2",l:"PAIE & SOCIAL",sep:true},
-    {id:"onss",l:t('nav.onss'),i:'◆',sub:[{id:"dimona",l:t('sub.dimona')},{id:"dmfa",l:t('sub.dmfa')},{id:"drs",l:t('sub.drs')},{id:"onss_dash",l:"Dashboard ONSS"}]},
-    {id:"fiscal",l:t('nav.fiscal'),i:'◇',sub:[{id:"belcotax",l:t('sub.belcotax')},{id:"precompte",l:t('sub.precompte')},{id:"atn",l:t('sub.atn')},{id:"baremespp",l:"📋 Baremes PP SPF"}]},
-    {id:"salaires",l:t('nav.salaires'),i:'◈',sub:[{id:"simcout",l:t('sub.simcout')},{id:"netbrut",l:t('sub.netbrut')},{id:"provisions",l:t('sub.provisions')},{id:"cumuls",l:t('sub.cumuls')},{id:"indexauto",l:t('sub.indexauto')},{id:"treizieme",l:t('sub.treizieme')},{id:"bonusemploi",l:t('sub.bonusemploi')}]},
-    {id:"avantages",l:t('nav.avantages'),i:'★',sub:[{id:"cheques",l:t('sub.cheques')},{id:"cafeteria",l:t('sub.cafeteria')},{id:"cct90",l:t('sub.cct90')},{id:"warrants",l:t('sub.warrants')},{id:"budgetmob",l:t('sub.budgetmob')}]},
-    {id:"_sep3",l:"RH & CONTRATS",sep:true},
-    {id:"contratsmenu",l:t('nav.contrats'),i:'▣',sub:[{id:"contrats",l:t('sub.contrats2')},{id:"reglement",l:t('sub.reglement')},{id:"preavis",l:t('sub.preavis')},{id:"pecsortie",l:t('sub.pecsortie')}]},
-    {id:"rh",l:t('nav.rh'),i:'◉',sub:[{id:"wf_embauche",l:"⚡ Embauche"},{id:"promesseembauche",l:"📄 Promesse Embauche"},{id:"wf_licenciement",l:"⚡ Licenciement"},{id:"wf_maladie",l:"⚡ Maladie"},{id:"absences",l:t('sub.absences')},{id:"credittemps",l:t('sub.credittemps')},{id:"pointage",l:t('sub.pointage')},{id:"medtravail",l:t('sub.medtravail')}]},
-    {id:"social",l:t('nav.social'),i:'◆',sub:[{id:"assloi",l:t('sub.assloi')},{id:"assgroupe",l:t('sub.assgroupe')},{id:"syndicales",l:t('sub.syndicales')},{id:"allocfam",l:t('sub.allocfam')},{id:"aidesemploi",l:t('sub.aidesemploi')}]},
-    {id:"legal",l:t('nav.legal'),i:'⚖',sub:[{id:"docsjuridiques",l:t('sub.docsjuridiques')},{id:"alertes",l:t('sub.alertes')},{id:"secteurs",l:t('sub.secteurs')},{id:"moteurlois",l:"⚖ Moteur Lois Belges"}]},
-    {id:"_sep4",l:"OUTILS & ADMIN",sep:true},
-    {id:"reporting",l:t('nav.reporting'),i:'▤',sub:[{id:"accounting",l:t('sub.accounting')},{id:"bilanbnb",l:t('sub.bilanbnb')},{id:"sepa",l:t('sub.sepa')},{id:"envoi",l:t('sub.envoi')},{id:"ged",l:t('sub.ged')}]},
-    {id:"aureussuite",l:"Aureus IA",i:'🔷',sub:[{id:"ia_turnover",l:"🧠 Prédiction Turnover"},{id:"ia_salaire",l:"💡 Reco Salariales"},{id:"ia_anomalies",l:"🔍 Anomalies"},{id:"what_if",l:"🔮 What-If"},{id:"kpi_dashboard",l:"📈 KPI Dashboard"}]},
-    {id:"portalmanager",l:t("nav.portalmanager"),i:"🏢"},
-    {id:"team",l:t('nav.team'),i:'👥'},
-    {id:"admin",l:"Admin",i:'👑',sub:[{id:"config",l:"⚙ Paramètres"},{id:"fraisgestion",l:"💰 Frais gestion"},{id:"gestionacces",l:"🔐 Gestion des Accès"},{id:"commissions",l:"💰 Commissions"},{id:"authroles",l:"🔑 Rôles & Permissions"},{id:"audit",l:"📋 Audit"},{id:"admin_billing",l:"🧾 Facturation"},{id:"comparatif",l:"⚔️ Comparatif Marche"},{id:"onboardwizard",l:"🚀 Onboarding"},{id:"checklistclient",l:"✅ Checklist Client"}]},
+    // ═══ 1. TABLEAU DE BORD ═══
+    {id:"_g1",l:"TABLEAU DE BORD",grp:true},
+    {id:"dashboard",l:"Dashboard Principal",i:'◫',g:1},
+    {id:"commandcenter",l:"Command Center",i:'🎯',g:1},
+    {id:"tbdirection",l:"Tableau Direction",i:'📊',g:1},
+    {id:"notifications",l:"Notifications",i:'🔔',g:1},
+    {id:"journal",l:"Journal Activite",i:'📋',g:1},
+    {id:"smartalerts",l:"Smart Alerts",i:'🔔',g:1},
+
+    // ═══ 2. GESTION PERSONNEL ═══
+    {id:"_g2",l:"GESTION PERSONNEL",grp:true},
+    {id:"employees",l:"Liste Employes",i:'◉',g:2},
+    {id:"onboarding",l:"Onboarding",i:'🆕',g:2},
+    {id:"repriseclient",l:"Reprise Concurrent",i:'🔄',g:2},
+    {id:"onboardwizard",l:"Onboarding Wizard",i:'🚀',g:2},
+    {id:"registrepersonnel",l:"Registre Personnel",i:'📖',g:2},
+    {id:"dashrh",l:"Dashboard RH",i:'👥',g:2},
+    {id:"portail",l:"Portail Employe",i:'👤',g:2},
+    {id:"portailclient",l:"Portail Client",i:'🌐',g:2},
+    {id:"checklistclient",l:"Checklist Client",i:'✅',g:2},
+    {id:"interimaires",l:"Interimaires",i:'👷',g:2},
+    {id:"proceduresrh",l:"Procedures RH (43)",i:'📋',g:2},
+    {id:"rh",l:"RH & Workflows",i:'◉',g:2,sub:[{id:"wf_embauche",l:"⚡ Embauche"},{id:"promesseembauche",l:"📄 Promesse Embauche"},{id:"wf_licenciement",l:"⚡ Licenciement"},{id:"wf_maladie",l:"⚡ Maladie"},{id:"absences",l:t('sub.absences')},{id:"credittemps",l:t('sub.credittemps')},{id:"pointage",l:t('sub.pointage')},{id:"medtravail",l:t('sub.medtravail')}]},
+
+    // ═══ 3. PAIE & CALCULS ═══
+    {id:"_g3",l:"PAIE & CALCULS",grp:true},
+    {id:"piloteauto",l:"Pilote Auto Total",i:'🏎️',g:3},
+    {id:"payslip",l:"Fiches de Paie",i:'◈',g:3},
+    {id:"calcinstant",l:"Calcul Instantane",i:'🔁',g:3},
+    {id:"validation",l:"Validation Pre-Paie",i:'✅',g:3},
+    {id:"cloture",l:"Cloture Mensuelle",i:'🔄',g:3},
+    {id:"soldetoutcompte",l:"Solde Tout Compte",i:'📑',g:3},
+    {id:"timeline",l:"Timeline Paie",i:'📅',g:3},
+    {id:"couttotal",l:"Cout Total",i:'💰',g:3},
+    {id:"coutsannuel",l:"Couts Annuels",i:'📊',g:3},
+    {id:"comparateur",l:"Comparateur Salarial",i:'⚖',g:3},
+    {id:"simembauche",l:"Simulateur Embauche",i:'🧮',g:3},
+    {id:"simulicenciement",l:"Simu Licenciement",i:'⚖️',g:3},
+    {id:"simutp",l:"Temps Partiel",i:'⏱',g:3},
+    {id:"simupension",l:"Simulateur Pension",i:'🏖',g:3},
+    {id:"baremescp",l:"Baremes CP",i:'📊',g:3},
+    {id:"baremespp",l:"Baremes PP SPF",i:'📋',g:3},
+    {id:"salaires",l:t('nav.salaires'),i:'◈',g:3,sub:[{id:"simcout",l:t('sub.simcout')},{id:"netbrut",l:t('sub.netbrut')},{id:"provisions",l:t('sub.provisions')},{id:"cumuls",l:t('sub.cumuls')},{id:"indexauto",l:t('sub.indexauto')},{id:"treizieme",l:t('sub.treizieme')},{id:"bonusemploi",l:t('sub.bonusemploi')}]},
+
+    // ═══ 4. PRIMES & AVANTAGES ═══
+    {id:"_g4",l:"PRIMES & AVANTAGES",grp:true},
+    {id:"gestionprimes",l:"56 Primes & Avantages",i:'🎁',g:4},
+    {id:"optifiscale",l:"Opti Fiscale",i:'💡',g:4},
+    {id:"vehiculesatn",l:"Vehicules & ATN",i:'🚗',g:4},
+    {id:"flexijobs",l:"Flexi-Jobs",i:'⚡',g:4},
+    {id:"avantages",l:t('nav.avantages'),i:'★',g:4,sub:[{id:"cheques",l:t('sub.cheques')},{id:"ecochequesv2",l:"🌿 Eco-Cheques"},{id:"plancafeteria",l:"☕ Plan Cafeteria"},{id:"cct90bonus",l:"🎯 Bonus CCT 90"},{id:"notefraisv2",l:"📎 Notes de Frais"},{id:"cafeteria",l:t('sub.cafeteria')},{id:"cct90",l:t('sub.cct90')},{id:"warrants",l:t('sub.warrants')},{id:"budgetmob",l:t('sub.budgetmob')}]},
+
+    // ═══ 5. DECLARATIONS & ONSS ═══
+    {id:"_g5",l:"DECLARATIONS & ONSS",grp:true},
+    {id:"onss",l:t('nav.onss'),i:'◆',g:5,sub:[{id:"dimona",l:t('sub.dimona')},{id:"dmfa",l:t('sub.dmfa')},{id:"drs",l:t('sub.drs')},{id:"onss_dash",l:"Dashboard ONSS"}]},
+    {id:"chargessociales",l:"Charges ONSS",i:'🏛',g:5},
+    {id:"declarations",l:"Declarations ONSS/SPF",i:'📡',g:5},
+    {id:"batchdecl",l:"Declarations Batch",i:'📋',g:5},
+    {id:"sepa",l:"SEPA Virements",i:'💳',g:5},
+    {id:"echeancier",l:"Echeancier Paiements",i:'💳',g:5},
+    {id:"chomagetemporaire",l:"Chomage Temporaire",i:'⏸',g:5},
+
+    // ═══ 6. FISCAL & COMPTABLE ═══
+    {id:"_g6",l:"FISCAL & COMPTABLE",grp:true},
+    {id:"fiscal",l:t('nav.fiscal'),i:'◇',g:6,sub:[{id:"belcotax",l:t('sub.belcotax')},{id:"precompte",l:t('sub.precompte')},{id:"atn",l:t('sub.atn')},{id:"baremespp",l:"📋 Baremes PP SPF"}]},
+    {id:"belcotax281",l:"Belcotax 281.10 XML",i:'📊',g:6},
+    {id:"exportcompta",l:"Export Comptable",i:'📤',g:6},
+    {id:"exportcomptapro",l:"Export Compta Pro",i:'📒',g:6},
+    {id:"exportWinbooks",l:"Export Winbooks/BOB",i:'📤',g:6},
+    {id:"exportbatch",l:"Export Batch",i:'📦',g:6},
+    {id:"facturation",l:"Facturation",i:'🧾',g:6},
+    {id:"budget",l:"Budget Previsionnel",i:'💰',g:6},
+    {id:"regulPP",l:"Regularisation PP",i:'📊',g:6},
+
+    // ═══ 7. ABSENCES & CONGES ═══
+    {id:"_g7",l:"ABSENCES & CONGES",grp:true},
+    {id:"workflowAbs",l:"Workflow Absences",i:'🏖',g:7},
+    {id:"gestionabs",l:"Gestion Absences",i:'🗓',g:7},
+    {id:"planifconges",l:"Planning Conges",i:'📅',g:7},
+    {id:"dashabsent",l:"Dash Absenteisme",i:'📊',g:7},
+    {id:"calcmaladie",l:"Salaire Garanti",i:'🏥',g:7},
+    {id:"joursPrestes",l:"Jours Prestes",i:'📅',g:7},
+    {id:"calendrier",l:"Calendrier Social",i:'📅',g:7},
+
+    // ═══ 8. CONTRATS & JURIDIQUE ═══
+    {id:"_g8",l:"CONTRATS & JURIDIQUE",grp:true},
+    {id:"contratsmenu",l:t('nav.contrats'),i:'▣',g:8,sub:[{id:"contrats",l:t('sub.contrats2')},{id:"reglement",l:t('sub.reglement')},{id:"preavis",l:t('sub.preavis')},{id:"pecsortie",l:t('sub.pecsortie')}]},
+    {id:"contratgen",l:"Contrats Legaux",i:'📝',g:8},
+    {id:"gendocsjur",l:"Docs Juridiques",i:'📜',g:8},
+    {id:"ccts",l:"Conventions CCT",i:'📜',g:8},
+    {id:"delegations",l:"Delegations Syndicales",i:'🏛',g:8},
+    {id:"legal",l:t('nav.legal'),i:'⚖',g:8,sub:[{id:"docsjuridiques",l:t('sub.docsjuridiques')},{id:"alertes",l:t('sub.alertes')},{id:"secteurs",l:t('sub.secteurs')},{id:"moteurlois",l:"⚖ Moteur Lois Belges"}]},
+    {id:"social",l:t('nav.social'),i:'◆',g:8,sub:[{id:"assloi",l:t('sub.assloi')},{id:"assgroupe",l:t('sub.assgroupe')},{id:"syndicales",l:t('sub.syndicales')},{id:"allocfam",l:t('sub.allocfam')},{id:"aidesemploi",l:t('sub.aidesemploi')}]},
+    {id:"accidentTravail",l:"Accident du Travail",i:'🚑',g:8},
+    {id:"annexeReglement",l:"Annexe Reglement",i:'📜',g:8},
+    {id:"formC4",l:"Formulaire C4",i:'📋',g:8},
+    {id:"formC131",l:"Certificat Vacances C131",i:'🏖',g:8},
+    {id:"compteIndividuel",l:"Compte Individuel",i:'📄',g:8},
+
+    // ═══ 9. REPORTING & OUTILS ═══
+    {id:"_g9",l:"REPORTING & OUTILS",grp:true},
+    {id:"reporting",l:t('nav.reporting'),i:'▤',g:9,sub:[{id:"accounting",l:t('sub.accounting')},{id:"bilanbnb",l:t('sub.bilanbnb')},{id:"sepa",l:t('sub.sepa')},{id:"envoi",l:t('sub.envoi')},{id:"ged",l:t('sub.ged')}]},
+    {id:"reportingpro",l:"Reporting Pro",i:'📊',g:9},
+    {id:"rapports",l:"Rapports Mensuels",i:'📊',g:9},
+    {id:"bilansocial",l:"Bilan Social",i:'📋',g:9},
+    {id:"analytics",l:"Analytics",i:'📈',g:9},
+    {id:"ged",l:"GED Documents",i:'📁',g:9},
+    {id:"archives",l:"Archives GED",i:'🗄',g:9},
+    {id:"importcsv",l:"Import CSV",i:'📥',g:9},
+    {id:"audittrail",l:"Audit Trail",i:'🔍',g:9},
+    {id:"formationsec",l:"Formation & Securite",i:'🎓',g:9},
+
+    // ═══ 10. AUTOMATISATION & IA ═══
+    {id:"_g10",l:"AUTOMATISATION & IA",grp:true},
+    {id:"autopilot",l:"Autopilot",i:'🤖',g:10},
+    {id:"massengine",l:"Mass Engine",i:'🏭',g:10},
+    {id:"queue",l:"File Traitement",i:'📋',g:10},
+    {id:"autoindex",l:"Auto-Indexation",i:'📈',g:10},
+    {id:"compliance",l:"Compliance Radar",i:'🛡',g:10},
+    {id:"historique",l:"Historique Runs",i:'📊',g:10},
+    {id:"actionsrapides",l:"Actions Rapides",i:'⚡',g:10},
+    {id:"integrations",l:"Integrations",i:'🔌',g:10},
+    {id:"parserConcurrent",l:"Audit Concurrent",i:'🔍',g:10},
+    {id:"aureussuite",l:"Aureus IA",i:'🔷',g:10,sub:[{id:"ia_turnover",l:"🧠 Prediction Turnover"},{id:"ia_salaire",l:"💡 Reco Salariales"},{id:"ia_anomalies",l:"🔍 Anomalies"},{id:"what_if",l:"🔮 What-If"},{id:"kpi_dashboard",l:"📈 KPI Dashboard"}]},
+
+    // ═══ 11. ADMINISTRATION ═══
+    {id:"_g11",l:"ADMINISTRATION",grp:true},
+    {id:"fiduciaire",l:"Hub Fiduciaire",i:'🏢',g:11},
+    {id:"adminbaremes",l:"Admin Barèmes",i:'⚙️',g:11},
+    {id:"portalmanager",l:t("nav.portalmanager"),i:'🏢',g:11},
+    {id:"team",l:t('nav.team'),i:'👥',g:11},
+    {id:"authroles",l:"Roles & Permissions",i:'🔐',g:11},
+    {id:"securitedata",l:"Securite Donnees",i:'🔒',g:11},
+    {id:"rgpd",l:"RGPD Compliance",i:'🔒',g:11},
+    {id:"monitoring",l:"Monitoring",i:'🖥',g:11},
+    {id:"testsuite",l:"Test Suite",i:'🧪',g:11},
+    {id:"comparatif",l:"Comparatif Marche",i:'⚔️',g:11},
+    {id:"landing",l:"Page Commerciale",i:'🌐',g:11},
+    {id:"admin",l:"Admin",i:'👑',g:11,sub:[{id:"config",l:"⚙ Paramètres"},{id:"fraisgestion",l:"💰 Frais gestion"},{id:"gestionacces",l:"🔐 Gestion des Accès"},{id:"commissions",l:"💰 Commissions"},{id:"authroles",l:"🔑 Rôles & Permissions"},{id:"audit",l:"📋 Audit"},{id:"admin_billing",l:"🧾 Facturation"}]},
   ];
 
   // ── Spotlight / Recherche globale (ALL HOOKS BEFORE EARLY RETURNS) ──
@@ -5531,7 +5551,7 @@ function AppInner({ supabase, user, onLogout }) {
   const spotRef=useRef(null);
   const spotIndex=useMemo(()=>{
     const items=[];
-    nav.forEach(it=>{
+    nav.filter(it=>!it.grp).forEach(it=>{
       items.push({id:it.id,sub:it.sub?.[0]?.id||null,label:it.l,icon:it.i,parent:null});
       if(it.sub)it.sub.forEach(sb=>{
         items.push({id:it.id,sub:sb.id,label:sb.l,icon:it.i,parent:it.l});
@@ -19372,6 +19392,11 @@ const pg=()=>{
       case'accidentTravail':return <FormulaireAccidentTravail s={s} d={d}/>;
       case'annexeReglement':return <AnnexeReglementTravail s={s} d={d}/>;
       case'belcotax281':return <Belcotax281Mod s={s} d={d}/>;
+      case'proceduresrh':return <ProceduresRHHub/>;
+      case'adminbaremes':return <AdminBaremes loisBelges={LOIS_BELGES} loisTimeline={[]} loisCurrent={LOIS_BELGES} onUpdate={()=>{}}/>;
+      case'soldetoutcompte':return <OffboardingMod s={s} d={d}/>;
+      case'declarations':return <EnvoiMod s={s} d={d}/>;
+      case'repriseclient':return <ParserImportConcurrent s={s} d={d}/>;
       default:return <Dashboard s={s} d={d}/>;
     }
   };
@@ -19476,12 +19501,13 @@ const pg=()=>{
         </div>
         <nav style={{padding:'8px 8px',flex:1,overflowY:'auto',scrollbarWidth:'thin',scrollbarColor:'rgba(198,163,78,.15) transparent'}}>
           {nav.map(it=>{
+            if(it.grp) return <div key={it.id} style={{padding:'14px 16px 4px',fontSize:9.5,fontWeight:700,color:'#8b7340',letterSpacing:'1.5px',textTransform:'uppercase',borderTop:it.id!=='_g1'?'1px solid rgba(139,115,60,.08)':'none',marginTop:it.id!=='_g1'?6:0}}>{it.l}</div>;
             const ac=s.page===it.id;
             return <div key={it.id}>
-              <button onClick={()=>{d({type:"NAV",page:it.id,sub:it.sub?.[0]?.id});setMobileMenu(false);}} style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'9px 12px',marginBottom:1,border:'none',borderRadius:8,cursor:'pointer',fontSize:12.5,fontWeight:ac?600:400,color:ac?'#c6a34e':'#9e9b93',background:ac?'rgba(198,163,78,.08)':'transparent',borderLeft:ac?'2px solid #c6a34e':'2px solid transparent',fontFamily:'inherit',textAlign:'left',transition:'all .12s ease'}}
+              <button onClick={()=>{d({type:"NAV",page:it.id,sub:it.sub?.[0]?.id});setMobileMenu(false);}} style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'8px 12px',marginBottom:1,border:'none',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:ac?600:400,color:ac?'#c6a34e':'#9e9b93',background:ac?'rgba(198,163,78,.08)':'transparent',borderLeft:ac?'2px solid #c6a34e':'2px solid transparent',fontFamily:'inherit',textAlign:'left',transition:'all .12s ease'}}
                 onMouseEnter={e=>{if(!ac){e.currentTarget.style.color='#e2c878';e.currentTarget.style.background='rgba(198,163,78,.04)';}}}
                 onMouseLeave={e=>{if(!ac){e.currentTarget.style.color='#9e9b93';e.currentTarget.style.background='transparent';}}}
-              ><span style={{fontSize:14,opacity:ac?1:.45,transition:'opacity .15s'}}>{it.i}</span>{it.l}</button>
+              ><span style={{fontSize:13,opacity:ac?1:.45,transition:'opacity .15s'}}>{it.i}</span>{it.l}</button>
               {ac&&it.sub&&<div style={{paddingLeft:32,marginBottom:2}}>
                 {it.sub.map(sb=><button key={sb.id} onClick={()=>{d({type:"NAV",page:it.id,sub:sb.id});setMobileMenu(false);}} style={{display:'block',width:'100%',padding:'5px 12px',border:'none',borderRadius:6,cursor:'pointer',fontSize:11.5,textAlign:'left',fontFamily:'inherit',color:s.sub===sb.id?'#c6a34e':'#5e5c56',background:s.sub===sb.id?'rgba(198,163,78,.06)':'transparent',fontWeight:s.sub===sb.id?500:400,transition:'all .1s'}}
                   onMouseEnter={e=>{if(s.sub!==sb.id)e.currentTarget.style.color='#9e9b93';}}
