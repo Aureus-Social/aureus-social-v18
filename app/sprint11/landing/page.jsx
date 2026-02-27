@@ -13,7 +13,7 @@ const FEATURES = [
   { icon: '🤖', title: 'IA juridique intégrée', desc: 'Posez vos questions en droit social belge. Réponses sourcées avec références légales.' },
   { icon: '🏛', title: '38 Commissions Paritaires', desc: 'CP 200, 124, 302, 140... Barèmes sectoriels, primes, conditions spécifiques par CP.' },
   { icon: '📅', title: 'Calendrier social', desc: 'Toutes les échéances ONSS, fiscales, TVA. Alertes automatiques avant chaque deadline.' },
-  { icon: '🚀', title: 'Onboarding automatisé', desc: 'Reprise de SD Worx, Securex, Partena en 7 étapes. Audit des erreurs de votre ancien prestataire.' },
+  { icon: '🚀', title: 'Onboarding automatisé', desc: 'Reprise depuis tout secrétariat social en 7 étapes. Audit des erreurs de votre ancien prestataire.' },
   { icon: '👥', title: 'Multi-utilisateurs', desc: 'Admin, gestionnaire, commercial, client, employé. Permissions granulaires par module.' },
 ];
 
@@ -24,18 +24,18 @@ const PRICING = [
 ];
 
 const COMPARATIF = [
-  { feature: 'Prix / travailleur', aureus: 'Dès 9,80€', sdworx: '~25-35€', partena: '~20-30€', securex: '~22-32€' },
-  { feature: 'Mise en service', aureus: '48h', sdworx: '2-4 semaines', partena: '1-3 semaines', securex: '2-3 semaines' },
-  { feature: 'IA juridique', aureus: '✅ Incluse', sdworx: '❌', partena: '❌', securex: '❌' },
-  { feature: 'Calcul en temps réel', aureus: '✅ Instantané', sdworx: '⏳ Batch', partena: '⏳ Batch', securex: '⏳ Batch' },
-  { feature: 'Transparence tarifs', aureus: '✅ Prix fixe', sdworx: '❌ Sur devis', partena: '❌ Sur devis', securex: '❌ Sur devis' },
-  { feature: 'Portail employé', aureus: '✅ Inclus', sdworx: '💰 Supplément', partena: '💰 Supplément', securex: '💰 Supplément' },
+  { feature: 'Prix / travailleur', aureus: 'Dès 9,80€', trad: '~25-35€', reg: '~20-30€' },
+  { feature: 'Mise en service', aureus: '48h', trad: '2-4 semaines', reg: '1-3 semaines' },
+  { feature: 'IA juridique', aureus: '✅ Incluse', trad: '❌', reg: '❌' },
+  { feature: 'Calcul en temps réel', aureus: '✅ Instantané', trad: '⏳ Batch', reg: '⏳ Batch' },
+  { feature: 'Transparence tarifs', aureus: '✅ Prix fixe', trad: '❌ Sur devis', reg: '❌ Sur devis' },
+  { feature: 'Portail employé', aureus: '✅ Inclus', trad: '💰 Supplément', reg: '💰 Supplément' },
 ];
 
 const FAQ = [
-  { q: 'Aureus Social Pro remplace-t-il mon secrétariat social ?', a: 'Oui. Aureus Social Pro est un secrétariat social digital agréé. Nous gérons l\'intégralité de vos obligations sociales : calcul de paie, Dimona, DmfA, précompte professionnel, Belcotax, et plus encore. Tout ce que fait SD Worx ou Partena, nous le faisons — en plus rapide et moins cher.' },
+  { q: 'Aureus Social Pro remplace-t-il mon secrétariat social ?', a: 'Oui. Aureus Social Pro est un secrétariat social digital agréé. Nous gérons l\'intégralité de vos obligations sociales : calcul de paie, Dimona, DmfA, précompte professionnel, Belcotax, et plus encore. Tout ce que fait un secrétariat social traditionnel, nous le faisons — en plus rapide et moins cher.' },
   { q: 'Mes données sont-elles en sécurité ?', a: 'Absolument. Chiffrement AES-256-GCM, hébergement UE (Frankfurt), authentification 2FA, audit trail complet, et conformité RGPD native. Vos données ne quittent jamais l\'Union européenne.' },
-  { q: 'Puis-je migrer depuis SD Worx, Securex ou Partena ?', a: 'Oui, notre wizard d\'onboarding en 7 étapes automatise la reprise. Nous importons vos données, recalculons en parallèle, et détectons les erreurs de votre ancien prestataire. Migration typique : 48h.' },
+  { q: 'Puis-je migrer depuis un autre secrétariat social ?', a: 'Oui, notre wizard d\'onboarding en 7 étapes automatise la reprise depuis tout prestataire. Nous importons vos données, recalculons en parallèle, et détectons les erreurs de votre ancien prestataire. Migration typique : 48h.' },
   { q: 'Comment fonctionne l\'IA juridique ?', a: 'Notre IA est entraînée sur l\'intégralité du droit social belge : lois, arrêtés royaux, CCT sectorielles. Elle répond à vos questions avec les références légales exactes et est mise à jour quotidiennement via le Moniteur belge.' },
   { q: 'Y a-t-il un engagement ?', a: 'Non. Tous nos plans sont sans engagement, résiliables à tout moment. Vous commencez par un essai gratuit de 14 jours, sans carte bancaire.' },
 ];
@@ -110,7 +110,7 @@ export default function LandingPage() {
           </h1>
           <p style={{ fontSize: 18, color: S.muted, lineHeight: 1.7, maxWidth: 560, margin: '0 auto 40px' }}>
             Calcul de paie, Dimona, DmfA, contrats, SEPA — tout automatisé.
-            Moins cher que SD Worx. Plus rapide que Partena. Plus intelligent que tous.
+            Moins cher. Plus rapide. Plus intelligent que les secrétariats sociaux traditionnels.
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/" style={{ padding: '16px 40px', borderRadius: 12, background: 'linear-gradient(135deg, #c6a34e, #a68a3c)', color: '#060810', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(198,163,78,0.3)' }}>
@@ -186,9 +186,8 @@ export default function LandingPage() {
                 <tr style={{ background: 'rgba(198,163,78,0.06)' }}>
                   <th style={{ padding: '14px 20px', textAlign: 'left', color: S.dim, fontWeight: 500, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}></th>
                   <th style={{ padding: '14px 20px', textAlign: 'center', color: S.gold, fontWeight: 700, fontSize: 13 }}>Aureus Pro</th>
-                  <th style={{ padding: '14px 20px', textAlign: 'center', color: S.dim, fontWeight: 500 }}>SD Worx</th>
-                  <th style={{ padding: '14px 20px', textAlign: 'center', color: S.dim, fontWeight: 500 }}>Partena</th>
-                  <th style={{ padding: '14px 20px', textAlign: 'center', color: S.dim, fontWeight: 500 }}>Securex</th>
+                  <th style={{ padding: '14px 20px', textAlign: 'center', color: S.dim, fontWeight: 500 }}>Grand SS traditionnel</th>
+                  <th style={{ padding: '14px 20px', textAlign: 'center', color: S.dim, fontWeight: 500 }}>SS régional</th>
                 </tr>
               </thead>
               <tbody>
@@ -196,9 +195,8 @@ export default function LandingPage() {
                   <tr key={i} style={{ borderTop: '1px solid rgba(198,163,78,0.05)' }}>
                     <td style={{ padding: '14px 20px', color: S.muted, fontWeight: 500 }}>{r.feature}</td>
                     <td style={{ padding: '14px 20px', textAlign: 'center', color: '#22c55e', fontWeight: 600 }}>{r.aureus}</td>
-                    <td style={{ padding: '14px 20px', textAlign: 'center', color: S.dim }}>{r.sdworx}</td>
-                    <td style={{ padding: '14px 20px', textAlign: 'center', color: S.dim }}>{r.partena}</td>
-                    <td style={{ padding: '14px 20px', textAlign: 'center', color: S.dim }}>{r.securex}</td>
+                    <td style={{ padding: '14px 20px', textAlign: 'center', color: S.dim }}>{r.trad}</td>
+                    <td style={{ padding: '14px 20px', textAlign: 'center', color: S.dim }}>{r.reg}</td>
                   </tr>
                 ))}
               </tbody>
