@@ -477,7 +477,7 @@ var obf={
   maskNISS:(n)=>{if(!n||n.length<6)return n;return n.slice(0,2)+'.***.***'+n.slice(-2);},
   maskIBAN:(i)=>{if(!i||i.length<8)return i;return i.slice(0,4)+' **** **** '+i.slice(-4);}
 };
-var safeLS={get:(k)=>{try{return safeLS.get(k);}catch(e){return null;}},set:(k,v)=>{safeLS.set(k,v);},remove:(k)=>{safeLS.remove(k);}};
+var safeLS={get:(k)=>{try{return localStorage.getItem(k);}catch(e){return null;}},set:(k,v)=>{try{localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}},remove:(k)=>{try{localStorage.removeItem(k);}catch(e){}}};
 var CR_MAX=LB.chequesRepas.valeurFaciale.max; // 8.00
 var CR_PAT=LB.chequesRepas.partPatronale.max; // 6.91
 var FORF_BUREAU=LB.fraisPropres.forfaitBureau.max; // FORF_BUREAU
