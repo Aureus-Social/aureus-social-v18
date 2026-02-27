@@ -5343,7 +5343,7 @@ function AppInner({ supabase, user, onLogout }) {
   // ── AUTO VEILLE LÉGALE AU LOGIN (toutes les 24h) ──
   const [veilleNotif,setVeilleNotif]=useState(null);
   useEffect(()=>{
-    if(loading||!visibleClients.length)return;
+    if(loading||!(s.clients||[]).length)return;
     let lastVeille=null;try{lastVeille=typeof window!=='undefined'?safeLS.get('aureus_last_veille'):null;}catch(e){}
     const now=new Date();
     const hoursSince=lastVeille?((now-new Date(lastVeille))/3600000):999;
