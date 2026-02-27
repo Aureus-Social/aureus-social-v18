@@ -236,7 +236,7 @@ var LOIS_BELGES = {
       plafondAbsolu: 108942.74,
     },
     // ── Frais de gestion caisse sociale (en sus des cotisations) ──
-    fraisGestion: 0.0305, // 3,05% — variable selon caisse (UCM, Xerius, Acerta, Partena, etc.)
+    fraisGestion: 0.0305, // 3,05% — variable selon caisse d'assurances sociales
     
     // ── Minimums trimestriels par catégorie (indexés 2026) ──
     minimums: {

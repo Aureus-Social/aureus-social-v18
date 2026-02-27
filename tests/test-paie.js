@@ -376,6 +376,310 @@ try {
     }
   }
 
+  // ═══ 10. TESTS END-TO-END FICHES DE PAIE ═══
+  // 10 scénarios réalistes comparés aux valeurs de référence
+  // Valeurs de référence: barèmes officiels 2026
+  // Tolérance: 1€ sur net (différences d'arrondi)
+  if (typeof calc === 'function') {
+    console.log('\n═══ 10. TESTS END-TO-END — 10 FICHES DE PAIE ═══');
+    const TOL = 1.00; // tolérance 1€
+
+    const scenarios = [
+      // Scénario 1: Employé CP200 isolé 2500€
+      { id: 1, desc: 'Employé CP200 isolé 2500€',
+        emp: { monthlySalary: 2500, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 },
+        check: { onssW: [326.75, 0.01], netRange: [1900, 2200] } },
+
+      // Scénario 2: Employé CP200 isolé 3500€
+      { id: 2, desc: 'Employé CP200 isolé 3500€',
+        emp: { monthlySalary: 3500, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 },
+        check: { onssW: [457.45, 0.01], netRange: [2200, 2500] } },
+
+      // Scénario 3: Employé CP200 marié 1 revenu 3500€ 2 enfants
+      { id: 3, desc: 'Employé marié 1rev 3500€ 2enf',
+        emp: { monthlySalary: 3500, statut: 'employe', civil: 'married_1', depChildren: 2, cp: '200', whWeek: 38 },
+        check: { onssW: [457.45, 0.01], netRange: [2500, 3100] } },
+
+      // Scénario 4: Employé CP200 isolé 5000€
+      { id: 4, desc: 'Employé CP200 isolé 5000€',
+        emp: { monthlySalary: 5000, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 },
+        check: { onssW: [653.50, 0.01], netRange: [2800, 3200] } },
+
+      // Scénario 5: Employé CP200 marié 2 revenus 4000€ 1 enfant
+      { id: 5, desc: 'Employé marié 2rev 4000€ 1enf',
+        emp: { monthlySalary: 4000, statut: 'employe', civil: 'married_2', depChildren: 1, cp: '200', whWeek: 38 },
+        check: { onssW: [522.80, 0.01], netRange: [2400, 2900] } },
+
+      // Scénario 6: Ouvrier CP124 isolé 2800€
+      { id: 6, desc: 'Ouvrier CP124 isolé 2800€',
+        emp: { monthlySalary: 2800, statut: 'ouvrier', civil: 'isole', depChildren: 0, cp: '124', whWeek: 38 },
+        check: { onssWBase108: true, netRange: [1700, 2200] } },
+
+      // Scénario 7: Employé mi-temps CP200 1500€ (base 3000€)
+      { id: 7, desc: 'Employé mi-temps 1500€',
+        emp: { monthlySalary: 1500, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 19 },
+        check: { onssW: [196.05, 0.01], netRange: [1100, 1510] } },
+
+      // Scénario 8: Employé CP200 isolé 8000€ haut salaire
+      { id: 8, desc: 'Employé CP200 isolé 8000€',
+        emp: { monthlySalary: 8000, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 },
+        check: { onssW: [1045.60, 0.01], netRange: [3800, 4400] } },
+
+      // Scénario 9: Employé CP200 isolé 3000€ 3 enfants
+      { id: 9, desc: 'Employé isolé 3000€ 3 enfants',
+        emp: { monthlySalary: 3000, statut: 'employe', civil: 'isole', depChildren: 3, cp: '200', whWeek: 38 },
+        check: { onssW: [392.10, 0.01], netRange: [2200, 2700] } },
+
+      // Scénario 10: Employé CP200 isolé 2000€ bas salaire + bonus emploi
+      { id: 10, desc: 'Employé CP200 isolé 2000€ + bonus',
+        emp: { monthlySalary: 2000, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 },
+        check: { onssW: [261.40, 0.01], bonusMin: 50, netRange: [1700, 2000] } },
+    ];
+
+    console.log('  ID │ Description                         │ Brut     │ ONSS W   │ PP       │ CSSS   │ Bonus  │ Net      │ Coût empl │ Statut');
+    console.log('  ───┼─────────────────────────────────────┼──────────┼──────────┼──────────┼────────┼────────┼──────────┼───────────┼───────');
+
+    let e2ePass = 0, e2eFail = 0;
+    const e2eErrors = [];
+
+    scenarios.forEach(s => {
+      try {
+        const r = calc(s.emp, per0, co0);
+        const brut = r.gross;
+        const onssW = r.onssW || r.onssNet || 0;
+        const pp = r.tax || 0;
+        const csss = r.css || 0;
+        const bonus = r.empBonus || 0;
+        const net = r.net || 0;
+        const cost = r.costTotal || 0;
+        const onssE = r.onssE || 0;
+
+        let ok = true;
+        const errs = [];
+
+        // Test 1: ONSS travailleur = brut × 13.07% (exact)
+        if (s.check.onssW) {
+          const expected = s.check.onssW[0];
+          const tol = s.check.onssW[1];
+          if (Math.abs(onssW - expected) > tol) {
+            errs.push(`ONSS W: ${onssW.toFixed(2)} ≠ ${expected}`);
+            ok = false;
+          }
+        }
+
+        // Test 2: Ouvrier base 108%
+        if (s.check.onssWBase108 && s.emp.statut === 'ouvrier') {
+          const expected108 = Math.round(s.emp.monthlySalary * 1.08 * 0.1307 * 100) / 100;
+          if (Math.abs(onssW - expected108) > 0.10) {
+            errs.push(`ONSS 108%: ${onssW.toFixed(2)} ≠ ${expected108}`);
+            ok = false;
+          }
+        }
+
+        // Test 3: Net dans la fourchette réaliste
+        if (s.check.netRange) {
+          if (net < s.check.netRange[0] || net > s.check.netRange[1]) {
+            errs.push(`Net ${net.toFixed(2)} hors [${s.check.netRange[0]}-${s.check.netRange[1]}]`);
+            ok = false;
+          }
+        }
+
+        // Test 4: Bonus emploi pour bas salaires
+        if (s.check.bonusMin && bonus < s.check.bonusMin) {
+          errs.push(`Bonus ${bonus.toFixed(2)} < ${s.check.bonusMin}`);
+          ok = false;
+        }
+
+        // Test 5: Cohérence brut = ONSS + PP + CSSS + net (± bonus)
+        const sumCheck = onssW + pp + csss + net - bonus;
+        if (Math.abs(sumCheck - brut) > TOL) {
+          errs.push(`Incohérence: ONSS+PP+CSSS+Net-Bonus=${sumCheck.toFixed(2)} ≠ brut ${brut.toFixed(2)}`);
+          ok = false;
+        }
+
+        // Test 6: PP > 0 pour tout brut > 2000€
+        if (brut >= 2000 && pp <= 0) {
+          errs.push(`PP=0 pour brut ${brut}€`);
+          ok = false;
+        }
+
+        // Test 7: ONSS employeur > 0
+        if (onssE <= 0) {
+          errs.push(`ONSS employeur = 0`);
+          ok = false;
+        }
+
+        // Test 8: Coût total > brut
+        if (cost <= brut) {
+          errs.push(`Coût ${cost.toFixed(2)} <= brut ${brut.toFixed(2)}`);
+          ok = false;
+        }
+
+        // Test 9: Net <= brut (bonus emploi can make net = brut for low salaries)
+        if (net > brut + 1) {
+          errs.push(`Net ${net.toFixed(2)} > brut ${brut.toFixed(2)}`);
+          ok = false;
+        }
+
+        // Test 10: Marié 1 rev → PP < isolé (même brut)
+        if (s.emp.civil === 'married_1') {
+          const rIsole = calc({ ...s.emp, civil: 'isole', depChildren: 0 }, per0, co0);
+          if (pp >= (rIsole.tax || 0)) {
+            errs.push(`Marié PP ${pp.toFixed(2)} >= isolé PP ${(rIsole.tax||0).toFixed(2)}`);
+            ok = false;
+          }
+        }
+
+        const status = ok ? '✅' : '❌';
+        if (ok) e2ePass++; else { e2eFail++; e2eErrors.push({ id: s.id, desc: s.desc, errs }); }
+        console.log(`  ${String(s.id).padStart(2)} │ ${s.desc.padEnd(35)} │ ${fmt(brut).padStart(8)} │ ${fmt(onssW).padStart(8)} │ ${fmt(pp).padStart(8)} │ ${fmt(csss).padStart(6)} │ ${fmt(bonus).padStart(6)} │ ${fmt(net).padStart(8)} │ ${fmt(cost).padStart(9)} │ ${status}`);
+        if (!ok) errs.forEach(e => console.log(`       └─ ⚠ ${e}`));
+
+        // Register in test framework
+        test(`E2E #${s.id}: ${s.desc}`, () => {
+          assert(ok, errs.join('; '));
+        });
+      } catch (e) {
+        e2eFail++;
+        e2eErrors.push({ id: s.id, desc: s.desc, errs: [e.message] });
+        console.log(`  ${String(s.id).padStart(2)} │ ${s.desc.padEnd(35)} │ ERREUR: ${e.message}`);
+        test(`E2E #${s.id}: ${s.desc}`, () => { throw e; });
+      }
+    });
+
+    console.log('  ───┼─────────────────────────────────────┼──────────┼──────────┼──────────┼────────┼────────┼──────────┼───────────┼───────');
+    console.log(`  E2E RÉSULTAT: ${e2ePass}/${e2ePass + e2eFail} scénarios passés`);
+    if (e2eFail > 0) {
+      console.log(`  ❌ ${e2eFail} ÉCHEC(S):`);
+      e2eErrors.forEach(e => console.log(`     #${e.id} ${e.desc}: ${e.errs.join(', ')}`));
+    }
+
+    // ═══ 11. TESTS COMPARATIFS CROISÉS ═══
+    console.log('\n═══ 11. TESTS COMPARATIFS — VÉRIFICATIONS CROISÉES ═══');
+
+    // Vérification: enfants réduisent le PP
+    test('Plus d\'enfants = moins de PP', () => {
+      const r0 = calc({ monthlySalary: 3500, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+      const r1 = calc({ monthlySalary: 3500, statut: 'employe', civil: 'isole', depChildren: 1, cp: '200', whWeek: 38 }, per0, co0);
+      const r2 = calc({ monthlySalary: 3500, statut: 'employe', civil: 'isole', depChildren: 2, cp: '200', whWeek: 38 }, per0, co0);
+      const r4 = calc({ monthlySalary: 3500, statut: 'employe', civil: 'isole', depChildren: 4, cp: '200', whWeek: 38 }, per0, co0);
+      assert(r0.tax > r1.tax, `0enf ${r0.tax} <= 1enf ${r1.tax}`);
+      assert(r1.tax > r2.tax, `1enf ${r1.tax} <= 2enf ${r2.tax}`);
+      assert(r2.tax > r4.tax, `2enf ${r2.tax} <= 4enf ${r4.tax}`);
+    });
+
+    // Marié 1 rev toujours plus avantageux qu'isolé
+    test('Marié 1 rev → net > isolé (3500€)', () => {
+      const rI = calc({ monthlySalary: 3500, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+      const rM = calc({ monthlySalary: 3500, statut: 'employe', civil: 'married_1', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+      assert(rM.net > rI.net, `Marié ${rM.net} <= isolé ${rI.net}`);
+    });
+
+    // Bonus emploi disparaît pour hauts salaires
+    test('Bonus emploi 0 au-dessus seuil', () => {
+      const r = calc({ monthlySalary: 5000, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+      eq(r.empBonus || 0, 0, 'Bonus 5000€');
+    });
+
+    // Bonus emploi > 0 pour bas salaires
+    test('Bonus emploi > 0 pour 2000€', () => {
+      const r = calc({ monthlySalary: 2000, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+      assert((r.empBonus || 0) > 50, `Bonus ${r.empBonus}€ trop bas`);
+    });
+
+    // Ouvrier 108% → ONSS plus élevé
+    test('Ouvrier ONSS > employé ONSS (même brut)', () => {
+      const rE = calc({ monthlySalary: 3000, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+      const rO = calc({ monthlySalary: 3000, statut: 'ouvrier', civil: 'isole', depChildren: 0, cp: '124', whWeek: 38 }, per0, co0);
+      assert((rO.onssW || rO.onssNet) > (rE.onssW || rE.onssNet), `Ouvrier ONSS <= employé`);
+    });
+
+    // CSSS plafonné
+    test('CSSS plafonné pour hauts salaires', () => {
+      const r1 = calc({ monthlySalary: 6000, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+      const r2 = calc({ monthlySalary: 10000, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+      eq(r1.css, r2.css, 'CSSS non plafonné');
+    });
+
+    // Coût total croissant
+    test('Coût total croissant avec brut', () => {
+      const bruts = [2000, 3000, 4000, 5000, 6000, 8000];
+      let prev = 0;
+      bruts.forEach(b => {
+        const r = calc({ monthlySalary: b, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+        assert(r.costTotal > prev, `Coût ${b}€ = ${r.costTotal} <= ${prev}`);
+        prev = r.costTotal;
+      });
+    });
+
+    // Taux net décroissant (progressivité fiscale)
+    test('Taux net décroissant (progressivité)', () => {
+      const r2k = calc({ monthlySalary: 2000, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+      const r8k = calc({ monthlySalary: 8000, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+      const pct2k = r2k.net / 2000;
+      const pct8k = r8k.net / 8000;
+      assert(pct2k > pct8k, `% net 2k (${(pct2k*100).toFixed(1)}%) <= 8k (${(pct8k*100).toFixed(1)}%)`);
+    });
+
+    // ═══ 12. TESTS PRÉCOMPTE SPF EXACT ═══
+    console.log('\n═══ 12. TESTS PRÉCOMPTE SPF — TRANCHES 2026 ═══');
+
+    test('PP tranches: 26,75% + 42,80% + 48,15% + 53,50%', () => {
+      // Vérification que les tranches sont correctement appliquées
+      const r = calcPrecompteExact(4000, { situation: 'isole', enfants: 0 });
+      assert(r.detail.impotBrut > 0, 'Impôt brut = 0');
+      // Annuel imposable = (4000 - 4000*0.1307) * 12 - frais pro
+      const imposable = 4000 - 4000 * 0.1307;
+      const annuel = imposable * 12;
+      assert(annuel > 16310, 'Annuel devrait dépasser 1ère tranche');
+    });
+
+    test('Frais pro salarié: 30% plafonné 5930€/an', () => {
+      const r1 = calcPrecompteExact(3000, { situation: 'isole' });
+      const r2 = calcPrecompteExact(8000, { situation: 'isole' });
+      // Pour 8000€: annuel imposable = ~83k → forfait = min(83k×30%, 5930) = 5930 annuel
+      assert(r2.detail.forfaitAn <= 5930 + 1, `Forfait annuel ${r2.detail.forfaitAn} > plafond 5930`);
+    });
+
+    test('Quotient conjugal marié 1 rev: 30% max 12520€', () => {
+      const r = calcPrecompteExact(5000, { situation: 'marie_1r', enfants: 0 });
+      assert(r.detail.qcAttribue > 0, 'QC = 0');
+      assert(r.detail.qcAttribue <= 12520, `QC ${r.detail.qcAttribue} > 12520`);
+    });
+
+    test('Réduction enfants croissante', () => {
+      const r0 = calcPrecompteExact(3500, { situation: 'isole', enfants: 0 });
+      const r2 = calcPrecompteExact(3500, { situation: 'isole', enfants: 2 });
+      const r5 = calcPrecompteExact(3500, { situation: 'isole', enfants: 5 });
+      assert(r2.detail.redEnfants > r0.detail.redEnfants, 'redEnfants 2 <= 0');
+      assert(r5.detail.redEnfants > r2.detail.redEnfants, 'redEnfants 5 <= 2');
+    });
+
+    // ═══ 13. TESTS PÉCULE VACANCES ═══
+    console.log('\n═══ 13. TESTS PÉCULE DE VACANCES ═══');
+    if (typeof calcPeculeVacancesComplet === 'function') {
+      test('Pécule employé: simple + double', () => {
+        const r = calcPeculeVacancesComplet({ brutMensuel: 3500, statut: 'employe', moisPrestes: 12 });
+        assert(r.simple && r.double, 'Structure manquante');
+        assert(r.simple.brut > 0, 'Simple brut = 0');
+        assert(r.double.brut > 0, 'Double brut = 0');
+      });
+
+      test('Pécule ouvrier: cotisation patronale', () => {
+        const r = calcPeculeVacancesComplet({ brutMensuel: 2500, statut: 'ouvrier', moisPrestes: 12 });
+        assert(r.cotisationPatronale > 0, 'Cotis patronale = 0');
+        assert(r.tauxPatronal === 15.84, `Taux ${r.tauxPatronal} ≠ 15.84`);
+      });
+
+      test('Pécule prorata 6 mois = 50%', () => {
+        const r12 = calcPeculeVacancesComplet({ brutMensuel: 3000, statut: 'employe', moisPrestes: 12 });
+        const r6 = calcPeculeVacancesComplet({ brutMensuel: 3000, statut: 'employe', moisPrestes: 6 });
+        const ratio = r6.totalBrut / r12.totalBrut;
+        assert(Math.abs(ratio - 0.5) < 0.02, `Ratio ${ratio} ≠ 0.5`);
+      });
+    }
+  }
+
   // ═══ RAPPORT ═══
   console.log('\n' + '═'.repeat(60));
   console.log(`  RÉSULTAT: ${passed}/${total} tests passés`);

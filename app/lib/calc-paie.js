@@ -988,7 +988,7 @@ function calc(emp, per, co) {
   const onssBase = isOuvrier ? r.gross * LEGAL.ONSS_DETAIL_2026.majoration_ouvrier : r.gross;
   r.onssW = onssBase * LEGAL.ONSS_W;
   // ── Bonus à l'emploi 2026 — Volet A (bas salaires) + Volet B (très bas salaires) ──
-  // Source: Instructions ONSS T1/2026 + Partena Professional
+  // Source: Instructions ONSS T1/2026
   const BE = LEGAL.BONUS_2026;
   r.empBonusA = 0; r.empBonusB = 0;
   if (isOuvrier) {
@@ -1293,7 +1293,7 @@ function calc(emp, per, co) {
   // Special SS contribution (Art. 106-112 Loi-programme 30/12/1988)
   // Barème trimestriel — retenue mensuelle = 1/3 du montant trimestriel
   // Différent pour isolés vs ménages avec 2 revenus
-  // Source: socialsecurity.be + Securex montants-socio-juridiques 2026
+  // Source: socialsecurity.be montants-socio-juridiques 2026
   r.css = 0;
   const grossTrim = r.gross * 3; // salaire trimestriel
   const grossTrimOuv = isOuvrier ? grossTrim * 1.08 : grossTrim;
