@@ -1,0 +1,15 @@
+# Aureus Social Pro — Security Contact
+# Aureus IA SPRL (BCE BE 1028.230.781)
+
+Contact: mailto:security@aureusia.com
+Preferred-Languages: fr, nl, en, de
+Canonical: https://app.aureussocial.be/.well-known/security.txt
+Policy: https://app.aureussocial.be/compliance
+Expires: 2027-01-01T00:00:00.000Z
+
+# Bug Bounty Program
+# Critical: €500 - €2,000
+# High: €200 - €500
+# Medium: €50 - €200
+# Low: Hall of Fame
+# Scope: *.aureussocial.be

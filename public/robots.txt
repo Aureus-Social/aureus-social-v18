@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /landing.html
+Allow: /compliance
+Disallow: /docs/compliance/
+Disallow: /api/
+Disallow: /?module=
+
+Sitemap: https://app.aureussocial.be/sitemap.xml

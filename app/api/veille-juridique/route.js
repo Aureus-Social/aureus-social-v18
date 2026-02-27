@@ -86,7 +86,7 @@ const SOURCES = [
   },
   {
     id: 'securex',
-    nom: 'Securex — Actualités sociales',
+    nom: 'Veille sectorielle — Actualités sociales',
     url: 'https://www.securex.be/fr/lex4you/employeur/actualites',
     type: 'Secondary',
     keywords: ['2026', '2027', 'modification', 'nouveau', 'changement'],

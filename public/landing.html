@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aureus Social Pro — Secrétariat Social Intelligent | Paie Belge</title>
+<meta name="description" content="Aureus Social Pro — Secrétariat social et logiciel de paie belge intelligent. Calcul salarial, déclarations ONSS/DmfA, CP 200, RGPD. Alternative digitale aux secrétariats sociaux traditionnels. Essai gratuit.">
+<meta name="keywords" content="secrétariat social, paie belge, logiciel paie, ONSS, DmfA, CP 200, calcul salarial, fiches de paie, déclarations sociales, RGPD, Belgique">
+<meta name="author" content="Aureus IA SPRL">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://app.aureussocial.be/landing.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Aureus Social Pro — Secrétariat Social Intelligent">
+<meta property="og:description" content="Logiciel de paie belge nouvelle génération. Calcul salarial automatisé, déclarations ONSS, 93 procédures RH, conformité RGPD. Jusqu'à 40% d'économies.">
+<meta property="og:url" content="https://app.aureussocial.be/landing.html">
+<meta property="og:site_name" content="Aureus Social Pro">
+<meta property="og:locale" content="fr_BE">
+<meta property="og:image" content="https://app.aureussocial.be/icon-512.png">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Aureus Social Pro — Secrétariat Social Intelligent">
+<meta name="twitter:description" content="Logiciel de paie belge IA. Calcul salarial, ONSS, DmfA, 93 procédures RH.">
+
+<!-- PWA -->
+<meta name="theme-color" content="#c6a34e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Aureus Social Pro",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "description": "Secrétariat social et logiciel de paie belge intelligent",
+  "url": "https://app.aureussocial.be",
+  "author": {"@type": "Organization", "name": "Aureus IA SPRL", "vatID": "BE 1028.230.781"},
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR", "description": "Tarif sur demande"}
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Outfit:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c6a34e;
+  --gold-light: #e2c878;
+  --gold-pale: #f5e6b8;
+  --gold-dark: #8b6914;
+  --dark: #060810;
+  --dark2: #0a0e1a;
+  --dark3: #0f1328;
+  --text: #e5e5e5;
+  --text-dim: #999;
+  --text-muted: #555;
+  --green: #22c55e;
+  --red: #ef4444;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Outfit', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+::selection { background: rgba(198,163,78,.35); color: #fff; }
+html { scroll-behavior: smooth; }
+body { background: var(--dark); color: var(--text); font-family: var(--sans); overflow-x: hidden; cursor: auto; }
+
+/* ═══ CUSTOM CURSOR ═══ */
+.cursor { display: none; }
+.cursor.hover { display: none; }
+.cursor-dot { display: none; }
+
+/* ═══ SCROLL PROGRESS ═══ */
+.scroll-progress { position: fixed; top: 0; left: 0; height: 2px; background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light)); z-index: 9999; width: 0; transition: width .1s; }
+
+/* ═══ GRAIN OVERLAY ═══ */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 9998; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.35;
+}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--dark); }
+::-webkit-scrollbar-thumb { background: linear-gradient(var(--gold-dark), var(--gold)); border-radius: 3px; }
+
+/* ═══ PARTICLE CANVAS ═══ */
+#particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+/* ═══ NAVBAR ═══ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 0 60px; height: 72px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(6,8,16,.7); backdrop-filter: blur(24px) saturate(1.8);
+  border-bottom: 1px solid rgba(198,163,78,.04);
+  transition: all .5s cubic-bezier(.22,1,.36,1);
+}
+nav.scrolled { background: rgba(6,8,16,.92); height: 56px; box-shadow: 0 4px 30px rgba(0,0,0,.3); }
+.nav-logo { display: flex; align-items: center; gap: 14px; cursor: auto; }
+.nav-logo-icon {
+  width: 38px; height: 38px; border-radius: 10px; position: relative;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif); font-weight: 700; font-size: 20px; color: var(--dark);
+  overflow: hidden;
+}
+.nav-logo-icon::after {
+  content: ''; position: absolute; inset: -50%; 
+  background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,.3) 50%, transparent 60%);
+  animation: shimmer 3s infinite;
+}
+@keyframes shimmer { 0% { transform: translateX(-100%) rotate(25deg); } 100% { transform: translateX(100%) rotate(25deg); } }
+.nav-logo-text { font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: 1px; }
+.nav-logo-text span { background: linear-gradient(135deg, var(--gold), var(--gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.nav-links { display: flex; gap: 36px; align-items: center; }
+.nav-links a {
+  color: var(--text-dim); text-decoration: none; font-size: 13px; font-weight: 400;
+  letter-spacing: .5px; transition: color .3s; position: relative; cursor: auto;
+}
+.nav-links a::after {
+  content: ''; position: absolute; bottom: -4px; left: 50%; width: 0; height: 1px;
+  background: var(--gold); transition: all .3s; transform: translateX(-50%);
+}
+.nav-links a:hover { color: var(--gold-light); }
+.nav-links a:hover::after { width: 100%; }
+.nav-cta {
+  padding: 10px 28px; border-radius: 8px; border: 1px solid rgba(198,163,78,.3);
+  background: transparent; color: var(--gold); font-family: var(--sans);
+  font-size: 13px; font-weight: 500; cursor: auto; transition: all .4s;
+  letter-spacing: .5px; position: relative; overflow: hidden;
+}
+.nav-cta::before {
+  content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  opacity: 0; transition: opacity .4s;
+}
+.nav-cta:hover { border-color: var(--gold); color: #fff; }
+.nav-cta:hover::before { opacity: 1; }
+.nav-cta span { position: relative; z-index: 1; }
+
+/* ═══ MOBILE MENU ═══ */
+.hamburger { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
+.hamburger span { display: block; width: 22px; height: 1.5px; background: var(--gold); margin: 5px 0; transition: all .3s; }
+
+/* ═══ LOGIN SLIDE PANEL ═══ */
+.login-overlay {
+  position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.6);
+  backdrop-filter: blur(12px); opacity: 0; pointer-events: none; transition: opacity .5s;
+}
+.login-overlay.open { opacity: 1; pointer-events: all; }
+.login-panel {
+  position: fixed; top: 0; left: 0; z-index: 201;
+  width: 460px; height: 100vh; max-width: 92vw;
+  background: linear-gradient(180deg, #0c1020 0%, #060810 50%, #08061a 100%);
+  border-right: 1px solid rgba(198,163,78,.08);
+  transform: translateX(-105%); transition: transform .6s cubic-bezier(.22,1,.36,1);
+  display: flex; flex-direction: column; padding: 48px 40px; overflow-y: auto;
+  box-shadow: 20px 0 80px rgba(0,0,0,.5);
+}
+.login-panel.open { transform: translateX(0); }
+.login-close {
+  position: absolute; top: 20px; right: 20px; width: 40px; height: 40px;
+  border-radius: 50%; border: 1px solid rgba(198,163,78,.1); background: transparent;
+  color: var(--text-dim); font-size: 20px; cursor: auto; transition: all .4s;
+  display: flex; align-items: center; justify-content: center;
+}
+.login-close:hover { border-color: var(--gold); color: var(--gold); transform: rotate(90deg); }
+.login-header { margin-bottom: 36px; }
+.login-header h2 {
+  font-family: var(--serif); font-size: 32px; font-weight: 500;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+.login-header p { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.login-tabs { display: flex; gap: 0; margin-bottom: 32px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(198,163,78,.08); }
+.login-tab {
+  flex: 1; padding: 12px; text-align: center; font-size: 11px; font-weight: 500;
+  background: rgba(255,255,255,.015); color: var(--text-dim); cursor: auto;
+  transition: all .4s; border: none; font-family: var(--sans); letter-spacing: .8px;
+  text-transform: uppercase;
+}
+.login-tab.active { background: rgba(198,163,78,.08); color: var(--gold); }
+.login-tab:hover:not(.active) { background: rgba(255,255,255,.03); color: var(--text); }
+.login-field { margin-bottom: 20px; position: relative; }
+.login-field label { display: block; font-size: 10px; color: var(--text-dim); margin-bottom: 8px; letter-spacing: 1.5px; text-transform: uppercase; }
+.login-field input {
+  width: 100%; padding: 16px 18px; border-radius: 12px;
+  border: 1px solid rgba(198,163,78,.08); background: rgba(255,255,255,.025);
+  color: var(--text); font-family: var(--sans); font-size: 14px;
+  outline: none; transition: all .4s; cursor: auto;
+}
+.login-field input:focus { border-color: var(--gold); box-shadow: 0 0 20px rgba(198,163,78,.08); }
+.login-field input::placeholder { color: var(--text-muted); }
+.login-submit {
+  width: 100%; padding: 18px; border-radius: 12px; border: none;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #fff; font-family: var(--sans); font-size: 14px; font-weight: 600;
+  cursor: auto; transition: all .4s; letter-spacing: .5px; margin-top: 8px;
+  position: relative; overflow: hidden;
+}
+.login-submit::after {
+  content: ''; position: absolute; inset: -50%;
+  background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,.15) 50%, transparent 60%);
+  animation: shimmer 2.5s infinite;
+}
+.login-submit:hover { filter: brightness(1.2); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(198,163,78,.3); }
+.login-forgot { display: block; text-align: center; margin-top: 16px; font-size: 12px; color: var(--text-dim); cursor: auto; transition: color .3s; }
+.login-forgot:hover { color: var(--gold); }
+.login-sep { display: flex; align-items: center; gap: 12px; margin: 28px 0; }
+.login-sep span { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
+.login-sep::before, .login-sep::after { content: ''; flex: 1; height: 1px; background: rgba(198,163,78,.06); }
+.login-magic {
+  width: 100%; padding: 16px; border-radius: 12px;
+  border: 1px solid rgba(198,163,78,.1); background: transparent;
+  color: var(--gold); font-family: var(--sans); font-size: 13px; font-weight: 500;
+  cursor: auto; transition: all .4s; display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.login-magic:hover { background: rgba(198,163,78,.06); border-color: rgba(198,163,78,.2); transform: translateY(-1px); }
+.login-bottom { margin-top: auto; padding-top: 28px; border-top: 1px solid rgba(198,163,78,.05); }
+.login-bottom p { font-size: 10px; color: var(--text-muted); text-align: center; line-height: 1.7; }
+.login-trust { display: flex; gap: 16px; justify-content: center; margin-bottom: 12px; }
+.login-trust span { font-size: 9px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+
+/* ═══ HERO ═══ */
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 120px 40px 80px; position: relative; overflow: hidden;
+}
+.hero-glow {
+  position: absolute; top: -300px; left: 50%; transform: translateX(-50%);
+  width: 1000px; height: 1000px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(198,163,78,.07) 0%, rgba(198,163,78,.02) 30%, transparent 70%);
+  pointer-events: none; animation: breathe 8s ease-in-out infinite;
+}
+@keyframes breathe { 0%,100% { opacity: .7; transform: translateX(-50%) scale(1); } 50% { opacity: 1; transform: translateX(-50%) scale(1.1); } }
+.hero-lines {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+}
+.hero-lines span {
+  position: absolute; width: 1px; height: 100vh; background: linear-gradient(to bottom, transparent, rgba(198,163,78,.04), transparent);
+  animation: lineFade 6s ease-in-out infinite;
+}
+@keyframes lineFade { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
+.hero::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 300px;
+  background: linear-gradient(to top, var(--dark), transparent); pointer-events: none;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 10px 24px; border-radius: 50px;
+  border: 1px solid rgba(198,163,78,.12); background: rgba(198,163,78,.03);
+  font-size: 11px; color: var(--gold); letter-spacing: 1.5px; text-transform: uppercase;
+  margin-bottom: 48px; opacity: 0; animation: fadeUp .8s ease-out .2s forwards;
+  backdrop-filter: blur(10px);
+}
+.hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; box-shadow: 0 0 12px var(--green); } 50% { opacity: .5; box-shadow: 0 0 4px var(--green); } }
+.hero h1 {
+  font-family: var(--serif); font-size: clamp(48px, 7.5vw, 100px); font-weight: 300;
+  line-height: 1.02; margin-bottom: 28px; letter-spacing: -2px;
+}
+.hero h1 .line { display: block; opacity: 0; animation: slideUp .9s cubic-bezier(.22,1,.36,1) forwards; }
+.hero h1 .line:nth-child(2) { animation-delay: .15s; }
+.hero h1 em {
+  font-style: italic; font-weight: 400;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light), var(--gold));
+  background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  animation: goldShift 4s ease-in-out infinite;
+}
+@keyframes goldShift { 0%,100% { background-position: 0% center; } 50% { background-position: 100% center; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+.hero-sub {
+  font-size: 18px; font-weight: 300; color: var(--text-dim); max-width: 600px;
+  line-height: 1.8; margin-bottom: 52px; opacity: 0; animation: fadeUp .8s ease-out .5s forwards;
+}
+.hero-actions { display: flex; gap: 16px; opacity: 0; animation: fadeUp .8s ease-out .65s forwards; }
+.btn-gold {
+  padding: 18px 44px; border-radius: 12px; border: none;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #fff; font-family: var(--sans); font-size: 14px; font-weight: 600;
+  cursor: auto; transition: all .4s; letter-spacing: .5px;
+  position: relative; overflow: hidden;
+}
+.btn-gold::after {
+  content: ''; position: absolute; inset: -50%;
+  background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,.12) 50%, transparent 60%);
+  animation: shimmer 3s infinite;
+}
+.btn-gold:hover { filter: brightness(1.2); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(198,163,78,.3); }
+.btn-outline {
+  padding: 18px 44px; border-radius: 12px;
+  border: 1px solid rgba(198,163,78,.2); background: transparent;
+  color: var(--gold); font-family: var(--sans); font-size: 14px; font-weight: 500;
+  cursor: auto; transition: all .4s; letter-spacing: .5px;
+}
+.btn-outline:hover { background: rgba(198,163,78,.06); border-color: var(--gold); transform: translateY(-3px); }
+.hero-stats {
+  display: flex; gap: 72px; margin-top: 88px;
+  opacity: 0; animation: fadeUp .8s ease-out .8s forwards; position: relative; z-index: 1;
+}
+.hero-stat { text-align: center; }
+.hero-stat .num {
+  font-family: var(--serif); font-size: 48px; font-weight: 300;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero-stat .lbl { font-size: 10px; color: var(--text-muted); letter-spacing: 2.5px; text-transform: uppercase; margin-top: 6px; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ═══ SCROLL ARROW ═══ */
+.scroll-arrow {
+  position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 2;
+  opacity: 0; animation: fadeUp .8s ease-out 1.2s forwards;
+}
+.scroll-arrow span {
+  display: block; width: 24px; height: 24px; border-right: 1.5px solid rgba(198,163,78,.3);
+  border-bottom: 1.5px solid rgba(198,163,78,.3); transform: rotate(45deg);
+  animation: arrowBounce 2s infinite;
+}
+@keyframes arrowBounce { 0%,100% { transform: rotate(45deg) translateY(0); opacity: .3; } 50% { transform: rotate(45deg) translateY(8px); opacity: .8; } }
+
+/* ═══ MARQUEE ═══ */
+.marquee-section { padding: 32px 0; border-top: 1px solid rgba(198,163,78,.04); border-bottom: 1px solid rgba(198,163,78,.04); overflow: hidden; background: rgba(198,163,78,.01); }
+.marquee-track { display: flex; gap: 48px; animation: scroll 35s linear infinite; width: max-content; }
+@keyframes scroll { to { transform: translateX(-50%); } }
+.marquee-item { font-family: var(--serif); font-size: 15px; color: rgba(198,163,78,.2); white-space: nowrap; letter-spacing: 3px; text-transform: uppercase; }
+.marquee-item .sep { color: rgba(198,163,78,.08); margin: 0 2px; }
+
+/* ═══ SECTIONS ═══ */
+section { padding: 140px 60px; position: relative; }
+.section-label {
+  font-size: 10px; color: var(--gold); letter-spacing: 4px; text-transform: uppercase;
+  font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+}
+.section-label::before { content: ''; width: 32px; height: 1px; background: var(--gold); }
+.section-title {
+  font-family: var(--serif); font-size: clamp(36px, 4.5vw, 58px); font-weight: 300;
+  line-height: 1.12; margin-bottom: 20px; max-width: 720px; letter-spacing: -1px;
+}
+.section-title em { font-style: italic; color: var(--gold); }
+.section-desc { font-size: 15px; color: var(--text-dim); max-width: 560px; line-height: 1.8; margin-bottom: 64px; }
+
+/* ═══ FEATURES GRID ═══ */
+.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1200px; margin: 0 auto; }
+.feature-card {
+  padding: 40px 32px; border-radius: 20px;
+  border: 1px solid rgba(198,163,78,.04);
+  background: linear-gradient(145deg, rgba(198,163,78,.015), rgba(255,255,255,.005));
+  transition: all .5s cubic-bezier(.22,1,.36,1); position: relative; overflow: hidden; cursor: auto;
+}
+.feature-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(198,163,78,.2), transparent);
+  opacity: 0; transition: opacity .5s;
+}
+.feature-card::after {
+  content: ''; position: absolute; top: -100%; left: -100%; width: 300%; height: 300%;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(198,163,78,.06) 0%, transparent 60%);
+  opacity: 0; transition: opacity .4s; pointer-events: none;
+}
+.feature-card:hover { border-color: rgba(198,163,78,.12); transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.feature-card:hover::before { opacity: 1; }
+.feature-card:hover::after { opacity: 1; }
+.feature-icon {
+  font-size: 28px; margin-bottom: 22px; display: flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: 14px; background: rgba(198,163,78,.06);
+  border: 1px solid rgba(198,163,78,.08);
+}
+.feature-title { font-family: var(--serif); font-size: 22px; font-weight: 500; color: var(--text); margin-bottom: 12px; }
+.feature-desc { font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+.feature-tag {
+  display: inline-block; margin-top: 18px; padding: 5px 14px; border-radius: 50px;
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500;
+  background: rgba(198,163,78,.06); color: var(--gold); border: 1px solid rgba(198,163,78,.06);
+}
+
+/* ═══ BENTO GRID ═══ */
+.bento { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 1200px; margin: 0 auto; }
+.bento-card {
+  padding: 28px 24px; border-radius: 16px; cursor: auto;
+  border: 1px solid rgba(198,163,78,.04); background: rgba(255,255,255,.01);
+  transition: all .4s cubic-bezier(.22,1,.36,1); position: relative; overflow: hidden;
+}
+.bento-card:hover { border-color: rgba(198,163,78,.12); transform: translateY(-4px); }
+.bento-card.span2 { grid-column: span 2; }
+.bento-icon { font-size: 22px; margin-bottom: 14px; }
+.bento-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.bento-desc { font-size: 11px; color: var(--text-dim); line-height: 1.6; }
+
+/* ═══ LIVE DEMO MOCKUP ═══ */
+.demo-section { position: relative; overflow: hidden; }
+.demo-wrapper { max-width: 1100px; margin: 0 auto; perspective: 1200px; }
+.demo-mockup {
+  background: var(--dark2); border-radius: 20px; border: 1px solid rgba(198,163,78,.08);
+  padding: 3px; overflow: hidden; box-shadow: 0 40px 120px rgba(0,0,0,.5);
+  transform: rotateX(4deg) rotateY(-2deg); transition: transform .6s;
+}
+.demo-mockup:hover { transform: rotateX(0) rotateY(0); }
+.demo-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: rgba(255,255,255,.03); border-bottom: 1px solid rgba(198,163,78,.05); }
+.demo-dot { width: 10px; height: 10px; border-radius: 50%; }
+.demo-dot.r { background: #ff5f57; }
+.demo-dot.y { background: #ffbd2e; }
+.demo-dot.g { background: #28ca41; }
+.demo-url { margin-left: 12px; padding: 6px 16px; border-radius: 6px; background: rgba(0,0,0,.3); font-size: 11px; color: var(--text-dim); font-family: var(--mono); flex: 1; text-align: center; }
+.demo-content { display: grid; grid-template-columns: 200px 1fr; min-height: 420px; }
+.demo-sidebar { background: rgba(0,0,0,.2); padding: 16px 0; border-right: 1px solid rgba(198,163,78,.05); }
+.demo-sidebar-item { padding: 10px 20px; font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 10px; transition: all .3s; cursor: auto; }
+.demo-sidebar-item:hover, .demo-sidebar-item.active { background: rgba(198,163,78,.06); color: var(--gold); }
+.demo-sidebar-item .ico { width: 18px; text-align: center; }
+.demo-main { padding: 24px; }
+.demo-main h3 { font-family: var(--serif); font-size: 20px; color: var(--gold); margin-bottom: 16px; }
+.demo-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.demo-kpi { padding: 16px; border-radius: 12px; background: rgba(198,163,78,.04); border: 1px solid rgba(198,163,78,.06); }
+.demo-kpi .val { font-family: var(--serif); font-size: 22px; color: var(--gold-light); }
+.demo-kpi .lab { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.demo-table { width: 100%; font-size: 11px; border-collapse: collapse; }
+.demo-table th { text-align: left; padding: 8px 12px; color: var(--text-dim); font-weight: 500; border-bottom: 1px solid rgba(198,163,78,.06); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+.demo-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.02); color: var(--text-dim); }
+.demo-table .status { padding: 3px 10px; border-radius: 50px; font-size: 9px; font-weight: 600; }
+.demo-table .status.ok { background: rgba(34,197,94,.1); color: var(--green); }
+.demo-table .status.pending { background: rgba(234,179,8,.1); color: #eab308; }
+
+/* ═══ COMPARISON TABLE ═══ */
+.comparison { max-width: 1000px; margin: 0 auto; }
+.comp-table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 20px; overflow: hidden; border: 1px solid rgba(198,163,78,.06); }
+.comp-table th { padding: 20px 24px; font-size: 14px; font-weight: 600; text-align: center; background: rgba(0,0,0,.3); }
+.comp-table th:first-child { text-align: left; font-family: var(--serif); font-size: 16px; }
+.comp-table th.aureus { background: rgba(198,163,78,.08); color: var(--gold); }
+.comp-table td { padding: 16px 24px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,.02); text-align: center; }
+.comp-table td:first-child { text-align: left; color: var(--text-dim); }
+.comp-table td.aureus { background: rgba(198,163,78,.02); }
+.comp-table .check { color: var(--green); font-size: 16px; }
+.comp-table .cross { color: rgba(239,68,68,.5); font-size: 16px; }
+.comp-table tr:hover td { background: rgba(255,255,255,.015); }
+.comp-table tr:hover td.aureus { background: rgba(198,163,78,.04); }
+
+/* ═══ SECURITY ═══ */
+.security-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; max-width: 900px; }
+.sec-item {
+  display: flex; align-items: flex-start; gap: 16px; padding: 28px;
+  border-radius: 16px; border: 1px solid rgba(198,163,78,.04);
+  background: rgba(255,255,255,.01); transition: all .4s; cursor: auto;
+}
+.sec-item:hover { border-color: rgba(198,163,78,.1); transform: translateY(-3px); }
+.sec-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: rgba(198,163,78,.04); }
+.sec-text h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.sec-text p { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+
+/* ═══ PORTALS ═══ */
+.portals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1100px; margin: 0 auto; }
+.portal-card {
+  padding: 44px 32px; border-radius: 24px; text-align: center;
+  border: 1px solid rgba(198,163,78,.05);
+  background: linear-gradient(180deg, rgba(198,163,78,.02), transparent);
+  transition: all .5s cubic-bezier(.22,1,.36,1); cursor: auto; position: relative; overflow: hidden;
+}
+.portal-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(198,163,78,.06) 0%, transparent 60%);
+  opacity: 0; transition: opacity .5s;
+}
+.portal-card:hover { border-color: rgba(198,163,78,.2); transform: translateY(-8px); box-shadow: 0 24px 80px rgba(0,0,0,.4); }
+.portal-card:hover::before { opacity: 1; }
+.portal-emoji { font-size: 44px; margin-bottom: 24px; display: block; position: relative; }
+.portal-name { font-family: var(--serif); font-size: 26px; font-weight: 500; color: var(--gold); margin-bottom: 12px; position: relative; }
+.portal-desc { font-size: 13px; color: var(--text-dim); line-height: 1.7; margin-bottom: 24px; position: relative; }
+.portal-url { font-family: var(--mono); font-size: 10px; color: var(--text-muted); padding: 10px 18px; border-radius: 8px; background: rgba(0,0,0,.3); display: inline-block; position: relative; letter-spacing: .5px; }
+
+/* ═══ TESTIMONIAL ═══ */
+.testimonial-section { text-align: center; }
+.testimonial-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1100px; margin: 0 auto; }
+.testimonial-card {
+  padding: 36px 28px; border-radius: 20px; text-align: left;
+  border: 1px solid rgba(198,163,78,.04); background: rgba(255,255,255,.01);
+  transition: all .4s;
+}
+.testimonial-card:hover { border-color: rgba(198,163,78,.1); transform: translateY(-4px); }
+.testimonial-stars { color: var(--gold); font-size: 14px; margin-bottom: 16px; letter-spacing: 2px; }
+.testimonial-text { font-size: 13px; color: var(--text-dim); line-height: 1.7; font-style: italic; margin-bottom: 20px; }
+.testimonial-author { display: flex; align-items: center; gap: 12px; }
+.testimonial-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, rgba(198,163,78,.2), rgba(198,163,78,.05)); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--gold); font-family: var(--serif); }
+.testimonial-info .name { font-size: 13px; font-weight: 600; color: var(--text); }
+.testimonial-info .role { font-size: 10px; color: var(--text-muted); }
+
+/* ═══ PRICING ═══ */
+.pricing { display: flex; gap: 24px; max-width: 900px; margin: 0 auto; justify-content: center; }
+.price-card {
+  flex: 1; max-width: 420px; padding: 48px 40px; border-radius: 24px;
+  border: 1px solid rgba(198,163,78,.06);
+  background: linear-gradient(180deg, rgba(198,163,78,.015), transparent);
+  text-align: center; transition: all .5s; cursor: auto;
+}
+.price-card.featured {
+  border-color: rgba(198,163,78,.2);
+  background: linear-gradient(180deg, rgba(198,163,78,.05), rgba(198,163,78,.01));
+  position: relative;
+}
+.price-card.featured::before {
+  content: 'POPULAIRE'; position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+  padding: 6px 20px; border-radius: 0 0 10px 10px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  font-size: 9px; font-weight: 700; color: #fff; letter-spacing: 2px;
+}
+.price-card:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.price-name { font-size: 11px; color: var(--gold); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+.price-amount { font-family: var(--serif); font-size: 56px; font-weight: 300; color: var(--text); }
+.price-amount span { font-size: 18px; color: var(--text-dim); font-family: var(--sans); }
+.price-period { font-size: 12px; color: var(--text-muted); margin-bottom: 28px; }
+.price-features { list-style: none; text-align: left; margin-bottom: 36px; }
+.price-features li { padding: 10px 0; font-size: 13px; color: var(--text-dim); border-bottom: 1px solid rgba(255,255,255,.02); display: flex; align-items: center; gap: 12px; }
+.price-features li::before { content: '✓'; color: var(--gold); font-weight: 600; font-size: 12px; flex-shrink: 0; }
+
+/* ═══ FAQ ═══ */
+.faq-list { max-width: 800px; }
+.faq-item { border-bottom: 1px solid rgba(198,163,78,.06); }
+.faq-q {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 0; cursor: auto; transition: color .3s; font-size: 16px; font-weight: 500;
+}
+.faq-q:hover { color: var(--gold); }
+.faq-q .arrow { font-size: 20px; color: var(--gold); transition: transform .4s; }
+.faq-q.open .arrow { transform: rotate(45deg); }
+.faq-a { max-height: 0; overflow: hidden; transition: max-height .5s cubic-bezier(.22,1,.36,1); }
+.faq-a p { padding: 0 0 24px; font-size: 14px; color: var(--text-dim); line-height: 1.7; }
+
+/* ═══ CTA SECTION ═══ */
+.cta-section {
+  text-align: center; padding: 140px 40px;
+  background: linear-gradient(180deg, var(--dark3), var(--dark), var(--dark3));
+  position: relative; overflow: hidden;
+}
+.cta-glow {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 700px; height: 700px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(198,163,78,.05) 0%, transparent 70%);
+  animation: breathe 6s ease-in-out infinite;
+}
+
+/* ═══ LIVE TICKER ═══ */
+.ticker-section { padding: 28px 60px; background: rgba(198,163,78,.02); border-top: 1px solid rgba(198,163,78,.04); border-bottom: 1px solid rgba(198,163,78,.04); }
+.ticker-grid { display: flex; justify-content: center; gap: 60px; align-items: center; flex-wrap: wrap; }
+.ticker-item { display: flex; align-items: center; gap: 10px; }
+.ticker-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 2s infinite; }
+.ticker-val { font-family: var(--mono); font-size: 18px; font-weight: 600; color: var(--gold-light); }
+.ticker-label { font-size: 11px; color: var(--text-muted); letter-spacing: .5px; }
+
+/* ═══ ROI CALCULATOR ═══ */
+.roi-section { background: linear-gradient(180deg, var(--dark3), var(--dark)); }
+.roi-wrapper { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.roi-inputs { padding: 40px; border-radius: 24px; border: 1px solid rgba(198,163,78,.08); background: rgba(255,255,255,.015); }
+.roi-results { padding: 40px; border-radius: 24px; border: 1px solid rgba(198,163,78,.15); background: linear-gradient(180deg, rgba(198,163,78,.04), rgba(198,163,78,.01)); }
+.roi-group { margin-bottom: 24px; }
+.roi-group label { display: block; font-size: 11px; color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+.roi-group select, .roi-group input[type="range"] { width: 100%; cursor: auto; }
+.roi-group select { padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(198,163,78,.1); background: var(--dark); color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; -webkit-appearance: none; }
+.roi-group input[type="range"] { -webkit-appearance: none; height: 4px; background: rgba(198,163,78,.15); border-radius: 2px; outline: none; }
+.roi-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gold); cursor: auto; box-shadow: 0 0 12px rgba(198,163,78,.4); }
+.roi-val { font-family: var(--mono); font-size: 16px; color: var(--gold-light); text-align: right; margin-top: 6px; }
+.roi-saving-big { font-family: var(--serif); font-size: 52px; font-weight: 300; color: var(--gold-light); margin: 8px 0 4px; }
+.roi-saving-label { font-size: 12px; color: var(--text-dim); margin-bottom: 20px; }
+.roi-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.roi-bar-label { font-size: 12px; color: var(--text-dim); width: 80px; flex-shrink: 0; }
+.roi-bar-track { flex: 1; height: 8px; border-radius: 4px; background: rgba(255,255,255,.05); overflow: hidden; position: relative; }
+.roi-bar-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.22,1,.36,1); }
+.roi-bar-fill.concurrent { background: linear-gradient(90deg, var(--red), #f97316); }
+.roi-bar-fill.aureus { background: linear-gradient(90deg, var(--gold-dark), var(--gold)); }
+.roi-bar-amount { font-family: var(--mono); font-size: 12px; color: var(--text-dim); width: 90px; text-align: right; flex-shrink: 0; }
+.roi-percent { display: inline-block; padding: 6px 16px; border-radius: 50px; background: rgba(34,197,94,.1); color: var(--green); font-size: 13px; font-weight: 600; margin-top: 8px; }
+
+/* ═══ MIGRATION TIMELINE ═══ */
+.migration-section { background: linear-gradient(180deg, var(--dark), var(--dark3)); }
+.migration-timeline { max-width: 1000px; margin: 0 auto; position: relative; }
+.migration-line { position: absolute; top: 40px; left: 0; right: 0; height: 2px; background: rgba(198,163,78,.1); }
+.migration-line-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); width: 100%; }
+.migration-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; position: relative; z-index: 1; }
+.migration-step { text-align: center; }
+.migration-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--dark); border: 2px solid var(--gold); margin: 26px auto 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--gold); font-weight: 700; transition: all .4s; }
+.migration-step:hover .migration-dot { background: var(--gold); color: var(--dark); box-shadow: 0 0 20px rgba(198,163,78,.4); }
+.migration-day { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.migration-title { font-family: var(--serif); font-size: 18px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.migration-desc { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+.migration-cta { text-align: center; margin-top: 48px; }
+
+/* ═══ BLOG ARTICLES ═══ */
+.blog-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 1100px; margin: 0 auto; }
+.blog-card {
+  padding: 36px 32px; border-radius: 20px; cursor: auto;
+  border: 1px solid rgba(198,163,78,.04); background: rgba(255,255,255,.01);
+  transition: all .5s cubic-bezier(.22,1,.36,1); position: relative; overflow: hidden;
+}
+.blog-card:hover { border-color: rgba(198,163,78,.12); transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,.2); }
+.blog-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.blog-tag { padding: 4px 12px; border-radius: 50px; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; background: rgba(198,163,78,.06); color: var(--gold); }
+.blog-date { font-size: 10px; color: var(--text-muted); }
+.blog-read { font-size: 10px; color: var(--text-muted); }
+.blog-title { font-family: var(--serif); font-size: 22px; font-weight: 500; color: var(--text); margin-bottom: 12px; line-height: 1.3; }
+.blog-excerpt { font-size: 13px; color: var(--text-dim); line-height: 1.7; margin-bottom: 20px; }
+.blog-cta { font-size: 12px; color: var(--gold); font-weight: 600; display: flex; align-items: center; gap: 6px; transition: gap .3s; }
+.blog-card:hover .blog-cta { gap: 12px; }
+
+/* ═══ ARTICLE MODAL ═══ */
+.article-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.7); backdrop-filter: blur(16px); opacity: 0; pointer-events: none; transition: opacity .5s; overflow-y: auto; }
+.article-overlay.open { opacity: 1; pointer-events: all; }
+.article-panel {
+  max-width: 780px; margin: 40px auto; padding: 56px 48px; border-radius: 24px;
+  background: linear-gradient(180deg, #0c1020, var(--dark)); border: 1px solid rgba(198,163,78,.08);
+  position: relative; transform: translateY(30px); opacity: 0;
+  transition: all .5s cubic-bezier(.22,1,.36,1);
+}
+.article-overlay.open .article-panel { transform: translateY(0); opacity: 1; }
+.article-close { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(198,163,78,.1); background: transparent; color: var(--text-dim); font-size: 22px; cursor: auto; display: flex; align-items: center; justify-content: center; transition: all .4s; }
+.article-close:hover { border-color: var(--gold); color: var(--gold); transform: rotate(90deg); }
+.article-tag { display: inline-block; padding: 6px 16px; border-radius: 50px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; background: rgba(198,163,78,.08); color: var(--gold); margin-bottom: 20px; }
+.article-panel h2 { font-family: var(--serif); font-size: 36px; font-weight: 400; color: var(--text); margin-bottom: 12px; line-height: 1.2; }
+.article-panel h2 em { color: var(--gold); font-style: italic; }
+.article-panel .article-info { font-size: 12px; color: var(--text-muted); margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid rgba(198,163,78,.06); }
+.article-panel h3 { font-family: var(--serif); font-size: 22px; font-weight: 500; color: var(--gold-light); margin: 32px 0 12px; }
+.article-panel p { font-size: 14px; color: var(--text-dim); line-height: 1.8; margin-bottom: 16px; }
+.article-panel ul { list-style: none; margin: 16px 0; }
+.article-panel ul li { padding: 10px 0; padding-left: 24px; font-size: 13px; color: var(--text-dim); line-height: 1.6; border-bottom: 1px solid rgba(255,255,255,.02); position: relative; }
+.article-panel ul li::before { content: ''; position: absolute; left: 0; top: 16px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+.article-panel .highlight-box { padding: 24px; border-radius: 16px; background: rgba(198,163,78,.04); border: 1px solid rgba(198,163,78,.08); margin: 24px 0; }
+.article-panel .highlight-box h4 { font-size: 14px; font-weight: 600; color: var(--gold); margin-bottom: 8px; }
+.article-panel .highlight-box p { margin-bottom: 0; font-size: 13px; }
+.article-panel .comp-mini { width: 100%; border-collapse: collapse; margin: 20px 0; border-radius: 12px; overflow: hidden; }
+.article-panel .comp-mini th { padding: 12px 16px; background: rgba(198,163,78,.06); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: center; color: var(--gold); }
+.article-panel .comp-mini th:first-child { text-align: left; }
+.article-panel .comp-mini td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.02); font-size: 13px; color: var(--text-dim); text-align: center; }
+.article-panel .comp-mini td:first-child { text-align: left; font-weight: 500; color: var(--text); }
+.article-panel .article-cta-box { text-align: center; padding: 32px; border-radius: 16px; background: rgba(198,163,78,.03); border: 1px solid rgba(198,163,78,.06); margin-top: 32px; }
+.article-panel .article-cta-box p { color: var(--text); font-size: 16px; margin-bottom: 16px; }
+
+@media (max-width: 768px) {
+  .roi-wrapper { grid-template-columns: 1fr; }
+  .migration-steps { grid-template-columns: repeat(2, 1fr); }
+  .migration-line { display: none; }
+  .blog-grid { grid-template-columns: 1fr; }
+  .article-panel { margin: 20px; padding: 32px 24px; }
+  .article-panel h2 { font-size: 26px; }
+  .ticker-grid { gap: 24px; }
+}
+
+/* ═══ FOOTER ═══ */
+footer {
+  padding: 48px 60px; border-top: 1px solid rgba(198,163,78,.04);
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+}
+.footer-left { font-family: var(--serif); font-size: 16px; color: var(--text-dim); }
+.footer-left span { color: var(--gold); }
+.footer-center { display: flex; gap: 28px; }
+.footer-center a { color: var(--text-muted); text-decoration: none; font-size: 12px; transition: color .3s; cursor: auto; }
+.footer-center a:hover { color: var(--gold); }
+.footer-right { text-align: right; font-size: 10px; color: var(--text-muted); line-height: 1.6; }
+
+/* ═══ LIVE TICKER ═══ */
+.ticker-section { padding: 28px 40px; background: rgba(198,163,78,.02); border-top: 1px solid rgba(198,163,78,.04); border-bottom: 1px solid rgba(198,163,78,.04); }
+.ticker-grid { display: flex; align-items: center; justify-content: center; gap: 40px; max-width: 1200px; margin: 0 auto; flex-wrap: wrap; }
+.ticker-item { text-align: center; position: relative; }
+.ticker-num { font-family: var(--serif); font-size: 28px; font-weight: 400; color: var(--gold-light); }
+.ticker-label { font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+.ticker-pulse { position: absolute; top: 4px; right: -8px; width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+.ticker-sep { width: 1px; height: 36px; background: rgba(198,163,78,.08); }
+
+/* ═══ ROI CALCULATOR ═══ */
+.roi-calc { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+.roi-left { padding: 36px; border-radius: 20px; border: 1px solid rgba(198,163,78,.06); background: rgba(255,255,255,.01); }
+.roi-field { margin-bottom: 28px; }
+.roi-field:last-child { margin-bottom: 0; }
+.roi-field label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 12px; font-weight: 500; }
+.roi-field input[type="range"] { width: 100%; -webkit-appearance: none; height: 4px; border-radius: 2px; background: rgba(198,163,78,.15); outline: none; cursor: auto; }
+.roi-field input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold-light)); cursor: auto; box-shadow: 0 2px 10px rgba(198,163,78,.4); }
+.roi-range-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+.roi-range-labels span:nth-child(2) { font-weight: 700; color: var(--gold); font-size: 18px; font-family: var(--serif); }
+.roi-providers { display: flex; gap: 8px; flex-wrap: wrap; }
+.roi-prov { padding: 10px 18px; border-radius: 10px; border: 1px solid rgba(198,163,78,.1); background: transparent; color: var(--text-dim); font-family: var(--sans); font-size: 12px; cursor: auto; transition: all .3s; }
+.roi-prov.active { background: rgba(198,163,78,.1); border-color: var(--gold); color: var(--gold); }
+.roi-prov:hover:not(.active) { border-color: rgba(198,163,78,.2); color: var(--text); }
+.roi-checks { display: flex; flex-direction: column; gap: 10px; }
+.roi-check { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-dim); cursor: auto; }
+.roi-check input { accent-color: var(--gold); width: 16px; height: 16px; cursor: auto; }
+.roi-right { display: flex; flex-direction: column; gap: 16px; }
+.roi-result-card { padding: 28px; border-radius: 16px; border: 1px solid rgba(198,163,78,.06); background: rgba(255,255,255,.01); }
+.roi-result-card.aureus { border-color: rgba(198,163,78,.2); background: rgba(198,163,78,.04); }
+.roi-result-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+.roi-result-amount { font-family: var(--serif); font-size: 36px; font-weight: 400; }
+.roi-result-card.current .roi-result-amount { color: var(--red); text-decoration: line-through; text-decoration-color: rgba(239,68,68,.3); }
+.roi-result-card.aureus .roi-result-amount { color: var(--gold-light); }
+.roi-result-period { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.roi-result-details { font-size: 11px; color: var(--text-muted); margin-top: 8px; font-family: var(--mono); }
+.roi-vs { text-align: center; font-family: var(--serif); font-size: 18px; color: var(--text-muted); font-style: italic; }
+.roi-savings { padding: 28px; border-radius: 16px; border: 1px solid rgba(34,197,94,.15); background: rgba(34,197,94,.03); text-align: center; }
+.roi-savings-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+.roi-savings-amount { font-family: var(--serif); font-size: 48px; font-weight: 400; color: var(--green); }
+.roi-savings-bar { width: 100%; height: 6px; border-radius: 3px; background: rgba(255,255,255,.05); margin-top: 16px; overflow: hidden; }
+.roi-savings-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--green), #4ade80); transition: width .6s cubic-bezier(.22,1,.36,1); }
+.roi-savings-pct { font-size: 13px; color: var(--green); margin-top: 10px; font-weight: 500; }
+
+/* ═══ MIGRATION TIMELINE ═══ */
+.timeline { max-width: 700px; margin: 0 auto; position: relative; padding-left: 60px; }
+.timeline-line { position: absolute; left: 23px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, var(--gold-dark), var(--gold), var(--gold-light)); }
+.timeline-step { position: relative; margin-bottom: 48px; }
+.timeline-step:last-child { margin-bottom: 0; }
+.timeline-dot { position: absolute; left: -60px; top: 0; width: 48px; height: 48px; border-radius: 50%; background: var(--dark2); border: 2px solid var(--gold-dark); display: flex; align-items: center; justify-content: center; z-index: 1; }
+.timeline-dot span { font-family: var(--serif); font-size: 18px; color: var(--gold); font-weight: 600; }
+.timeline-dot.gold { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); border-color: var(--gold-light); }
+.timeline-dot.gold span { color: #fff; }
+.timeline-content { padding: 32px; border-radius: 16px; border: 1px solid rgba(198,163,78,.06); background: rgba(255,255,255,.01); transition: all .4s; }
+.timeline-content:hover { border-color: rgba(198,163,78,.12); transform: translateX(8px); }
+.timeline-day { font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+.timeline-content h3 { font-family: var(--serif); font-size: 22px; font-weight: 500; color: var(--text); margin-bottom: 12px; }
+.timeline-content p { font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+.timeline-tags { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.timeline-tags span { padding: 5px 12px; border-radius: 50px; font-size: 10px; background: rgba(198,163,78,.06); color: var(--gold); border: 1px solid rgba(198,163,78,.06); }
+
+/* ═══ ARTICLES ═══ */
+.articles-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 1100px; margin: 0 auto; }
+.article-card { padding: 36px; border-radius: 20px; border: 1px solid rgba(198,163,78,.06); background: rgba(255,255,255,.01); cursor: auto; transition: all .4s; }
+.article-card:hover { border-color: rgba(198,163,78,.15); transform: translateY(-4px); }
+.article-category { font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px; font-weight: 500; }
+.article-card h3 { font-family: var(--serif); font-size: 22px; font-weight: 500; color: var(--text); margin-bottom: 12px; line-height: 1.3; }
+.article-card > p { font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+.article-meta { display: flex; gap: 20px; margin-top: 16px; font-size: 11px; color: var(--text-muted); }
+.article-expand { max-height: 0; overflow: hidden; transition: max-height .8s cubic-bezier(.22,1,.36,1); }
+.article-expand.open { max-height: 5000px; }
+.article-body { padding-top: 28px; margin-top: 28px; border-top: 1px solid rgba(198,163,78,.06); }
+.article-body h4 { font-family: var(--serif); font-size: 18px; color: var(--gold); margin: 24px 0 10px; }
+.article-body h4:first-child { margin-top: 0; }
+.article-body p { font-size: 13px; color: var(--text-dim); line-height: 1.8; margin-bottom: 12px; }
+.article-body strong { color: var(--text); }
+.article-table { margin: 16px 0; overflow-x: auto; }
+.article-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.article-table th { padding: 12px 16px; background: rgba(198,163,78,.06); color: var(--gold); text-align: left; font-weight: 500; border-radius: 6px 6px 0 0; }
+.article-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.03); color: var(--text-dim); }
+.article-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+.article-compare-col { padding: 24px; border-radius: 14px; border: 1px solid rgba(255,255,255,.04); background: rgba(255,255,255,.01); }
+.article-compare-col.gold { border-color: rgba(198,163,78,.15); background: rgba(198,163,78,.03); }
+.article-compare-head { font-family: var(--serif); font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.article-compare-col.gold .article-compare-head { color: var(--gold); border-color: rgba(198,163,78,.1); }
+.article-compare-item { font-size: 12px; color: var(--text-dim); padding: 6px 0; line-height: 1.5; }
+.article-cta { margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(198,163,78,.06); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.article-cta p { margin-bottom: 12px; flex-basis: 100%; }
+
+/* ═══ RESPONSIVE NEW SECTIONS ═══ */
+@media (max-width: 1024px) { .roi-calc { grid-template-columns: 1fr; } .articles-grid { grid-template-columns: 1fr; } .article-compare { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .ticker-grid { gap: 20px; } .ticker-sep { display: none; } .ticker-num { font-size: 22px; } .timeline { padding-left: 48px; } .timeline-dot { left: -48px; width: 40px; height: 40px; } }
+
+/* ═══ REVEAL ANIMATIONS ═══ */
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity .8s cubic-bezier(.22,1,.36,1), transform .8s cubic-bezier(.22,1,.36,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: .1s; }
+.reveal-delay-2 { transition-delay: .2s; }
+.reveal-delay-3 { transition-delay: .3s; }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 1024px) {
+  .features-grid { grid-template-columns: repeat(2, 1fr); }
+  .bento { grid-template-columns: repeat(2, 1fr); }
+  .portals { grid-template-columns: 1fr; max-width: 420px; }
+  .testimonial-grid { grid-template-columns: 1fr; max-width: 480px; }
+  .demo-content { grid-template-columns: 1fr; }
+  .demo-sidebar { display: none; }
+  .comp-table { font-size: 11px; }
+}
+@media (max-width: 768px) {
+  body { cursor: auto; }
+  .cursor, .cursor-dot { display: none; }
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .hamburger { display: block; cursor: pointer; }
+  .mobile-nav { display: none; position: fixed; top: 60px; left: 0; right: 0; background: rgba(6,8,16,.97); backdrop-filter: blur(20px); padding: 20px; z-index: 999; border-bottom: 1px solid rgba(198,163,78,.1); }
+  .mobile-nav.open { display: flex; flex-direction: column; gap: 12px; }
+  .mobile-nav a { color: #e5e5e5; text-decoration: none; font-size: 15px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .mobile-nav a:hover { color: var(--gold); }
+  .mobile-nav .btn-gold-sm { display: inline-block; margin-top: 8px; padding: 12px; border-radius: 10px; background: linear-gradient(135deg,var(--gold),var(--gold-dark)); color: #060810; font-weight: 700; text-align: center; text-decoration: none; font-size: 14px; }
+  [data-theme="light"] .mobile-nav { background: rgba(255,255,255,.97); }
+  [data-theme="light"] .mobile-nav a { color: #333; border-bottom-color: rgba(0,0,0,.06); }
+  section { padding: 80px 20px; }
+  .hero { padding: 100px 20px 60px; }
+  .hero h1 { font-size: 38px; letter-spacing: -1px; }
+  .hero-stats { gap: 24px; flex-wrap: wrap; justify-content: center; }
+  .hero-stat .num { font-size: 32px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .bento { grid-template-columns: 1fr; }
+  .bento-card.span2 { grid-column: span 1; }
+  .security-grid { grid-template-columns: 1fr; }
+  .pricing { flex-direction: column; align-items: center; }
+  .login-panel { width: 100%; max-width: 100%; padding: 32px 24px; }
+  footer { grid-template-columns: 1fr; gap: 20px; text-align: center; }
+  .footer-right { text-align: center; }
+  .comparison { overflow-x: auto; }
+  .demo-mockup { transform: none; }
+}
+/* ═══ LIGHT THEME ═══ */
+[data-theme="light"] { --dark:#f8f7f4; --dark2:#ffffff; --dark3:#f0eee8; --dark4:#e8e6e0; --text:#1a1a2e; --text-dim:#555; --text-muted:#888; }
+[data-theme="light"] body { background: #f8f7f4 !important; color: #1a1a2e; }
+[data-theme="light"] #navbar { background: rgba(255,255,255,.92) !important; border-bottom-color: rgba(0,0,0,.06) !important; }
+[data-theme="light"] .nav-links a { color: #555; }
+[data-theme="light"] .nav-links a:hover { color: var(--gold-dark); }
+[data-theme="light"] .nav-logo-text { color: #1a1a2e; }
+[data-theme="light"] .nav-cta { border-color: rgba(198,163,78,.4); color: var(--gold-dark); }
+[data-theme="light"] section { color: #1a1a2e; }
+[data-theme="light"] .hero-sub, [data-theme="light"] .sect-sub { color: #666 !important; }
+[data-theme="light"] .stat-card, [data-theme="light"] .feature-card, [data-theme="light"] .security-card, [data-theme="light"] .testimonial-card, [data-theme="light"] .price-card, [data-theme="light"] .blog-card { background: #ffffff !important; border-color: rgba(0,0,0,.06) !important; }
+[data-theme="light"] .stat-card:hover, [data-theme="light"] .feature-card:hover, [data-theme="light"] .price-card:hover { box-shadow: 0 20px 60px rgba(0,0,0,.06) !important; }
+[data-theme="light"] .feature-card h3, [data-theme="light"] .security-card h3 { color: #1a1a2e !important; }
+[data-theme="light"] .feature-card p, [data-theme="light"] .security-card p { color: #666 !important; }
+[data-theme="light"] .demo-box { background: #ffffff !important; border-color: rgba(0,0,0,.06) !important; }
+[data-theme="light"] .demo-kpi { background: rgba(0,0,0,.02) !important; border-color: rgba(0,0,0,.04) !important; }
+[data-theme="light"] .demo-kpi .lbl { color: #888 !important; }
+[data-theme="light"] .price-card { background: #ffffff !important; }
+[data-theme="light"] .price-card.featured { border-color: var(--gold) !important; }
+[data-theme="light"] .price-val { color: var(--gold-dark) !important; }
+[data-theme="light"] .price-feat { border-bottom-color: rgba(0,0,0,.04) !important; color: #555 !important; }
+[data-theme="light"] footer { background: #ffffff !important; border-top-color: rgba(0,0,0,.06) !important; }
+[data-theme="light"] footer * { color: #555 !important; }
+[data-theme="light"] .scroll-progress { background: linear-gradient(90deg, var(--gold-dark), var(--gold)) !important; }
+[data-theme="light"] .cursor { display: none !important; }
+/* Bento cards */
+[data-theme="light"] .bento-card { background: #ffffff !important; border-color: rgba(0,0,0,.06) !important; }
+[data-theme="light"] .bento-card:hover { border-color: rgba(198,163,78,.2) !important; box-shadow: 0 12px 40px rgba(0,0,0,.06) !important; }
+[data-theme="light"] .bento-title { color: #1a1a2e !important; }
+[data-theme="light"] .bento-desc { color: #666 !important; }
+/* Security items */
+[data-theme="light"] .sec-item { background: #ffffff !important; border-color: rgba(0,0,0,.06) !important; }
+[data-theme="light"] .sec-item:hover { border-color: rgba(198,163,78,.15) !important; box-shadow: 0 8px 30px rgba(0,0,0,.05) !important; }
+[data-theme="light"] .sec-item h4 { color: #1a1a2e !important; }
+[data-theme="light"] .sec-item p { color: #666 !important; }
+/* Portal cards */
+[data-theme="light"] .portal-card { background: #ffffff !important; border-color: rgba(0,0,0,.06) !important; }
+[data-theme="light"] .portal-card:hover { border-color: rgba(198,163,78,.2) !important; box-shadow: 0 20px 60px rgba(0,0,0,.08) !important; }
+[data-theme="light"] .portal-card h3 { color: #1a1a2e !important; }
+[data-theme="light"] .portal-card p, [data-theme="light"] .portal-card li { color: #666 !important; }
+/* FAQ */
+[data-theme="light"] .faq-item { border-bottom-color: rgba(0,0,0,.06) !important; }
+[data-theme="light"] .faq-q { color: #1a1a2e !important; }
+[data-theme="light"] .faq-a p { color: #666 !important; }
+/* Blog */
+[data-theme="light"] .blog-card { background: #ffffff !important; }
+[data-theme="light"] .blog-title { color: #1a1a2e !important; }
+[data-theme="light"] .blog-tag { background: rgba(198,163,78,.08) !important; }
+/* Price details */
+[data-theme="light"] .price-name { color: var(--gold-dark) !important; }
+[data-theme="light"] .price-card h4 { color: #1a1a2e !important; }
+/* Login panel */
+[data-theme="light"] .login-panel { background: #ffffff !important; border-left-color: rgba(0,0,0,.08) !important; box-shadow: -10px 0 40px rgba(0,0,0,.08) !important; }
+[data-theme="light"] .login-panel h2 { color: #1a1a2e !important; }
+[data-theme="light"] .login-panel input { background: #f8f7f4 !important; border-color: rgba(0,0,0,.1) !important; color: #1a1a2e !important; }
+[data-theme="light"] .login-panel label { color: #666 !important; }
+/* ROI / Stat cards */
+[data-theme="light"] .stat-label { color: #888 !important; }
+[data-theme="light"] .stat-val { color: #1a1a2e !important; }
+/* Section headings */
+[data-theme="light"] .sect-title { color: #1a1a2e !important; }
+[data-theme="light"] .sect-badge { background: rgba(198,163,78,.08) !important; color: var(--gold-dark) !important; border-color: rgba(198,163,78,.15) !important; }
+/* Testimonials */
+[data-theme="light"] .testimonial-card p { color: #555 !important; }
+[data-theme="light"] .testimonial-card .author { color: #888 !important; }
+/* CTA section */
+[data-theme="light"] .cta-section { background: linear-gradient(135deg, rgba(198,163,78,.06), rgba(198,163,78,.02)) !important; }
+/* Trust badges */
+[data-theme="light"] .trust-badge { background: rgba(0,0,0,.02) !important; border-color: rgba(0,0,0,.06) !important; }
+[data-theme="light"] .trust-badge span { color: #555 !important; }
+/* General text overrides */
+[data-theme="light"] [style*="color: #e5e5e5"], [data-theme="light"] [style*="color:#e5e5e5"] { color: #1a1a2e !important; }
+[data-theme="light"] [style*="color: #9e9b93"], [data-theme="light"] [style*="color:#9e9b93"] { color: #666 !important; }
+[data-theme="light"] [style*="color: #888"], [data-theme="light"] [style*="color:#888"] { color: #999 !important; }
+/* Hamburger */
+[data-theme="light"] .hamburger span { background: #333 !important; }
+/* Hero section */
+[data-theme="light"] .hero-glow { opacity: .3 !important; }
+[data-theme="light"] .hero-lines span { background: linear-gradient(to bottom, transparent, rgba(198,163,78,.08), transparent) !important; }
+[data-theme="light"] .hero h1 { color: #1a1a2e !important; }
+[data-theme="light"] .hero-badge { background: rgba(198,163,78,.06) !important; border-color: rgba(198,163,78,.2) !important; }
+[data-theme="light"] .hero-badge span { color: #555 !important; }
+[data-theme="light"] .hero-stat .num { color: var(--gold-dark) !important; }
+[data-theme="light"] .hero-stat .txt { color: #888 !important; }
+[data-theme="light"] .btn-outline { border-color: rgba(0,0,0,.15) !important; color: #333 !important; }
+[data-theme="light"] .btn-outline:hover { border-color: var(--gold) !important; color: var(--gold-dark) !important; }
+</style>
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-dot" id="cursorDot"></div>
+
+<!-- Scroll Progress -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- Particles -->
+<canvas id="particles"></canvas>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav id="navbar">
+  <div class="nav-logo" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <div class="nav-logo-icon">A</div>
+    <div class="nav-logo-text"><span>AUREUS</span> SOCIAL</div>
+  </div>
+  <div class="nav-links">
+    <a href="#fonctionnalites">Fonctionnalites</a>
+    <a href="#demo">Demo</a>
+    <a href="#roi">Economies</a>
+    <a href="#securite">Securite</a>
+    <a href="#tarifs">Tarifs</a>
+    <a href="#blog">Blog</a>
+    <button onclick="toggleLandingTheme()" id="landingThemeBtn" style="width:36px;height:36px;border-radius:10px;border:1px solid rgba(198,163,78,.2);background:transparent;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .3s" title="Mode jour/nuit">🌙</button>
+  </div>
+  <button class="hamburger" onclick="toggleMobileNav()"><span></span><span></span><span></span></button>
+  <button class="nav-cta" onclick="toggleLogin()"><span>Se connecter</span></button>
+</nav>
+<div class="mobile-nav" id="mobileNav">
+  <a href="#fonctionnalites" onclick="closeMobileNav()">Fonctionnalités</a>
+  <a href="#demo" onclick="closeMobileNav()">Démo</a>
+  <a href="#roi" onclick="closeMobileNav()">Économies</a>
+  <a href="#securite" onclick="closeMobileNav()">Sécurité</a>
+  <a href="#tarifs" onclick="closeMobileNav()">Tarifs</a>
+  <a href="#blog" onclick="closeMobileNav()">Blog</a>
+  <div style="display:flex;gap:10px;align-items:center;padding-top:8px">
+    <button onclick="toggleLandingTheme()" style="width:36px;height:36px;border-radius:10px;border:1px solid rgba(198,163,78,.2);background:transparent;cursor:pointer;font-size:16px" id="mobileThemeBtn">🌙</button>
+    <a class="btn-gold-sm" style="flex:1" href="javascript:void(0)" onclick="closeMobileNav();toggleLogin()">Se connecter</a>
+  </div>
+</div>
+
+<!-- ═══ LOGIN PANEL ═══ -->
+<div class="login-overlay" id="loginOverlay" onclick="toggleLogin()"></div>
+<div class="login-panel" id="loginPanel">
+  <button class="login-close" onclick="toggleLogin()">&times;</button>
+  <div class="login-header">
+    <h2>Bienvenue</h2>
+    <p>Connectez-vous a votre espace Aureus Social Pro</p>
+  </div>
+  <div class="login-tabs">
+    <button class="login-tab active" onclick="switchTab(this,'admin')">Admin</button>
+    <button class="login-tab" onclick="switchTab(this,'client')">Client</button>
+    <button class="login-tab" onclick="switchTab(this,'employee')">Employe</button>
+  </div>
+  <div id="loginForm">
+    <div class="login-field"><label>Adresse email</label><input type="email" id="loginEmail" placeholder="votre@email.be" autocomplete="email"></div>
+    <div class="login-field" id="passwordField"><label>Mot de passe</label><input type="password" id="loginPassword" placeholder="Votre mot de passe" autocomplete="current-password"></div>
+    <button class="login-submit" onclick="handleLogin()">Se connecter</button>
+    <span class="login-forgot">Mot de passe oublie ?</span>
+  </div>
+  <div id="magicForm" style="display:none">
+    <div class="login-field"><label>Email professionnel</label><input type="email" placeholder="prenom.nom@entreprise.be" autocomplete="email"></div>
+    <button class="login-submit" onclick="handleMagicLink()">&#10024; Recevoir le lien magique</button>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:12px;text-align:center">Un lien securise sera envoye a votre adresse</p>
+  </div>
+  <div class="login-sep"><span>ou</span></div>
+  <button class="login-magic" onclick="window.open('https://app.aureussocial.be')">Acceder a l'application &rarr;</button>
+  <div class="login-bottom">
+    <div class="login-trust">
+      <span>&#128274; SSL 256-bit</span>
+      <span>&#127466;&#127482; RGPD</span>
+      <span>&#128272; AES-256</span>
+    </div>
+    <p>Aureus IA SPRL &mdash; BCE BE 1028.230.781<br>Chiffrement AES-256-GCM &bull; Conforme RGPD Art. 32</p>
+  </div>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-lines" id="heroLines"></div>
+  <div class="hero-badge"><span class="dot"></span> Version 18 — Deploye en production</div>
+  <h1>
+    <span class="line">L'administration sociale,</span>
+    <span class="line"><em>reinventee.</em></span>
+  </h1>
+  <p class="hero-sub">
+    Secretariat social belge de nouvelle generation. Moteur de paie conforme SPF,
+    declarations ONSS automatiques, portails multi-tenant, securite de niveau bancaire.
+  </p>
+  <div class="hero-actions">
+    <button class="btn-gold" onclick="toggleLogin()">Commencer gratuitement</button>
+    <button class="btn-outline" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">Voir la demo &darr;</button>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="num" data-count="32631">0</div><div class="lbl">Lignes de code</div></div>
+    <div class="hero-stat"><div class="num" data-count="229">0</div><div class="lbl">Commissions paritaires</div></div>
+    <div class="hero-stat"><div class="num" data-count="59">0</div><div class="lbl">Tests valides / 59</div></div>
+    <div class="hero-stat"><div class="num" data-count="30">0</div><div class="lbl">Modules deployes</div></div>
+  </div>
+  <div class="scroll-arrow"><span></span></div>
+</section>
+
+<!-- ═══ MARQUEE ═══ -->
+<div class="marquee-section">
+  <div class="marquee-track">
+    <span class="marquee-item">ONSS <span class="sep">&middot;</span> DmfA XML <span class="sep">&middot;</span> Belcotax 281.10 <span class="sep">&middot;</span> DIMONA <span class="sep">&middot;</span> SEPA pain.001 <span class="sep">&middot;</span> Precompte SPF <span class="sep">&middot;</span> Pecule Vacances <span class="sep">&middot;</span> AES-256-GCM <span class="sep">&middot;</span> Multi-Tenant RLS <span class="sep">&middot;</span> PWA Mobile <span class="sep">&middot;</span> Yousign <span class="sep">&middot;</span> DocuSign <span class="sep">&middot;</span> RGPD Art.32 <span class="sep">&middot;</span> 229 CP <span class="sep">&middot;</span> Bonus Emploi <span class="sep">&middot;</span> Quotient Conjugal</span>
+    <span class="marquee-item">ONSS <span class="sep">&middot;</span> DmfA XML <span class="sep">&middot;</span> Belcotax 281.10 <span class="sep">&middot;</span> DIMONA <span class="sep">&middot;</span> SEPA pain.001 <span class="sep">&middot;</span> Precompte SPF <span class="sep">&middot;</span> Pecule Vacances <span class="sep">&middot;</span> AES-256-GCM <span class="sep">&middot;</span> Multi-Tenant RLS <span class="sep">&middot;</span> PWA Mobile <span class="sep">&middot;</span> Yousign <span class="sep">&middot;</span> DocuSign <span class="sep">&middot;</span> RGPD Art.32 <span class="sep">&middot;</span> 229 CP <span class="sep">&middot;</span> Bonus Emploi <span class="sep">&middot;</span> Quotient Conjugal</span>
+  </div>
+</div>
+
+<!-- ═══ LIVE TICKER ═══ -->
+<div class="ticker-section">
+  <div class="ticker-grid">
+    <div class="ticker-item">
+      <div class="ticker-num" id="tickerFiches">1 247</div>
+      <div class="ticker-label">Fiches de paie calculees</div>
+      <div class="ticker-pulse"></div>
+    </div>
+    <div class="ticker-sep"></div>
+    <div class="ticker-item">
+      <div class="ticker-num" id="tickerEntreprises">42</div>
+      <div class="ticker-label">Entreprises gerees</div>
+      <div class="ticker-pulse"></div>
+    </div>
+    <div class="ticker-sep"></div>
+    <div class="ticker-item">
+      <div class="ticker-num" id="tickerUptime">99.97%</div>
+      <div class="ticker-label">Uptime plateforme</div>
+      <div class="ticker-pulse"></div>
+    </div>
+    <div class="ticker-sep"></div>
+    <div class="ticker-item">
+      <div class="ticker-num" id="tickerDecla">387</div>
+      <div class="ticker-label">Declarations ONSS soumises</div>
+      <div class="ticker-pulse"></div>
+    </div>
+    <div class="ticker-sep"></div>
+    <div class="ticker-item">
+      <div class="ticker-num"><span style="color:var(--green)">&#9679;</span> LIVE</div>
+      <div class="ticker-label">Plateforme operationnelle</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FONCTIONNALITES ═══ -->
+<section id="fonctionnalites">
+  <div class="section-label reveal">Fonctionnalites</div>
+  <div class="section-title reveal">Tout ce dont un <em>secretariat social</em> a besoin</div>
+  <div class="section-desc reveal">30 modules deployes en production, couvrant l'integralite du cycle de paie belge.</div>
+  <div class="features-grid">
+    <div class="feature-card reveal"><div class="feature-icon">&#129518;</div><div class="feature-title">Calcul de Paie Complet</div><div class="feature-desc">Brut vers net : ONSS 13,07%, precompte professionnel SPF 16 parametres, bonus emploi, frais propres, cheques-repas. Baremes 2024-2026.</div><span class="feature-tag">Moteur certifie</span></div>
+    <div class="feature-card reveal"><div class="feature-icon">&#128203;</div><div class="feature-title">DmfA XML ONSS</div><div class="feature-desc">Generation XML conforme schema ONSS. Toutes balises obligatoires, trimestres Q1-Q4, reduction structurelle, bonus emploi.</div><span class="feature-tag">XML compliant</span></div>
+    <div class="feature-card reveal"><div class="feature-icon">&#128176;</div><div class="feature-title">Belcotax 281.10</div><div class="feature-desc">Formulaire fiscal annuel XML conforme SPF Finances. Calcul automatique depuis donnees mensuelles, validation integree.</div><span class="feature-tag">SPF compliant</span></div>
+    <div class="feature-card reveal"><div class="feature-icon">&#127963;</div><div class="feature-title">229 Commissions Paritaires</div><div class="feature-desc">Taux sectoriels complets, reduction structurelle 4 categories, cotisations speciales, Maribel social, bonus emploi.</div><span class="feature-tag">229 CP couvertes</span></div>
+    <div class="feature-card reveal"><div class="feature-icon">&#128200;</div><div class="feature-title">Precompte Professionnel</div><div class="feature-desc">Annexe III AR : tranches progressives, quotient conjugal, enfants, handicap, parent isole, 65+, taxe communale.</div><span class="feature-tag">16 parametres</span></div>
+    <div class="feature-card reveal"><div class="feature-icon">&#127958;</div><div class="feature-title">Pecule de Vacances</div><div class="feature-desc">Simulateur employe et ouvrier, prorata entree/sortie, provisions mensuelles, C4-Vac, base legale AR 30/03/1967.</div><span class="feature-tag">Employe + ouvrier</span></div>
+    <div class="feature-card reveal"><div class="feature-icon">&#9997;&#65039;</div><div class="feature-title">Signature Electronique</div><div class="feature-desc">Yousign et DocuSign : contrats, avenants, documents RH. Envoi, suivi statut, webhook callback automatique.</div><span class="feature-tag">Yousign + DocuSign</span></div>
+    <div class="feature-card reveal"><div class="feature-icon">&#128220;</div><div class="feature-title">63 Procedures RH</div><div class="feature-desc">12 sections couvrant le droit social belge : embauche, licenciement, absences, formations, obligations legales, pension.</div><span class="feature-tag">Cadre juridique</span></div>
+    <div class="feature-card reveal"><div class="feature-icon">&#129534;</div><div class="feature-title">Facturation Cabinet</div><div class="feature-desc">Factures auto par ETP ou forfait, recurrence, export PDF, statistiques revenus, suivi encaissements.</div><span class="feature-tag">MRR tracking</span></div>
+  </div>
+</section>
+
+<!-- ═══ MORE MODULES ═══ -->
+<section style="padding-top:0">
+  <div class="section-label reveal">Et aussi</div>
+  <div class="section-title reveal">30 modules, <em>zero compromis</em></div>
+  <div class="bento">
+    <div class="bento-card span2 reveal"><div class="bento-icon">&#128225;</div><div class="bento-title">DIMONA Electronique</div><div class="bento-desc">Declaration IN/OUT/UPDATE XML. Validation, historique, suivi statut ONSS. Interface complete.</div></div>
+    <div class="bento-card reveal"><div class="bento-icon">&#127974;</div><div class="bento-title">SEPA pain.001</div><div class="bento-desc">Virements batch ISO 20022, validation IBAN.</div></div>
+    <div class="bento-card reveal"><div class="bento-icon">&#128229;</div><div class="bento-title">Import Concurrent</div><div class="bento-desc">Parsers CSV multi-format, import automatique.</div></div>
+    <div class="bento-card reveal"><div class="bento-icon">&#127757;</div><div class="bento-title">Multi-devise & Expats</div><div class="bento-desc">11 devises, detachements A1, indemnites.</div></div>
+    <div class="bento-card reveal"><div class="bento-icon">&#128202;</div><div class="bento-title">Reporting Avance</div><div class="bento-desc">Bilan social BNB, analytics RH, export.</div></div>
+    <div class="bento-card span2 reveal"><div class="bento-icon">&#128279;</div><div class="bento-title">API REST & Webhooks</div><div class="bento-desc">4 endpoints v1 documentes. Webhooks HMAC-SHA256 pour integrations comptabilite/ERP (BOB, Winbooks, Horus).</div></div>
+    <div class="bento-card reveal"><div class="bento-icon">&#128241;</div><div class="bento-title">PWA Mobile</div><div class="bento-desc">Installable, push notifs, mode offline.</div></div>
+    <div class="bento-card reveal"><div class="bento-icon">&#128231;</div><div class="bento-title">5 Emails Auto</div><div class="bento-desc">Fiche, recap, alerte, rappel, facture.</div></div>
+    <div class="bento-card reveal"><div class="bento-icon">&#128193;</div><div class="bento-title">GED Documents</div><div class="bento-desc">8 categories, retention legale, Storage.</div></div>
+    <div class="bento-card reveal"><div class="bento-icon">&#9878;&#65039;</div><div class="bento-title">Solde Tout Compte</div><div class="bento-desc">Preavis, indemnites, vacances sortie, C4.</div></div>
+    <div class="bento-card reveal"><div class="bento-icon">&#128276;</div><div class="bento-title">Alertes Intelligentes</div><div class="bento-desc">Echeances, calendrier social, regles.</div></div>
+    <div class="bento-card reveal"><div class="bento-icon">&#9881;&#65039;</div><div class="bento-title">Admin Baremes</div><div class="bento-desc">Constantes legales modifiables sans code.</div></div>
+  </div>
+</section>
+
+<!-- ═══ LIVE DEMO ═══ -->
+<section id="demo" class="demo-section" style="background: linear-gradient(180deg, var(--dark), var(--dark3), var(--dark))">
+  <div style="text-align:center">
+    <div class="section-label reveal" style="justify-content:center"><span style="width:32px;height:1px;background:var(--gold);display:inline-block"></span> Apercu</div>
+    <div class="section-title reveal" style="margin:0 auto 20px;text-align:center">Decouvrez l'<em>interface</em></div>
+    <div class="section-desc reveal" style="margin:0 auto 60px;text-align:center">Un apercu de la plateforme en temps reel.</div>
+  </div>
+  <div class="demo-wrapper reveal">
+    <div class="demo-mockup">
+      <div class="demo-bar">
+        <div class="demo-dot r"></div><div class="demo-dot y"></div><div class="demo-dot g"></div>
+        <div class="demo-url">&#128274; app.aureussocial.be</div>
+      </div>
+      <div class="demo-content">
+        <div class="demo-sidebar">
+          <div class="demo-sidebar-item active"><span class="ico">&#128200;</span> Dashboard</div>
+          <div class="demo-sidebar-item"><span class="ico">&#129518;</span> Calcul Paie</div>
+          <div class="demo-sidebar-item"><span class="ico">&#128101;</span> Travailleurs</div>
+          <div class="demo-sidebar-item"><span class="ico">&#128203;</span> DmfA ONSS</div>
+          <div class="demo-sidebar-item"><span class="ico">&#128176;</span> Belcotax</div>
+          <div class="demo-sidebar-item"><span class="ico">&#128225;</span> DIMONA</div>
+          <div class="demo-sidebar-item"><span class="ico">&#127974;</span> SEPA</div>
+          <div class="demo-sidebar-item"><span class="ico">&#128193;</span> Documents</div>
+          <div class="demo-sidebar-item"><span class="ico">&#129534;</span> Facturation</div>
+          <div class="demo-sidebar-item"><span class="ico">&#128274;</span> Securite</div>
+        </div>
+        <div class="demo-main">
+          <h3>&#128200; Dashboard — Fevrier 2026</h3>
+          <div class="demo-cards">
+            <div class="demo-kpi"><div class="val">€ 127 450</div><div class="lab">Masse salariale</div></div>
+            <div class="demo-kpi"><div class="val">42</div><div class="lab">Travailleurs actifs</div></div>
+            <div class="demo-kpi"><div class="val">€ 16 629</div><div class="lab">ONSS patronal</div></div>
+          </div>
+          <table class="demo-table">
+            <tr><th>Employe</th><th>CP</th><th>Brut</th><th>Net</th><th>Status</th></tr>
+            <tr><td>Martin P.</td><td>200</td><td>€ 3 250</td><td>€ 2 147</td><td><span class="status ok">Calcule</span></td></tr>
+            <tr><td>Duval J.</td><td>124</td><td>€ 2 890</td><td>€ 1 924</td><td><span class="status ok">Calcule</span></td></tr>
+            <tr><td>Peeters A.</td><td>302</td><td>€ 3 100</td><td>€ 2 058</td><td><span class="status pending">En attente</span></td></tr>
+            <tr><td>Lambert S.</td><td>200</td><td>€ 4 200</td><td>€ 2 689</td><td><span class="status ok">Calcule</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ COMPARISON ═══ -->
+<section>
+  <div style="text-align:center">
+    <div class="section-label reveal" style="justify-content:center"><span style="width:32px;height:1px;background:var(--gold);display:inline-block"></span> Comparaison</div>
+    <div class="section-title reveal" style="margin:0 auto 20px;text-align:center">Pourquoi pas les <em>autres</em> ?</div>
+    <div class="section-desc reveal" style="margin:0 auto 60px;text-align:center">Comparaison objective avec les solutions traditionnelles du marche belge.</div>
+  </div>
+  <div class="comparison reveal">
+    <table class="comp-table">
+      <tr><th></th><th class="aureus">Aureus Social Pro</th><th>Grand SS traditionnel</th><th>SS regional</th></tr>
+      <tr><td>Tarif mensuel (10 ETP)</td><td class="aureus"><strong style="color:var(--gold)">À consulter</strong></td><td>€ 800-1 200</td><td>€ 600-900</td></tr>
+      <tr><td>Interface moderne (React/Next.js)</td><td class="aureus"><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td><td><span class="cross">&#10007;</span></td></tr>
+      <tr><td>API REST publique</td><td class="aureus"><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td><td><span class="cross">&#10007;</span></td></tr>
+      <tr><td>Portail employe inclus</td><td class="aureus"><span class="check">&#10003;</span></td><td>Option payante</td><td>Option payante</td></tr>
+      <tr><td>Signature electronique</td><td class="aureus"><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td><td><span class="cross">&#10007;</span></td></tr>
+      <tr><td>PWA Mobile</td><td class="aureus"><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td><td><span class="cross">&#10007;</span></td></tr>
+      <tr><td>Multi-devise & expats</td><td class="aureus"><span class="check">&#10003;</span></td><td><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td></tr>
+      <tr><td>Import concurrent (migration)</td><td class="aureus"><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td><td><span class="cross">&#10007;</span></td></tr>
+      <tr><td>Webhooks temps reel</td><td class="aureus"><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td><td><span class="cross">&#10007;</span></td></tr>
+      <tr><td>Deploiement continu</td><td class="aureus"><span class="check">&#10003;</span></td><td>Trimstriel</td><td>Semestriel</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ SECURITY ═══ -->
+<section id="securite" style="background: linear-gradient(180deg, var(--dark), var(--dark3))">
+  <div class="section-label reveal">Securite</div>
+  <div class="section-title reveal">Securite de <em>niveau bancaire</em></div>
+  <div class="section-desc reveal">4 couches de protection. RGPD Art. 32 natif.</div>
+  <div class="security-grid">
+    <div class="sec-item reveal"><div class="sec-icon">&#128272;</div><div class="sec-text"><h4>Chiffrement AES-256-GCM</h4><p>NISS et IBAN chiffres au repos et en transit. Cles rotatives.</p></div></div>
+    <div class="sec-item reveal"><div class="sec-icon">&#128737;</div><div class="sec-text"><h4>HSTS + CSP Headers</h4><p>Strict Transport Security max-age 2 ans, CSP restrictive.</p></div></div>
+    <div class="sec-item reveal"><div class="sec-icon">&#128274;</div><div class="sec-text"><h4>Row Level Security</h4><p>Isolation multi-tenant Supabase. Chaque client voit uniquement ses donnees.</p></div></div>
+    <div class="sec-item reveal"><div class="sec-icon">&#128683;</div><div class="sec-text"><h4>Anti Brute Force</h4><p>Rate limit 60 req/min, blocage 30 min apres 5 echecs, timeout 15 min.</p></div></div>
+    <div class="sec-item reveal"><div class="sec-icon">&#127757;</div><div class="sec-text"><h4>Detection Geo Intrusion</h4><p>Alerte DPO si connexion pays inhabituel. Journal complet des tentatives.</p></div></div>
+    <div class="sec-item reveal"><div class="sec-icon">&#128273;</div><div class="sec-text"><h4>Rotation Cles Chiffrement</h4><p>ENCRYPTION_KEY rotative sans perte. Historique auditable.</p></div></div>
+    <div class="sec-item reveal"><div class="sec-icon">&#128203;</div><div class="sec-text"><h4>IP Whitelist + CIDR</h4><p>Restriction par adresse IP et plage CIDR. Interface admin.</p></div></div>
+    <div class="sec-item reveal"><div class="sec-icon">&#128269;</div><div class="sec-text"><h4>OWASP ZAP CI/CD</h4><p>Scan auto a chaque deploy + scan hebdo complet. GitHub Actions.</p></div></div>
+  </div>
+  <div style="text-align:center;margin-top:40px" class="reveal">
+    <a href="/compliance" style="display:inline-block;padding:16px 36px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#fff;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:.5px;transition:all .3s;box-shadow:0 4px 20px rgba(198,163,78,.3)">🛡️ Trust Center — Voir toutes nos certifications</a>
+  </div>
+</section>
+
+<!-- ═══ PORTAILS ═══ -->
+<section id="portails">
+  <div style="text-align:center">
+    <div class="section-label reveal" style="justify-content:center"><span style="width:32px;height:1px;background:var(--gold);display:inline-block"></span> Multi-tenant</div>
+    <div class="section-title reveal" style="margin:0 auto 20px;text-align:center">Trois portails, <em>une plateforme</em></div>
+    <div class="section-desc reveal" style="margin:0 auto 60px;text-align:center">Isolation totale des donnees. Chaque utilisateur accede exactement a ce dont il a besoin.</div>
+  </div>
+  <div class="portals">
+    <div class="portal-card reveal"><span class="portal-emoji">&#127970;</span><div class="portal-name">Admin</div><div class="portal-desc">Acces complet : calcul de paie, declarations, configuration, facturation, hub fiduciaire.</div><div class="portal-url">app.aureussocial.be</div></div>
+    <div class="portal-card reveal"><span class="portal-emoji">&#128084;</span><div class="portal-name">Client Employeur</div><div class="portal-desc">Dashboard, travailleurs, fiches de paie, declarations, documents, factures.</div><div class="portal-url">?portal=client</div></div>
+    <div class="portal-card reveal"><span class="portal-emoji">&#128100;</span><div class="portal-name">Employe</div><div class="portal-desc">Fiches PDF, demandes de conge, documents personnels, informations.</div><div class="portal-url">?portal=employee</div></div>
+  </div>
+</section>
+
+<!-- ═══ TESTIMONIALS ═══ -->
+<section style="background: linear-gradient(180deg, var(--dark), var(--dark3))">
+  <div style="text-align:center">
+    <div class="section-label reveal" style="justify-content:center"><span style="width:32px;height:1px;background:var(--gold);display:inline-block"></span> Temoignages</div>
+    <div class="section-title reveal" style="margin:0 auto 20px;text-align:center">Ce qu'en disent nos <em>beta-testeurs</em></div>
+    <div class="section-desc reveal" style="margin:0 auto 60px;text-align:center">Retours des premiers fiduciaires a tester la plateforme.</div>
+  </div>
+  <div class="testimonial-grid">
+    <div class="testimonial-card reveal">
+      <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="testimonial-text">"L'interface est annees-lumiere devant ce qu'on utilisait avec notre ancien secretariat social. Le calcul de paie est precis, les 229 CP sont la, et le portail employe fait gagner un temps fou."</div>
+      <div class="testimonial-author"><div class="testimonial-avatar">S</div><div class="testimonial-info"><div class="name">Sophie V.</div><div class="role">Gestionnaire de paie, Fiduciaire Bruxelles</div></div></div>
+    </div>
+    <div class="testimonial-card reveal">
+      <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="testimonial-text">"La DmfA XML se genere en un clic, le precompte est conforme SPF, et les fiches de paie sont impeccables. On a migre 85 dossiers depuis notre ancien prestataire en une semaine."</div>
+      <div class="testimonial-author"><div class="testimonial-avatar">N</div><div class="testimonial-info"><div class="name">Nathalie C.</div><div class="role">Gestionnaire de paie senior, Cabinet comptable Liege</div></div></div>
+    </div>
+    <div class="testimonial-card reveal">
+      <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+      <div class="testimonial-text">"On paye 4x moins qu'avec notre ancien secretariat social et on a plus de fonctionnalites. Le Belcotax, le SEPA, les declarations DIMONA — tout est automatise. Un vrai gain de temps."</div>
+      <div class="testimonial-author"><div class="testimonial-avatar">K</div><div class="testimonial-info"><div class="name">Karim B.</div><div class="role">Gestionnaire de paie, Secretariat social Anvers</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PRICING ═══ -->
+<section id="tarifs">
+  <div style="text-align:center">
+    <div class="section-label reveal" style="justify-content:center"><span style="width:32px;height:1px;background:var(--gold);display:inline-block"></span> Tarifs</div>
+    <div class="section-title reveal" style="margin:0 auto 20px;text-align:center">Transparent et <em>competitif</em></div>
+    <div class="section-desc reveal" style="margin:0 auto 60px;text-align:center">Pas de frais caches. Pas d'engagement longue duree. Essai gratuit 30 jours.</div>
+  </div>
+  <div class="pricing">
+    <div class="price-card reveal">
+      <div class="price-name">Starter</div>
+      <div class="price-amount" style="font-size:32px">À consulter</div>
+      <div class="price-period">Tarif adapté à votre entreprise</div>
+      <ul class="price-features">
+        <li>Calcul de paie complet</li>
+        <li>DmfA + Belcotax XML</li>
+        <li>Portail employe</li>
+        <li>Fiches de paie PDF</li>
+        <li>GED documents</li>
+        <li>Support email</li>
+      </ul>
+      <button class="btn-outline" style="width:100%" onclick="toggleLogin()">Commencer</button>
+    </div>
+    <div class="price-card featured reveal">
+      <div class="price-name">Pro</div>
+      <div class="price-amount" style="font-size:32px">À consulter</div>
+      <div class="price-period">Tout inclus — sur mesure</div>
+      <ul class="price-features">
+        <li>Tout Starter inclus</li>
+        <li>DIMONA + SEPA automatiques</li>
+        <li>Signature electronique</li>
+        <li>API REST + Webhooks</li>
+        <li>Reporting avance</li>
+        <li>Multi-devise & expats</li>
+        <li>Import concurrent</li>
+        <li>Support prioritaire</li>
+      </ul>
+      <button class="btn-gold" style="width:100%" onclick="toggleLogin()">Essai gratuit 30j</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq" style="background: linear-gradient(180deg, var(--dark), var(--dark3))">
+  <div class="section-label reveal">FAQ</div>
+  <div class="section-title reveal">Questions <em>frequentes</em></div>
+  <div class="section-desc reveal">Tout ce que vous devez savoir avant de commencer.</div>
+  <div class="faq-list">
+    <div class="faq-item reveal"><div class="faq-q" onclick="toggleFaq(this)">Est-ce conforme a la legislation belge ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui. Le moteur de paie implemente les baremes SPF 2024-2026, les 229 commissions paritaires, les declarations DmfA XML et Belcotax 281.10 conformes aux schemas officiels ONSS et SPF Finances. 59 tests automatises valident la conformite.</p></div></div>
+    <div class="faq-item reveal"><div class="faq-q" onclick="toggleFaq(this)">Comment migrer depuis un secretariat social traditionnel ?<span class="arrow">+</span></div><div class="faq-a"><p>Le module Import Concurrent inclut des parsers CSV compatibles avec tous les formats du marche belge. Importez vos donnees en un clic sans ressaisie manuelle. Notre equipe vous accompagne pendant la migration.</p></div></div>
+    <div class="faq-item reveal"><div class="faq-q" onclick="toggleFaq(this)">Les donnees sont-elles securisees ?<span class="arrow">+</span></div><div class="faq-a"><p>Absolument. Chiffrement AES-256-GCM pour les donnees sensibles (NISS, IBAN), HSTS, CSP, Row Level Security Supabase, detection geo-intrusion, rotation cles, et scan OWASP ZAP automatique. Conforme RGPD Art. 32.</p></div></div>
+    <div class="faq-item reveal"><div class="faq-q" onclick="toggleFaq(this)">Puis-je tester gratuitement ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, l'offre Pro inclut un essai gratuit de 30 jours sans engagement. Vous pouvez importer vos donnees, tester tous les modules, et decider en conditions reelles.</p></div></div>
+    <div class="faq-item reveal"><div class="faq-q" onclick="toggleFaq(this)">Y a-t-il une API pour mon ERP / logiciel comptable ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, l'API REST v1 expose 4 endpoints documentes (employees, payroll, declarations, documents) avec authentification bearer token. Des webhooks HMAC-SHA256 notifient vos systemes en temps reel. Connecteurs BOB, Winbooks et Horus inclus.</p></div></div>
+    <div class="faq-item reveal"><div class="faq-q" onclick="toggleFaq(this)">L'application fonctionne-t-elle sur mobile ?<span class="arrow">+</span></div><div class="faq-a"><p>Oui, Aureus Social Pro est une PWA (Progressive Web App) installable sur iPhone et Android directement depuis le navigateur. Push notifications, mode offline, et experience native sans App Store.</p></div></div>
+  </div>
+</section>
+<!-- ═══ ROI CALCULATOR ═══ -->
+<section id="roi" style="background: linear-gradient(180deg, var(--dark), var(--dark3))">
+  <div style="text-align:center">
+    <div class="section-label reveal" style="justify-content:center"><span style="width:32px;height:1px;background:var(--gold);display:inline-block"></span> Calculateur ROI</div>
+    <div class="section-title reveal" style="margin:0 auto 20px;text-align:center">Combien <em>economisez-vous</em> ?</div>
+    <div class="section-desc reveal" style="margin:0 auto 60px;text-align:center">Comparez votre cout actuel avec Aureus Social Pro en quelques clics.</div>
+  </div>
+  <div class="roi-calc reveal">
+    <div class="roi-left">
+      <div class="roi-field">
+        <label>Nombre de travailleurs (ETP)</label>
+        <input type="range" id="roiEtp" min="5" max="200" value="30" oninput="calcROI()">
+        <div class="roi-range-labels"><span>5</span><span id="roiEtpVal">30</span><span>200</span></div>
+      </div>
+      <div class="roi-field">
+        <label>Votre prestataire actuel</label>
+        <div class="roi-providers">
+          <button class="roi-prov active" onclick="selectProv(this,'grand')">Grand SS</button>
+          <button class="roi-prov" onclick="selectProv(this,'moyen')">SS regional</button>
+          <button class="roi-prov" onclick="selectProv(this,'petit')">Petit SS</button>
+          <button class="roi-prov" onclick="selectProv(this,'legacy')">Legacy</button>
+        </div>
+      </div>
+      <div class="roi-field">
+        <label>Modules supplementaires ?</label>
+        <div class="roi-checks">
+          <label class="roi-check"><input type="checkbox" id="roiPortail" onchange="calcROI()" checked><span>Portail employe</span></label>
+          <label class="roi-check"><input type="checkbox" id="roiSign" onchange="calcROI()"><span>Signature electronique</span></label>
+          <label class="roi-check"><input type="checkbox" id="roiApi" onchange="calcROI()"><span>API / Integration ERP</span></label>
+        </div>
+      </div>
+    </div>
+    <div class="roi-right">
+      <div class="roi-result-card current">
+        <div class="roi-result-label">Cout actuel estime</div>
+        <div class="roi-result-amount" id="roiCurrent">€ 2 400</div>
+        <div class="roi-result-period">par mois</div>
+        <div class="roi-result-details" id="roiCurrentDetails">Base: ~€80/ETP &bull; 30 ETP</div>
+      </div>
+      <div class="roi-vs">VS</div>
+      <div class="roi-result-card aureus">
+        <div class="roi-result-label">Avec Aureus Social Pro</div>
+        <div class="roi-result-amount" id="roiAureus">À consulter</div>
+        <div class="roi-result-period">tarif sur mesure</div>
+        <div class="roi-result-details" id="roiAureusDetails">Tarif adapté · 30 ETP · Tout inclus</div>
+      </div>
+      <div class="roi-savings">
+        <div class="roi-savings-label">Économie potentielle</div>
+        <div class="roi-savings-amount" id="roiSavings">Contactez-nous</div>
+        <div class="roi-savings-bar"><div class="roi-savings-fill" id="roiBar" style="width:70%"></div></div>
+        <div class="roi-savings-pct" id="roiPct">Demandez votre devis personnalisé</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MIGRATION TIMELINE ═══ -->
+<section id="migration">
+  <div style="text-align:center">
+    <div class="section-label reveal" style="justify-content:center"><span style="width:32px;height:1px;background:var(--gold);display:inline-block"></span> Migration</div>
+    <div class="section-title reveal" style="margin:0 auto 20px;text-align:center">Migrez en <em>7 jours</em>, pas 7 mois</div>
+    <div class="section-desc reveal" style="margin:0 auto 60px;text-align:center">Un processus clair, accompagne, sans interruption de votre activite.</div>
+  </div>
+  <div class="timeline">
+    <div class="timeline-line"></div>
+    <div class="timeline-step reveal">
+      <div class="timeline-dot"><span>1</span></div>
+      <div class="timeline-content">
+        <div class="timeline-day">Jour 1-2</div>
+        <h3>Import & Analyse</h3>
+        <p>Export CSV depuis votre prestataire actuel. Notre parseur detecte automatiquement le format et importe travailleurs, contrats, historiques de paie, soldes de conges.</p>
+        <div class="timeline-tags"><span>&#128229; Import CSV</span><span>&#128202; Analyse auto</span><span>&#9989; Validation NISS</span></div>
+      </div>
+    </div>
+    <div class="timeline-step reveal">
+      <div class="timeline-dot"><span>2</span></div>
+      <div class="timeline-content">
+        <div class="timeline-day">Jour 3-5</div>
+        <h3>Verification & Parametrage</h3>
+        <p>Verification croisee de toutes les donnees importees : commissions paritaires, baremes, taux ONSS sectoriels. Configuration des portails client et employe. Formation de votre equipe (2h).</p>
+        <div class="timeline-tags"><span>&#128269; Audit donnees</span><span>&#9881;&#65039; Config CP</span><span>&#127891; Formation 2h</span></div>
+      </div>
+    </div>
+    <div class="timeline-step reveal">
+      <div class="timeline-dot"><span>3</span></div>
+      <div class="timeline-content">
+        <div class="timeline-day">Jour 5-6</div>
+        <h3>Paie Parallele</h3>
+        <p>Calcul de paie en parallele avec votre ancien systeme. Comparaison fiche par fiche : brut, ONSS, precompte, net. Ecart 0€ = migration validee. Ajustements si necessaire.</p>
+        <div class="timeline-tags"><span>&#129518; Calcul parallele</span><span>&#128200; Comparaison</span><span>&#9989; Ecart 0€</span></div>
+      </div>
+    </div>
+    <div class="timeline-step reveal">
+      <div class="timeline-dot gold"><span>&#10003;</span></div>
+      <div class="timeline-content">
+        <div class="timeline-day">Jour 7</div>
+        <h3>Go Live !</h3>
+        <p>Basculement definitif. Generation des premieres fiches de paie officielles. Activation DIMONA, DmfA, SEPA. Vos employes recoivent l'acces au portail. Support prioritaire pendant 30 jours.</p>
+        <div class="timeline-tags"><span>&#128640; Production</span><span>&#128225; DIMONA active</span><span>&#127881; C'est parti !</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:60px" class="reveal">
+    <button class="btn-gold" onclick="toggleLogin()">Commencer la migration</button>
+  </div>
+</section>
+
+<!-- ═══ ARTICLES / BLOG ═══ -->
+<section id="blog" style="background: linear-gradient(180deg, var(--dark), var(--dark3))">
+  <div style="text-align:center">
+    <div class="section-label reveal" style="justify-content:center"><span style="width:32px;height:1px;background:var(--gold);display:inline-block"></span> Ressources</div>
+    <div class="section-title reveal" style="margin:0 auto 20px;text-align:center">Expertise <em>paie belge</em></div>
+    <div class="section-desc reveal" style="margin:0 auto 60px;text-align:center">Guides pratiques et analyses pour les gestionnaires de paie en Belgique.</div>
+  </div>
+  <div class="articles-grid">
+    <!-- ARTICLE 1 -->
+    <div class="article-card reveal" onclick="toggleArticle('art1')">
+      <div class="article-category">Erreurs & Conformite</div>
+      <h3>Les 10 erreurs de paie les plus couteuses en Belgique</h3>
+      <p>Commission paritaire incorrecte, precompte mal calcule, DIMONA oubliee... Decouvrez les erreurs qui coutent des milliers d'euros aux fiduciaires.</p>
+      <div class="article-meta"><span>&#128337; 8 min</span><span>&#128197; Fevrier 2026</span></div>
+      <div class="article-expand" id="art1">
+        <div class="article-body">
+          <h4>1. Commission paritaire incorrecte</h4>
+          <p>C'est l'erreur la plus grave. Appliquer la CP 200 au lieu de la CP 302 (horeca) change TOUT : bareme salarial, cotisations ONSS sectorielles, cheques-repas, primes de fin d'annee. Un controle ONSS peut remonter 3 ans en arriere.</p>
+          <p><strong>Cout moyen :</strong> 2 500€ - 15 000€ par travailleur concerne en regularisation.</p>
+          <p><strong>Solution Aureus :</strong> Verification automatique NACE vs CP lors de l'encodage. Alerte si incoherence detectee.</p>
+          
+          <h4>2. Precompte professionnel mal calcule</h4>
+          <p>Les baremes SPF changent chaque annee. Oublier la reduction pour parent isole, mal appliquer le quotient conjugal, ou utiliser un ancien bareme : le travailleur recoit un decompte fiscal douloureux.</p>
+          <p><strong>Cout moyen :</strong> 800€ - 3 000€ par travailleur par an en regularisation.</p>
+          <p><strong>Solution Aureus :</strong> Moteur PP 16 parametres conforme Annexe III AR, mis a jour automatiquement.</p>
+          
+          <h4>3. DIMONA oubliee ou en retard</h4>
+          <p>Chaque jour de travail sans DIMONA IN = amende ONSS de 2 500€ minimum. Pour les etudiants et flexi-jobs, c'est encore plus critique : pas de DIMONA = pas d'exoneration.</p>
+          <p><strong>Cout moyen :</strong> 2 500€ - 12 500€ par infraction.</p>
+          <p><strong>Solution Aureus :</strong> Alerte automatique a l'encodage d'un nouveau travailleur. DIMONA generee en 1 clic.</p>
+          
+          <h4>4. Bonus emploi non applique</h4>
+          <p>Les travailleurs a bas salaire ont droit a une reduction ONSS (bonus social) ET une reduction PP (bonus fiscal). De nombreux gestionnaires oublient le volet fiscal, ce qui augmente artificiellement le precompte.</p>
+          <p><strong>Cout moyen :</strong> 50€ - 180€/mois par travailleur concerne.</p>
+          <p><strong>Solution Aureus :</strong> Calcul automatique volet A (33.14%) + volet B (52.54%) des que le brut est sous le plafond.</p>
+          
+          <h4>5. Cotisation speciale SS mal calculee</h4>
+          <p>Les tranches CSSS dependent du revenu du menage, pas uniquement du salaire individuel. Appliquer la mauvaise tranche = regularisation par le SPF.</p>
+          
+          <h4>6. Pecule de vacances ouvrier vs employe</h4>
+          <p>Le pecule ouvrier est paye par la caisse de vacances (pas par l'employeur). Confondre les deux systemes = double paiement ou non-paiement.</p>
+          
+          <h4>7. Indexation sectorielle oubliee</h4>
+          <p>Chaque CP a son propre mecanisme d'indexation. Rater l'index CP 200 de janvier = regularisation retroactive de tous les salaires.</p>
+          
+          <h4>8. Taux accident du travail incorrect</h4>
+          <p>Le taux AT depend de la police d'assurance, pas de la CP. Utiliser le mauvais taux fausse le cout employeur.</p>
+          
+          <h4>9. Cheques-repas : jours faux</h4>
+          <p>Les cheques-repas sont dus par jour effectivement preste. Compter les jours d'absence ou de vacances = redressement ONSS.</p>
+          
+          <h4>10. Anciennete mal calculee</h4>
+          <p>L'anciennete determine le bareme salarial, le preavis, et les primes. Une date d'entree erronee impacte des annees de calculs.</p>
+          
+          <div class="article-cta">
+            <p><strong>Aureus Social Pro detecte ces 10 erreurs automatiquement</strong> grace au module Pilote Auto, qui scanne chaque fiche de paie avant generation.</p>
+            <button class="btn-gold" onclick="event.stopPropagation();toggleLogin()">Tester gratuitement</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ARTICLE 2 -->
+    <div class="article-card reveal" onclick="toggleArticle('art2')">
+      <div class="article-category">Comparatif</div>
+      <h3>Secretariat social traditionnel vs Aureus Social Pro : comparatif 2026</h3>
+      <p>Tarifs, fonctionnalites, technologie, support. Analyse objective point par point de deux approches radicalement differentes.</p>
+      <div class="article-meta"><span>&#128337; 12 min</span><span>&#128197; Fevrier 2026</span></div>
+      <div class="article-expand" id="art2">
+        <div class="article-body">
+          <h4>Le contexte</h4>
+          <p>Les grands secretariats sociaux belges dominent le marche depuis des decennies. Mais leur technologie date, leurs tarifs sont opaques, et les fiduciaires se plaignent de plus en plus du manque de flexibilite et des couts croissants.</p>
+          
+          <h4>Tarification</h4>
+          <div class="article-compare">
+            <div class="article-compare-col">
+              <div class="article-compare-head">SS Traditionnel</div>
+              <div class="article-compare-item">&#128308; 60€ - 120€ / ETP / mois</div>
+              <div class="article-compare-item">&#128308; Frais de setup 2 000€ - 10 000€</div>
+              <div class="article-compare-item">&#128308; Portail employe en supplement</div>
+              <div class="article-compare-item">&#128308; Facturation a l'acte (DIMONA, C4...)</div>
+              <div class="article-compare-item">&#128308; Engagement 12-36 mois</div>
+            </div>
+            <div class="article-compare-col gold">
+              <div class="article-compare-head">Aureus Social Pro</div>
+              <div class="article-compare-item">&#128994; Tarif à consulter — tout inclus</div>
+              <div class="article-compare-item">&#128994; Setup gratuit + migration assistee</div>
+              <div class="article-compare-item">&#128994; 3 portails inclus (admin, client, employe)</div>
+              <div class="article-compare-item">&#128994; DIMONA, DmfA, Belcotax inclus</div>
+              <div class="article-compare-item">&#128994; Sans engagement, essai 30 jours</div>
+            </div>
+          </div>
+          
+          <h4>Technologie</h4>
+          <p><strong>Un SS traditionnel</strong> fonctionne sur une architecture legacy. L'interface date des annees 2010, les mises a jour sont trimestrielles, et il n'y a ni API publique ni webhooks.</p>
+          <p><strong>Aureus Social Pro</strong> est construit en React/Next.js avec deploiement continu sur Vercel. API REST documentee, webhooks temps reel, PWA mobile, signature electronique integree.</p>
+          
+          <h4>Support</h4>
+          <p><strong>SS traditionnel :</strong> Hotline standard, temps d'attente eleve, experts generalistes.</p>
+          <p><strong>Aureus :</strong> Support direct par des gestionnaires de paie seniors. Chat, email, visio.</p>
+          
+          <h4>Verdict</h4>
+          <p>Un grand SS traditionnel reste pertinent pour les tres grandes entreprises (500+ ETP) qui ont besoin d'un partenaire international. Pour les fiduciaires et PME belges de 5 a 200 ETP, Aureus Social Pro offre plus de fonctionnalites a un quart du prix.</p>
+          
+          <div class="article-cta">
+            <button class="btn-gold" onclick="event.stopPropagation();toggleLogin()">Tester Aureus Social Pro</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ARTICLE 3 -->
+    <div class="article-card reveal" onclick="toggleArticle('art3')">
+      <div class="article-category">Guide Technique</div>
+      <h3>Precompte professionnel 2026 : le guide complet pour gestionnaires</h3>
+      <p>Tranches progressives, quotient conjugal, reductions enfants, bonus emploi fiscal. Tout ce qui change en 2026 et comment le calculer.</p>
+      <div class="article-meta"><span>&#128337; 15 min</span><span>&#128197; Janvier 2026</span></div>
+      <div class="article-expand" id="art3">
+        <div class="article-body">
+          <h4>Qu'est-ce que le precompte professionnel ?</h4>
+          <p>Le precompte professionnel (PP) est la retenue fiscale operee chaque mois sur le salaire du travailleur. C'est un acompte sur l'impot des personnes physiques (IPP). Il est calcule selon l'Annexe III de l'Arrete Royal, mise a jour chaque annee par le SPF Finances.</p>
+          
+          <h4>Les tranches progressives 2026</h4>
+          <div class="article-table">
+            <table>
+              <tr><th>Tranche</th><th>De</th><th>A</th><th>Taux</th></tr>
+              <tr><td>1</td><td>0 €</td><td>10 580 €</td><td>25%</td></tr>
+              <tr><td>2</td><td>10 580 €</td><td>15 820 €</td><td>40%</td></tr>
+              <tr><td>3</td><td>15 820 €</td><td>26 360 €</td><td>45%</td></tr>
+              <tr><td>4</td><td>26 360 €</td><td>&infin;</td><td>50%</td></tr>
+            </table>
+          </div>
+          
+          <h4>Les 16 parametres du calcul</h4>
+          <p>Le PP ne se resume pas aux tranches. Voici les 16 parametres qui influencent le calcul :</p>
+          <p>1. <strong>ONSS 13,07%</strong> — Deduit du brut avant imposition<br>
+          2. <strong>Frais professionnels forfaitaires</strong> — 30% salarie (max), 3% dirigeant (max)<br>
+          3. <strong>Situation familiale</strong> — Isole (bareme 1) ou marie/cohabitant (bareme 2)<br>
+          4. <strong>Quotient conjugal</strong> — Attribution au conjoint sans revenus<br>
+          5. <strong>Enfants a charge</strong> — Reductions progressives (1 enfant a 8+)<br>
+          6. <strong>Enfants handicapes</strong> — Comptent double fiscalement<br>
+          7. <strong>Parent isole</strong> — Reduction supplementaire avec enfants<br>
+          8. <strong>Handicap beneficiaire</strong> — Reduction specifique<br>
+          9. <strong>Conjoint handicape</strong> — Reduction bareme 2<br>
+          10. <strong>Conjoint revenus limites</strong> — Reduction speciale<br>
+          11. <strong>Conjoint pension limitee</strong> — Reduction pension<br>
+          12. <strong>Personnes 65+ a charge</strong> — Reduction par personne<br>
+          13. <strong>Autres charges</strong> — Reduction par personne a charge<br>
+          14. <strong>Taxe communale</strong> — Defaut 7%, varie par commune<br>
+          15. <strong>Regime de travail</strong> — Prorata temps partiel<br>
+          16. <strong>Bonus emploi fiscal</strong> — 33.14% volet A + 52.54% volet B</p>
+          
+          <h4>Exemple concret</h4>
+          <p><strong>Travailleur isole, 0 enfant, brut mensuel 3 500€, commune 7% :</strong></p>
+          <p>ONSS : 3 500 × 13,07% = 457,45€<br>
+          Imposable : 3 042,55€ → Annualise : 36 510,60€<br>
+          Frais forfaitaires : 30% plafonne<br>
+          Impot progressif sur tranches → Reductions quotite exemptee<br>
+          Taxe communale +7% → PP mensuel ≈ 518€<br>
+          Taux effectif : ~14,8%</p>
+          
+          <div class="article-cta">
+            <p><strong>Aureus Social Pro calcule ces 16 parametres automatiquement</strong> avec les baremes SPF 2026 a jour.</p>
+            <button class="btn-gold" onclick="event.stopPropagation();toggleLogin()">Calculer une fiche de paie</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ARTICLE 4 -->
+    <div class="article-card reveal" onclick="toggleArticle('art4')">
+      <div class="article-category">Guide Migration</div>
+      <h3>Comment migrer de votre secretariat social en 7 jours</h3>
+      <p>Guide pas-a-pas pour quitter votre secretariat social traditionnel sans perdre une seule donnee et sans interruption de paie.</p>
+      <div class="article-meta"><span>&#128337; 10 min</span><span>&#128197; Fevrier 2026</span></div>
+      <div class="article-expand" id="art4">
+        <div class="article-body">
+          <h4>Pourquoi migrer ?</h4>
+          <p>Les raisons les plus citees par nos clients : tarifs trop eleves (80€-130€/ETP en moyenne), interface obsolete, manque d'automatisation, pas de portail employe inclus, pas d'API.</p>
+          
+          <h4>Etape 1 : L'export (Jour 1)</h4>
+          <p>Demandez a votre prestataire actuel un export complet de vos donnees :</p>
+          <p>&#128204; Signaletique travailleurs (nom, NISS, adresse, IBAN)<br>
+          &#128204; Contrats actifs (type, CP, bareme, date debut)<br>
+          &#128204; Historique paie 12 derniers mois<br>
+          &#128204; Soldes conges et compteurs<br>
+          &#128204; Declarations DmfA des 4 derniers trimestres</p>
+          <p>Les formats CSV, Excel ou PDF sont tous acceptes. Notre parseur reconnait automatiquement les formats des principaux SS belges.</p>
+          
+          <h4>Etape 2 : L'import (Jour 1-2)</h4>
+          <p>Uploadez vos fichiers dans le module Import Concurrent d'Aureus Social Pro. Le systeme :</p>
+          <p>&#9989; Detecte automatiquement le format source<br>
+          &#9989; Mappe les colonnes automatiquement<br>
+          &#9989; Valide les NISS (modulo 97)<br>
+          &#9989; Verifie les IBAN (algorithme officiel)<br>
+          &#9989; Affiche un rapport de pre-import avec les anomalies</p>
+          
+          <h4>Etape 3 : La verification (Jour 3-5)</h4>
+          <p>Le module Pilote Auto scanne toutes les donnees importees et detecte les incoherences : CP vs NACE, baremes obsoletes, cotisations manquantes. Votre equipe verifie et valide en 2 heures.</p>
+          
+          <h4>Etape 4 : Paie parallele (Jour 5-6)</h4>
+          <p>Calculez la paie du mois en cours sur les DEUX systemes. Comparez fiche par fiche. Si l'ecart est 0€ : c'est valide. Si un ecart existe, le detail du calcul montre exactement ou et pourquoi — generalement une erreur dans l'ancien systeme, pas dans Aureus.</p>
+          
+          <h4>Etape 5 : Go Live (Jour 7)</h4>
+          <p>Resiliez votre ancien contrat. Basculez. Vos employes recoivent leur acces portail. Les declarations DIMONA, DmfA et Belcotax sont deja configurees.</p>
+          
+          <h4>Et apres ?</h4>
+          <p>Support prioritaire pendant 30 jours. Formation complementaire si necessaire. Votre gestionnaire de paie dedie reste joignable par chat, email ou visio.</p>
+          
+          <div class="article-cta">
+            <button class="btn-gold" onclick="event.stopPropagation();toggleLogin()">Commencer la migration</button>
+            <button class="btn-outline" onclick="event.stopPropagation();window.open('mailto:info@aureus-ia.com')" style="margin-left:12px">Prendre rendez-vous</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="section-label reveal" style="text-align:center;justify-content:center"><span style="width:32px;height:1px;background:var(--gold);display:inline-block"></span> Pret a commencer ?</div>
+  <div class="section-title reveal" style="margin:0 auto 24px;text-align:center;max-width:600px">Rejoignez la <em>revolution</em> de la paie belge</div>
+  <p class="reveal" style="font-size:16px;color:var(--text-dim);max-width:500px;margin:0 auto 44px;text-align:center;line-height:1.8">
+    Dites adieu aux logiciels obsoletes. Aureus Social Pro modernise votre secretariat social pour une fraction du prix.
+  </p>
+  <div style="display:flex;gap:16px;justify-content:center;position:relative;z-index:1" class="reveal">
+    <button class="btn-gold" onclick="toggleLogin()">Creer un compte gratuit</button>
+    <button class="btn-outline" onclick="window.open('mailto:info@aureus-ia.com')">Nous contacter</button>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-left"><span>AUREUS</span> SOCIAL PRO &copy; 2026</div>
+  <div class="footer-center">
+    <a href="/cdn-cgi/l/email-protection#e881868e87a8899d9a8d9d9bc58189c68b8785">Contact</a>
+    <a href="/compliance">Trust Center</a>
+    <a href="/compliance">Confidentialite</a>
+    <a href="#">CGU</a>
+    <a href="#">Status</a>
+  </div>
+  <div class="footer-right">Aureus IA SPRL<br>BCE BE 1028.230.781 &mdash; Bruxelles</div>
+</footer>
+
+<script>
+// ═══ MOBILE NAV ═══
+function toggleMobileNav() {
+  const nav = document.getElementById('mobileNav');
+  nav.classList.toggle('open');
+  const btn = document.getElementById('mobileThemeBtn');
+  if (btn) btn.textContent = document.documentElement.getAttribute('data-theme') === 'light' ? '☀️' : '🌙';
+}
+function closeMobileNav() {
+  document.getElementById('mobileNav').classList.remove('open');
+}
+
+// ═══ THEME TOGGLE ═══
+function toggleLandingTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  html.setAttribute('data-theme', next);
+  const icon = next === 'light' ? '☀️' : '🌙';
+  document.getElementById('landingThemeBtn').textContent = icon;
+  const mBtn = document.getElementById('mobileThemeBtn');
+  if (mBtn) mBtn.textContent = icon;
+  localStorage.setItem('aureus-theme', next);
+}
+(function(){
+  const saved = localStorage.getItem('aureus-theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+    const btn = document.getElementById('landingThemeBtn');
+    if (btn) btn.textContent = saved === 'light' ? '☀️' : '🌙';
+  }
+})();
+
+// ═══ CUSTOM CURSOR ═══
+const cursor = document.getElementById('cursor');
+const cursorDot = document.getElementById('cursorDot');
+let mx = 0, my = 0, cx = 0, cy = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cursorDot.style.left = mx + 'px'; cursorDot.style.top = my + 'px'; });
+function animateCursor() { cx += (mx - cx) * .15; cy += (my - cy) * .15; cursor.style.left = cx + 'px'; cursor.style.top = cy + 'px'; requestAnimationFrame(animateCursor); }
+animateCursor();
+document.querySelectorAll('a, button, .faq-q, .feature-card, .bento-card, .portal-card, .sec-item, input').forEach(el => {
+  el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+  el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+});
+
+// ═══ CARD SPOTLIGHT EFFECT ═══
+document.querySelectorAll('.feature-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+    card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+  });
+});
+
+// ═══ SCROLL PROGRESS ═══
+const progress = document.getElementById('scrollProgress');
+window.addEventListener('scroll', () => {
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  progress.style.width = (window.scrollY / h * 100) + '%';
+});
+
+// ═══ NAVBAR ═══
+const nav = document.getElementById('navbar');
+window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 60));
+
+// ═══ PARTICLES ═══
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+class Particle {
+  constructor() { this.reset(); }
+  reset() { this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height; this.size = Math.random() * 1.5 + .3; this.speedX = (Math.random() - .5) * .3; this.speedY = (Math.random() - .5) * .3; this.opacity = Math.random() * .3 + .05; }
+  update() { this.x += this.speedX; this.y += this.speedY; if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset(); }
+  draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = `rgba(198,163,78,${this.opacity})`; ctx.fill(); }
+}
+for (let i = 0; i < 60; i++) particles.push(new Particle());
+function animateParticles() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(animateParticles); }
+animateParticles();
+
+// ═══ HERO LINES ═══
+const heroLines = document.getElementById('heroLines');
+for (let i = 0; i < 6; i++) {
+  const line = document.createElement('span');
+  line.style.left = (15 + i * 14) + '%';
+  line.style.animationDelay = (i * 1.2) + 's';
+  heroLines.appendChild(line);
+}
+
+// ═══ COUNTER ANIMATION ═══
+function animateCounters() {
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const target = +el.dataset.count;
+    const duration = 2000;
+    const start = performance.now();
+    const fmt = target > 1000 ? n => n.toLocaleString('fr-BE') : n => n;
+    function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(Math.floor(target * eased));
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+// ═══ REVEAL ON SCROLL ═══
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// Counter trigger
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { animateCounters(); counterObserver.disconnect(); } });
+}, { threshold: 0.5 });
+const heroStats = document.querySelector('.hero-stats');
+if (heroStats) counterObserver.observe(heroStats);
+
+// ═══ LOGIN ═══
+function toggleLogin() {
+  const panel = document.getElementById('loginPanel');
+  const overlay = document.getElementById('loginOverlay');
+  panel.classList.toggle('open');
+  overlay.classList.toggle('open');
+  document.body.style.overflow = panel.classList.contains('open') ? 'hidden' : '';
+}
+function switchTab(btn, type) {
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('loginForm').style.display = type === 'employee' ? 'none' : 'block';
+  document.getElementById('magicForm').style.display = type === 'employee' ? 'block' : 'none';
+}
+function handleLogin() { window.location.href = 'https://app.aureussocial.be'; }
+function handleMagicLink() { alert('Lien de connexion envoye !'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.getElementById('loginPanel').classList.contains('open')) toggleLogin(); });
+
+// ═══ FAQ ═══
+function toggleFaq(el) {
+  const a = el.nextElementSibling;
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.faq-q').forEach(q => { q.classList.remove('open'); q.nextElementSibling.style.maxHeight = '0'; });
+  if (!isOpen) { el.classList.add('open'); a.style.maxHeight = a.scrollHeight + 'px'; }
+}
+
+// ═══ ROI CALCULATOR ═══
+let selectedProv = 'grand';
+const provRates = { grand: 95, moyen: 75, petit: 65, legacy: 55 };
+const provSupp = { grand: { portail: 12, sign: 15, api: 20 }, moyen: { portail: 10, sign: 0, api: 0 }, petit: { portail: 10, sign: 0, api: 0 }, legacy: { portail: 8, sign: 0, api: 0 } };
+function selectProv(btn, prov) {
+  document.querySelectorAll('.roi-prov').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedProv = prov;
+  calcROI();
+}
+function calcROI() {
+  const etp = +document.getElementById('roiEtp').value;
+  document.getElementById('roiEtpVal').textContent = etp;
+  const rate = provRates[selectedProv];
+  let currentCost = etp * rate;
+  const supp = provSupp[selectedProv];
+  if (document.getElementById('roiPortail').checked) currentCost += etp * supp.portail;
+  if (document.getElementById('roiSign').checked) currentCost += supp.sign > 0 ? etp * supp.sign : 500;
+  if (document.getElementById('roiApi').checked) currentCost += supp.api > 0 ? etp * supp.api : 800;
+  document.getElementById('roiCurrent').textContent = '\u20AC ' + currentCost.toLocaleString('fr-BE');
+  document.getElementById('roiAureus').textContent = '\u00C0 consulter';
+  document.getElementById('roiSavings').textContent = 'Contactez-nous';
+  document.getElementById('roiCurrentDetails').textContent = 'Base: ~\u20AC' + rate + '/ETP \u2022 ' + etp + ' ETP \u2022 ' + selectedProv.charAt(0).toUpperCase() + selectedProv.slice(1);
+  document.getElementById('roiAureusDetails').textContent = 'Tarif adapte \u2022 ' + etp + ' ETP \u2022 Tout inclus';
+  document.getElementById('roiBar').style.width = '70%';
+  document.getElementById('roiPct').textContent = 'Demandez votre devis personnalise';
+}
+calcROI();
+
+// ═══ LIVE TICKER ═══
+function animateTicker() {
+  const fiches = document.getElementById('tickerFiches');
+  const entreprises = document.getElementById('tickerEntreprises');
+  const decla = document.getElementById('tickerDecla');
+  let f = 1247, e = 42, d = 387;
+  setInterval(() => {
+    f += Math.floor(Math.random() * 3);
+    if (Math.random() > .95) e += 1;
+    if (Math.random() > .85) d += 1;
+    fiches.textContent = f.toLocaleString('fr-BE');
+    entreprises.textContent = e;
+    decla.textContent = d.toLocaleString('fr-BE');
+  }, 4000);
+}
+animateTicker();
+
+// ═══ ARTICLES TOGGLE ═══
+function toggleArticle(id) {
+  const el = document.getElementById(id);
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.article-expand').forEach(a => a.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+}
+
+</script>
+</body>
+</html>

@@ -24633,7 +24633,7 @@ function IntegrationsMod({s,d}){const loisRef=LOIS_BELGES;
       {name:'Pluxee (Sodexo)',logo:'🟠',status:'connected',desc:'Commande chèques-repas'},
       {name:'Edenred',logo:'🔴',status:'available',desc:'Chèques-repas & éco-chèques'},
       {name:'Monizze',logo:'🟢',status:'available',desc:'Chèques-repas digitaux'},
-      {name:'Attentia',logo:'🩺',status:'available',desc:'Médecine du travail'},
+      {name:'SPMT-ARISTA',logo:'🩺',status:'available',desc:'Médecine du travail'},
       {name:'Mensura',logo:'🏥',status:'available',desc:'Prévention & bien-être'},
     ]},
     {cat:'Communication',items:[
