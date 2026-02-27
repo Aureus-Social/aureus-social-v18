@@ -1,6 +1,8 @@
 // Aureus Social Pro v20.2
 "use client"
-import { useState, useReducer, useRef, useMemo, useEffect, createContext, useContext } from "react";
+import { useState, useReducer, useRef, useMemo, useEffect, useCallback, createContext, useContext } from "react";
+import AccessManagement from "./modules/AccessManagement";
+import CommissionsModule from "./modules/CommissionsModule";
 
 // ═══ SPRINT 37: MOTEUR CENTRAL LOIS BELGES — AUTO-UPDATE 1 CLIC  ═══
 // ══════════════════════════════════════════════════════════════════════
@@ -3903,7 +3905,7 @@ function reducer(s,a){
     case'UPD_CO':ns={...s,co:{...s.co,...a.d}};break;
     case'MODAL':ns={...s,modal:a.m};break;
     // Multi-sociétés
-    case'ADD_CLIENT':ns={...s,clients:[...s.clients,{...a.d,id:"CL-"+uid(),createdAt:new Date().toISOString()}]};break;
+    case'ADD_CLIENT':ns={...s,clients:[...s.clients,{...a.d,id:"CL-"+uid(),createdAt:new Date().toISOString(),assignedTo:a.assignedTo||null}]};break;
     case'UPD_CLIENT':ns={...s,clients:(s.clients||[]).map(c=>c.id===a.d.id?{...c,...a.d}:c)};break;
     case'DEL_CLIENT':if(a.role==='readonly'){ns=s;break;}ns={...s,clients:s.clients.filter(c=>c.id!==a.id)};break;
     case'SELECT_CLIENT':{
@@ -3946,6 +3948,12 @@ const PERMISSIONS = {
     label: 'Comptable', icon: '🧮', color: '#a855f7',
     canView: true, canEdit: true, canDelete: false, canExport: true, 
     canManageUsers: false, canSettings: false, canBackup: false, canBatch: false
+  },
+  commercial: { 
+    label: 'Commercial(e)', icon: '📈', color: '#f97316',
+    canView: true, canEdit: false, canDelete: false, canExport: false, 
+    canManageUsers: false, canSettings: false, canBackup: false, canBatch: false,
+    isCommercial: true
   },
   readonly: { 
     label: 'Lecture seule', icon: '👁', color: '#888',
@@ -4981,12 +4989,15 @@ function ClientWizard({onFinish,onCancel}){
   </div>;
 }
 
-function ClientsPage({s,d,user,onLogout,veilleNotif,setVeilleNotif}){
+function ClientsPage({s,d,user,userRole,onLogout,veilleNotif,setVeilleNotif}){
+  const isCommercial=userRole==='commercial';
+  const userEmail=user?.email?.toLowerCase()||'';
+  const visibleClients=isCommercial?(s.clients||[]).filter(c=>c.assignedTo?.toLowerCase()===userEmail):(s.clients||[]);
   const [showWizard,setShowWizard]=useState(false);
   const [search,setSearch]=useState('');
   
   const handleFinish=(result)=>{
-    d({type:"ADD_CLIENT",d:{company:result.company,emps:result.emps,pays:[],dims:[],dmfas:[],fiches:[],docs:[],sector:result.sector,subType:result.subType}});
+    d({type:"ADD_CLIENT",d:{company:result.company,emps:result.emps,pays:[],dims:[],dmfas:[],fiches:[],docs:[],sector:result.sector,subType:result.subType},assignedTo:userEmail});
     setShowWizard(false);
   };
   
@@ -4999,7 +5010,7 @@ function ClientsPage({s,d,user,onLogout,veilleNotif,setVeilleNotif}){
     return Math.round(sc/13*100);
   };
   
-  const filtered=(s.clients||[]).filter(c=>{
+  const filtered=visibleClients.filter(c=>{
     if(!search)return true;
     if(search==='__bad__')return getScore(c)<60;
     if(search==='__ok__'){const sc=getScore(c);return sc>=60&&sc<80;}
@@ -5010,7 +5021,7 @@ function ClientsPage({s,d,user,onLogout,veilleNotif,setVeilleNotif}){
     return c.company?.name?.toLowerCase().includes(q)||c.company?.vat?.toLowerCase().includes(q)||c.company?.contact?.toLowerCase().includes(q);
   });
 
-  const stats={total:s.clients?.length||0,emps:(s.clients||[]).reduce((a,c)=>a+(c.emps?.length||0),0)};
+  const stats={total:visibleClients.length||0,emps:visibleClients.reduce((a,c)=>a+(c.emps?.length||0),0)};
 
   return(
     <div style={{minHeight:'100vh',background:"#060810",color:'#d4d0c8',fontFamily:`'Outfit','DM Sans',system-ui,sans-serif`}}>
@@ -5022,7 +5033,7 @@ function ClientsPage({s,d,user,onLogout,veilleNotif,setVeilleNotif}){
           <div style={{width:42,height:42,borderRadius:12,background:"linear-gradient(135deg,#c6a34e,#e2c878)",display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:20,fontWeight:800,color:'#060810'}}>A</span></div>
           <div>
             <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:20,fontWeight:700,background:"linear-gradient(135deg,#c6a34e,#e2c878)",WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>AUREUS SOCIAL PRO</div>
-            <div style={{fontSize:9,color:'#8b7340',letterSpacing:'3px',textTransform:'uppercase'}}>Gestion des dossiers clients</div>
+            <div style={{fontSize:9,color:isCommercial?'#f97316':'#8b7340',letterSpacing:'3px',textTransform:'uppercase'}}>{isCommercial?'📈 Mes clients — Espace commercial':'Gestion des dossiers clients'}</div>
           </div>
         </div>
         <div style={{display:'flex',gap:14,alignItems:'center'}}>
@@ -5056,13 +5067,13 @@ function ClientsPage({s,d,user,onLogout,veilleNotif,setVeilleNotif}){
         </div>}
         
         {/* ═══ GLOBAL DASHBOARD — Vue d'ensemble 1000 clients ═══ */}
-        {(s.clients||[]).length>0&&<div style={{marginBottom:24}}>
+        {visibleClients.length>0&&<div style={{marginBottom:24}}>
           {/* KPI Row */}
           <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10,marginBottom:14}}>
             {[
               {l:'Dossiers',v:stats.total,c:'#c6a34e'},
               {l:'Travailleurs',v:stats.emps,c:'#60a5fa'},
-              {l:'Score santé moyen',v:Math.round((s.clients||[]).reduce((a,cl)=>{
+              {l:'Score santé moyen',v:Math.round(visibleClients.reduce((a,cl)=>{
                 let sc=0,tot=13;
                 if(cl.company?.name)sc++;if(cl.company?.vat)sc++;if(cl.company?.onss)sc++;
                 if(cl.company?.iban)sc++;if(cl.company?.cp)sc++;if(cl.company?.accidentIns)sc++;
@@ -5072,22 +5083,22 @@ function ClientsPage({s,d,user,onLogout,veilleNotif,setVeilleNotif}){
                 }
                 if(cl.dims?.length>0)sc++;if(cl.fiches?.length>0)sc++;
                 return a+(sc/tot*100);
-              },0)/(s.clients||[]).length||0)+'%',c:'#4ade80'},
-              {l:'Dossiers à risque',v:(s.clients||[]).filter(cl=>{
+              },0)/visibleClients.length||0)+'%',c:'#4ade80'},
+              {l:'Dossiers à risque',v:visibleClients.filter(cl=>{
                 let sc=0;if(cl.company?.name)sc++;if(cl.company?.vat)sc++;if(cl.emps?.length>0)sc++;
                 if(cl.emps?.every(e=>e.niss))sc++;if(cl.emps?.every(e=>e.monthlySalary>0))sc++;
                 return sc<3;
               }).length,c:'#f87171'},
-              {l:'Sans TVA',v:(s.clients||[]).filter(cl=>!cl.company?.vat).length,c:'#fb923c'},
-              {l:'Masse salariale',v:((s.clients||[]).reduce((a,cl)=>a+(cl.emps||[]).reduce((b,e)=>b+(e.monthlySalary||0),0),0)/1000).toFixed(0)+'K€',c:'#a78bfa'},
+              {l:'Sans TVA',v:visibleClients.filter(cl=>!cl.company?.vat).length,c:'#fb923c'},
+              {l:'Masse salariale',v:(visibleClients.reduce((a,cl)=>a+(cl.emps||[]).reduce((b,e)=>b+(e.monthlySalary||0),0),0)/1000).toFixed(0)+'K€',c:'#a78bfa'},
             ].map((k,i)=><div key={i} style={{background:'linear-gradient(145deg,#0e1220,#131829)',border:'1px solid rgba(139,115,60,.08)',borderRadius:10,padding:'12px 14px',textAlign:'center'}}>
               <div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div>
               <div style={{fontSize:9,color:'#5e5c56',marginTop:2}}>{k.l}</div>
             </div>)}
           </div>
           
-          {/* ACTIONS EN MASSE */}
-          <div style={{background:'linear-gradient(145deg,#0e1220,#131829)',border:'1px solid rgba(139,115,60,.12)',borderRadius:12,padding:'16px 20px',marginBottom:14}}>
+          {/* ACTIONS EN MASSE — Hidden for commercial */}
+          {!isCommercial&&<div style={{background:'linear-gradient(145deg,#0e1220,#131829)',border:'1px solid rgba(139,115,60,.12)',borderRadius:12,padding:'16px 20px',marginBottom:14}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
               <div style={{fontSize:13,fontWeight:600,color:'#c6a34e'}}>⚡ Actions en masse — Tous les clients</div>
               <div style={{fontSize:9,color:'#5e5c56'}}>100% automatisé · validation finale obligatoire</div>
@@ -5095,12 +5106,12 @@ function ClientsPage({s,d,user,onLogout,veilleNotif,setVeilleNotif}){
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
               {[
                 {icon:'💰',label:'Batch Paie',desc:'Calculer toutes les fiches',action:()=>{
-                  const ready=(s.clients||[]).filter(cl=>{
+                  const ready=visibleClients.filter(cl=>{
                     let sc=0;if(cl.company?.name)sc++;if(cl.company?.vat)sc++;if(cl.emps?.length>0)sc++;
                     if(cl.emps?.every(e=>e.niss))sc++;if(cl.emps?.every(e=>e.monthlySalary>0))sc++;
                     return sc>=4;
                   });
-                  const blocked=(s.clients||[]).length-ready.length;
+                  const blocked=visibleClients.length-ready.length;
                   const totalEmps=ready.reduce((a,c)=>a+(c.emps?.length||0),0);
                   if(confirm(`⚡ BATCH PAIE MULTI-CLIENTS\n\n✅ ${ready.length} dossiers prêts (${totalEmps} travailleurs)\n${blocked>0?`❌ ${blocked} dossiers bloqués (score santé insuffisant)\n`:''}\nLe système va:\n1. Vérifier les absences encodées\n2. Calculer brut/ONSS/PP/net pour chaque travailleur\n3. Préparer les fiches de paie\n\n🔒 RIEN N'EST ENVOYÉ — Vous validez après.\n\nLancer le calcul ?`)){
                     alert(`✅ ${totalEmps} fiches de paie calculées pour ${ready.length} clients.\n\n📋 Ouvrez chaque dossier pour vérifier et valider l'envoi.`);
@@ -5108,19 +5119,19 @@ function ClientsPage({s,d,user,onLogout,veilleNotif,setVeilleNotif}){
                 }},
                 {icon:'📡',label:'Batch DmfA',desc:'Générer XML trimestriel',action:()=>{
                   const q=Math.ceil((new Date().getMonth()+1)/3);
-                  const ready=(s.clients||[]).filter(cl=>cl.company?.onss&&cl.emps?.length>0);
-                  if(confirm(`⚡ BATCH DmfA T${q}/${new Date().getFullYear()}\n\n✅ ${ready.length} dossiers avec n° ONSS\n❌ ${(s.clients||[]).length-ready.length} sans n° ONSS (bloqués)\n\nLe système va générer le XML DmfA pour chaque client.\n\n🔒 RIEN N'EST SOUMIS — Vous envoyez via le portail.\n\nGénérer ?`)){
+                  const ready=visibleClients.filter(cl=>cl.company?.onss&&cl.emps?.length>0);
+                  if(confirm(`⚡ BATCH DmfA T${q}/${new Date().getFullYear()}\n\n✅ ${ready.length} dossiers avec n° ONSS\n❌ ${visibleClients.length-ready.length} sans n° ONSS (bloqués)\n\nLe système va générer le XML DmfA pour chaque client.\n\n🔒 RIEN N'EST SOUMIS — Vous envoyez via le portail.\n\nGénérer ?`)){
                     alert(`✅ ${ready.length} fichiers DmfA générés.\n\n📋 Vérifiez et soumettez sur socialsecurity.be`);
                   }
                 }},
                 {icon:'📈',label:'Batch Indexation',desc:'Appliquer indexation',action:()=>{
-                  const totalEmps=(s.clients||[]).reduce((a,c)=>a+(c.emps?.length||0),0);
-                  if(confirm(`⚡ BATCH INDEXATION ${new Date().getFullYear()}\n\n📊 ${(s.clients||[]).length} clients · ${totalEmps} travailleurs\n\nLe système va calculer les nouveaux salaires indexés.\n\n🔒 RIEN N'EST APPLIQUÉ — Vous validez client par client.\n\nCalculer ?`)){
+                  const totalEmps=visibleClients.reduce((a,c)=>a+(c.emps?.length||0),0);
+                  if(confirm(`⚡ BATCH INDEXATION ${new Date().getFullYear()}\n\n📊 ${visibleClients.length} clients · ${totalEmps} travailleurs\n\nLe système va calculer les nouveaux salaires indexés.\n\n🔒 RIEN N'EST APPLIQUÉ — Vous validez client par client.\n\nCalculer ?`)){
                     alert(`✅ Indexation calculée pour ${totalEmps} travailleurs.\n\n📋 Ouvrez chaque dossier pour vérifier et appliquer.`);
                   }
                 }},
                 {icon:'📄',label:'Batch Belcotax',desc:'Générer fiches 281',action:()=>{
-                  const ready=(s.clients||[]).filter(cl=>cl.company?.vat&&cl.emps?.length>0);
+                  const ready=visibleClients.filter(cl=>cl.company?.vat&&cl.emps?.length>0);
                   if(confirm(`⚡ BATCH BELCOTAX ${new Date().getFullYear()-1}\n\n✅ ${ready.length} dossiers prêts\n📄 Fiches 281.10 + 281.20\n\nLe système va générer toutes les fiches.\n\n🔒 RIEN N'EST SOUMIS — Vous envoyez via Belcotax on web.\n\nGénérer ?`)){
                     alert(`✅ Fiches 281 générées pour ${ready.length} clients.\n\n📋 Vérifiez et soumettez sur belcotaxonweb.be`);
                   }
@@ -5138,22 +5149,22 @@ function ClientsPage({s,d,user,onLogout,veilleNotif,setVeilleNotif}){
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginTop:8}}>
               {[
                 {icon:'🔔',label:'Batch Dimona',desc:'Vérifier toutes Dimona',action:()=>{
-                  const missing=(s.clients||[]).reduce((a,cl)=>{
+                  const missing=visibleClients.reduce((a,cl)=>{
                     return a+(cl.emps||[]).filter(e=>!(cl.dims||[]).some(d=>d.niss===e.niss&&d.type==='IN')).length;
                   },0);
                   alert(`📡 Vérification Dimona:\n\n${missing>0?`⚠️ ${missing} travailleur(s) sans Dimona IN`:'✅ Toutes les Dimona sont en ordre'}`);
                 }},
                 {icon:'💳',label:'Batch SEPA',desc:'Générer virements',action:()=>{
-                  const ready=(s.clients||[]).filter(cl=>cl.emps?.some(e=>e.iban&&e.monthlySalary>0));
+                  const ready=visibleClients.filter(cl=>cl.emps?.some(e=>e.iban&&e.monthlySalary>0));
                   if(confirm(`⚡ BATCH SEPA VIREMENTS\n\n✅ ${ready.length} clients avec IBAN valides\n\nLe système va créer les fichiers SEPA.\n\n🔒 RIEN N'EST VIRÉ — Vous uploadez en banque.\n\nGénérer ?`)){
                     alert(`✅ ${ready.length} fichiers SEPA générés.\n\n📋 Uploadez sur votre plateforme bancaire (Isabel, Codabox, etc.)`);
                   }
                 }},
                 {icon:'📊',label:'Rapport global',desc:'Export tous clients',action:()=>{
-                  alert(`📊 Rapport global généré:\n\n• ${stats.total} clients\n• ${stats.emps} travailleurs\n• Masse salariale: ${((s.clients||[]).reduce((a,cl)=>a+(cl.emps||[]).reduce((b,e)=>b+(e.monthlySalary||0),0),0)).toLocaleString('fr-BE')}€/mois\n\n📋 Export disponible dans Reporting & Export.`);
+                  alert(`📊 Rapport global généré:\n\n• ${stats.total} clients\n• ${stats.emps} travailleurs\n• Masse salariale: ${(visibleClients.reduce((a,cl)=>a+(cl.emps||[]).reduce((b,e)=>b+(e.monthlySalary||0),0),0)).toLocaleString('fr-BE')}€/mois\n\n📋 Export disponible dans Reporting & Export.`);
                 }},
                 {icon:'🏥',label:'Audit santé',desc:'Score tous dossiers',action:()=>{
-                  const results=(s.clients||[]).map(cl=>{
+                  const results=visibleClients.map(cl=>{
                     let sc=0;if(cl.company?.name)sc++;if(cl.company?.vat)sc++;if(cl.company?.onss)sc++;
                     if(cl.company?.iban)sc++;if(cl.company?.cp)sc++;if(cl.company?.accidentIns)sc++;
                     if(cl.emps?.length>0){sc++;if(cl.emps.every(e=>e.niss))sc++;if(cl.emps.every(e=>e.iban))sc++;
@@ -5175,7 +5186,7 @@ function ClientsPage({s,d,user,onLogout,veilleNotif,setVeilleNotif}){
                 <div style={{fontSize:9,color:'#5e5c56',marginTop:2}}>{act.desc}</div>
               </button>)}
             </div>
-          </div>
+          </div>}
           
           {/* Filters */}
           <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>
@@ -5218,10 +5229,11 @@ function ClientsPage({s,d,user,onLogout,veilleNotif,setVeilleNotif}){
               </div>
               
               {cl.updatedAt&&<div style={{fontSize:9.5,color:'#3a3930',marginTop:10}}>Modifié: {new Date(cl.updatedAt).toLocaleDateString('fr-BE')}</div>}
+              {cl.assignedTo&&!isCommercial&&<div style={{fontSize:9,color:'#f97316',marginTop:4}}>📈 Commercial: {cl.assignedTo}</div>}
               
-              <button onClick={e=>{e.stopPropagation();if(confirm(`Supprimer le dossier "${cl.company?.name}" ?`))d({type:"DEL_CLIENT",id:cl.id});}}
+              {!isCommercial&&<button onClick={e=>{e.stopPropagation();if(confirm(`Supprimer le dossier "${cl.company?.name}" ?`))d({type:"DEL_CLIENT",id:cl.id});}}
                 style={{position:'absolute',top:12,right:12,background:"none",border:'none',color:'#3a3930',cursor:'pointer',fontSize:14,padding:4}}
-                onMouseEnter={e=>e.target.style.color='#f87171'} onMouseLeave={e=>e.target.style.color='#3a3930'}>✕</button>
+                onMouseEnter={e=>e.target.style.color='#f87171'} onMouseLeave={e=>e.target.style.color='#3a3930'}>✕</button>}
             </div>
           ))}
           
@@ -5331,7 +5343,7 @@ function AppInner({ supabase, user, onLogout }) {
   // ── AUTO VEILLE LÉGALE AU LOGIN (toutes les 24h) ──
   const [veilleNotif,setVeilleNotif]=useState(null);
   useEffect(()=>{
-    if(loading||!s.clients?.length)return;
+    if(loading||!visibleClients.length)return;
     let lastVeille=null;try{lastVeille=typeof window!=='undefined'?safeLS.get('aureus_last_veille'):null;}catch(e){}
     const now=new Date();
     const hoursSince=lastVeille?((now-new Date(lastVeille))/3600000):999;
@@ -5481,7 +5493,7 @@ function AppInner({ supabase, user, onLogout }) {
     {id:"aureussuite",l:"Aureus IA",i:'🔷',sub:[{id:"ia_turnover",l:"🧠 Prédiction Turnover"},{id:"ia_salaire",l:"💡 Reco Salariales"},{id:"ia_anomalies",l:"🔍 Anomalies"},{id:"what_if",l:"🔮 What-If"},{id:"kpi_dashboard",l:"📈 KPI Dashboard"}]},
     {id:"portalmanager",l:t("nav.portalmanager"),i:"🏢"},
     {id:"team",l:t('nav.team'),i:'👥'},
-    {id:"admin",l:"Admin",i:'👑',sub:[{id:"config",l:"⚙ Paramètres"},{id:"fraisgestion",l:"💰 Frais gestion"},{id:"audit",l:"📋 Audit"},{id:"admin_billing",l:"🧾 Facturation"},{id:"comparatif",l:"⚔️ Comparatif Marche"},{id:"onboardwizard",l:"🚀 Onboarding"},{id:"checklistclient",l:"✅ Checklist Client"}]},
+    {id:"admin",l:"Admin",i:'👑',sub:[{id:"config",l:"⚙ Paramètres"},{id:"fraisgestion",l:"💰 Frais gestion"},{id:"gestionacces",l:"🔐 Gestion des Accès"},{id:"commissions",l:"💰 Commissions"},{id:"authroles",l:"🔑 Rôles & Permissions"},{id:"audit",l:"📋 Audit"},{id:"admin_billing",l:"🧾 Facturation"},{id:"comparatif",l:"⚔️ Comparatif Marche"},{id:"onboardwizard",l:"🚀 Onboarding"},{id:"checklistclient",l:"✅ Checklist Client"}]},
   ];
 
   // ── Spotlight / Recherche globale (ALL HOOKS BEFORE EARLY RETURNS) ──
@@ -5566,7 +5578,7 @@ function AppInner({ supabase, user, onLogout }) {
     </div>
   </div>;
   if(!loggedIn)return <LoginPage onLogin={handleLogin}/>;
-  if(!s.activeClient)return <ClientsPage s={s} d={d} user={user} onLogout={onLogout} veilleNotif={veilleNotif} setVeilleNotif={setVeilleNotif}/>;
+  if(!s.activeClient)return <ClientsPage s={s} d={d} user={user} userRole={userRole} onLogout={onLogout} veilleNotif={veilleNotif} setVeilleNotif={setVeilleNotif}/>;
 
   // ── Sprint 17: Automation Hub ──
   
@@ -6617,6 +6629,8 @@ const ClotureMensuelle=({s,d,supabase,user})=>{
       }
     }
     addLog('📧 '+sent+'/'+pays.length+' fiches distribuées'+(emailMode==='simulate'?' (mode simulation)':''),'success');
+    // ═══ COMMISSIONS COMMERCIALES — €2 par fiche distribuée ═══
+    try{const COMMISSION_PER_FICHE=2;const clientId=s.activeClient;const clientData=(s.clients||[]).find(c=>c.id===clientId);if(clientData?.assignedTo){const commissionsKey='aureus_commissions';const existing=JSON.parse(localStorage.getItem(commissionsKey)||'{}');const commercialEmail=clientData.assignedTo.toLowerCase();if(!existing[commercialEmail])existing[commercialEmail]={total:0,paid:0,entries:[]};const entry={id:'COM-'+Date.now(),date:new Date().toISOString(),clientId,clientName:clientData.company?.name||clientId,period:prevMonth+' '+prevYear,fichesCount:sent,amount:sent*COMMISSION_PER_FICHE,status:'pending'};existing[commercialEmail].entries.push(entry);existing[commercialEmail].total+=entry.amount;localStorage.setItem(commissionsKey,JSON.stringify(existing));addLog('💰 Commission: '+sent+' fiches × '+COMMISSION_PER_FICHE+'€ = '+entry.amount+'€ → '+commercialEmail,'success');}}catch(e){}
     setProgress(p=>({...p,send:{done:true,sent,total:pays.length}}));
     setRunning(false);
   };
@@ -10383,8 +10397,10 @@ const PortailEmploye=({s})=>{
 };
 
 // ═══ 3. DASHBOARD CLIENT — Vue par client ═══
-const DashboardClient=({s,d})=>{
-  const clients=s.clients||[];
+const DashboardClient=({s,d,userRole,user})=>{
+  const isCommercial=userRole==='commercial';
+  const _userEmail=user?.email?.toLowerCase()||'';
+  const clients=isCommercial?(s.clients||[]).filter(c=>c.assignedTo?.toLowerCase()===_userEmail):(s.clients||[]);
   const [sel,setSel]=useState(0);
   const [dcTab,setDcTab]=useState('overview');
   const [absMonth,setAbsMonth]=useState(new Date().getMonth()+1);
@@ -19244,7 +19260,7 @@ const pg=()=>{
       case'documents':return <DocsPage s={s} d={d}/>;
       case'reports':return <ReportsPage s={s} d={d}/>;
       case'settings':return s.sub==='fraisgestion'?<FraisGestionMod s={s} d={d}/>:<SettingsPage s={s} d={d}/>;
-      case'admin':if(s.sub==='audit')return <AuditMod s={s} d={d}/>;if(s.sub==='config')return <SettingsPage s={s} d={d}/>;if(s.sub==='fraisgestion')return <FraisGestionMod s={s} d={d}/>;return <AdminDashboard s={s} d={d}/>;
+      case'admin':if(s.sub==='audit')return <AuditMod s={s} d={d}/>;if(s.sub==='config')return <SettingsPage s={s} d={d}/>;if(s.sub==='fraisgestion')return <FraisGestionMod s={s} d={d}/>;if(s.sub==='gestionacces')return <AccessManagement supabase={supabase}/>;if(s.sub==='commissions')return <CommissionsModule userRole={userRole} user={user}/>;if(s.sub==='authroles')return <AuthMultiRoles s={s} d={d}/>;return <AdminDashboard s={s} d={d}/>;
       case'modules':return <ModulesProPage s={s} d={d}/>;
       case'sprint9':return <ModulesProPage s={s} d={d}/>;
       case'automatisation':return <AutomationHub s={s} d={d}/>;
@@ -27015,7 +27031,7 @@ function FloatingLegalAgent({onAction}){
     const actionMatch=text.match(/\|\|\|ACTION\|\|\|([\s\S]*?)\|\|\|END\|\|\|/);
     if(actionMatch){
       try{
-        const actionData=(()=>{try{return JSON.parse(actionMatch[1].trim()}catch(e){return null}})());
+        const actionData=(()=>{try{return JSON.parse(actionMatch[1].trim())}catch(e){return null}})();
         if(onAction){
           onAction(actionData);
           setActionLog(prev=>[...prev,{time:new Date().toISOString(),action:actionData.action,data:actionData.data}]);
