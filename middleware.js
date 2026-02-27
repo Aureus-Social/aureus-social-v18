@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // ═══════════════════════════════════════════════════════════
 // AUREUS SOCIAL PRO — SECURITY MIDDLEWARE

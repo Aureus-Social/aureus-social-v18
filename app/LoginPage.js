@@ -11,6 +11,8 @@ export default function LoginPage({ onLogin }) {
   const [success, setSuccess] = useState('');
   const [mode, setMode] = useState('login'); // login, reset, signup
 
+  if (!supabase) return <div style={{minHeight:"100vh",background:"#060810",display:"flex",alignItems:"center",justifyContent:"center",color:"#ef4444",fontFamily:"Inter,sans-serif",padding:40,textAlign:"center"}}><div><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{fontSize:18,fontWeight:600,color:"#e5e5e5",marginBottom:8}}>Configuration requise</div><div style={{fontSize:13,color:"#999",lineHeight:1.6}}>Les variables d'environnement Supabase ne sont pas configurées.<br/>Ajoutez NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY dans Vercel.</div></div></div>;
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);

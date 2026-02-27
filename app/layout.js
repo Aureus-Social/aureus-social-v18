@@ -4,7 +4,7 @@ export const metadata = {
   title: 'Aureus Social Pro — Gestion de Paie Belge',
   description: 'Logiciel professionnel de gestion de paie et secrétariat social pour la Belgique — Aureus IA SPRL',
   manifest: '/manifest.json',
-  themeColor: '#c6a34e',
+
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -25,6 +25,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: '#c6a34e',
 }
 
 export default function RootLayout({ children }) {
