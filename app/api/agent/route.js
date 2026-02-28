@@ -221,7 +221,7 @@ export async function POST(request) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json({
-        error: 'API_KEY_MISSING',
+        error: 'AI service not configured',
         fallback: true,
         text: null
       }, { status: 200 });

@@ -21,7 +21,7 @@ const ALLOWED_ORIGINS = [
 
 function corsHeaders(request) {
   const origin = request?.headers?.get?.('origin') || '';
-  const allowed = ALLOWED_ORIGINS.some(o => origin.startsWith(o));
+  const allowed = ALLOWED_ORIGINS.some(o => origin === o);
   return {
     'Access-Control-Allow-Origin': allowed ? origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -44,8 +44,8 @@ export async function GET(request) {
     });
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
+    const limit = Math.min(Math.max(1, parseInt(searchParams.get('limit') || '50') || 50), 200);
     const status = searchParams.get('status') || 'active';
     const search = (searchParams.get('search') || '').slice(0, 100);
 

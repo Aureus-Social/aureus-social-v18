@@ -54,7 +54,7 @@ const ALLOWED_ORIGINS = [
 
 function cors(request) {
   const origin = request?.headers?.get?.('origin') || '';
-  const allowed = ALLOWED_ORIGINS.some(o => origin.startsWith(o));
+  const allowed = ALLOWED_ORIGINS.some(o => origin === o);
   return {
     'Access-Control-Allow-Origin': allowed ? origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -72,7 +72,19 @@ export async function POST(request) {
     const body = await request.json();
     const { brut, situation, enfants, statut, regime } = body;
 
-    if (!brut || brut <= 0) return Response.json({ error: 'brut must be > 0' }, { status: 400, headers: cors(request) });
+    if (!brut || typeof brut !== 'number' || brut <= 0 || brut > 100000) {
+      return Response.json({ error: 'brut must be a number > 0 and <= 100000' }, { status: 400, headers: cors(request) });
+    }
+
+    const validSituations = ['isole', 'marie_1rev', 'marie_2rev', 'cohabitant_1rev', 'cohabitant_2rev', 'parent_isole'];
+    if (situation && !validSituations.includes(situation)) {
+      return Response.json({ error: `Invalid situation. Allowed: ${validSituations.join(', ')}` }, { status: 400, headers: cors(request) });
+    }
+
+    const validStatuts = ['employe', 'ouvrier'];
+    if (statut && !validStatuts.includes(statut)) {
+      return Response.json({ error: `Invalid statut. Allowed: ${validStatuts.join(', ')}` }, { status: 400, headers: cors(request) });
+    }
 
     const isOuvrier = statut === 'ouvrier';
     const baseONSS = isOuvrier ? brut * 1.08 : brut;
