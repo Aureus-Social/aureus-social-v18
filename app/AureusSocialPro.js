@@ -23327,7 +23327,7 @@ function ContratsMenuPage({s,d}){const sub=s.sub||'contrats';return <div>
 </div>;}
 
 function RHPage({s,d}){const sub=s.sub||'absences';return <div>
-  <PH title="RH & Personnel" sub={`Module: ${{'wf_embauche':'⚡ Workflow Embauche','wf_licenciement':'⚡ Workflow Licenciement','wf_maladie':'⚡ Workflow Maladie','absences':'Gestion absences',"absenteisme":'Analyse absentéisme',"credittemps":'Crédit-temps',"chomtemp":'Chômage temporaire',"congeduc":'Congé-éducation payé',"rcc":'RCC / Prépension',"outplacement":'Outplacement',"pointage":'Pointage & Portail Employeur',"planform":'Plan de formation',"medtravail":'Médecine du travail',"selfservice":'Portail travailleur'}[sub]||sub}`}/>
+  <PH title="RH & Personnel" sub={`Module: ${{'wf_embauche':'⚡ Workflow Embauche','wf_licenciement':'⚡ Workflow Licenciement','wf_maladie':'⚡ Workflow Maladie','absences':'Gestion absences',"absenteisme":'Analyse absentéisme',"credittemps":'Crédit-temps',"chomtemp":'Chômage temporaire',"congeduc":'Congé-éducation payé',"rcc":'RCC / Prépension',"outplacement":'Outplacement',"pointage":'Pointage & Portail Employeur',"planform":'Plan de formation',"medtravail":'Médecine du travail',"selfservice":'Portail travailleur',"promesseembauche":'📄 Promesse d\'Embauche'}[sub]||sub}`}/>
   {sub==='wf_embauche'&&<WorkflowEmbaucheMod s={s} d={d}/>}{sub==='wf_licenciement'&&<WorkflowLicenciementMod s={s} d={d}/>}{sub==='wf_maladie'&&<WorkflowMaladieMod s={s} d={d}/>}
   {sub==='absences'&&<AbsencesMod s={s} d={d}/>}{sub==='absenteisme'&&<AbsenteismeMod s={s} d={d}/>}
   {sub==='credittemps'&&<CreditTempsMod s={s} d={d}/>}{sub==='chomtemp'&&<ChomTempMod s={s} d={d}/>}
@@ -23339,6 +23339,7 @@ function RHPage({s,d}){const sub=s.sub||'absences';return <div>
   {sub==='offboarding'&&<OffboardingMod s={s} d={d}/>}
   {sub==='registre'&&<RegistrePersonnelMod s={s} d={d}/>}
   {sub==='totalreward'&&<TotalRewardMod s={s} d={d}/>}
+  {sub==='promesseembauche'&&<PromesseEmbauche s={s} d={d}/>}
 </div>;}
 
 function SocialPage({s,d}){const sub=s.sub||'assloi';return <div>
