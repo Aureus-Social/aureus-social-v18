@@ -13111,11 +13111,30 @@ const AuthMultiRoles=({s,d})=>{
             <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:10}}>Permissions</div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4}}>
               {allPerms.map(p=>{
-                const has=selRoleData.perms.includes('all')||selRoleData.perms.includes(p.id);
-                return <div key={p.id} style={{display:'flex',alignItems:'center',gap:6,padding:'5px 8px',borderRadius:6,background:has?'rgba(34,197,94,.05)':'rgba(255,255,255,.01)',border:'1px solid '+(has?'rgba(34,197,94,.1)':'rgba(255,255,255,.03)')}}>
-                  <span style={{fontSize:10,color:has?'#22c55e':'#ef4444'}}>{has?'✅':'❌'}</span>
+                const hasAll=selRoleData.perms.includes('all');
+                const has=hasAll||selRoleData.perms.includes(p.id);
+                const togglePerm=()=>{
+                  setRoles(prev=>prev.map(r=>{
+                    if(r.id!==selRole)return r;
+                    let newPerms=[...r.perms];
+                    if(p.id==='all'){
+                      newPerms=has?[]:['all'];
+                    }else if(hasAll){
+                      newPerms=allPerms.map(ap=>ap.id).filter(id=>id!=='all'&&id!==p.id);
+                    }else if(has){
+                      newPerms=newPerms.filter(x=>x!==p.id);
+                    }else{
+                      newPerms=[...newPerms,p.id];
+                      const allNonSystem=allPerms.filter(ap=>ap.id!=='all').map(ap=>ap.id);
+                      if(allNonSystem.every(id=>newPerms.includes(id)))newPerms=['all'];
+                    }
+                    return {...r,perms:newPerms};
+                  }));
+                };
+                return <button key={p.id} onClick={togglePerm} style={{display:'flex',alignItems:'center',gap:6,padding:'5px 8px',borderRadius:6,background:has?'rgba(34,197,94,.05)':'rgba(255,255,255,.01)',border:'1px solid '+(has?'rgba(34,197,94,.1)':'rgba(255,255,255,.03)'),cursor:'pointer',textAlign:'left',fontFamily:'inherit',transition:'all .15s'}}>
+                  <span style={{width:16,height:16,borderRadius:4,border:'2px solid '+(has?'#22c55e':'#555'),background:has?'#22c55e':'transparent',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#fff',flexShrink:0,transition:'all .15s'}}>{has?'✓':''}</span>
                   <span style={{fontSize:10,color:has?'#e5e5e5':'#555'}}>{p.label}</span>
-                </div>;
+                </button>;
               })}
             </div>
 
