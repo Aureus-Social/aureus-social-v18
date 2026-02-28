@@ -229,7 +229,7 @@ var LOIS_BELGES = {
   },
 
   // ═══ RÉMUNÉRATION ═══
-  remuneration: {
+  rémunération: {
     RMMMG: { montant18ans: 2070.48, montant20ans6m: 2070.48, montant21ans12m: 2070.48, source: 'CNT - CCT 43/15' },
     indexSante: { coeff: 2.0399, pivot: 125.60, dateDerniereIndex: '2024-12-01', prochainPivotEstime: '2026-06-01' },
     peculeVacances: {
@@ -382,7 +382,7 @@ var LOIS_BELGES = {
     delaiIN: 'Avant debut prestations',
     delaiOUT: 'Le jour meme',
     types: ['IN','OUT','UPDATE','CANCEL'],
-    canal: 'Portail securite sociale ou batch',
+    canal: 'Portail sécurité sociale ou batch',
     sanctionNiveau: 3,
   },
 
@@ -403,7 +403,7 @@ var LOIS_BELGES = {
 
   // ═══ SOURCES OFFICIELLES ═══
   sources: [
-    { id: 'spf', nom: 'SPF Finances', url: 'https://finances.belgium.be/fr/entreprises/personnel_et_remuneration/precompte_professionnel', type: 'PP/Fiscal' },
+    { id: 'spf', nom: 'SPF Finances', url: 'https://finances.belgium.be/fr/entreprises/personnel_et_rémunération/precompte_professionnel', type: 'PP/Fiscal' },
     { id: 'onss', nom: 'ONSS', url: 'https://www.socialsecurity.be', type: 'Cotisations sociales' },
     { id: 'cnt', nom: 'Conseil National du Travail', url: 'https://www.cnt-nar.be', type: 'CCT/RMMMG' },
     { id: 'spf_emploi', nom: 'SPF Emploi', url: 'https://emploi.belgique.be', type: 'Droit du travail' },
@@ -510,7 +510,7 @@ function exportTravailleurs(emps,company){
     (e.city||''),
     (e.iban||''),
     (e.bic||''),
-    (e.statut||'Employe'),
+    (e.statut||'Employé'),
     (e.contractType||'CDI'),
     (e.startDate||''),
     (e.endDate||''),
@@ -608,7 +608,7 @@ function runPayrollTests(){
   // ══ PECULE VACANCES ══
   assert('PV simple 7.67%',PV_SIMPLE,0.0767);
   assert('PV double 92%',PV_DOUBLE,0.92);
-  assert('PV ouvrier 8.58%',LOIS_BELGES.remuneration.peculeVacances.ouvrierDouble.pct,0.0858);
+  assert('PV ouvrier 8.58%',LOIS_BELGES.rémunération.peculeVacances.ouvrierDouble.pct,0.0858);
   // ══ RMMMG ══
   assert('RMMMG 2026',RMMMG,2070.48,5);
   // ══ CONSTANTES CENTRALISEES ══
@@ -639,9 +639,9 @@ var CR_MAX=LB.chequesRepas.valeurFaciale.max; // 8.00
 var CR_PAT=LB.chequesRepas.partPatronale.max; // 6.91
 var FORF_BUREAU=LB.fraisPropres.forfaitBureau.max; // FORF_BUREAU
 var FORF_KM=LB.fraisPropres.forfaitDeplacement.voiture; // 0.4415
-var PV_SIMPLE=LB.remuneration.peculeVacances.simple.pct; // PV_SIMPLE
-var PV_DOUBLE=LB.remuneration.peculeVacances.double.pct; // 0.92
-var RMMMG=LB.remuneration.RMMMG.montant18ans; // RMMMG
+var PV_SIMPLE=LB.rémunération.peculeVacances.simple.pct; // PV_SIMPLE
+var PV_DOUBLE=LB.rémunération.peculeVacances.double.pct; // 0.92
+var RMMMG=LB.rémunération.RMMMG.montant18ans; // RMMMG
 var BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 194.03
 var SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
 var SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
@@ -660,7 +660,7 @@ function getLoi(path, fallback) {
 
 // Aliases courts pour calculs — connectés à LOIS_BELGES
 // (voir bloc RACCOURCIS CENTRALISÉS plus bas)
-var _PVP = LOIS_BELGES.remuneration.peculeVacances.patronal.pct;
+var _PVP = LOIS_BELGES.rémunération.peculeVacances.patronal.pct;
 var _HLEG = LOIS_BELGES.tempsTravail.dureeHebdoLegale;
 
 // Fonction centralisée: calculer PP via LOIS_BELGES
@@ -695,8 +695,8 @@ function calcPPFromLois(brut, opts) {
 
 
 // ═══ RACCOURCIS CENTRALISÉS — Toute modif dans LOIS_BELGES se propage ICI ═══
-var _RMMMG = LOIS_BELGES.remuneration.RMMMG.montant18ans; // 2070.48
-var _IDX = LOIS_BELGES.remuneration.indexSante.coeff; // 2.0399
+var _RMMMG = LOIS_BELGES.rémunération.RMMMG.montant18ans; // 2070.48
+var _IDX = LOIS_BELGES.rémunération.indexSante.coeff; // 2.0399
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -1052,11 +1052,11 @@ const I18N = {
   'emp.brut': { fr:'Brut mensuel', nl:'Bruto maandloon', en:'Gross monthly' },
   'emp.net': { fr:'Net', nl:'Netto', en:'Net' },
   'emp.status': { fr:'Statut', nl:'Statuut', en:'Status' },
-  'emp.employe': { fr:'Employe', nl:'Bediende', en:'Employee' },
+  'emp.employe': { fr:'Employé', nl:'Bediende', en:'Employee' },
   'emp.ouvrier': { fr:'Ouvrier', nl:'Arbeider', en:'Worker' },
   'pay.brut': { fr:'Salaire brut', nl:'Brutoloon', en:'Gross salary' },
   'pay.onss': { fr:'ONSS personnelle', nl:'RSZ persoonlijk', en:'Social security' },
-  'pay.pp': { fr:'Precompte professionnel', nl:'Bedrijfsvoorheffing', en:'Withholding tax' },
+  'pay.pp': { fr:'Précompte professionnel', nl:'Bedrijfsvoorheffing', en:'Withholding tax' },
   'pay.net': { fr:'Salaire net', nl:'Nettoloon', en:'Net salary' },
   'pay.cout': { fr:'Cout employeur', nl:'Werkgeverskost', en:'Employer cost' },
   'pay.cheques': { fr:'Cheques-repas', nl:'Maaltijdcheques', en:'Meal vouchers' },
@@ -1991,7 +1991,7 @@ var BAREMES={
     ]},
 
   '200':{n:'CPNAE — Commission paritaire auxiliaire pour employes',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
-    fn:{'Employe Cat.1':{cls:1},'Employe Cat.2':{cls:2},'Employe Cat.3':{cls:3},'Employe Cat.4':{cls:4}},
+    fn:{'Employé Cat.1':{cls:1},'Employé Cat.2':{cls:2},'Employé Cat.3':{cls:3},'Employé Cat.4':{cls:4}},
     note:'CP 200 CPNAE. Plus grande CP de Belgique (~450.000 travailleurs). Index pivot 2%. Bareme sectoriel minimum.',
     grille:[
       {exp:0,c1:2029.88,c2:2242.80,c3:2468.07,c4:2728.35},
@@ -2006,7 +2006,7 @@ var BAREMES={
     ]},
 
   '216':{n:'Notariat',idx:2.0,dt:'01/01/2026',regime:36,approx:false,
-    fn:{'Employe Cat.1':{cls:1},'Employe Cat.2':{cls:2},'Clerc':{cls:3},'Notaire employe':{cls:4}},
+    fn:{'Employé Cat.1':{cls:1},'Employé Cat.2':{cls:2},'Clerc':{cls:3},'Notaire employe':{cls:4}},
     note:'CP 216 Notariat. Regime 36h/sem. Bareme specifique. Prime de fin annee = 13eme mois.',
     grille:[
       {exp:0,c1:2242.80,c2:2468.07,c3:2728.35,c4:3500.00},
@@ -2015,7 +2015,7 @@ var BAREMES={
     ]},
 
   '218':{n:'CPNAE employes (secteur alimentaire)',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
-    fn:{'Employe Cat.1':{cls:1},'Employe Cat.2':{cls:2},'Employe Cat.3':{cls:3},'Employe Cat.4':{cls:4}},
+    fn:{'Employé Cat.1':{cls:1},'Employé Cat.2':{cls:2},'Employé Cat.3':{cls:3},'Employé Cat.4':{cls:4}},
     note:'CP 218 Employes industrie alimentaire. Liee a CP 118. Baremes specifiques au secteur.',
     grille:[
       {exp:0,c1:2200.00,c2:2420.00,c3:2660.00,c4:2940.00},
@@ -3006,7 +3006,7 @@ function calc(emp, per, co) {
     // Employé: simple = 1 mois brut (déjà inclus dans salaire normal du mois de vacances)
     r.peculeVacCalc.simple = emp.monthlySalary || 0;
     // Double = 92% du brut mensuel (LOIS_BELGES)
-    r.peculeVacCalc.double = (emp.monthlySalary || 0) * LOIS_BELGES.remuneration.peculeVacances.double.pct;
+    r.peculeVacCalc.double = (emp.monthlySalary || 0) * LOIS_BELGES.rémunération.peculeVacances.double.pct;
     r.peculeVacCalc.total = r.peculeVacCalc.simple + r.peculeVacCalc.double;
     // 2ème partie du double pécule (7/92 du double) → ONSS 13,07% + cotis spéciale 1%
     const dp2 = r.peculeVacCalc.double * (7/92);
@@ -3022,7 +3022,7 @@ function calc(emp, per, co) {
   } else {
     // Ouvrier: 15,38% du brut annuel N-1 × 108%
     r.peculeVacCalc.simple = Math.round(r.peculeVacCalc.brutRef * 0.0680 * 100) / 100;
-    r.peculeVacCalc.double = Math.round(r.peculeVacCalc.brutRef * LOIS_BELGES.remuneration.peculeVacances.ouvrierDouble.pct * 100) / 100;
+    r.peculeVacCalc.double = Math.round(r.peculeVacCalc.brutRef * LOIS_BELGES.rémunération.peculeVacances.ouvrierDouble.pct * 100) / 100;
     r.peculeVacCalc.total = Math.round(r.peculeVacCalc.brutRef * (PV_SIMPLE*2+0.001) * 100) / 100;
   }
 
@@ -3270,7 +3270,7 @@ function genDMFAXML(co, emps, q, y) {
 <!-- DmfAOriginal — Declaration Multifonctionnelle / Securite Sociale Belge -->
 <!-- Schema conforme ONSS — socialsecurity.be/TechLib -->
 <!-- Reference: ${ref} | Trimestre: ${q}/${y} -->
-<!-- Genere par: Aureus Social Pro — Aureus IA SPRL (${AUREUS_INFO.vat}) -->
+<!-- Généré par: Aureus Social Pro — Aureus IA SPRL (${AUREUS_INFO.vat}) -->
 <DmfAOriginal xmlns="http://www.smals-mvm.be/xml/ns/systemFlux"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <FormCreation>
@@ -7708,7 +7708,7 @@ const Facturation=({s})=>{
     {/* Invoice table */}
     <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       <div style={{display:'grid',gridTemplateColumns:'120px 180px 80px 100px 80px 100px 100px 1fr',padding:'8px 12px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#888'}}>
-        <div>N facture</div><div>Client</div><div>Employes</div><div>HTVA</div><div>TVA</div><div>TTC</div><div>Statut</div><div>Actions</div>
+        <div>N facture</div><div>Client</div><div>Employés</div><div>HTVA</div><div>TVA</div><div>TTC</div><div>Statut</div><div>Actions</div>
       </div>
       {factures.map((fact,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'120px 180px 80px 100px 80px 100px 100px 1fr',padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
         <div style={{color:'#c6a34e',fontWeight:600,fontSize:10}}>{fact.id}</div>
@@ -8059,11 +8059,11 @@ const RecapEmployeur=({s,user})=>{
     +'<h1>Aureus Social Pro</h1>'
     +'<h2>Recap Mensuel — '+mois[month]+' '+year+'</h2>'
     +'<p><strong>'+( co.name||'Client')+'</strong> — '+(co.vat||'')+' — '+(co.address||'')+'</p>'
-    +'<div class="kpi"><div class="val">'+recap.empCount+'</div><div class="lab">Employes</div></div>'
+    +'<div class="kpi"><div class="val">'+recap.empCount+'</div><div class="lab">Employés</div></div>'
     +'<div class="kpi"><div class="val">'+f2(recap.totalBrut)+' EUR</div><div class="lab">Masse brute</div></div>'
     +'<div class="kpi"><div class="val">'+f2(recap.totalNet)+' EUR</div><div class="lab">Net total</div></div>'
-    +'<h2>Detail par employe</h2>'
-    +'<table><tr><th>Employe</th><th>Contrat</th><th>Brut</th><th>ONSS</th><th>PP</th><th>Net</th></tr>'
+    +'<h2>Détail par employé</h2>'
+    +'<table><tr><th>Employé</th><th>Contrat</th><th>Brut</th><th>ONSS</th><th>PP</th><th>Net</th></tr>'
     +(recap.emps||[]).map(e=>'<tr><td>'+e.name+'</td><td>'+e.contrat+'</td><td>'+f2(e.brut)+'</td><td>'+f2(e.onss)+'</td><td>'+f2(e.pp)+'</td><td style="font-weight:bold;color:#2d7a2d">'+f2(e.net)+'</td></tr>').join('')
     +'<tr class="total"><td>TOTAL</td><td>'+recap.empCount+' emp.</td><td>'+f2(recap.totalBrut)+'</td><td>'+f2(recap.totalONSS_W)+'</td><td>'+f2(recap.totalPP)+'</td><td style="color:#2d7a2d">'+f2(recap.totalNet)+'</td></tr>'
     +'</table>'
@@ -8071,15 +8071,15 @@ const RecapEmployeur=({s,user})=>{
     +'<table><tr><th>Rubrique</th><th>Montant</th></tr>'
     +'<tr><td>Masse brute</td><td>'+f2(recap.totalBrut)+' EUR</td></tr>'
     +'<tr><td>ONSS patronal (25,07%)</td><td>'+f2(recap.totalONSS_P)+' EUR</td></tr>'
-    +'<tr class="total"><td>Cout total employeur</td><td style="color:#c00">'+f2(recap.totalCout)+' EUR</td></tr>'
+    +'<tr class="total"><td>Coût total employeur</td><td style="color:#c00">'+f2(recap.totalCout)+' EUR</td></tr>'
     +'</table>'
     +'<h2>Echeances du mois</h2>'
     +'<table><tr><th>Date</th><th>Obligation</th><th>Montant</th></tr>'
     +'<tr><td>5/'+month+'</td><td>ONSS provisoire</td><td>'+f2(recap.totalBrut*(TX_ONSS_W+TX_ONSS_E))+' EUR</td></tr>'
-    +'<tr><td>15/'+month+'</td><td>Precompte professionnel</td><td>'+f2(recap.totalPP)+' EUR</td></tr>'
+    +'<tr><td>15/'+month+'</td><td>Précompte professionnel</td><td>'+f2(recap.totalPP)+' EUR</td></tr>'
     +'<tr><td>25/'+month+'</td><td>Virements salaires (SEPA)</td><td>'+f2(recap.totalNet)+' EUR</td></tr>'
     +'</table>'
-    +'<div class="footer">Genere par Aureus Social Pro — aureussocial.be — '+(new Date().toLocaleDateString('fr-BE'))+'<br/>Ce document est confidentiel et destine uniquement au client mentionne ci-dessus.</div>'
+    +'<div class="footer">Généré par Aureus Social Pro — aureussocial.be — '+(new Date().toLocaleDateString('fr-BE'))+'<br/>Ce document est confidentiel et destine uniquement au client mentionne ci-dessus.</div>'
     +'</body></html>';
   };
 
@@ -8213,11 +8213,11 @@ const EnvoiMasse=({s,user})=>{
         +'<table><tr><th>Rubrique</th><th>Montant</th></tr>'
         +'<tr><td>Salaire brut</td><td>'+f2(brut)+' EUR</td></tr>'
         +'<tr><td>ONSS (-13,07%)</td><td>-'+f2(onss)+' EUR</td></tr>'
-        +'<tr><td>Precompte professionnel</td><td>-'+f2(pp)+' EUR</td></tr>'
+        +'<tr><td>Précompte professionnel</td><td>-'+f2(pp)+' EUR</td></tr>'
         +(bonus>0?'<tr><td>Bonus emploi</td><td>+'+f2(bonus)+' EUR</td></tr>':'')
         +'<tr><td><strong>NET A PAYER</strong></td><td class="net">'+f2(net)+' EUR</td></tr>'
         +'</table>'
-        +'<p style="color:#888;font-size:11px;margin-top:20px">Genere par Aureus Social Pro — aureussocial.be</p>'
+        +'<p style="color:#888;font-size:11px;margin-top:20px">Généré par Aureus Social Pro — aureussocial.be</p>'
         +'</body></html>';
 
       try{
@@ -8248,7 +8248,7 @@ const EnvoiMasse=({s,user})=>{
         +'<tr><td>Net total</td><td class="big" style="color:#2d7a2d">'+f2(tn)+' EUR</td></tr>'
         +'<tr><td>Cout employeur total</td><td class="big" style="color:#c00">'+f2(tc)+' EUR</td></tr>'
         +'</table>'
-        +'<h2>Echeances</h2>'
+        +'<h2>Échéances</h2>'
         +'<table><tr><th>Date</th><th>Obligation</th><th>Montant</th></tr>'
         +'<tr><td>5/'+month+'</td><td>ONSS</td><td>'+f2(tb*(TX_ONSS_W+TX_ONSS_E))+' EUR</td></tr>'
         +'<tr><td>15/'+month+'</td><td>Precompte prof.</td><td>'+f2(tb*PP_EST)+' EUR</td></tr>'
@@ -8393,7 +8393,7 @@ const CP_DATABASE = {
     preavis_art:'Art. 37/2 Loi 3/7/1978', prime_fin:'Oui — prime de fin annee',
     ecoCheques:'Selon CCT', formation:'Formation continue obligatoire secteur soins',
     transport:'100% transport en commun', fonds:'Fonds Maribel Social (AR 18/7/2002)',
-    rmmmg:'Baremes IFIC (classification fonctions)', specificites:'IFIC classification obligatoire. Primes de nuit, week-end, jours feries. Maribel social (reduction ONSS Art. 35 Loi 29/6/1981).'
+    rmmmg:'Baremes IFIC (classification fonctions)', specificites:'IFIC classification obligatoire. Primes de nuit, week-end, jours fériés. Maribel social (reduction ONSS Art. 35 Loi 29/6/1981).'
   }
 };
 
@@ -8449,7 +8449,7 @@ const ContratGenerator=({s,d,user})=>{
 
     // HEADER
     html+='<h1>CONTRAT DE TRAVAIL '+(contractType==='CDD'?'A DUREE DETERMINEE':'A DUREE INDETERMINEE')+'</h1>';
-    html+='<p style="text-align:center;font-size:10pt;color:#666">'+cpData.name+'<br/>Statut: '+(statut==='ouvrier'?'Ouvrier':'Employe')+'</p>';
+    html+='<p style="text-align:center;font-size:10pt;color:#666">'+cpData.name+'<br/>Statut: '+(statut==='ouvrier'?'Ouvrier':'Employé')+'</p>';
     
     // ENTRE
     html+='<h2>ENTRE LES PARTIES</h2>';
@@ -8498,22 +8498,22 @@ const ContratGenerator=({s,d,user})=>{
       html+='<p class="article important">Le present contrat etant a temps partiel, il doit imperativement etre constate par ecrit pour chaque travailleur individuellement, au plus tard au moment de l entree en service, conformement a l article 11bis de la Loi du 3 juillet 1978.</p>';
       html+='<p class="ref">Ref. legale : Art. 11bis Loi 3/7/1978. Loi du 16 mars 1971 sur le travail, Art. 26bis (publicite des horaires). AR 25/6/1990 assimilant travail a temps partiel.</p>';
     }
-    html+='<p class="article">La duree hebdomadaire maximale de travail est de '+cpData.duree+' heures (Art. 19 Loi du 16 mars 1971 sur le travail). Les heures supplementaires sont remunerees conformement a l article 29 de la meme loi (sursalaire de 50% en semaine, 100% les dimanches et jours feries).</p>';
+    html+='<p class="article">La duree hebdomadaire maximale de travail est de '+cpData.duree+' heures (Art. 19 Loi du 16 mars 1971 sur le travail). Les heures supplementaires sont rémunérées conformement a l article 29 de la meme loi (sursalaire de 50% en semaine, 100% les dimanches et jours fériés).</p>';
     html+='<p class="ref">Ref. legale : Loi du 16/3/1971 sur le travail, Art. 19, 20, 29. '+cpData.preavis_art+'</p>';
 
     // ARTICLE 5 — REMUNERATION
     html+='<h2>ARTICLE 5 — REMUNERATION</h2>';
-    html+='<p class="article">Le Travailleur percevra une remuneration mensuelle brute de <strong>'+brut.toFixed(2)+' EUR</strong> pour des prestations a temps plein ('+(regime>=cpData.duree?'100%':Math.round(regime/cpData.duree*100)+'%')+').</p>';
-    html+='<p class="article">Cette remuneration respecte les baremes minima fixes par la '+cpData.name+' (RMMMG sectoriel : '+cpData.rmmmg+').</p>';
-    html+='<p class="article">La remuneration sera payee mensuellement, au plus tard le dernier jour ouvrable du mois, par virement bancaire sur le compte communique par le Travailleur, conformement a l article 5 de la Loi du 12 avril 1965 concernant la protection de la remuneration des travailleurs.</p>';
-    html+='<p class="article"><strong>Indexation :</strong> La remuneration sera indexee selon le mecanisme applicable dans la '+cpData.name+' : <strong>'+cpData.indexation+'</strong>, conformement a la Loi du 2 aout 1971 organisant un regime de liaison a l indice des prix a la consommation (indice sante).</p>';
+    html+='<p class="article">Le Travailleur percevra une rémunération mensuelle brute de <strong>'+brut.toFixed(2)+' EUR</strong> pour des prestations a temps plein ('+(regime>=cpData.duree?'100%':Math.round(regime/cpData.duree*100)+'%')+').</p>';
+    html+='<p class="article">Cette rémunération respecte les baremes minima fixes par la '+cpData.name+' (RMMMG sectoriel : '+cpData.rmmmg+').</p>';
+    html+='<p class="article">La rémunération sera payee mensuellement, au plus tard le dernier jour ouvrable du mois, par virement bancaire sur le compte communique par le Travailleur, conformement a l article 5 de la Loi du 12 avril 1965 concernant la protection de la rémunération des travailleurs.</p>';
+    html+='<p class="article"><strong>Indexation :</strong> La rémunération sera indexée selon le mécanisme applicable dans la '+cpData.name+' : <strong>'+cpData.indexation+'</strong>, conformement a la Loi du 2 aout 1971 organisant un regime de liaison a l indice des prix a la consommation (indice sante).</p>';
     if(cpData.type==='ouvrier'){
-      html+='<p class="article"><strong>Pecule de vacances :</strong> Le pecule de vacances (simple et double) sera verse par la Caisse de vacances competente, conformement aux Lois coordonnees du 28 juin 1971 relatives aux vacances annuelles des travailleurs salaries.</p>';
+      html+='<p class="article"><strong>Pécule de vacances :</strong> Le pécule de vacances (simple et double) sera verse par la Caisse de vacances competente, conformement aux Lois coordonnees du 28 juin 1971 relatives aux vacances annuelles des travailleurs salaries.</p>';
     } else {
-      html+='<p class="article"><strong>Pecule de vacances :</strong> Le simple pecule est inclus dans le salaire mensuel. Le double pecule (92% du salaire brut) sera verse en mai-juin conformement a l AR du 30 mars 1967 et aux Lois coordonnees du 28 juin 1971.</p>';
+      html+='<p class="article"><strong>Pécule de vacances :</strong> Le simple pecule est inclus dans le salaire mensuel. Le double pecule (92% du salaire brut) sera verse en mai-juin conformement a l AR du 30 mars 1967 et aux Lois coordonnees du 28 juin 1971.</p>';
     }
     html+='<p class="article"><strong>Prime de fin d annee :</strong> '+cpData.prime_fin+'.</p>';
-    html+='<p class="ref">Ref. legale : Loi 12/4/1965 protection remuneration. Art. 16-20 Loi 3/7/1978 (obligations des parties). Lois coord. 28/6/1971 (vacances annuelles). CCT '+cp+' applicable.</p>';
+    html+='<p class="ref">Ref. legale : Loi 12/4/1965 protection rémunération. Art. 16-20 Loi 3/7/1978 (obligations des parties). Lois coord. 28/6/1971 (vacances annuelles). CCT '+cp+' applicable.</p>';
 
     // ARTICLE 6 — AVANTAGES
     html+='<h2>ARTICLE 6 — AVANTAGES COMPLEMENTAIRES</h2>';
@@ -8529,11 +8529,11 @@ const ContratGenerator=({s,d,user})=>{
     html+='<h3>7.1 — Obligations du Travailleur (Art. 17 Loi 3/7/1978)</h3>';
     html+='<p class="article">Le Travailleur s engage a :<br/>- executer son travail avec soin, probite et conscience, au temps, au lieu et dans les conditions convenues (Art. 17, 1°);<br/>- agir conformement aux ordres et instructions de l Employeur en vue de l execution du contrat (Art. 17, 2°);<br/>- s abstenir de tout ce qui pourrait nuire a sa securite, a celle de ses compagnons, de l employeur ou de tiers (Art. 17, 3°);<br/>- restituer en bon etat les instruments de travail et les matieres premieres qui lui sont confies (Art. 17, 4°);<br/>- garder le secret sur toute affaire confidentielle dont il aurait eu connaissance dans l exercice de ses fonctions (Art. 17, 3°bis).</p>';
     html+='<h3>7.2 — Obligations de l Employeur (Art. 20 Loi 3/7/1978)</h3>';
-    html+='<p class="article">L Employeur s engage a :<br/>- faire travailler le Travailleur dans les conditions, au temps et au lieu convenus (Art. 20, 1°);<br/>- veiller a ce que le travail s accomplisse dans des conditions convenables (Art. 20, 2°);<br/>- payer la remuneration aux conditions, au temps et au lieu convenus (Art. 20, 3°);<br/>- consacrer l attention et les soins necessaires a l accueil du Travailleur (Art. 20, 6°);<br/>- fournir au Travailleur les informations prevues par la Directive (UE) 2019/1152 transposee par la Loi du 7 octobre 2022.</p>';
+    html+='<p class="article">L Employeur s engage a :<br/>- faire travailler le Travailleur dans les conditions, au temps et au lieu convenus (Art. 20, 1°);<br/>- veiller a ce que le travail s accomplisse dans des conditions convenables (Art. 20, 2°);<br/>- payer la rémunération aux conditions, au temps et au lieu convenus (Art. 20, 3°);<br/>- consacrer l attention et les soins necessaires a l accueil du Travailleur (Art. 20, 6°);<br/>- fournir au Travailleur les informations prevues par la Directive (UE) 2019/1152 transposee par la Loi du 7 octobre 2022.</p>';
 
     // ARTICLE 8 — SUSPENSION
     html+='<h2>ARTICLE 8 — SUSPENSION DU CONTRAT</h2>';
-    html+='<p class="article">L execution du contrat peut etre suspendue dans les cas prevus par la Loi du 3 juillet 1978 (Chapitre III, Art. 26 a 31/2), notamment :<br/>- Force majeure (Art. 26);<br/>- Incapacite de travail resultant de maladie ou accident (Art. 31 — salaire garanti: '+(statut==='ouvrier'?'7 jours employeur, puis mutuelle (Art. 52 Loi 3/7/1978)':'30 jours employeur (Art. 70 Loi 3/7/1978)')+';<br/>- Vacances annuelles (Lois coord. 28/6/1971);<br/>- Jours feries legaux (Loi du 4 janvier 1974);<br/>- Petit chomage / conge de circonstance (AR 28/8/1963);<br/>- Conge de maternite (Art. 39 Loi 16/3/1971 — 15 semaines);<br/>- Conge de naissance (Art. 30 §2 Loi 3/7/1978 — 20 jours);<br/>- Credit-temps (CCT n°103 du CNT du 27/6/2012).</p>';
+    html+='<p class="article">L execution du contrat peut etre suspendue dans les cas prevus par la Loi du 3 juillet 1978 (Chapitre III, Art. 26 a 31/2), notamment :<br/>- Force majeure (Art. 26);<br/>- Incapacite de travail resultant de maladie ou accident (Art. 31 — salaire garanti: '+(statut==='ouvrier'?'7 jours employeur, puis mutuelle (Art. 52 Loi 3/7/1978)':'30 jours employeur (Art. 70 Loi 3/7/1978)')+';<br/>- Vacances annuelles (Lois coord. 28/6/1971);<br/>- Jours fériés legaux (Loi du 4 janvier 1974);<br/>- Petit chomage / conge de circonstance (AR 28/8/1963);<br/>- Conge de maternite (Art. 39 Loi 16/3/1971 — 15 semaines);<br/>- Conge de naissance (Art. 30 §2 Loi 3/7/1978 — 20 jours);<br/>- Credit-temps (CCT n°103 du CNT du 27/6/2012).</p>';
 
     // ARTICLE 9 — PREAVIS ET FIN DE CONTRAT
     html+='<h2>ARTICLE 9 — PREAVIS ET FIN DE CONTRAT</h2>';
@@ -8554,8 +8554,8 @@ const ContratGenerator=({s,d,user})=>{
     let artNum = confidentialite ? 11 : 10;
     if(nonConcurrence){
       html+='<h2>ARTICLE '+artNum+' — CLAUSE DE NON-CONCURRENCE</h2>';
-      html+='<p class="article">Conformement aux articles 65 et 86 de la Loi du 3 juillet 1978, et pour autant que la remuneration annuelle brute depasse 41.969 EUR (montant indexe 2026), le Travailleur s engage, en cas de cessation du contrat, a ne pas exercer d activites similaires, soit en exploitant une entreprise personnelle, soit en s engageant chez un employeur concurrent, pendant une duree maximale de <strong>12 mois</strong> a compter de la fin du contrat, dans un rayon geographique de <strong>[zone]</strong>.</p>';
-      html+='<p class="article">En contrepartie, l Employeur versera une indemnite compensatoire unique egale a la moitie de la remuneration brute correspondant a la duree d application de la clause (Art. 65 §2, 4° Loi 3/7/1978).</p>';
+      html+='<p class="article">Conformement aux articles 65 et 86 de la Loi du 3 juillet 1978, et pour autant que la rémunération annuelle brute depasse 41.969 EUR (montant indexe 2026), le Travailleur s engage, en cas de cessation du contrat, a ne pas exercer d activites similaires, soit en exploitant une entreprise personnelle, soit en s engageant chez un employeur concurrent, pendant une duree maximale de <strong>12 mois</strong> a compter de la fin du contrat, dans un rayon geographique de <strong>[zone]</strong>.</p>';
+      html+='<p class="article">En contrepartie, l Employeur versera une indemnite compensatoire unique egale a la moitie de la rémunération brute correspondant a la duree d application de la clause (Art. 65 §2, 4° Loi 3/7/1978).</p>';
       html+='<p class="ref">Ref. legale : Art. 65 (employes) et Art. 86 (ouvriers) Loi 3/7/1978. Conditions: salaire > 41.969 EUR/an; duree max 12 mois; zone geographique limitee; activites similaires; indemnite compensatoire.</p>';
       artNum++;
     }
@@ -8564,8 +8564,8 @@ const ContratGenerator=({s,d,user})=>{
     if(ecolage){
       html+='<h2>ARTICLE '+artNum+' — CLAUSE D ECOLAGE</h2>';
       html+='<p class="article">Conformement a l article 22bis de la Loi du 3 juillet 1978, le Travailleur beneficiant d une formation specifique aux frais de l Employeur s engage a rester au service de l Employeur pendant une duree de <strong>[duree]</strong> mois.</p>';
-      html+='<p class="article">En cas de depart anticipe, le Travailleur remboursera les frais de formation selon le bareme degressif legal : 80% (depart avant 1/3 de la periode), 50% (entre 1/3 et 2/3), 20% (au-dela de 2/3). Le montant ne pourra exceder 30% de la remuneration annuelle du Travailleur (Art. 22bis §5).</p>';
-      html+='<p class="ref">Ref. legale : Art. 22bis Loi 3/7/1978. Conditions : remuneration annuelle > 41.969 EUR; formation > 80h ou cout > 2x RMMMG; ecrit obligatoire avant le debut de la formation.</p>';
+      html+='<p class="article">En cas de depart anticipe, le Travailleur remboursera les frais de formation selon le bareme degressif legal : 80% (depart avant 1/3 de la periode), 50% (entre 1/3 et 2/3), 20% (au-dela de 2/3). Le montant ne pourra exceder 30% de la rémunération annuelle du Travailleur (Art. 22bis §5).</p>';
+      html+='<p class="ref">Ref. legale : Art. 22bis Loi 3/7/1978. Conditions : rémunération annuelle > 41.969 EUR; formation > 80h ou cout > 2x RMMMG; ecrit obligatoire avant le debut de la formation.</p>';
       artNum++;
     }
 
@@ -8591,7 +8591,7 @@ const ContratGenerator=({s,d,user})=>{
 
     // ARTICLE — DROIT APPLICABLE
     html+='<h2>ARTICLE '+artNum+' — DROIT APPLICABLE ET JURIDICTION</h2>';
-    html+='<p class="article">Le present contrat est regi par le droit belge, et en particulier par :<br/>- La Loi du 3 juillet 1978 relative aux contrats de travail;<br/>- La Loi du 16 mars 1971 sur le travail;<br/>- La Loi du 12 avril 1965 concernant la protection de la remuneration;<br/>- La Loi du 26 decembre 2013 concernant le statut unique;<br/>- Les CCT applicables dans la '+cpData.name+';<br/>- Le reglement de travail de l Employeur.</p>';
+    html+='<p class="article">Le present contrat est regi par le droit belge, et en particulier par :<br/>- La Loi du 3 juillet 1978 relative aux contrats de travail;<br/>- La Loi du 16 mars 1971 sur le travail;<br/>- La Loi du 12 avril 1965 concernant la protection de la rémunération;<br/>- La Loi du 26 decembre 2013 concernant le statut unique;<br/>- Les CCT applicables dans la '+cpData.name+';<br/>- Le reglement de travail de l Employeur.</p>';
     html+='<p class="article">En cas de litige, les Tribunaux du Travail du ressort du lieu d execution habituel du contrat sont competents (Art. 578 du Code judiciaire).</p>';
     artNum++;
 
@@ -8618,7 +8618,7 @@ const ContratGenerator=({s,d,user})=>{
     html+='</div>';
 
     html+='<div style="margin-top:30px;padding-top:15px;border-top:2px solid #eee;font-size:8pt;color:#888">';
-    html+='Document genere par Aureus Social Pro — aureussocial.be — Ce contrat doit etre adapte par un juriste ou un conseiller en droit social avant signature definitive. '+new Date().toLocaleDateString('fr-BE');
+    html+='Document genere par Aureus Social Pro — aureussocial.be — Ce contrat doit être adapté par un juriste ou un conseiller en droit social avant signature definitive. '+new Date().toLocaleDateString('fr-BE');
     html+='</div>';
 
     html+='</body></html>';
@@ -8737,9 +8737,9 @@ const ContratGenerator=({s,d,user})=>{
         Loi du 3/7/1978 relative aux contrats de travail (M.B. 22/8/1978) •
         Loi du 26/12/2013 concernant le statut unique (M.B. 31/12/2013) •
         Loi du 16/3/1971 sur le travail •
-        Loi du 12/4/1965 protection de la remuneration •
+        Loi du 12/4/1965 protection de la rémunération •
         Loi du 8/4/1965 reglements de travail •
-        Loi du 4/1/1974 jours feries •
+        Loi du 4/1/1974 jours fériés •
         Loi du 5/3/2017 travail faisable et maniable (Peeters) •
         Loi du 7/10/2022 transposition Directive (UE) 2019/1152 •
         Loi du 30/7/2018 secrets d affaires •
@@ -8876,7 +8876,7 @@ const ImportCSV=({s,d})=>{
           else if(hl.includes('adresse')||hl.includes('address')||hl.includes('rue')) autoMap[h]='address';
           else if(hl.includes('entree')||hl.includes('start')||hl.includes('debut')) autoMap[h]='startDate';
           else if(hl.includes('contrat')||hl.includes('contract')) autoMap[h]='contractType';
-          else if(hl.includes('salaire')||hl.includes('brut')||hl.includes('salary')||hl.includes('remuneration')) autoMap[h]='monthlySalary';
+          else if(hl.includes('salaire')||hl.includes('brut')||hl.includes('salary')||hl.includes('rémunération')) autoMap[h]='monthlySalary';
           else if(hl.includes('fonction')||hl.includes('function')||hl.includes('poste')) autoMap[h]='function';
           else if(hl.includes('heure')||hl.includes('hours')||hl.includes('regime')) autoMap[h]='whWeek';
           else if(hl.includes('statut')||hl.includes('status')||hl==='type') autoMap[h]='statut';
@@ -9119,7 +9119,7 @@ const SetupWizard=({s,d,setPage})=>{
           <input value={companyData.vat} onChange={e=>setCompanyData(p=>({...p,vat:e.target.value}))} placeholder="BE 0XXX.XXX.XXX" style={inputStyle}/>
         </div>
         <div>
-          <div style={{fontSize:10,color:'#888',marginBottom:3}}>Numero ONSS</div>
+          <div style={{fontSize:10,color:'#888',marginBottom:3}}>Numéro ONSS</div>
           <input value={companyData.onss} onChange={e=>setCompanyData(p=>({...p,onss:e.target.value}))} placeholder="XXX-XXXXXXX-XX" style={inputStyle}/>
         </div>
         <div style={{gridColumn:'1/-1'}}>
@@ -9212,7 +9212,7 @@ const SetupWizard=({s,d,setPage})=>{
       <div style={{marginTop:20,padding:16,background:'rgba(198,163,78,.04)',borderRadius:12,textAlign:'left',maxWidth:400,margin:'20px auto 0'}}>
         <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:8}}>Prochaines etapes :</div>
         {[
-          {icon:'📝',text:'Generer les contrats de travail',page:'contratgen'},
+          {icon:'📝',text:'Générer les contrats de travail',page:'contratgen'},
           {icon:'🏎️',text:'Lancer le Pilote Auto (calcul paie)',page:'piloteauto'},
           {icon:'📧',text:'Envoyer les fiches aux employes',page:'envoiMasse'},
           {icon:'📥',text:'Importer plus d employes (CSV)',page:'importcsv'}
@@ -9307,7 +9307,7 @@ td,th{padding:5px 10px;text-align:left;font-size:9.5px;}
 </div>
 
 <div class="section">
-  <div class="section-title">Remuneration</div>
+  <div class="section-title">Rémunération</div>
   <table>
     <tr><td class="label">Salaire mensuel brut</td><td class="value">${f2(brut)} EUR</td></tr>
     <tr class="row-alt"><td class="label">Regime de travail</td><td class="value">${emp.whWeek||38}h/sem (${Math.round((emp.whWeek||38)/38*100)}%)</td></tr>
@@ -9319,8 +9319,8 @@ td,th{padding:5px 10px;text-align:left;font-size:9.5px;}
   <table>
     <tr><td class="label">ONSS personnelle (13,07%)</td><td class="value-red">- ${f2(onssW)} EUR</td></tr>
     <tr class="row-alt"><td class="label">Revenu imposable</td><td class="value">${f2(imposable)} EUR</td></tr>
-    <tr><td class="label">Precompte professionnel</td><td class="value-red">- ${f2(pp)} EUR</td></tr>
-    <tr class="row-alt"><td class="label">Cotisation speciale securite sociale</td><td class="value-red">- ${f2(css)} EUR</td></tr>
+    <tr><td class="label">Précompte professionnel</td><td class="value-red">- ${f2(pp)} EUR</td></tr>
+    <tr class="row-alt"><td class="label">Cotisation spéciale securite sociale</td><td class="value-red">- ${f2(css)} EUR</td></tr>
     ${bonus>0?'<tr><td class="label">Bonus a l emploi (Art. 289ter CIR)</td><td class="value-green">+ '+f2(bonus)+' EUR</td></tr>':''}
     <tr class="total-row"><td>TOTAL RETENUES</td><td class="value-red">- ${f2(onssW+pp+css-bonus)} EUR</td></tr>
   </table>
@@ -9330,7 +9330,7 @@ td,th{padding:5px 10px;text-align:left;font-size:9.5px;}
   <div class="section-title">Charges employeur</div>
   <table>
     <tr><td class="label">ONSS patronale (25%)</td><td class="value">${f2(onssE)} EUR</td></tr>
-    <tr class="row-alt"><td class="label">Cout total employeur</td><td class="value" style="font-weight:700;color:#dc2626;">${f2(cout)} EUR</td></tr>
+    <tr class="row-alt"><td class="label">Coût total employeur</td><td class="value" style="font-weight:700;color:#dc2626;">${f2(cout)} EUR</td></tr>
   </table>
 </div>
 
@@ -9341,13 +9341,13 @@ td,th{padding:5px 10px;text-align:left;font-size:9.5px;}
 </div>
 
 <div class="footer">
-  <div>Aureus Social Pro — Secretariat social agree<br/>Genere le ${new Date().toLocaleDateString('fr-BE')}</div>
+  <div>Aureus Social Pro — Secrétariat social agree<br/>Généré le ${new Date().toLocaleDateString('fr-BE')}</div>
   <div style="text-align:right;">Document confidentiel<br/>Conservation: 5 ans (Art. 24 AR 08/08/1980)</div>
 </div>
 
 <div class="legal">
-  Ce document est etabli conformement a la Loi du 12/04/1965 relative a la protection de la remuneration des travailleurs.<br/>
-  Precompte professionnel calcule selon l'Annexe III de l'AR/CIR 92 (bareme 2026).<br/>
+  Ce document est etabli conformement a la Loi du 12/04/1965 relative a la protection de la rémunération des travailleurs.<br/>
+  Précompte professionnel calcule selon l'Annexe III de l'AR/CIR 92 (bareme 2026).<br/>
   ONSS: Loi du 27/06/1969 revisant l'arrete-loi du 28/12/1944 concernant la securite sociale des travailleurs.
 </div>
 </div>
@@ -9583,14 +9583,14 @@ function emailFichePaie(emp, period, calcData) {
   const content=`
 <h1>Votre fiche de paie — ${period}</h1>
 <p>Bonjour ${emp.first||emp.fn||''},</p>
-<p>Veuillez trouver ci-dessous le detail de votre remuneration pour la periode <strong>${period}</strong>.</p>
+<p>Veuillez trouver ci-dessous le detail de votre rémunération pour la periode <strong>${period}</strong>.</p>
 
 <div class="table-wrap">
 <table>
-  <tr><th colspan="2">Detail de la remuneration</th></tr>
+  <tr><th colspan="2">Detail de la rémunération</th></tr>
   <tr><td>Salaire mensuel brut</td><td style="text-align:right;font-weight:700;color:#1a1a2e">${f2(brut)} EUR</td></tr>
   <tr><td>ONSS personnelle (13,07%)</td><td style="text-align:right;color:#dc2626">- ${f2(onss)} EUR</td></tr>
-  <tr><td>Precompte professionnel</td><td style="text-align:right;color:#dc2626">- ${f2(pp)} EUR</td></tr>
+  <tr><td>Précompte professionnel</td><td style="text-align:right;color:#dc2626">- ${f2(pp)} EUR</td></tr>
   ${calcData?.bonusEmploi>0?'<tr><td>Bonus a l emploi</td><td style="text-align:right;color:#16a34a">+ '+f2(calcData.bonusEmploi)+' EUR</td></tr>':''}
 </table>
 </div>
@@ -9622,9 +9622,9 @@ function emailRecapEmployeur(client, period, data) {
   <tr><td>Masse salariale brute</td><td style="text-align:right;font-weight:700;color:#c6a34e">${f2(data.totalBrut)} EUR</td></tr>
   <tr><td>ONSS patronale</td><td style="text-align:right;color:#dc2626">${f2(data.onssE)} EUR</td></tr>
   <tr><td>ONSS personnelle (retenue)</td><td style="text-align:right;color:#dc2626">${f2(data.onssW)} EUR</td></tr>
-  <tr><td>Precompte professionnel</td><td style="text-align:right;color:#dc2626">${f2(data.totalPP)} EUR</td></tr>
+  <tr><td>Précompte professionnel</td><td style="text-align:right;color:#dc2626">${f2(data.totalPP)} EUR</td></tr>
   <tr><td>Net total</td><td style="text-align:right;font-weight:700;color:#16a34a">${f2(data.totalNet)} EUR</td></tr>
-  <tr style="background:#f8f6f0"><td style="font-weight:700">Cout total employeur</td><td style="text-align:right;font-weight:700;color:#dc2626;font-size:14px">${f2(data.coutTotal)} EUR</td></tr>
+  <tr style="background:#f8f6f0"><td style="font-weight:700">Coût total employeur</td><td style="text-align:right;font-weight:700;color:#dc2626;font-size:14px">${f2(data.coutTotal)} EUR</td></tr>
 </table>
 </div>
 
@@ -9632,12 +9632,12 @@ function emailRecapEmployeur(client, period, data) {
 <div class="table-wrap">
 <table>
   <tr><td><span class="badge badge-red">5 du mois</span></td><td>ONSS — Provisions mensuelles</td><td style="text-align:right;font-weight:600">${f2(data.onssE)} EUR</td></tr>
-  <tr><td><span class="badge badge-blue">15 du mois</span></td><td>Precompte professionnel 274</td><td style="text-align:right;font-weight:600">${f2(data.totalPP)} EUR</td></tr>
+  <tr><td><span class="badge badge-blue">15 du mois</span></td><td>Précompte professionnel 274</td><td style="text-align:right;font-weight:600">${f2(data.totalPP)} EUR</td></tr>
   <tr><td><span class="badge badge-green">25 du mois</span></td><td>Virements SEPA salaires</td><td style="text-align:right;font-weight:600">${f2(data.totalNet)} EUR</td></tr>
 </table>
 </div>
 
-<p style="text-align:center;margin-top:20px;"><a href="https://aureussocial.be" class="btn">Acceder au Dashboard</a></p>
+<p style="text-align:center;margin-top:20px;"><a href="https://aureussocial.be" class="btn">Accéder àu Dashboard</a></p>
 `;
   return emailWrap(content);
 }
@@ -9649,7 +9649,7 @@ function emailAlerteLegale(type, message, details) {
   const content = `
 <h1 style="color:${severityColor}">Alerte ${severityLabel}</h1>
 <p>${message}</p>
-${details?.echeance ? '<div class="highlight"><div class="label">Echeance</div><div class="value" style="color:'+severityColor+';font-size:16px">'+details.echeance+'</div></div>' : ''}
+${details?.echeance ? '<div class="highlight"><div class="label">Échéance</div><div class="value" style="color:'+severityColor+';font-size:16px">'+details.echeance+'</div></div>' : ''}
 ${details?.action ? '<p><strong>Action requise :</strong> '+details.action+'</p>' : ''}
 ${details?.baseLegale ? '<p style="font-size:11px;color:#888;"><strong>Base legale :</strong> '+details.baseLegale+'</p>' : ''}
 ${details?.sanction ? '<p style="font-size:11px;color:#dc2626;"><strong>Sanction :</strong> '+details.sanction+'</p>' : ''}
@@ -9673,7 +9673,7 @@ function emailRappelEcheance(echeances) {
 </table>
 </div>
 <p style="font-size:11px;color:#888;">Ce rappel est genere automatiquement par Aureus Social Pro. Verifiez les montants exacts dans votre tableau de bord.</p>
-<p style="text-align:center;margin-top:20px;"><a href="https://app.aureussocial.be" class="btn">Acceder au Dashboard</a></p>
+<p style="text-align:center;margin-top:20px;"><a href="https://app.aureussocial.be" class="btn">Accéder àu Dashboard</a></p>
 `;
   return emailWrap(content);
 }
@@ -9687,7 +9687,7 @@ function emailFactureClient(facture) {
 <div class="table-wrap">
 <table>
   <tr><th colspan="2">Detail facture</th></tr>
-  <tr><td>Numero</td><td style="text-align:right;font-weight:700">${facture.numero||'N/A'}</td></tr>
+  <tr><td>Numéro</td><td style="text-align:right;font-weight:700">${facture.numero||'N/A'}</td></tr>
   <tr><td>Periode</td><td style="text-align:right">${facture.periode||'N/A'}</td></tr>
   <tr><td>HTVA</td><td style="text-align:right">${f2(facture.htva)} EUR</td></tr>
   <tr><td>TVA (21%)</td><td style="text-align:right">${f2(facture.tva)} EUR</td></tr>
@@ -9728,7 +9728,7 @@ const NotificationCenter=({s,d})=>{
     // Deadline notifications
     const day=now.getDate();
     if(day<=5) n.push({id:'N-onss',type:'urgent',icon:'🏛',title:'ONSS — Provisions dues le 5',desc:'Provisions mensuelles ONSS a verser avant le 5 du mois',time:now.toISOString(),read:false,action:'echeancier'});
-    if(day<=15) n.push({id:'N-pp',type:'info',icon:'💰',title:'Precompte professionnel — 274',desc:'Declaration PP a soumettre avant le 15 du mois',time:now.toISOString(),read:false,action:'echeancier'});
+    if(day<=15) n.push({id:'N-pp',type:'info',icon:'💰',title:'Précompte professionnel — 274',desc:'Declaration PP a soumettre avant le 15 du mois',time:now.toISOString(),read:false,action:'echeancier'});
     if(day<=25) n.push({id:'N-sepa',type:'info',icon:'💸',title:'Virements SEPA salaires',desc:'Virements nets a effectuer avant le 25',time:now.toISOString(),read:false,action:'sepa'});
     
     // System notifications
@@ -9987,7 +9987,7 @@ const BaremesCP=({s})=>{
       {/* Employees in this CP */}
       {(()=>{
         const empsCP=allEmps.filter(e=>(e.clientCP||'200')===selCP);
-        if(empsCP.length===0) return <div style={{padding:20,textAlign:'center',color:'#555',fontSize:12}}>Aucun employe dans cette CP</div>;
+        if(empsCP.length===0) return <div style={{padding:20,textAlign:'center',color:'#555',fontSize:12}}>Aucun employé dans cette CP</div>;
         return <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
           <div style={{padding:'10px 14px',background:'rgba(198,163,78,.06)',fontSize:11,fontWeight:600,color:'#c6a34e'}}>Employes CP {selCP} ({empsCP.length})</div>
           {empsCP.map((e,i)=>{
@@ -10040,9 +10040,9 @@ const PlanAbsences=({s,d})=>{
   const getFirstDay=(m,y)=>{const d=new Date(y,m,1).getDay();return d===0?6:d-1;};
   const days=getDaysInMonth(month,year);
   const firstDay=getFirstDay(month,year);
-  const feries=[1,1, 1,5, 21,7, 15,8, 1,11, 11,11, 25,12]; // Belgian holidays month,day pairs
+  const fériés=[1,1, 1,5, 21,7, 15,8, 1,11, 11,11, 25,12]; // Belgian holidays month,day pairs
 
-  const isHoliday=(d)=>{for(let i=0;i<feries.length;i+=2){if(feries[i+1]-1===month&&feries[i]===d)return true;}return false;};
+  const isHoliday=(d)=>{for(let i=0;i<fériés.length;i+=2){if(fériés[i+1]-1===month&&fériés[i]===d)return true;}return false;};
   const isWeekend=(d)=>{const day=new Date(year,month,d).getDay();return day===0||day===6;};
 
   const toggleAbsence=(empIdx,day)=>{
@@ -10086,7 +10086,7 @@ const PlanAbsences=({s,d})=>{
     <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       {/* Header row: days */}
       <div style={{display:'grid',gridTemplateColumns:'140px repeat('+days+',1fr)',background:'rgba(198,163,78,.06)'}}>
-        <div style={{padding:'8px 12px',fontSize:11,fontWeight:600,color:'#c6a34e'}}>Employe</div>
+        <div style={{padding:'8px 12px',fontSize:11,fontWeight:600,color:'#c6a34e'}}>Employé</div>
         {Array.from({length:days},(_,i)=>{
           const d=i+1;
           const we=isWeekend(d);
@@ -10235,7 +10235,7 @@ const DashboardRH=({s})=>{
     <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       <div style={{padding:'10px 14px',background:'rgba(198,163,78,.06)',fontSize:12,fontWeight:600,color:'#c6a34e'}}>🏢 Par client</div>
       <div style={{display:'grid',gridTemplateColumns:'180px 80px 80px 100px 100px 100px 1fr',padding:'6px 12px',background:'rgba(198,163,78,.03)',fontSize:9,color:'#888',fontWeight:600}}>
-        <div>Client</div><div>Employes</div><div>CDI/CDD</div><div>Masse brute</div><div>Cout/mois</div><div>Cout/an</div><div>Score</div>
+        <div>Client</div><div>Employés</div><div>CDI/CDD</div><div>Masse brute</div><div>Cout/mois</div><div>Cout/an</div><div>Score</div>
       </div>
       {clients.map((cl,i)=>{
         const e=cl.emps||[];
@@ -10339,7 +10339,7 @@ const BudgetPrev=({s})=>{
         </div>
         <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
           <div style={{display:'grid',gridTemplateColumns:'100px 60px 90px 90px 90px 90px',padding:'6px 12px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#888'}}>
-            <div>Mois</div><div>Effectif</div><div>Brut</div><div>ONSS</div><div>Net</div><div>Cout total</div>
+            <div>Mois</div><div>Effectif</div><div>Brut</div><div>ONSS</div><div>Net</div><div>Coût total</div>
           </div>
           {projection.map((p,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'100px 60px 90px 90px 90px 90px',padding:'5px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:10}}>
             <div style={{color:'#c6a34e',fontWeight:500}}>{p.label}</div>
@@ -10366,7 +10366,7 @@ const Echeancier=({s})=>{
 
   const echeances=[
     {day:5,label:'ONSS provisoire',amount:Math.round(totalBrut*(TX_ONSS_W+TX_ONSS_E)),cat:'ONSS',icon:'🏛',dest:'ONSS via portail securite sociale'},
-    {day:15,label:'Precompte professionnel',amount:emps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0),cat:'Fiscal',icon:'💰',dest:'SPF Finances via Finprof'},
+    {day:15,label:'Précompte professionnel',amount:emps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0),cat:'Fiscal',icon:'💰',dest:'SPF Finances via Finprof'},
     {day:20,label:'Cheques-repas',amount:Math.round(clients.reduce((a,c)=>a+(c.emps||[]).length,0)*8*22*0.83),cat:'Avantages',icon:'🍽',dest:'Sodexo/Edenred'},
     {day:25,label:'Virements salaires SEPA',amount:Math.round(totalBrut*NET_FACTOR),cat:'Paie',icon:'💳',dest:'Banque via fichier SEPA'},
     {day:28,label:'Distribution fiches de paie',amount:0,cat:'Admin',icon:'📄',dest:'Email / portail employe'},
@@ -10539,7 +10539,7 @@ const GedDocuments=({s,d})=>{
             <div style={{display:'flex',gap:4}}>
               {docTypes.filter(d=>d.auto).slice(0,4).map(dt=><button key={dt.id} onClick={()=>{
                 try{
-                  if(dt.id==='contrat') generateDocHTML&&previewHTML(generateDocHTML({name:(emp.first||'')+' '+(emp.last||''),niss:emp.niss,contractType:emp.contractType||'CDI',fonction:emp.function||'Employe',startDate:emp.startDate,brut:+(emp.monthlySalary||0),whWeek:emp.whWeek||38,company:cl.company},'contrat_travail'),'Contrat');
+                  if(dt.id==='contrat') generateDocHTML&&previewHTML(generateDocHTML({name:(emp.first||'')+' '+(emp.last||''),niss:emp.niss,contractType:emp.contractType||'CDI',fonction:emp.function||'Employé',startDate:emp.startDate,brut:+(emp.monthlySalary||0),whWeek:emp.whWeek||38,company:cl.company},'contrat_travail'),'Contrat');
                   else if(dt.id==='attestation') generateAttestationEmploi(emp,cl.company||{});
                   else if(dt.id==='fiche_paie'){const brut=+(emp.monthlySalary||emp.gross||0);const o=Math.round(brut*TX_ONSS_W*100)/100;const imp=brut-o;const pp=quickPP(brut);const net=Math.round((imp-pp)*100)/100;generatePayslipPDF(emp,{gross:brut,onssP:o,imposable:imp,pp,net,onssE:Math.round(brut*TX_ONSS_E*100)/100,coutTotal:Math.round(brut*(1+TX_ONSS_E)*100)/100},{month:new Date().getMonth()+1,year:new Date().getFullYear()},cl.company||{});}
                 }catch(ex){}
@@ -10575,7 +10575,7 @@ const PortailEmploye=({s})=>{
 
   const cl=clients[selClient]||{emps:[]};
   const emp=(cl.emps||[])[selEmp];
-  if(!emp) return <div style={{padding:24,textAlign:'center',color:'#888'}}>Aucun employe. Ajoutez des clients d abord.</div>;
+  if(!emp) return <div style={{padding:24,textAlign:'center',color:'#888'}}>Aucun employé. Ajoutez des clients d abord.</div>;
 
   const name=(emp.first||emp.fn||'')+' '+(emp.last||emp.ln||'');
   const brut=+(emp.monthlySalary||emp.gross||0);
@@ -10607,7 +10607,7 @@ const PortailEmploye=({s})=>{
         <div style={{width:52,height:52,borderRadius:26,background:'linear-gradient(135deg,#c6a34e,#a07d3e)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,color:'#060810',fontWeight:800}}>{(emp.first||'?')[0]}{(emp.last||'?')[0]}</div>
         <div>
           <div style={{fontSize:18,fontWeight:700,color:'#e5e5e5'}}>Bonjour, {emp.first||name} 👋</div>
-          <div style={{fontSize:11,color:'#888'}}>{emp.function||emp.job||'Employe'} — {cl.company?.name} — {emp.contractType||'CDI'}</div>
+          <div style={{fontSize:11,color:'#888'}}>{emp.function||emp.job||'Employé'} — {cl.company?.name} — {emp.contractType||'CDI'}</div>
         </div>
       </div>
     </div>
@@ -10640,7 +10640,7 @@ const PortailEmploye=({s})=>{
       {/* Personal info */}
       <div style={{padding:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
         <div style={{fontSize:13,fontWeight:600,color:'#3b82f6',marginBottom:10}}>👤 Mes informations</div>
-        {[{l:'Nom complet',v:name},{l:'NISS',v:emp.niss||emp.NISS||'Non renseigne'},{l:'Email',v:emp.email||'Non renseigne'},{l:'IBAN',v:emp.iban||emp.IBAN||'Non renseigne'},{l:'Contrat',v:(emp.contractType||'CDI')+' — '+(emp.whWeek||38)+'h/sem'},{l:'Debut',v:emp.startDate||emp.start||'N/A'},{l:'Fonction',v:emp.function||emp.job||'Employe'},{l:'Commission paritaire',v:cl.company?.cp||'CP 200'}].map((r,i)=>
+        {[{l:'Nom complet',v:name},{l:'NISS',v:emp.niss||emp.NISS||'Non renseigne'},{l:'Email',v:emp.email||'Non renseigne'},{l:'IBAN',v:emp.iban||emp.IBAN||'Non renseigne'},{l:'Contrat',v:(emp.contractType||'CDI')+' — '+(emp.whWeek||38)+'h/sem'},{l:'Debut',v:emp.startDate||emp.start||'N/A'},{l:'Fonction',v:emp.function||emp.job||'Employé'},{l:'Commission paritaire',v:cl.company?.cp||'CP 200'}].map((r,i)=>
           <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
             <span style={{color:'#888'}}>{r.l}</span><span style={{color:'#e5e5e5',fontWeight:500}}>{r.v}</span>
           </div>
@@ -10715,7 +10715,7 @@ const DashboardClient=({s,d,userRole,user})=>{
   });
   health=Math.max(0,Math.min(100,health));
 
-  const absTypesList=[{id:'conge',icon:'🏖',label:'Conge paye',c:'#22c55e'},{id:'maladie',icon:'🤒',label:'Maladie',c:'#ef4444'},{id:'formation',icon:'📚',label:'Formation',c:'#3b82f6'},{id:'teletravail',icon:'🏠',label:'Teletravail',c:'#a855f7'},{id:'recup',icon:'⏰',label:'Recuperation',c:'#eab308'},{id:'sans_solde',icon:'⚪',label:'Sans solde',c:'#888'},{id:'maternite',icon:'🤱',label:'Maternite',c:'#ec4899'},{id:'naissance',icon:'👶',label:'Conge naissance',c:'#06b6d4'}];
+  const absTypesList=[{id:'conge',icon:'🏖',label:'Congé payé',c:'#22c55e'},{id:'maladie',icon:'🤒',label:'Maladie',c:'#ef4444'},{id:'formation',icon:'📚',label:'Formation',c:'#3b82f6'},{id:'teletravail',icon:'🏠',label:'Teletravail',c:'#a855f7'},{id:'recup',icon:'⏰',label:'Recuperation',c:'#eab308'},{id:'sans_solde',icon:'⚪',label:'Sans solde',c:'#888'},{id:'maternite',icon:'🤱',label:'Maternite',c:'#ec4899'},{id:'naissance',icon:'👶',label:'Conge naissance',c:'#06b6d4'}];
   const moisLabels=['','Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
   const numDays=new Date(absYear,absMonth,0).getDate();
 
@@ -10816,7 +10816,7 @@ const DashboardClient=({s,d,userRole,user})=>{
       <div style={{overflowX:'auto',border:'1px solid rgba(198,163,78,.1)',borderRadius:12}}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:9}}>
           <thead><tr style={{background:'rgba(198,163,78,.06)'}}>
-            <th style={{padding:'8px 6px',textAlign:'left',color:'#c6a34e',fontWeight:600,fontSize:10,minWidth:120,position:'sticky',left:0,background:'#0d1117',zIndex:1}}>Employe</th>
+            <th style={{padding:'8px 6px',textAlign:'left',color:'#c6a34e',fontWeight:600,fontSize:10,minWidth:120,position:'sticky',left:0,background:'#0d1117',zIndex:1}}>Employé</th>
             {Array.from({length:numDays},(_,i)=>{const dow=new Date(absYear,absMonth-1,i+1).getDay();const isWE=dow===0||dow===6;return <th key={i} style={{padding:'4px 2px',textAlign:'center',color:isWE?'#555':'#888',fontWeight:isWE?400:500,fontSize:9,background:isWE?'rgba(255,255,255,.02)':'transparent',minWidth:22}}>{i+1}</th>;})}
             <th style={{padding:'4px 6px',textAlign:'center',color:'#c6a34e',fontWeight:600,fontSize:9}}>Total</th>
           </tr></thead>
@@ -10849,7 +10849,7 @@ const DashboardClient=({s,d,userRole,user})=>{
       <div style={{marginTop:14,padding:14,background:'rgba(59,130,246,.04)',border:'1px solid rgba(59,130,246,.1)',borderRadius:12}}>
         <div style={{fontSize:11,fontWeight:600,color:'#3b82f6',marginBottom:6}}>Impact sur la paie</div>
         <div style={{fontSize:10,color:'#888',lineHeight:1.6}}>
-          Conge paye : salaire maintenu — Maladie : salaire garanti 30j employe / 7j ouvrier — Sans solde : deduction au prorata — Teletravail : salaire maintenu + indemnite bureau
+          Congé payé : salaire maintenu — Maladie : salaire garanti 30j employe / 7j ouvrier — Sans solde : deduction au prorata — Teletravail : salaire maintenu + indemnite bureau
         </div>
       </div>
     </div>
@@ -11349,7 +11349,7 @@ const AuditTrail=({s,user})=>{
     
     // Payslip events
     (cl.pays||[]).forEach(p=>{
-      events.push({time:new Date(p.generated||now-86400000*Math.random()*30),type:'paie',action:'Fiche de paie',detail:(p.ename||'Employe')+' — '+(p.period||'')+' — Net: '+(p.net||0),icon:'📄',cat:'Paie'});
+      events.push({time:new Date(p.generated||now-86400000*Math.random()*30),type:'paie',action:'Fiche de paie',detail:(p.ename||'Employé')+' — '+(p.period||'')+' — Net: '+(p.net||0),icon:'📄',cat:'Paie'});
     });
   });
 
@@ -11441,7 +11441,7 @@ const SimulateurEmbauche=({s})=>{
       {/* Input */}
       <div style={{display:'flex',flexDirection:'column',gap:12}}>
         <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
-          <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:10}}>Parametres</div>
+          <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:10}}>Paramètres</div>
           <div style={{marginBottom:8}}>
             <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Salaire brut mensuel (EUR)</label>
             <input type="range" min="1800" max="10000" step="50" value={brut} onChange={e=>setBrut(+e.target.value)} style={{width:'100%'}}/>
@@ -11492,8 +11492,8 @@ const SimulateurEmbauche=({s})=>{
             {l:'ONSS travailleur (13,07%)',v:'-'+f2(onssW),c:'#ef4444'},
             bonusEmploi>0?{l:'Bonus emploi',v:'+'+f2(bonusEmploi),c:'#22c55e'}:null,
             {l:'Imposable',v:f2(imposable),c:'#888'},
-            {l:'Precompte professionnel ('+Math.round(ppRate*100)+'%)',v:'-'+f2(pp),c:'#ef4444'},
-            csss>0?{l:'Cotisation speciale SS',v:'-'+f2(csss),c:'#ef4444'}:null,
+            {l:'Précompte professionnel ('+Math.round(ppRate*100)+'%)',v:'-'+f2(pp),c:'#ef4444'},
+            csss>0?{l:'Cotisation spéciale SS',v:'-'+f2(csss),c:'#ef4444'}:null,
             {l:'NET A PAYER',v:f2(net)+' EUR',c:'#22c55e',bold:true,big:true},
             {l:'',v:'',sep:true},
             {l:'ONSS patronal (25,07%)',v:'+'+f2(onssE),c:'#ef4444'},
@@ -11759,10 +11759,10 @@ const SimuTempsPartiel=({s})=>{
   const net=Math.round((brutP-onssW-pp)*100)/100;const coutT=Math.round(brutP*(1+TX_ONSS_E)*100)/100;
   const netFT=Math.round((quickNet(brutTP))*100)/100;
   const regimes=[{h:38,l:'Temps plein'},{h:30.4,l:'4/5eme'},{h:28.5,l:'3/4'},{h:19,l:'Mi-temps'},{h:12.67,l:'1/3'},{h:7.6,l:'1/5eme'}];
-  const droits=[{l:'Conges payes',v:Math.round(20*fraction)+'j/20j',p:fraction*100},{l:'Pecule vacances',v:f2(brutP*PV_SIMPLE)+' EUR',p:fraction*100},{l:'Pension legale',v:'Prorata '+Math.round(fraction*100)+'%',p:fraction*100},{l:'Chomage',v:fraction>=0.33?'Maintenu':'Risque',p:fraction>=0.33?100:30}];
+  const droits=[{l:'Congés payés',v:Math.round(20*fraction)+'j/20j',p:fraction*100},{l:'Pecule vacances',v:f2(brutP*PV_SIMPLE)+' EUR',p:fraction*100},{l:'Pension legale',v:'Prorata '+Math.round(fraction*100)+'%',p:fraction*100},{l:'Chomage',v:fraction>=0.33?'Maintenu':'Risque',p:fraction>=0.33?100:30}];
   return <div style={{padding:24}}>
     <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>⏱ Simulateur Temps Partiel</h2>
-    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Impact remuneration et droits sociaux</p>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Impact rémunération et droits sociaux</p>
     <div style={{display:'grid',gridTemplateColumns:'260px 1fr',gap:16}}>
       <div style={{padding:18,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
         <div style={{marginBottom:12}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Brut temps plein: {f2(brutTP)} EUR</label>
@@ -11827,12 +11827,12 @@ const GestionDelegations=({s})=>{
     </div>:<div style={{textAlign:'center',padding:30,color:'#888',fontSize:12}}>Aucun delegue enregistre</div>}
     <div style={{marginTop:14,padding:14,background:'rgba(239,68,68,.03)',border:'1px solid rgba(239,68,68,.1)',borderRadius:12}}>
       <div style={{fontSize:12,fontWeight:600,color:'#ef4444',marginBottom:4}}>🛡 Protection (Loi 19/03/1991)</div>
-      <div style={{fontSize:10,color:'#888'}}>Licenciement interdit sauf motif grave reconnu ou raisons eco/techniques acceptees par la CP. Indemnite = remuneration restante du mandat + 2 a 4 ans.</div>
+      <div style={{fontSize:10,color:'#888'}}>Licenciement interdit sauf motif grave reconnu ou raisons eco/techniques acceptees par la CP. Indemnite = rémunération restante du mandat + 2 a 4 ans.</div>
     </div>
     {showAdd&&<div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.6)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setShowAdd(false)}>
       <div onClick={e=>e.stopPropagation()} style={{background:'#0d1117',border:'1px solid rgba(198,163,78,.2)',borderRadius:16,padding:24,width:400}}>
         <h3 style={{fontSize:16,fontWeight:700,color:'#c6a34e',marginBottom:14}}>Nouveau delegue</h3>
-        <div style={{marginBottom:10}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Employe</label><select value={newDel.empIndex} onChange={e=>setNewDel(p=>({...p,empIndex:+e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>{emps.map((e,i)=><option key={i} value={i}>{(e.first||'')} {(e.last||'')}</option>)}</select></div>
+        <div style={{marginBottom:10}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Employé</label><select value={newDel.empIndex} onChange={e=>setNewDel(p=>({...p,empIndex:+e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>{emps.map((e,i)=><option key={i} value={i}>{(e.first||'')} {(e.last||'')}</option>)}</select></div>
         <div style={{marginBottom:10}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Syndicat</label><div style={{display:'flex',gap:4}}>{syndicats.map(s=><button key={s.id} onClick={()=>setNewDel(p=>({...p,syndicat:s.id}))} style={{flex:1,padding:'8px',borderRadius:6,border:newDel.syndicat===s.id?'1px solid '+s.color:'1px solid rgba(255,255,255,.05)',background:newDel.syndicat===s.id?s.color+'10':'transparent',color:newDel.syndicat===s.id?s.color:'#888',fontSize:10,cursor:'pointer'}}>{s.icon} {s.id}</button>)}</div></div>
         <div style={{marginBottom:10}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Mandat</label><select value={newDel.mandat} onChange={e=>setNewDel(p=>({...p,mandat:e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>{mandats.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select></div>
         <div style={{marginBottom:14}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Credit heures/sem</label><input type="number" value={newDel.creditHeures} onChange={e=>setNewDel(p=>({...p,creditHeures:+e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}/></div>
@@ -11942,7 +11942,7 @@ const PlanifCongesEquipe=({s})=>{
     <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden',overflowX:'auto'}}>
       <div style={{display:'grid',gridTemplateColumns:'140px repeat('+daysInMonth+',1fr)',minWidth:140+daysInMonth*28}}>
         {/* Header */}
-        <div style={{padding:'6px 10px',background:'rgba(198,163,78,.06)',fontSize:10,fontWeight:600,color:'#c6a34e',position:'sticky',left:0,zIndex:2,background:'#0d1117'}}>Employe</div>
+        <div style={{padding:'6px 10px',background:'rgba(198,163,78,.06)',fontSize:10,fontWeight:600,color:'#c6a34e',position:'sticky',left:0,zIndex:2,background:'#0d1117'}}>Employé</div>
         {Array.from({length:daysInMonth},(_,i)=>{
           const d=new Date(year,month,i+1);
           const isWE=d.getDay()===0||d.getDay()===6;
@@ -11988,7 +11988,7 @@ const RegistrePersonnel=({s})=>{
     html+='<div class="header"><div style="font-size:20px;font-weight:800;color:#c6a34e">AUREUS SOCIAL PRO</div>';
     html+='<h1>REGISTRE GENERAL DU PERSONNEL</h1>';
     html+='<div style="font-size:10px;color:#888">'+co.name+' — BCE: '+(co.vat||'N/A')+' — CP: '+(co.cp||'200')+'</div>';
-    html+='<div style="font-size:9px;color:#aaa">Conformement a l\'AR du 8 aout 1980 — Genere le '+now.toLocaleDateString('fr-BE')+'</div></div>';
+    html+='<div style="font-size:9px;color:#aaa">Conformement a l\'AR du 8 aout 1980 — Généré le '+now.toLocaleDateString('fr-BE')+'</div></div>';
 
     html+='<table><tr><th>N°</th><th>Nom</th><th>Prenom</th><th>NISS</th><th>Sexe</th><th>Nationalite</th><th>Date naissance</th><th>Adresse</th><th>Debut contrat</th><th>Type</th><th>Temps</th><th>Fonction</th><th>Brut</th><th>Fin</th></tr>';
     emps.forEach((e,i)=>{
@@ -12003,7 +12003,7 @@ const RegistrePersonnel=({s})=>{
       html+='<td>'+(e.startDate||e.start||'—')+'</td>';
       html+='<td style="text-align:center">'+(e.contractType||'CDI')+'</td>';
       html+='<td style="text-align:center">'+(e.whWeek||38)+'h</td>';
-      html+='<td>'+(e.function||e.titre||'Employe')+'</td>';
+      html+='<td>'+(e.function||e.titre||'Employé')+'</td>';
       html+='<td style="text-align:right;font-family:monospace">'+f2(+(e.monthlySalary||e.gross||0))+'</td>';
       html+='<td>'+(e.endDate||'—')+'</td></tr>';
     });
@@ -12040,7 +12040,7 @@ const RegistrePersonnel=({s})=>{
         <div style={{color:'#a855f7',fontFamily:'monospace',fontSize:9}}>{e.niss||e.NISS||'—'}</div>
         <span style={{fontSize:8,padding:'2px 5px',borderRadius:4,background:(e.contractType||'CDI')==='CDI'?'rgba(34,197,94,.1)':'rgba(234,179,8,.1)',color:(e.contractType||'CDI')==='CDI'?'#22c55e':'#eab308',textAlign:'center'}}>{e.contractType||'CDI'}</span>
         <div style={{color:'#888',fontSize:9}}>{e.startDate||e.start||'—'}</div>
-        <div style={{color:'#888',fontSize:9}}>{e.function||e.titre||'Employe'}</div>
+        <div style={{color:'#888',fontSize:9}}>{e.function||e.titre||'Employé'}</div>
         <div style={{color:'#888',fontSize:9}}>{e.whWeek||38}h/sem</div>
         <div style={{color:'#c6a34e',fontFamily:'monospace',fontWeight:600}}>{f2(+(e.monthlySalary||e.gross||0))}</div>
         <div style={{width:8,height:8,borderRadius:'50%',background:e.endDate?'#ef4444':'#22c55e'}}/>
@@ -12091,7 +12091,7 @@ const CalcMaladie=({s})=>{
         <div style={{marginBottom:12}}>
           <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Statut</label>
           <div style={{display:'flex',gap:4}}>
-            {[{id:'employe',l:'Employe'},{id:'ouvrier',l:'Ouvrier'}].map(s=><button key={s.id} onClick={()=>setStatut(s.id)} style={{flex:1,padding:'8px',borderRadius:6,border:'none',background:statut===s.id?'rgba(198,163,78,.12)':'rgba(255,255,255,.03)',color:statut===s.id?'#c6a34e':'#888',fontSize:11,cursor:'pointer',fontWeight:statut===s.id?600:400}}>{s.l}</button>)}
+            {[{id:'employe',l:'Employé'},{id:'ouvrier',l:'Ouvrier'}].map(s=><button key={s.id} onClick={()=>setStatut(s.id)} style={{flex:1,padding:'8px',borderRadius:6,border:'none',background:statut===s.id?'rgba(198,163,78,.12)':'rgba(255,255,255,.03)',color:statut===s.id?'#c6a34e':'#888',fontSize:11,cursor:'pointer',fontWeight:statut===s.id?600:400}}>{s.l}</button>)}
           </div>
         </div>
         <div style={{marginBottom:12}}>
@@ -12204,7 +12204,7 @@ const DashCoutsAnnuel=({s})=>{
     {/* Monthly table */}
     <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       <div style={{display:'grid',gridTemplateColumns:'60px repeat(7,1fr)',padding:'6px 10px',background:'rgba(198,163,78,.04)',fontSize:8,fontWeight:600,color:'#c6a34e'}}>
-        <div>Mois</div><div>Brut</div><div>ONSS W</div><div>ONSS E</div><div>PP</div><div>Net</div><div>Special</div><div>Cout total</div>
+        <div>Mois</div><div>Brut</div><div>ONSS W</div><div>ONSS E</div><div>PP</div><div>Net</div><div>Special</div><div>Coût total</div>
       </div>
       {monthly.map((m,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'60px repeat(7,1fr)',padding:'5px 10px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:10,background:i===now.getMonth()?'rgba(198,163,78,.03)':'transparent'}}>
         <div style={{fontWeight:600,color:i===now.getMonth()?'#c6a34e':'#e5e5e5'}}>{m.month}</div>
@@ -12246,7 +12246,7 @@ const GenDocsJuridiques=({s,d})=>{
     {id:'faute_grave',title:'Licenciement faute grave',icon:'🔴',desc:'Rupture immediate sans preavis',color:'#ef4444'},
     {id:'rupture_commun',title:'Rupture de commun accord',icon:'🤝',desc:'Convention de depart amiable',color:'#3b82f6'},
     {id:'attestation',title:'Attestation d\'emploi',icon:'📄',desc:'Confirmation de fonction et anciennete',color:'#22c55e'},
-    {id:'avenant_sal',title:'Avenant salarial',icon:'💰',desc:'Modification de remuneration',color:'#c6a34e'},
+    {id:'avenant_sal',title:'Avenant salarial',icon:'💰',desc:'Modification de rémunération',color:'#c6a34e'},
     {id:'teletravail',title:'Convention teletravail',icon:'🏠',desc:'Accord teletravail structure',color:'#a855f7'},
   ];
 
@@ -12308,8 +12308,8 @@ const GenDocsJuridiques=({s,d})=>{
       html+='<p><strong>'+empName+'</strong> est employe(e) au sein de notre societe depuis le <strong>'+startDate+'</strong> en qualite de <strong>'+(emp.function||emp.titre||'employe(e)')+'</strong>.</p>';
       html+='<p>Cette attestation est delivree pour servir et valoir ce que de droit.</p></div>';
     }else if(selDoc==='avenant_sal'){
-      html+='<div class="objet">Objet : Avenant au contrat de travail — Modification de remuneration</div>';
-      html+='<div class="corps"><p>Les parties conviennent de modifier les conditions de remuneration comme suit :</p>';
+      html+='<div class="objet">Objet : Avenant au contrat de travail — Modification de rémunération</div>';
+      html+='<div class="corps"><p>Les parties conviennent de modifier les conditions de rémunération comme suit :</p>';
       html+='<p>Nouveau salaire brut mensuel : <strong>'+(formData.details||'[montant]')+' EUR</strong></p>';
       html+='<p>Cette modification prend effet a compter du '+(formData.date||'[date]')+'.</p>';
       html+='<p>Toutes les autres clauses du contrat initial restent inchangees.</p></div>';
@@ -12349,7 +12349,7 @@ const GenDocsJuridiques=({s,d})=>{
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
           <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Client</label>
             <select value={selClient} onChange={e=>setSelClient(+e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>{clients.map((c,i)=><option key={i} value={i}>{c.company?.name}</option>)}</select></div>
-          <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Employe</label>
+          <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Employé</label>
             <select value={formData.empIndex} onChange={e=>setFormData(p=>({...p,empIndex:+e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>{emps.map((e,i)=><option key={i} value={i}>{(e.first||'')} {(e.last||'')}</option>)}</select></div>
           <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Date</label>
             <input type="date" value={formData.date} onChange={e=>setFormData(p=>({...p,date:e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}/></div>
@@ -12360,7 +12360,7 @@ const GenDocsJuridiques=({s,d})=>{
           <input value={formData.motif} onChange={e=>setFormData(p=>({...p,motif:e.target.value}))} placeholder="Motif principal" style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}/></div>
         <div style={{marginBottom:14}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Details</label>
           <textarea value={formData.details} onChange={e=>setFormData(p=>({...p,details:e.target.value}))} rows={3} placeholder="Circonstances, details..." style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',resize:'vertical'}}/></div>
-        <button onClick={generateDoc} style={{width:'100%',padding:'12px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#e2c878)',color:'#060810',fontWeight:700,fontSize:13,cursor:'pointer'}}>📄 Generer le document</button>
+        <button onClick={generateDoc} style={{width:'100%',padding:'12px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#c6a34e,#e2c878)',color:'#060810',fontWeight:700,fontSize:13,cursor:'pointer'}}>📄 Générer le document</button>
       </div>
     </div>
   </div>;
@@ -12437,7 +12437,7 @@ const DashAbsenteisme=({s})=>{
     {/* Employee table */}
     <div style={{marginTop:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       <div style={{display:'grid',gridTemplateColumns:'180px 120px 70px 70px 80px 80px',padding:'8px 14px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#c6a34e'}}>
-        <div>Employe</div><div>Client</div><div>Episodes</div><div>Jours</div><div>Bradford</div><div>Statut</div>
+        <div>Employé</div><div>Client</div><div>Episodes</div><div>Jours</div><div>Bradford</div><div>Statut</div>
       </div>
       <div style={{maxHeight:300,overflowY:'auto'}}>
         {absData.sort((a,b)=>b.bradford-a.bradford).map((a,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'180px 120px 70px 70px 80px 80px',padding:'6px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
@@ -12536,7 +12536,7 @@ const GestionFlexiJobs=({s,d})=>{
     {/* Flexi list */}
     {flexis.length>0&&<div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       <div style={{display:'grid',gridTemplateColumns:'150px 100px 60px 70px 80px 80px 80px',padding:'8px 14px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#c6a34e'}}>
-        <div>Nom</div><div>Secteur</div><div>Heures</div><div>Taux/h</div><div>Brut=Net</div><div>Cot. 28%</div><div>Cout total</div>
+        <div>Nom</div><div>Secteur</div><div>Heures</div><div>Taux/h</div><div>Brut=Net</div><div>Cot. 28%</div><div>Coût total</div>
       </div>
       {flexis.map((fl,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'150px 100px 60px 70px 80px 80px 80px',padding:'6px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
         <div style={{color:'#e5e5e5',fontWeight:500}}>{fl.first} {fl.last}</div>
@@ -12554,7 +12554,7 @@ const GestionFlexiJobs=({s,d})=>{
     {/* Avantage comparatif */}
     <div style={{marginTop:16,padding:14,background:'rgba(34,197,94,.03)',border:'1px solid rgba(34,197,94,.1)',borderRadius:12}}>
       <div style={{fontSize:12,fontWeight:600,color:'#22c55e',marginBottom:4}}>💡 Avantage flexi-job vs contrat normal</div>
-      <div style={{fontSize:10,color:'#888'}}>Pour un travailleur a {f2(12.05)}/h pendant 40h : Brut = Net = {f2(12.05*40)} EUR (pas de retenues). Employeur paie uniquement 28% cotisation speciale = {f2(12.05*40*0.28)} EUR. Cout total = {f2(12.05*40*1.28)} EUR vs {f2(12.05*40*1.55)} EUR en regime normal → economie de {f2(12.05*40*0.27)} EUR.</div>
+      <div style={{fontSize:10,color:'#888'}}>Pour un travailleur a {f2(12.05)}/h pendant 40h : Brut = Net = {f2(12.05*40)} EUR (pas de retenues). Employeur paie uniquement 28% cotisation spéciale = {f2(12.05*40*0.28)} EUR. Cout total = {f2(12.05*40*1.28)} EUR vs {f2(12.05*40*1.55)} EUR en regime normal → economie de {f2(12.05*40*0.27)} EUR.</div>
     </div>
 
     {/* Add modal */}
@@ -12648,7 +12648,7 @@ const SimuChomageTemp=({s})=>{
     {/* Per employee */}
     <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       <div style={{display:'grid',gridTemplateColumns:'160px 80px 80px 80px 90px 80px',padding:'8px 14px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#c6a34e'}}>
-        <div>Employe</div><div>Brut/jour</div><div>Alloc/jour</div><div>Alloc total</div><div>Econ. empl.</div><div>Suppl.</div>
+        <div>Employé</div><div>Brut/jour</div><div>Alloc/jour</div><div>Alloc total</div><div>Econ. empl.</div><div>Suppl.</div>
       </div>
       {results.map((r,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'160px 80px 80px 80px 90px 80px',padding:'6px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
         <div style={{color:'#e5e5e5',fontWeight:500}}>{r.name}</div>
@@ -12836,7 +12836,7 @@ const OnboardingWizard=({s,d})=>{
           <div style={{padding:14,borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
             <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:6}}>Employes ({data.employees.length})</div>
             {data.employees.map((e,i)=><div key={i} style={{fontSize:10,color:'#e5e5e5'}}>{e.first} {e.last} — {e.contractType} — {e.monthlySalary} EUR</div>)}
-            {data.employees.length===0&&<div style={{fontSize:10,color:'#888'}}>Aucun employe encode</div>}
+            {data.employees.length===0&&<div style={{fontSize:10,color:'#888'}}>Aucun employé encode</div>}
           </div>
           <div style={{padding:14,borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
             <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:6}}>Options</div>
@@ -12902,7 +12902,7 @@ const ChecklistClient=({s})=>{
       {id:'visite_med',label:'Visites medicales planifiees',auto:false},
     ]},
     {title:'Fiscal',icon:'🧾',items:[
-      {id:'pp_config',label:'Precompte professionnel configure',auto:false},
+      {id:'pp_config',label:'Précompte professionnel configure',auto:false},
       {id:'sit_familiale',label:'Situations familiales renseignees',auto:false},
       {id:'charges_famille',label:'Charges de famille encodees',auto:false},
     ]},
@@ -13101,7 +13101,7 @@ const DueDiligenceSociale=({s})=>{
   if(emps.some(e=>!(e.niss||e.NISS))) risks.push({level:'medium',title:'NISS manquants',desc:emps.filter(e=>!(e.niss||e.NISS)).length+' employe(s) sans NISS'});
   if(avgAnc>10) risks.push({level:'medium',title:'Anciennete moyenne elevee ('+avgAnc+' ans)',desc:'Provisions preavis importantes en cas de restructuration'});
   if(!co.vat) risks.push({level:'high',title:'N° BCE manquant',desc:'Identification entreprise incomplete'});
-  if(emps.length===0) risks.push({level:'high',title:'Aucun employe',desc:'Dossier vide'});
+  if(emps.length===0) risks.push({level:'high',title:'Aucun employé',desc:'Dossier vide'});
   else{
     risks.push({level:'low',title:'Effectif stable ('+emps.length+')',desc:'Pas d\'anomalie de masse salariale detectee'});
     if(cddCount===0) risks.push({level:'low',title:'100% CDI',desc:'Stabilite contractuelle excellente'});
@@ -13181,7 +13181,7 @@ const AuthMultiRoles=({s,d})=>{
     {id:'admin',name:'Administrateur',icon:'👑',color:'#c6a34e',desc:'Acces total — configuration, facturation, utilisateurs',perms:['all']},
     {id:'gestionnaire',name:'Gestionnaire Paie',icon:'💼',color:'#3b82f6',desc:'Gestion paie, declarations, documents — pas facturation',perms:['paie','onss','fiscal','contrats','rh','documents','reporting']},
     {id:'client',name:'Client Fiduciaire',icon:'🏢',color:'#22c55e',desc:'Consultation fiches, demandes, messagerie — lecture seule paie',perms:['portail','fiches','demandes','messages','documents_read']},
-    {id:'employe',name:'Employe',icon:'👤',color:'#a855f7',desc:'Ses propres fiches, absences, documents personnels',perms:['mes_fiches','mes_absences','mes_documents','profil']},
+    {id:'employe',name:'Employé',icon:'👤',color:'#a855f7',desc:'Ses propres fiches, absences, documents personnels',perms:['mes_fiches','mes_absences','mes_documents','profil']},
     {id:'comptable',name:'Comptable externe',icon:'📒',color:'#eab308',desc:'Exports comptables, journaux, reconciliation',perms:['export_compta','journaux','reporting_read']},
   ]);
   const [users,setUsers]=useState([
@@ -13203,7 +13203,7 @@ const AuthMultiRoles=({s,d})=>{
     {id:'reporting',label:'Reporting complet',cat:'Reporting'},{id:'reporting_read',label:'Reporting (lecture)',cat:'Reporting'},
     {id:'export_compta',label:'Export comptable',cat:'Compta'},{id:'journaux',label:'Journaux comptables',cat:'Compta'},
     {id:'portail',label:'Portail client',cat:'Client'},{id:'fiches',label:'Fiches de paie',cat:'Client'},{id:'demandes',label:'Demandes',cat:'Client'},{id:'messages',label:'Messagerie',cat:'Client'},
-    {id:'mes_fiches',label:'Mes fiches',cat:'Employe'},{id:'mes_absences',label:'Mes absences',cat:'Employe'},{id:'mes_documents',label:'Mes documents',cat:'Employe'},{id:'profil',label:'Mon profil',cat:'Employe'},
+    {id:'mes_fiches',label:'Mes fiches',cat:'Employé'},{id:'mes_absences',label:'Mes absences',cat:'Employé'},{id:'mes_documents',label:'Mes documents',cat:'Employé'},{id:'profil',label:'Mon profil',cat:'Employé'},
   ];
 
   const selRoleData=roles.find(r=>r.id===selRole);
@@ -13402,7 +13402,7 @@ const BaremesPPOfficiel=({s})=>{
   });
 
   const SPF_SOURCES=[
-    {name:'SPF Finances',url:'https://finances.belgium.be/fr/entreprises/personnel_et_remuneration/precompte_professionnel/calcul',type:'official'},
+    {name:'SPF Finances',url:'https://finances.belgium.be/fr/entreprises/personnel_et_rémunération/precompte_professionnel/calcul',type:'official'},
     {name:'Refli.be',url:'https://refli.be/fr/documentation/computation/tax',type:'reference'},
     {name:'Calculateur-de-salaire.be',url:'https://calculateur-de-salaire.be/guide/precompte-professionnel-belgique',type:'reference'},
     {name:'Veille SS',url:'https://www.socialsecurity.be',type:'secondary'},
@@ -13650,12 +13650,12 @@ const BaremesPPOfficiel=({s})=>{
     {/* === SIMULATEUR === */}
     {(tab==='calc'||tab==='detail')&&<div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:16}}>
       <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
-        <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Parametres</div>
+        <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Paramètres</div>
         <label style={labelS}>Salaire brut mensuel</label>
         <input type="range" min={1800} max={12000} step={50} value={brutM} onChange={e=>setBrutM(+e.target.value)} style={{width:'100%',accentColor:'#c6a34e'}}/>
         <div style={{textAlign:'center',fontSize:16,fontWeight:700,color:'#c6a34e',margin:'4px 0 10px'}}>{fmt(brutM)} EUR</div>
         <label style={labelS}>Statut</label>
-        <select value={statut} onChange={e=>setStatut(e.target.value)} style={{...inputS,marginBottom:8}}><option value="salarie">Salarie</option><option value="dirigeant">Dirigeant entreprise</option></select>
+        <select value={statut} onChange={e=>setStatut(e.target.value)} style={{...inputS,marginBottom:8}}><option value="salarie">Salarié</option><option value="dirigeant">Dirigeant entreprise</option></select>
         <label style={labelS}>Bareme</label>
         <select value={bareme} onChange={e=>setBareme(e.target.value)} style={{...inputS,marginBottom:8}}><option value="1">Bareme 1 - Isole / 2 revenus</option><option value="2">Bareme 2 - Marie revenu unique</option></select>
         <label style={labelS}>Enfants a charge</label>
@@ -13690,7 +13690,7 @@ const BaremesPPOfficiel=({s})=>{
           </div>
           <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14,marginBottom:14}}>
             <div style={{fontSize:12,fontWeight:600,color:'#c6a34e',marginBottom:10}}>Decomposition mensuelle</div>
-            {[{l:'Salaire brut',v:r.brutMensuel,c:'#c6a34e',pct:100},{l:'ONSS travailleur ("+((LOIS_BELGES.onss.travailleur*100).toFixed(2))+"%)',v:-r.onss,c:'#f87171',pct:r.onss/r.brutMensuel*100},{l:'Imposable',v:r.imposable,c:'#e5e5e5',pct:r.imposable/r.brutMensuel*100},{l:'Precompte professionnel',v:-r.ppMensuel,c:'#a855f7',pct:r.ppMensuel/r.brutMensuel*100},{l:'NET',v:r.net,c:'#22c55e',pct:r.net/r.brutMensuel*100}].map((row,i)=>
+            {[{l:'Salaire brut',v:r.brutMensuel,c:'#c6a34e',pct:100},{l:'ONSS travailleur ("+((LOIS_BELGES.onss.travailleur*100).toFixed(2))+"%)',v:-r.onss,c:'#f87171',pct:r.onss/r.brutMensuel*100},{l:'Imposable',v:r.imposable,c:'#e5e5e5',pct:r.imposable/r.brutMensuel*100},{l:'Précompte professionnel',v:-r.ppMensuel,c:'#a855f7',pct:r.ppMensuel/r.brutMensuel*100},{l:'NET',v:r.net,c:'#22c55e',pct:r.net/r.brutMensuel*100}].map((row,i)=>
               <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
                 <span style={{fontSize:11,color:'#999',flex:1}}>{row.l}</span>
                 <div style={{width:120,height:6,background:'rgba(255,255,255,.05)',borderRadius:3,marginRight:10,overflow:'hidden'}}><div style={{height:'100%',width:Math.abs(row.pct)+'%',background:row.c,borderRadius:3}}/></div>
@@ -13788,7 +13788,7 @@ const BaremesPPOfficiel=({s})=>{
 
     {/* === EQUIPE === */}
     {tab==='equipe'&&<div>
-      {ae.length===0?<div style={{padding:40,textAlign:'center',color:'#555'}}>Aucun employe encode</div>:
+      {ae.length===0?<div style={{padding:40,textAlign:'center',color:'#555'}}>Aucun employé encode</div>:
       <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'auto'}}>
         <div style={{display:'grid',gridTemplateColumns:'180px repeat(6,80px)',padding:'8px 12px',background:'rgba(198,163,78,.06)',fontSize:9,fontWeight:600,color:'#c6a34e',minWidth:660}}><div>Nom</div><div style={{textAlign:'right'}}>Brut</div><div style={{textAlign:'right'}}>ONSS</div><div style={{textAlign:'right'}}>Imposable</div><div style={{textAlign:'right'}}>PP</div><div style={{textAlign:'right'}}>Net</div><div style={{textAlign:'right'}}>Taux</div></div>
         {ae.map((emp,i)=>{const c=calculPP(+emp.gross||0,{enfants:0,enfantsH:0,isole:false,handicap:false,conjHandicap:false,conjRevLimite:false,conjPensionLim:false,dep65:0,depAutres:0,txComm:7});return <div key={i} style={{display:'grid',gridTemplateColumns:'180px repeat(6,80px)',padding:'6px 12px',borderBottom:'1px solid rgba(255,255,255,.02)',fontSize:11,minWidth:660}}><div style={{color:'#e5e5e5'}}>{(emp.fn||'')+' '+(emp.ln||'')}</div><div style={{textAlign:'right',color:'#c6a34e'}}>{fmt(+emp.gross||0)}</div><div style={{textAlign:'right',color:'#f87171'}}>{fmt(c.onss)}</div><div style={{textAlign:'right',color:'#e5e5e5'}}>{fmt(c.imposable)}</div><div style={{textAlign:'right',color:'#a855f7',fontWeight:600}}>{fmt(c.ppMensuel)}</div><div style={{textAlign:'right',color:'#22c55e',fontWeight:600}}>{fmt(c.net)}</div><div style={{textAlign:'right',color:'#888'}}>{((c.ppMensuel/(+emp.gross||1))*100).toFixed(1)}%</div></div>;})}
@@ -13943,7 +13943,7 @@ const BaremesPPOfficiel=({s})=>{
 
     <div style={{marginTop:14,padding:10,background:'rgba(198,163,78,.03)',border:'1px solid rgba(198,163,78,.08)',borderRadius:8,fontSize:9,color:'#666'}}>
       Sources: Formule-cle SPF Finances Annexe III {activeYear} | calculateur-de-salaire.be | refli.be | CGSLB.
-      Auto-update quotidien actif. Admin panel pour mise a jour manuelle lors publication nouvel AR.
+      Auto-update quotidien actif. Admin panel pour mise à jour manuelle lors publication nouvel AR.
       {PP._source==='custom'&&' \u26A0\uFE0F Baremes modifies manuellement le '+new Date(PP._customDate).toLocaleDateString('fr-BE')+'.'}
     </div>
   </div>;
@@ -14187,8 +14187,8 @@ const TestSuiteDash=({s})=>{
     {cat:'Cout',name:'Ratio net/coût 3.500',input:3500,expected:56.04,fn:b=>{const o=Math.round(b*TX_ONSS_W*100)/100;const r=calcPrecompteExact(b,{situation:'isole',enfants:0});const c=calcCSSS(b,'isole');const net=b-o-r.pp-c+(r.bonusEmploi||0);const cout=b*(1+TX_ONSS_E);return Math.round(net/cout*10000)/100;},tolerance:2},
     // Pécule vacances
     {cat:'Pecule',name:'Pécule simple 7,67%',input:3500,expected:268.45,fn:b=>Math.round(b*PV_SIMPLE*100)/100},
-    {cat:'Pecule',name:'Pécule double 15,38%',input:3500,expected:538.09,fn:b=>Math.round(b*LOIS_BELGES.remuneration.peculeVacances.patronal.pct*b>0?b*0.1538:0)},
-    {cat:'Pecule',name:'Ouvrier double 8,58%',input:3500,expected:300.30,fn:b=>Math.round(b*LOIS_BELGES.remuneration.peculeVacances.ouvrierDouble.pct*100)/100},
+    {cat:'Pecule',name:'Pécule double 15,38%',input:3500,expected:538.09,fn:b=>Math.round(b*LOIS_BELGES.rémunération.peculeVacances.patronal.pct*b>0?b*0.1538:0)},
+    {cat:'Pecule',name:'Ouvrier double 8,58%',input:3500,expected:300.30,fn:b=>Math.round(b*LOIS_BELGES.rémunération.peculeVacances.ouvrierDouble.pct*100)/100},
     // LOIS_BELGES consistency
     {cat:'Config',name:'RMMMG = 2070.48',input:0,expected:2070.48,fn:()=>RMMMG},
     {cat:'Config',name:'TX_ONSS_W = 0.1307',input:0,expected:0.1307,fn:()=>TX_ONSS_W},
@@ -14201,7 +14201,7 @@ const TestSuiteDash=({s})=>{
     {cat:'Constantes',name:'CR_PAT = 6.91',input:null,expected:6.91,fn:()=>CR_PAT},
     {cat:'Constantes',name:'PV_SIMPLE = 0.0767',input:null,expected:0.0767,fn:()=>PV_SIMPLE},
     {cat:'Constantes',name:'PV_DOUBLE = 0.92',input:null,expected:0.92,fn:()=>PV_DOUBLE},
-    {cat:'Constantes',name:'Pecule ouvrier = 0.0858',input:null,expected:0.0858,fn:()=>LOIS_BELGES.remuneration.peculeVacances.ouvrierDouble.pct},
+    {cat:'Constantes',name:'Pecule ouvrier = 0.0858',input:null,expected:0.0858,fn:()=>LOIS_BELGES.rémunération.peculeVacances.ouvrierDouble.pct},
     {cat:'Integration',name:'quickPP utilise calcPrecompteExact',input:3500,expected:true,fn:b=>{const pp=quickPP(b);return pp>0&&pp<b;}},
     {cat:'Integration',name:'Net = Brut - ONSS - PP',input:3500,expected:true,fn:b=>{const o=Math.round(b*TX_ONSS_W*100)/100;const pp=quickPP(b);const n=b-o-pp;return n>2000&&n<2800;}},
     {cat:'Integration',name:'Cout employeur > Brut',input:3500,expected:true,fn:b=>b*(1+TX_ONSS_E)>b},
@@ -14275,7 +14275,7 @@ const TestSuiteDash=({s})=>{
 // ═══ PRIME TYPES & CATEGORIES — Constantes module-level ═══
 var PRIME_CATS=[
   {id:'all',label:'Toutes (56)',icon:'🎁'},
-  {id:'remuneration',label:'Remuneration',icon:'💶'},
+  {id:'rémunération',label:'Remuneration',icon:'💶'},
   {id:'cheques',label:'Cheques & Avantages',icon:'🎫'},
   {id:'mobilite',label:'Mobilite & Transport',icon:'🚲'},
   {id:'teletravail',label:'Teletravail & Frais',icon:'🏠'},
@@ -14285,16 +14285,16 @@ var PRIME_CATS=[
 ];
 var PRIME_TYPES=[
   // ═══ REMUNERATION & PRIMES SALARIALES (1-10) ═══
-  {id:'prime_fin_annee',label:'Prime de fin d\'annee (13eme mois)',icon:'🎄',taxable:true,onss:true,cat:'remuneration',desc:'Obligatoire CP 200 — equivalent 1 mois brut'},
-  {id:'prime_resultat',label:'Prime de resultat',icon:'📊',taxable:true,onss:true,cat:'remuneration',desc:'Prime liee aux performances individuelles'},
-  {id:'prime_anciennete',label:'Prime d\'anciennete',icon:'⭐',taxable:true,onss:true,cat:'remuneration',desc:'Prime liee aux annees de service'},
-  {id:'bonus_cct90',label:'Bonus CCT 90 (non-recurrent)',icon:'🎯',taxable:false,onss:false,max:4020,cat:'remuneration',desc:'Avantage non-recurrent lie aux resultats — max 4.020 EUR/an (2026)'},
-  {id:'prime_equipe',label:'Prime d\'equipe / shift',icon:'👥',taxable:true,onss:true,cat:'remuneration',desc:'Supplement pour travail en equipes successives'},
-  {id:'prime_nuit',label:'Prime de nuit',icon:'🌙',taxable:true,onss:true,cat:'remuneration',desc:'Supplement pour prestations entre 20h et 6h'},
-  {id:'prime_weekend',label:'Prime de week-end',icon:'📅',taxable:true,onss:true,cat:'remuneration',desc:'Supplement samedi/dimanche — taux selon CCT'},
-  {id:'prime_jf',label:'Prime jours feries',icon:'🎉',taxable:true,onss:true,cat:'remuneration',desc:'Supplement pour prestation un jour ferie legal'},
-  {id:'prime_heures_sup',label:'Heures supplementaires',icon:'⏰',taxable:true,onss:true,cat:'remuneration',desc:'Majoration 50% (semaine) ou 100% (dimanche/JF)'},
-  {id:'prime_productivite',label:'Prime de productivite',icon:'🏆',taxable:true,onss:true,cat:'remuneration',desc:'Prime liee aux objectifs de production'},
+  {id:'prime_fin_annee',label:'Prime de fin d\'annee (13eme mois)',icon:'🎄',taxable:true,onss:true,cat:'rémunération',desc:'Obligatoire CP 200 — equivalent 1 mois brut'},
+  {id:'prime_resultat',label:'Prime de resultat',icon:'📊',taxable:true,onss:true,cat:'rémunération',desc:'Prime liee aux performances individuelles'},
+  {id:'prime_anciennete',label:'Prime d\'anciennete',icon:'⭐',taxable:true,onss:true,cat:'rémunération',desc:'Prime liee aux annees de service'},
+  {id:'bonus_cct90',label:'Bonus CCT 90 (non-recurrent)',icon:'🎯',taxable:false,onss:false,max:4020,cat:'rémunération',desc:'Avantage non-recurrent lie aux resultats — max 4.020 EUR/an (2026)'},
+  {id:'prime_equipe',label:'Prime d\'equipe / shift',icon:'👥',taxable:true,onss:true,cat:'rémunération',desc:'Supplement pour travail en equipes successives'},
+  {id:'prime_nuit',label:'Prime de nuit',icon:'🌙',taxable:true,onss:true,cat:'rémunération',desc:'Supplement pour prestations entre 20h et 6h'},
+  {id:'prime_weekend',label:'Prime de week-end',icon:'📅',taxable:true,onss:true,cat:'rémunération',desc:'Supplement samedi/dimanche — taux selon CCT'},
+  {id:'prime_jf',label:'Prime jours fériés',icon:'🎉',taxable:true,onss:true,cat:'rémunération',desc:'Supplement pour prestation un jour ferie legal'},
+  {id:'prime_heures_sup',label:'Heures supplementaires',icon:'⏰',taxable:true,onss:true,cat:'rémunération',desc:'Majoration 50% (semaine) ou 100% (dimanche/JF)'},
+  {id:'prime_productivite',label:'Prime de productivite',icon:'🏆',taxable:true,onss:true,cat:'rémunération',desc:'Prime liee aux objectifs de production'},
 
   // ═══ CHEQUES & AVANTAGES EN NATURE (11-20) ═══
   {id:'cheques_repas',label:'Cheques-repas',icon:'🍽',taxable:false,onss:false,max:8,cat:'cheques',desc:'Max 8 EUR/jour — part patronale max 6,91 EUR'},
@@ -14339,7 +14339,7 @@ var PRIME_TYPES=[
   {id:'plan_bonus_pension',label:'Plan bonus pension',icon:'🎯',taxable:false,onss:true,cat:'assurance',desc:'Engagement collectif de pension — regle des 80%'},
 
   // ═══ CONGES & ABSENCES REMUNEREES (45-50) ═══
-  {id:'pecule_vacances',label:'Pecule de vacances',icon:'🏖',taxable:true,onss:true,cat:'conges',desc:'Simple + double pecule — 15,38% brut annuel (employes)'},
+  {id:'pecule_vacances',label:'Pécule de vacances',icon:'🏖',taxable:true,onss:true,cat:'conges',desc:'Simple + double pecule — 15,38% brut annuel (employes)'},
   {id:'pecule_sortie',label:'Pecule de sortie',icon:'🚪',taxable:true,onss:true,cat:'conges',desc:'Solde conges non pris — calcul au prorata'},
   {id:'petit_chomage',label:'Petit chomage (conge circ.)',icon:'📋',taxable:true,onss:true,cat:'conges',desc:'Mariage, deces, communion — jours payes (AR 28/08/1963)'},
   {id:'conge_education',label:'Conge-education paye',icon:'🎓',taxable:true,onss:true,cat:'conges',desc:'Formation reconnue — remboursement par la Region'},
@@ -14691,7 +14691,7 @@ const SimuOptiFiscale=({s})=>{
     {id:'bonus_cct90',title:'Bonus CCT 90 au lieu de prime',
       desc:'Remplacer prime imposable par bonus non-recurrent',
       brutSaved:emps.length*335,netGain:emps.length*280,coutSaved:emps.length*335*TX_ONSS_E,
-      detail:'Max 4.020 EUR/an — cotisation speciale 33% au lieu de ~55% charge totale',color:'#3b82f6'},
+      detail:'Max 4.020 EUR/an — cotisation spéciale 33% au lieu de ~55% charge totale',color:'#3b82f6'},
     {id:'teletravail',title:'Indemnite teletravail 154,74 EUR/mois',
       desc:'Indemnite forfaitaire exoneree ONSS',
       brutSaved:0,netGain:emps.length*FORF_BUREAU,coutSaved:emps.length*FORF_BUREAU*TX_ONSS_E,
@@ -14780,7 +14780,7 @@ const GestionAbsences=({s,d})=>{
   const jours=['Lu','Ma','Me','Je','Ve','Sa','Di'];
 
   const types=[
-    {id:'conge',label:'Conge paye',color:'#22c55e',icon:'🌴',quota:20},
+    {id:'conge',label:'Congé payé',color:'#22c55e',icon:'🌴',quota:20},
     {id:'maladie',label:'Maladie',color:'#ef4444',icon:'🤒',quota:null},
     {id:'ct',label:'Credit-temps',color:'#a855f7',icon:'⏰',quota:null},
     {id:'formation',label:'Formation',color:'#3b82f6',icon:'📚',quota:5},
@@ -14854,7 +14854,7 @@ const GestionAbsences=({s,d})=>{
     <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       {/* Header row - days */}
       <div style={{display:'grid',gridTemplateColumns:'160px repeat('+daysInMonth+',1fr)',background:'rgba(198,163,78,.04)'}}>
-        <div style={{padding:'8px 12px',fontSize:11,fontWeight:600,color:'#c6a34e'}}>Employe</div>
+        <div style={{padding:'8px 12px',fontSize:11,fontWeight:600,color:'#c6a34e'}}>Employé</div>
         {Array.from({length:daysInMonth},(_,i)=>{
           const d=new Date(year,month,i+1);
           const isWE=d.getDay()===0||d.getDay()===6;
@@ -14915,7 +14915,7 @@ const GestionAbsences=({s,d})=>{
     <div style={{marginTop:16,border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       <div style={{padding:'8px 14px',background:'rgba(198,163,78,.04)',fontSize:12,fontWeight:600,color:'#c6a34e'}}>Soldes conges {year}</div>
       <div style={{display:'grid',gridTemplateColumns:'160px repeat('+types.filter(t=>t.quota).length+',1fr)',padding:'6px 14px',background:'rgba(198,163,78,.02)',fontSize:9,fontWeight:600,color:'#888'}}>
-        <div>Employe</div>
+        <div>Employé</div>
         {types.filter(t=>t.quota).map(t=><div key={t.id} style={{textAlign:'center'}}>{t.icon} {t.label} ({t.quota}j)</div>)}
       </div>
       {emps.map((e,i)=>{
@@ -14987,7 +14987,7 @@ const FormationSecurite=({s})=>{
 
     {tab==='medical'&&<div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       <div style={{display:'grid',gridTemplateColumns:'180px 120px 100px 100px 80px 80px',padding:'8px 14px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#c6a34e'}}>
-        <div>Employe</div><div>Client</div><div>Derniere visite</div><div>Prochaine</div><div>J restants</div><div>Statut</div>
+        <div>Employé</div><div>Client</div><div>Derniere visite</div><div>Prochaine</div><div>J restants</div><div>Statut</div>
       </div>
       {medVisites.map((v,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'180px 120px 100px 100px 80px 80px',padding:'6px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
         <div style={{color:'#e5e5e5',fontWeight:500}}>{v.name}</div>
@@ -15045,7 +15045,7 @@ const BilanSocial=({s})=>{
     let html='<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:10px;padding:30px;max-width:900px;margin:auto}h1{font-size:16px;text-align:center;margin:15px 0}h2{font-size:12px;color:#c6a34e;border-bottom:2px solid #c6a34e;padding-bottom:3px;margin:15px 0 8px}table{width:100%;border-collapse:collapse;margin:6px 0}th{background:#f0ece3;padding:5px 8px;font-size:9px;text-align:left}td{padding:4px 8px;border-bottom:1px solid #eee}.r{text-align:right;font-family:monospace}.total{background:#f8f7f4;font-weight:700}@media print{button{display:none!important}}</style></head><body>';
     html+='<div style="text-align:center;font-size:22px;font-weight:800;color:#c6a34e;font-family:Georgia">AUREUS SOCIAL PRO</div>';
     html+='<h1>BILAN SOCIAL — '+co.name+' — Exercice '+year+'</h1>';
-    html+='<p style="text-align:center;color:#888;margin-bottom:15px">BCE: '+(co.vat||'N/A')+' | CP: '+(co.cp||'200')+' | Genere le '+now.toLocaleDateString('fr-BE')+'</p>';
+    html+='<p style="text-align:center;color:#888;margin-bottom:15px">BCE: '+(co.vat||'N/A')+' | CP: '+(co.cp||'200')+' | Généré le '+now.toLocaleDateString('fr-BE')+'</p>';
 
     html+='<h2>I. ETAT DES PERSONNES OCCUPEES</h2>';
     html+='<table><tr><th>Rubrique</th><th class="r">Hommes</th><th class="r">Femmes</th><th class="r">Total</th></tr>';
@@ -15202,7 +15202,7 @@ const ExportComptaPro=({s})=>{
       content+='SAL;'+now.toLocaleDateString('fr-BE').replace(/\//g,'')+';'+pcmn.brut+';Remunerations brutes;'+totalBrut.toFixed(2)+';0;EUR\n';
       content+='SAL;'+now.toLocaleDateString('fr-BE').replace(/\//g,'')+';'+pcmn.onssE+';ONSS patronal;'+totalOnssE.toFixed(2)+';0;EUR\n';
       content+='SAL;'+now.toLocaleDateString('fr-BE').replace(/\//g,'')+';'+pcmn.onssW+';ONSS personnel;;'+totalOnssW.toFixed(2)+';EUR\n';
-      content+='SAL;'+now.toLocaleDateString('fr-BE').replace(/\//g,'')+';'+pcmn.pp+';Precompte professionnel;;'+totalPP.toFixed(2)+';EUR\n';
+      content+='SAL;'+now.toLocaleDateString('fr-BE').replace(/\//g,'')+';'+pcmn.pp+';Précompte professionnel;;'+totalPP.toFixed(2)+';EUR\n';
       content+='SAL;'+now.toLocaleDateString('fr-BE').replace(/\//g,'')+';'+pcmn.net+';Net a payer;;'+totalNet.toFixed(2)+';EUR\n';
     }else if(format==='csv_generic'||format==='bob'||format==='octopus'){
       content+='Compte;Libelle;Debit;Credit;Journal;Date\n';
@@ -15226,7 +15226,7 @@ const ExportComptaPro=({s})=>{
         {compte:pcmn.brut,desc:'Remunerations brutes',montant:totalBrut,sens:'D'},
         {compte:pcmn.onssE,desc:'ONSS patronal',montant:totalOnssE,sens:'D'},
         {compte:pcmn.onssW,desc:'ONSS travailleur',montant:totalOnssW,sens:'C'},
-        {compte:pcmn.pp,desc:'Precompte professionnel',montant:totalPP,sens:'C'},
+        {compte:pcmn.pp,desc:'Précompte professionnel',montant:totalPP,sens:'C'},
         {compte:pcmn.net,desc:'Net a payer',montant:totalNet,sens:'C'},
       ];
       const periodeStr=now.getFullYear()+'-'+(now.getMonth()+1).toString().padStart(2,'0');
@@ -15418,7 +15418,7 @@ const PortailClientSS=({s,d})=>{
       </div>
       {emps.map((e,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'200px 100px 80px 100px 80px',padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
         <div style={{fontWeight:500,color:'#e5e5e5'}}>{(e.first||e.fn||'')} {(e.last||e.ln||'')}</div>
-        <div style={{color:'#888'}}>{e.function||e.job||'Employe'}</div>
+        <div style={{color:'#888'}}>{e.function||e.job||'Employé'}</div>
         <div style={{color:'#888'}}>{e.contractType||'CDI'}</div>
         <div style={{color:'#22c55e'}}>{f2(+(e.monthlySalary||e.gross||0))} EUR</div>
         <div style={{fontSize:9,padding:'2px 6px',borderRadius:4,background:'rgba(34,197,94,.1)',color:'#22c55e',textAlign:'center'}}>{e.status||'Actif'}</div>
@@ -15516,7 +15516,7 @@ const ReportingAvance=({s})=>{
 
   const reports=[
     {id:'recap_mensuel',title:'Recap Mensuel Global',desc:'Synthese de paie tous clients — masses salariales, ONSS, PP, net',icon:'📊',cat:'Mensuel'},
-    {id:'journal_paie',title:'Journal de Paie',desc:'Detail par employe — brut, cotisations, retenues, net a payer',icon:'📒',cat:'Mensuel'},
+    {id:'journal_paie',title:'Journal de Paie',desc:'Détail par employé — brut, cotisations, retenues, net a payer',icon:'📒',cat:'Mensuel'},
     {id:'cout_employeur',title:'Rapport Cout Employeur',desc:'Decomposition complete du cout patronal par client',icon:'💰',cat:'Mensuel'},
     {id:'onss_recap',title:'Recap ONSS Trimestriel',desc:'Cotisations ONSS par trimestre avec detail employeur/travailleur',icon:'🏛',cat:'Trimestriel'},
     {id:'belcotax_recap',title:'Recap Belcotax Annuel',desc:'Synthese 281.10 — revenus imposables, precomptes verses',icon:'🧾',cat:'Annuel'},
@@ -15589,7 +15589,7 @@ const ReportingAvance=({s})=>{
       } else if(report.id==='provisions'){
         html+='<h1>Provisions Sociales a Constituer</h1>';
         html+='<p style="color:#888;margin-bottom:15px">Estimation des provisions au '+now.toLocaleDateString('fr-BE')+'</p>';
-        html+='<table><tr><th>Client</th><th>Employe</th><th>Anciennete</th><th class="r">Pecule vacances</th><th class="r">13eme mois</th><th class="r">Preavis estime</th><th class="r">Total provision</th></tr>';
+        html+='<table><tr><th>Client</th><th>Employé</th><th>Anciennete</th><th class="r">Pecule vacances</th><th class="r">13eme mois</th><th class="r">Preavis estime</th><th class="r">Total provision</th></tr>';
         let totPV=0,tot13=0,totPrea=0;
         clients.forEach(cl=>{
           (cl.emps||[]).forEach(e=>{
@@ -15614,7 +15614,7 @@ const ReportingAvance=({s})=>{
         html+='<div class="kpi"><div class="kpi-val">'+clients.length+'</div><div class="kpi-lbl">Clients</div></div>';
         html+='<div class="kpi"><div class="kpi-val">'+totalEmps+'</div><div class="kpi-lbl">Travailleurs</div></div>';
         html+='<div class="kpi"><div class="kpi-val">'+f2(totalBrut)+'</div><div class="kpi-lbl">Masse brute</div></div>';
-        html+='<div class="kpi"><div class="kpi-val">'+f2(totalCout)+'</div><div class="kpi-lbl">Cout total</div></div>';
+        html+='<div class="kpi"><div class="kpi-val">'+f2(totalCout)+'</div><div class="kpi-lbl">Coût total</div></div>';
         html+='</div>';
         clients.forEach(cl=>{
           const co=cl.company||{};const emps=cl.emps||[];
@@ -15624,7 +15624,7 @@ const ReportingAvance=({s})=>{
         });
       }
 
-      html+='<div style="margin-top:30px;padding-top:10px;border-top:1px solid #eee;text-align:center;color:#888;font-size:9px">Aureus Social Pro — Genere le '+now.toLocaleDateString('fr-BE')+' a '+now.toLocaleTimeString('fr-BE')+' | Document confidentiel</div>';
+      html+='<div style="margin-top:30px;padding-top:10px;border-top:1px solid #eee;text-align:center;color:#888;font-size:9px">Aureus Social Pro — Généré le '+now.toLocaleDateString('fr-BE')+' a '+now.toLocaleTimeString('fr-BE')+' | Document confidentiel</div>';
       html+='<div style="text-align:center;margin:15px 0" class="no-print"><button onclick="window.print()" style="background:#c6a34e;color:#fff;border:none;padding:12px 30px;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px">Imprimer / PDF</button></div>';
       html+='</body></html>';
 
@@ -15895,7 +15895,7 @@ const FiduciaireHub=({s,d})=>{
 
     {selView==='ranking'&&<div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       <div style={{display:'grid',gridTemplateColumns:'40px 180px 80px 100px 100px 100px 100px 60px',padding:'8px 14px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#c6a34e'}}>
-        <div>#</div><div>Client</div><div>Effectif</div><div>Masse brute</div><div>ONSS total</div><div>Cout total</div><div>Brut moyen</div><div>Sante</div>
+        <div>#</div><div>Client</div><div>Effectif</div><div>Masse brute</div><div>ONSS total</div><div>Coût total</div><div>Brut moyen</div><div>Sante</div>
       </div>
       {sorted.map((c,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'40px 180px 80px 100px 100px 100px 100px 60px',padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
         <div style={{fontSize:14,fontWeight:700,color:i<3?'#c6a34e':'#888'}}>{i+1}</div>
@@ -16099,7 +16099,7 @@ const SimuLicenciement=({s})=>{
               {l:'Preavis legal',v:result.semaines+' semaines',bold:true},
               {l:'Indemnite de preavis (hebdo x semaines)',v:f2(result.indemnitePreavis)+' EUR',bold:true},
               {l:'ONSS travailleur (13,07%)',v:'- '+f2(result.onssInd)+' EUR',red:true},
-              {l:'Precompte professionnel',v:'- '+f2(result.ppInd)+' EUR',red:true},
+              {l:'Précompte professionnel',v:'- '+f2(result.ppInd)+' EUR',red:true},
               {l:'Net indemnite preavis',v:f2(result.netInd)+' EUR',green:true},
               {l:'',v:'',sep:true},
               {l:'Pecule vacances sortie (7,64% x prorata)',v:f2(result.pecule)+' EUR'},
@@ -16191,7 +16191,7 @@ const CoutTotalDash=({s})=>{
     {/* Table */}
     <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       <div style={{display:'grid',gridTemplateColumns:'140px 100px 80px 80px 80px 80px 80px 90px',padding:'8px 12px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#c6a34e'}}>
-        <div>Employe</div><div>Client</div><div>Brut</div><div>ONSS W</div><div>PP</div><div>Net</div><div>ONSS E</div><div>Cout total</div>
+        <div>Employé</div><div>Client</div><div>Brut</div><div>ONSS W</div><div>PP</div><div>Net</div><div>ONSS E</div><div>Coût total</div>
       </div>
       <div style={{maxHeight:450,overflowY:'auto'}}>
         {rows.map((r,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'140px 100px 80px 80px 80px 80px 80px 90px',padding:'6px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
@@ -16234,7 +16234,7 @@ const PayrollTimeline=({s})=>{
     const d=new Date(now);d.setMonth(d.getMonth()+m);
     const mIdx=d.getMonth();const yr=d.getFullYear();
     events.push({date:new Date(yr,mIdx,5),type:'deadline',cat:'ONSS',title:'ONSS provisoire '+mois[mIdx],icon:'🏛',color:'#ef4444'});
-    events.push({date:new Date(yr,mIdx,15),type:'deadline',cat:'Fiscal',title:'Precompte professionnel '+mois[mIdx],icon:'💰',color:'#a855f7'});
+    events.push({date:new Date(yr,mIdx,15),type:'deadline',cat:'Fiscal',title:'Précompte professionnel '+mois[mIdx],icon:'💰',color:'#a855f7'});
     events.push({date:new Date(yr,mIdx,25),type:'deadline',cat:'Paie',title:'Virements salaires '+mois[mIdx],icon:'💳',color:'#22c55e'});
     events.push({date:new Date(yr,mIdx,28),type:'deadline',cat:'Paie',title:'Distribution fiches '+mois[mIdx],icon:'📄',color:'#3b82f6'});
   }
@@ -16515,7 +16515,7 @@ const SmartAlerts=({s})=>{
   const day=now.getDate();
   const month=now.getMonth();
   if(day<=5) alerts.push({type:'urgent',cat:'ONSS',title:'ONSS provisoire',desc:'Paiement ONSS du avant le 5 '+mois[month],deadline:5-day,icon:'🏛'});
-  if(day<=15) alerts.push({type:day<=10?'urgent':'warn',cat:'Fiscal',title:'Precompte professionnel',desc:'Versement PP du avant le 15 '+mois[month],deadline:15-day,icon:'💰'});
+  if(day<=15) alerts.push({type:day<=10?'urgent':'warn',cat:'Fiscal',title:'Précompte professionnel',desc:'Versement PP du avant le 15 '+mois[month],deadline:15-day,icon:'💰'});
   if(day<=25) alerts.push({type:day<=20?'warn':'info',cat:'Paie',title:'Virements salaires',desc:'SEPA a executer avant le 25 '+mois[month],deadline:25-day,icon:'💳'});
   if(day<=28) alerts.push({type:day<=25?'info':'warn',cat:'Paie',title:'Distribution fiches',desc:'Fiches de paie a distribuer avant fin de mois',deadline:28-day,icon:'📄'});
 
@@ -16623,7 +16623,7 @@ const BatchDeclarations=({s})=>{
   const types=[
     {id:'dimona_in',icon:'🟢',label:'Dimona IN — Entrees',desc:'Declarations entree en service'},
     {id:'dimona_out',icon:'🔴',label:'Dimona OUT — Sorties',desc:'Declarations sortie de service'},
-    {id:'dmfa',icon:'🏛',label:'DmfA T'+quarter,desc:'Declaration trimestrielle ONSS'},
+    {id:'dmfa',icon:'🏛',label:'DmfA T'+quarter,desc:'Déclaration trimestrielle ONSS'},
     {id:'belcotax',icon:'🧾',label:'Belcotax 281.10',desc:'Fiches fiscales annuelles'},
   ];
 
@@ -16945,7 +16945,7 @@ const AutoIndexation=({s,d})=>{
       {/* Config */}
       <div>
         <div style={{padding:18,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14,marginBottom:14}}>
-          <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Parametres</div>
+          <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:12}}>Paramètres</div>
           <div style={{marginBottom:10}}>
             <label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Taux indexation (%)</label>
             <input type="number" step="0.01" value={indexRate} onChange={e=>setIndexRate(+e.target.value)} style={{width:'100%',padding:'10px 12px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:16,fontWeight:700,fontFamily:'inherit',textAlign:'center'}}/>
@@ -16995,7 +16995,7 @@ const AutoIndexation=({s,d})=>{
           {/* Table */}
           <div style={{maxHeight:450,overflowY:'auto'}}>
             <div style={{display:'grid',gridTemplateColumns:'140px 100px 90px 90px 70px 90px 90px',padding:'8px 12px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#c6a34e'}}>
-              <div>Employe</div><div>Client</div><div>Brut actuel</div><div>Nouveau brut</div><div>Diff</div><div>Ancien net</div><div>Nouveau net</div>
+              <div>Employé</div><div>Client</div><div>Brut actuel</div><div>Nouveau brut</div><div>Diff</div><div>Ancien net</div><div>Nouveau net</div>
             </div>
             {preview.results.map((r,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'140px 100px 90px 90px 70px 90px 90px',padding:'6px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
               <div style={{color:'#e5e5e5',fontWeight:500}}>{r.name}</div>
@@ -21926,7 +21926,7 @@ function AdminDashboard({s,d}){
 
       <div style={{background:"rgba(255,255,255,.02)",borderRadius:12,border:"1px solid rgba(255,255,255,.04)",overflow:'hidden'}}>
         <div style={{display:'grid',gridTemplateColumns:'2.5fr 1.5fr 1fr 1fr 1fr 1fr 1fr',padding:'10px 14px',background:"rgba(198,163,78,.06)",borderBottom:'1px solid rgba(198,163,78,.1)',fontSize:10,fontWeight:600,color:'#c6a34e',textTransform:'uppercase',letterSpacing:.5}}>
-          <div>Societe</div><div>TVA / ONSS</div><div>CP</div><div>Secteur</div><div>Travailleurs</div><div>Inscription</div><div>Statut</div>
+          <div>Société</div><div>TVA / ONSS</div><div>CP</div><div>Secteur</div><div>Travailleurs</div><div>Inscription</div><div>Statut</div>
         </div>
         {clients.length===0?<div style={{padding:30,textAlign:'center',color:'#5e5c56',fontSize:12}}>Aucun dossier client.</div>:
         clients.filter(c=>{
@@ -22149,7 +22149,7 @@ function BelcotaxPage({s,d}) {
       d({type:"ADD_F",d:{eid:emp.id,ename:`${emp.first} ${emp.last}`,yr,ft,ftl:LEGAL.FICHE_281[ft],ag:ad.gross,an:p.net*12,aonss:ad.onss,atax:ad.tax,acss:ad.css,xml,at:new Date().toISOString()}});
     });
     // Récapitulatif XML global BelcotaxOnWeb
-    const globalXml=`<?xml version="1.0" encoding="UTF-8"?>\n<!-- BelcotaxOnWeb — Fichier recapitulatif -->\n<!-- ${ae.length} fiche(s) 281.${ft} — Annee ${yr} -->\n<!-- Genere par: Aureus Social Pro -->\n<Belcotax xmlns="urn:belcotax:${yr}">\n  <Verzending>\n    <Aangiftenr>BELCO${Date.now().toString(36).toUpperCase()}</Aangiftenr>\n    <Aangiftetype>281.${ft}</Aangiftetype>\n    <AangifteJaar>${yr}</AangifteJaar>\n    <AantalOpgaven>${ae.length}</AantalOpgaven>\n    <Schuldenaar>\n      <KBO>${(s.co.bce||s.co.vat||'').replace(/[^0-9]/g,"")}</KBO>\n      <Naam>${s.co.name}</Naam>\n      <Adres>${s.co.addr}</Adres>\n    </Schuldenaar>\n  </Verzending>\n</Belcotax>`;
+    const globalXml=`<?xml version="1.0" encoding="UTF-8"?>\n<!-- BelcotaxOnWeb — Fichier recapitulatif -->\n<!-- ${ae.length} fiche(s) 281.${ft} — Annee ${yr} -->\n<!-- Généré par: Aureus Social Pro -->\n<Belcotax xmlns="urn:belcotax:${yr}">\n  <Verzending>\n    <Aangiftenr>BELCO${Date.now().toString(36).toUpperCase()}</Aangiftenr>\n    <Aangiftetype>281.${ft}</Aangiftetype>\n    <AangifteJaar>${yr}</AangifteJaar>\n    <AantalOpgaven>${ae.length}</AantalOpgaven>\n    <Schuldenaar>\n      <KBO>${(s.co.bce||s.co.vat||'').replace(/[^0-9]/g,"")}</KBO>\n      <Naam>${s.co.name}</Naam>\n      <Adres>${s.co.addr}</Adres>\n    </Schuldenaar>\n  </Verzending>\n</Belcotax>`;
     setAllXml(globalXml);
   };
 
@@ -22327,7 +22327,7 @@ function PrecomptePage({s,d}) {
           <div style={{display:'flex',gap:8}}>
             <B v="outline" style={{fontSize:10.5,padding:'6px 12px'}} onClick={()=>{
               const periode=mode==='mensuel'?`${String(m).padStart(2,"0")}/${y}`:`T${q}/${y}`;
-              const xml274=`<?xml version="1.0" encoding="UTF-8"?>\n<!-- Declaration Precompte Professionnel 274 -->\n<!-- SPF Finances — FINPROF -->\n<!-- Genere par: Aureus Social Pro -->\n<PP274 xmlns="urn:pp274:${y}">\n  <Declaration>\n    <Periode>${periode}</Periode>\n    <Periodicite>${mode}</Periodicite>\n    <Employeur>\n      <KBO>${(s.co.bce||s.co.vat||'').replace(/[^0-9]/g,"")}</KBO>\n      <ONSS>${(s.co.onss||'').replace(/[^0-9]/g,"")}</ONSS>\n      <Naam>${s.co.name}</Naam>\n    </Employeur>\n    <NbrTravailleurs>${ae.length}</NbrTravailleurs>\n    <TotalBrut>${det.reduce((a,r)=>a+r.gross,0).toFixed(2)}</TotalBrut>\n    <TotalPrecompte>${tot.toFixed(2)}</TotalPrecompte>\n${det.map(r=>`    <Travailleur>\n      <Naam>${r.e.last||''} ${r.e.first||''}</Naam>\n      <INSZ>${(r.e.niss||'').replace(/[\\.-\\s]/g,"")}</INSZ>\n      <Brut>${r.gross.toFixed(2)}</Brut>\n      <PP>${r.tax.toFixed(2)}</PP>\n    </Travailleur>`).join('\n')}\n  </Declaration>\n</PP274>`;
+              const xml274=`<?xml version="1.0" encoding="UTF-8"?>\n<!-- Declaration Precompte Professionnel 274 -->\n<!-- SPF Finances — FINPROF -->\n<!-- Généré par: Aureus Social Pro -->\n<PP274 xmlns="urn:pp274:${y}">\n  <Declaration>\n    <Periode>${periode}</Periode>\n    <Periodicite>${mode}</Periodicite>\n    <Employeur>\n      <KBO>${(s.co.bce||s.co.vat||'').replace(/[^0-9]/g,"")}</KBO>\n      <ONSS>${(s.co.onss||'').replace(/[^0-9]/g,"")}</ONSS>\n      <Naam>${s.co.name}</Naam>\n    </Employeur>\n    <NbrTravailleurs>${ae.length}</NbrTravailleurs>\n    <TotalBrut>${det.reduce((a,r)=>a+r.gross,0).toFixed(2)}</TotalBrut>\n    <TotalPrecompte>${tot.toFixed(2)}</TotalPrecompte>\n${det.map(r=>`    <Travailleur>\n      <Naam>${r.e.last||''} ${r.e.first||''}</Naam>\n      <INSZ>${(r.e.niss||'').replace(/[\\.-\\s]/g,"")}</INSZ>\n      <Brut>${r.gross.toFixed(2)}</Brut>\n      <PP>${r.tax.toFixed(2)}</PP>\n    </Travailleur>`).join('\n')}\n  </Declaration>\n</PP274>`;
               d({type:"MODAL",m:{w:850,c:<div>
                 <h2 style={{fontSize:17,fontWeight:600,color:'#e8e6e0',margin:'0 0 6px',fontFamily:"'Cormorant Garamond',serif"}}>Déclaration PP 274 — {periode}</h2>
                 <div style={{display:'flex',gap:8,marginBottom:12}}>
@@ -23108,7 +23108,7 @@ return <div><PH title="ONSS - Declaration DmfA" sub={"Declarations trimestrielle
 <div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"dmfa",l:"DmfA Resume"},{v:"cotis",l:"Detail cotisations"},{v:"reductions",l:"Reductions"},{v:"dimona",l:"Dimona"},{v:"calendrier",l:"Calendrier"},{v:"controle",l:"Controle pre-envoi"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>
 {tab==="dmfa"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}}><C><ST>{"DmfA "+trim+" "+new Date().getFullYear()}</ST>
 <div style={{display:"flex",gap:6,marginBottom:12}}>{["T1","T2","T3","T4"].map(t=><button key={t} onClick={()=>setTrim(t)} style={{padding:"6px 14px",borderRadius:6,border:"none",cursor:"pointer",fontSize:11,fontWeight:trim===t?600:400,fontFamily:"inherit",background:trim===t?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:trim===t?"#c6a34e":"#5e5c56"}}>{t}</button>)}</div>
-<Tbl cols={[{k:"r",l:"Rubrique",b:1,r:r=>r.rub},{k:"m",l:"Mensuel",a:"right",r:r=><span style={{color:"#e8e6e0"}}>{fmt(r.mens)}</span>},{k:"t",l:"Trimestre",a:"right",r:r=><span style={{color:"#fb923c",fontWeight:600}}>{fmt(r.trim)}</span>}]} data={[{rub:"Masse salariale brute",mens:mb,trim:mbTrim},{rub:"ONSS patronal ("+(TX_ONSS_E*100).toFixed(2)+"%)",mens:onssP,trim:onssPTrim},{rub:"ONSS personnel ("+(TX_ONSS_W*100).toFixed(2)+"%)",mens:onssT,trim:onssTTrim},{rub:"Total cotisations",mens:totalONSS,trim:totalTrim},{rub:"Reductions groupes-cibles",mens:totalRed/3,trim:totalRed},{rub:"Reduction structurelle",mens:redStruct/3,trim:redStruct},{rub:"NET A PAYER ONSS",mens:(totalONSS*3-totalRed)/3,trim:totalTrim-totalRed}]}/>
+<Tbl cols={[{k:"r",l:"Rubrique",b:1,r:r=>r.rub},{k:"m",l:"Mensuel",a:"right",r:r=><span style={{color:"#e8e6e0"}}>{fmt(r.mens)}</span>},{k:"t",l:"Trimestre",a:"right",r:r=><span style={{color:"#fb923c",fontWeight:600}}>{fmt(r.trim)}</span>}]} data={[{rub:"Masse salariale brute",mens:mb,trim:mbTrim},{rub:"ONSS patronal ("+(TX_ONSS_E*100).toFixed(2)+"%)",mens:onssP,trim:onssPTrim},{rub:"ONSS personnel ("+(TX_ONSS_W*100).toFixed(2)+"%)",mens:onssT,trim:onssTTrim},{rub:"Total cotisations",mens:totalONSS,trim:totalTrim},{rub:"Reductions groupes-cibles",mens:totalRed/3,trim:totalRed},{rub:"Réduction structurelle",mens:redStruct/3,trim:redStruct},{rub:"NET A PAYER ONSS",mens:(totalONSS*3-totalRed)/3,trim:totalTrim-totalRed}]}/>
 </C><C><ST>Par travailleur</ST>
 <Tbl cols={[{k:"n",l:"Nom",b:1,r:r=>(r.fn||"")+" "+(r.ln||"")},{k:"b",l:"Brut",a:"right",r:r=><span style={{color:"#c6a34e"}}>{fmt(+r.gross||0)}</span>},{k:"p",l:"ONSS P",a:"right",r:r=><span style={{color:"#f87171"}}>{fmt((+r.gross||0)*TX_ONSS_E)}</span>},{k:"t",l:"ONSS T",a:"right",r:r=><span style={{color:"#f87171"}}>{fmt((+r.gross||0)*TX_ONSS_W)}</span>},{k:"to",l:"Total",a:"right",r:r=><span style={{fontWeight:700,color:"#e8e6e0"}}>{fmt((+r.gross||0)*(TX_ONSS_W+TX_ONSS_E))}</span>}]} data={ae}/>
 </C></div>}
@@ -23120,7 +23120,7 @@ return <div><PH title="ONSS - Declaration DmfA" sub={"Declarations trimestrielle
 </C></div>}
 {tab==="reductions"&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}}><C><ST>Reductions groupes-cibles</ST>
 {[{g:"Jeunes (-26 ans)",n:redGC,m:fmt(redGCMontant)+"/trim",c:"#4ade80",d:"Reduction ONSS pour travailleurs de moins de 26 ans. Montant selon age et qualification."},{g:"Travailleurs ages (55+)",n:ae.filter(e2=>{const a2=e2.birthDate?Math.floor((Date.now()-new Date(e2.birthDate))/(365.25*24*3600*1000)):35;return a2>=55;}).length,m:"Variable",c:"#60a5fa",d:"Reduction pour maintien emploi 55+. Montant croissant avec age."},{g:"Premiers engagements",n:Math.min(n,6),m:n<=1?"4.000/trim":"Degressif",c:"#a78bfa",d:"1er: 4.000/trim a vie. 2e-6e: degressif sur 13 trimestres."},{g:"Restructuration",n:0,m:"0",c:"#5e5c56",d:"Travailleurs licencies suite a restructuration/fermeture."},{g:"Handicap/tuteur",n:0,m:"0",c:"#5e5c56",d:"Travailleurs reconnus handicapes ou tuteurs en formation."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{display:"flex",justifyContent:"space-between"}}><b style={{color:r.c,fontSize:12}}>{r.g} ({r.n})</b><span style={{color:r.c,fontWeight:600}}>{r.m}</span></div><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
-</C><C><ST>Reduction structurelle</ST>
+</C><C><ST>Réduction structurelle</ST>
 {[{l:"Principe",v:"Reduction forfaitaire par travailleur"},{l:"Montant de base",v:"480 EUR/trimestre"},{l:"Composante bas salaire",v:"Si brut < plafond"},{l:"Composante haut salaire",v:"Si brut > plafond (employes)"},{l:"Votre estimation",v:fmt(redStruct)+"/trimestre"},{l:"Total reductions",v:fmt(totalRed)+"/trimestre"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#9e9b93"}}>{r.l}</span><span style={{fontWeight:600,color:"#4ade80"}}>{r.v}</span></div>)}
 <div style={{marginTop:12,padding:10,background:"rgba(74,222,128,.04)",borderRadius:8}}><div style={{fontSize:11,color:"#4ade80",fontWeight:600}}>Economie totale: {fmt(totalRed)}/trimestre = {fmt(totalRed*4)}/an</div></div>
 </C></div>}
@@ -23136,7 +23136,7 @@ return <div><PH title="ONSS - Declaration DmfA" sub={"Declarations trimestrielle
 {[{l:"Principe",d:"Versement mensuel = estimation 1/3 du trimestre"},{l:"Date",d:"Au plus tard le 5 du mois suivant"},{l:"Base",d:"Masse salariale du mois x taux global"},{l:"Regularisation",d:"A la declaration trimestrielle DmfA"},{l:"Penalites retard",d:"Majoration de 10% + interets 7%/an"}].map((r,i)=><div key={i} style={{padding:"6px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#e8e6e0",fontSize:11}}>{r.l}</b><span style={{color:"#9e9b93",fontSize:10,marginLeft:8}}>{r.d}</span></div>)}</div>
 </C>}
 {tab==="controle"&&<C><ST>Controle pre-envoi DmfA</ST>
-{[].concat(ae.filter(e=>!e.niss).map(e=>({ok:false,t:"NISS manquant: "+(e.fn||"")+" "+(e.ln||""),d:"Numero national obligatoire pour chaque ligne travailleur DmfA",c:"#f87171"}))).concat(ae.filter(e=>!e.startDate).map(e=>({ok:false,t:"Date entree manquante: "+(e.fn||"")+" "+(e.ln||""),d:"Date debut occupation requise",c:"#f87171"}))).concat(ae.filter(e=>(+e.gross||0)<=0).map(e=>({ok:false,t:"Salaire nul: "+(e.fn||"")+" "+(e.ln||""),d:"Remuneration brute obligatoire",c:"#f87171"}))).concat(n>0?[{ok:true,t:"Nombre travailleurs: "+n,d:"Au moins 1 travailleur declare",c:"#4ade80"}]:[{ok:false,t:"Aucun travailleur",d:"Minimum 1 travailleur requis",c:"#f87171"}]).concat([{ok:mb>0,t:"Masse salariale: "+fmt(mb),d:mb>0?"Masse salariale calculee":"Masse salariale nulle",c:mb>0?"#4ade80":"#f87171"},{ok:true,t:"ONSS patronal: "+fmt(onssP),d:""+(TX_ONSS_E*100).toFixed(2)+"% calcule automatiquement",c:"#4ade80"},{ok:true,t:"ONSS personnel: "+fmt(onssT),d:""+((LOIS_BELGES.onss.travailleur*100).toFixed(2))+"% calcule automatiquement",c:"#4ade80"},{ok:true,t:"Format XML DmfA",d:"Conforme schema XSD ONSS v2024.1",c:"#4ade80"}]).map((r,i)=><div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{width:22,height:22,borderRadius:6,background:r.ok?"rgba(74,222,128,.1)":"rgba(248,113,113,.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:r.ok?"#4ade80":"#f87171",flexShrink:0}}>{r.ok?"V":"X"}</div><div><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10,color:"#5e5c56"}}>{r.d}<div style={{display:"flex",gap:8,marginTop:12}}><button onClick={()=>sendSimulationPDF({brut:brutSim||3500,nb:nbPers||1,duree:dureeMois||12,cheqRepas:130.02,coName:s.co?.name},"")} style={{flex:1,padding:"10px",borderRadius:8,border:"1px solid rgba(198,163,78,.3)",background:"rgba(198,163,78,.08)",color:"#c6a34e",fontWeight:600,fontSize:11,cursor:"pointer"}}>Telecharger PDF</button><button onClick={()=>{var email=prompt("Email du client:");if(email)sendSimulationPDF({brut:brutSim||3500,nb:nbPers||1,duree:dureeMois||12,cheqRepas:130.02,coName:s.co?.name},email)}} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:"#c6a34e",color:"#fff",fontWeight:600,fontSize:11,cursor:"pointer"}}>Envoyer par email</button></div></div></div></div>)}
+{[].concat(ae.filter(e=>!e.niss).map(e=>({ok:false,t:"NISS manquant: "+(e.fn||"")+" "+(e.ln||""),d:"Numéro national obligatoire pour chaque ligne travailleur DmfA",c:"#f87171"}))).concat(ae.filter(e=>!e.startDate).map(e=>({ok:false,t:"Date entree manquante: "+(e.fn||"")+" "+(e.ln||""),d:"Date debut occupation requise",c:"#f87171"}))).concat(ae.filter(e=>(+e.gross||0)<=0).map(e=>({ok:false,t:"Salaire nul: "+(e.fn||"")+" "+(e.ln||""),d:"Remuneration brute obligatoire",c:"#f87171"}))).concat(n>0?[{ok:true,t:"Nombre travailleurs: "+n,d:"Au moins 1 travailleur declare",c:"#4ade80"}]:[{ok:false,t:"Aucun travailleur",d:"Minimum 1 travailleur requis",c:"#f87171"}]).concat([{ok:mb>0,t:"Masse salariale: "+fmt(mb),d:mb>0?"Masse salariale calculee":"Masse salariale nulle",c:mb>0?"#4ade80":"#f87171"},{ok:true,t:"ONSS patronal: "+fmt(onssP),d:""+(TX_ONSS_E*100).toFixed(2)+"% calcule automatiquement",c:"#4ade80"},{ok:true,t:"ONSS personnel: "+fmt(onssT),d:""+((LOIS_BELGES.onss.travailleur*100).toFixed(2))+"% calcule automatiquement",c:"#4ade80"},{ok:true,t:"Format XML DmfA",d:"Conforme schema XSD ONSS v2024.1",c:"#4ade80"}]).map((r,i)=><div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div style={{width:22,height:22,borderRadius:6,background:r.ok?"rgba(74,222,128,.1)":"rgba(248,113,113,.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:r.ok?"#4ade80":"#f87171",flexShrink:0}}>{r.ok?"V":"X"}</div><div><b style={{color:r.c,fontSize:12}}>{r.t}</b><div style={{fontSize:10,color:"#5e5c56"}}>{r.d}<div style={{display:"flex",gap:8,marginTop:12}}><button onClick={()=>sendSimulationPDF({brut:brutSim||3500,nb:nbPers||1,duree:dureeMois||12,cheqRepas:130.02,coName:s.co?.name},"")} style={{flex:1,padding:"10px",borderRadius:8,border:"1px solid rgba(198,163,78,.3)",background:"rgba(198,163,78,.08)",color:"#c6a34e",fontWeight:600,fontSize:11,cursor:"pointer"}}>Télécharger PDF</button><button onClick={()=>{var email=prompt("Email du client:");if(email)sendSimulationPDF({brut:brutSim||3500,nb:nbPers||1,duree:dureeMois||12,cheqRepas:130.02,coName:s.co?.name},email)}} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:"#c6a34e",color:"#fff",fontWeight:600,fontSize:11,cursor:"pointer"}}>Envoyer par email</button></div></div></div></div>)}
 {ae.every(e=>e.niss&&e.startDate&&(+e.gross||0)>0)&&<div style={{marginTop:12,textAlign:"center",padding:16,background:"rgba(74,222,128,.06)",borderRadius:8}}><div style={{fontSize:14,fontWeight:700,color:"#4ade80"}}>PRET POUR ENVOI</div><div style={{fontSize:11,color:"#9e9b93",marginTop:4}}>Toutes les validations sont OK - DmfA peut etre transmise</div></div>}
 </C>}
 </div>;}
@@ -23200,7 +23200,7 @@ function exportSimulation(){var sb=document.getElementById("sb");if(sb)sb.style.
 function sendSimulationPDF(simData,clientEmail){var d=simData||{};var brut=+(d.brut||0);var onssP=Math.round(brut*TX_ONSS_E*100)/100;var assAT=Math.round(brut*TX_AT*100)/100;var med=COUT_MED;var cr=+(d.cheqRepas||130.02);var coutMens=Math.round((brut+onssP+assAT+med+cr)*100)/100;var nb=+(d.nb||1);var dur=+(d.duree||12);var coutTotal=Math.round(coutMens*nb*100)/100;var coutAn=Math.round(coutMens*nb*dur*100)/100;var onssE=Math.round(brut*TX_ONSS_W*100)/100;var imp=brut-onssE;var pp=quickPP(brut);var net=Math.round((brut-onssE-pp)*100)/100;var ratio=brut>0?Math.round(net/coutMens*100):0;var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var coName=d.coName||"Aureus IA SPRL";var html="<!DOCTYPE html><html><head><meta charset=utf-8><title>Simulation cout salarial</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;padding:30px;max-width:800px;margin:auto;color:#1a1a1a}h1{font-size:18px;color:#c6a34e;margin-bottom:5px}h2{font-size:13px;color:#333;margin:15px 0 8px;border-bottom:1px solid #e5e5e5;padding-bottom:4px}table{width:100%;border-collapse:collapse;margin:8px 0}td{padding:5px 8px;font-size:11px}td:last-child{text-align:right;font-family:monospace;font-weight:600}.kpi{display:flex;gap:15px;margin:12px 0;flex-wrap:wrap}.kpi-box{flex:1;min-width:140px;background:#f8f7f4;border:1px solid #e5e2d9;border-radius:6px;padding:10px;text-align:center}.kpi-val{font-size:16px;font-weight:700;color:#c6a34e}.kpi-lab{font-size:9px;color:#666;margin-top:2px}.total td{font-weight:700;border-top:2px solid #c6a34e;padding-top:8px}.foot{margin-top:25px;font-size:9px;color:#999;text-align:center}@media print{button{display:none!important}}</style></head><body><h1>"+coName+"</h1><p style=font-size:10px;color:#666>Simulation cout salarial - "+new Date().toLocaleDateString("fr-BE")+"</p><div class=kpi><div class=kpi-box><div class=kpi-val>"+f2(brut)+" EUR</div><div class=kpi-lab>Brut mensuel</div></div><div class=kpi-box><div class=kpi-val>"+f2(coutMens)+" EUR</div><div class=kpi-lab>Cout mensuel/pers.</div></div><div class=kpi-box><div class=kpi-val>"+f2(coutAn)+" EUR</div><div class=kpi-lab>Cout sur "+dur+" mois</div></div><div class=kpi-box><div class=kpi-val>"+ratio+"%</div><div class=kpi-lab>Ratio net/cout</div></div></div><h2>Decomposition cout employeur</h2><table><tr><td>Salaire brut</td><td>"+f2(brut)+" EUR</td></tr><tr><td>ONSS patronal 25,07%</td><td>"+f2(onssP)+" EUR</td></tr><tr><td>Assurance AT 1%</td><td>"+f2(assAT)+" EUR</td></tr><tr><td>Medecine travail</td><td>"+f2(med)+" EUR</td></tr><tr><td>Cheques-repas</td><td>"+f2(cr)+" EUR</td></tr><tr class=total><td>COUT / personne</td><td>"+f2(coutMens)+" EUR</td></tr><tr><td>COUT TOTAL "+nb+" pers.</td><td>"+f2(coutTotal)+" EUR</td></tr></table><h2>Net employe</h2><table><tr><td>Brut</td><td>"+f2(brut)+"</td></tr><tr><td>ONSS -13,07%</td><td>-"+f2(onssE)+"</td></tr><tr><td>PP</td><td>-"+f2(pp)+"</td></tr><tr class=total><td>Net</td><td>"+f2(net)+" EUR</td></tr></table><div class=foot>Aureus Social Pro - aureussocial.be</div><button onclick=window.print() style=display:block;margin:15px_auto;background:#c6a34e;color:#fff;border:none;padding:10px_30px;border-radius:6px;cursor:pointer>Imprimer</button></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Simulation_'+brut+'EUR');if(clientEmail){var subject=encodeURIComponent("Simulation cout salarial - "+f2(brut)+" EUR");var body=encodeURIComponent("Bonjour,\n\nSimulation:\n- Brut: "+f2(brut)+" EUR\n- Cout employeur: "+f2(coutMens)+" EUR/mois\n- Net estime: "+f2(net)+" EUR\n- Ratio: "+ratio+"%\n\nCordialement,\n"+coName);setTimeout(function(){window.location.href="mailto:"+clientEmail+"?subject="+subject+"&body="+body},600)}}
 function generateAttestationEmploi(emp,co){var coName=co?.name||"Aureus IA SPRL";var coVAT=co?.vat||"BE 1028.230.781";var name=(emp.first||emp.fn||"")+" "+(emp.last||emp.ln||"");var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var html="<!DOCTYPE html><html><head><meta charset=utf-8><title>Attestation "+name+"</title><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto;line-height:1.6}@media print{button{display:none!important}}</style></head><body><h2 style=text-align:center;text-decoration:underline;margin:20px>ATTESTATION D EMPLOI</h2><p>"+coName+" ("+coVAT+") atteste que <b>"+name+"</b> (NISS: "+(emp.niss||"N/A")+") est employe(e) depuis le <b>"+(emp.startDate||emp.start||"N/A")+"</b> en qualite de <b>"+(emp.function||emp.job||"employe")+"</b>. Contrat: "+(emp.contractType||"CDI")+" - "+(emp.whWeek||38)+"h/sem. Brut: "+f2(+(emp.monthlySalary||emp.gross||0))+" EUR/mois.</p><p>Pour servir et valoir ce que de droit.</p><div style=text-align:center;margin-top:20px><button onclick=window.print()>Imprimer</button></div></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Attestation_emploi_'+name);}
 function generateAttestationSalaire(emp,co){var coName=co?.name||"Aureus IA SPRL";var name=(emp.first||emp.fn||"")+" "+(emp.last||emp.ln||"");var brut=+(emp.monthlySalary||emp.gross||0);var onss=Math.round(brut*TX_ONSS_W*100)/100;var pp=quickPP(brut);var net=Math.round((brut-onss-pp)*100)/100;var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var html="<!DOCTYPE html><html><head><meta charset=utf-8><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto}table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:6px 10px;border:1px solid #ccc}@media print{button{display:none!important}}</style></head><body><h2 style=text-align:center;text-decoration:underline>ATTESTATION DE REMUNERATION</h2><p>"+coName+" certifie que <b>"+name+"</b> percoit:</p><table><tr><th>Element</th><th>Mensuel</th><th>Annuel</th></tr><tr><td>Brut</td><td>"+f2(brut)+"</td><td>"+f2(brut*12)+"</td></tr><tr><td>ONSS</td><td>-"+f2(onss)+"</td><td>-"+f2(onss*12)+"</td></tr><tr><td>PP</td><td>-"+f2(pp)+"</td><td>-"+f2(pp*12)+"</td></tr><tr style=font-weight:700><td>Net</td><td>"+f2(net)+"</td><td>"+f2(net*12)+"</td></tr></table><div style=text-align:center;margin-top:20px><button onclick=window.print()>Imprimer</button></div></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Attestation_salaire_'+name);}
-function generateSoldeCompte(emp,co){var coName=co?.name||"Aureus IA SPRL";var name=(emp.first||emp.fn||"")+" "+(emp.last||emp.ln||"");var brut=+(emp.monthlySalary||emp.gross||0);var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var pro=Math.round(brut*15/22*100)/100;var pec=Math.round(brut*PV_SIMPLE*100)/100;var pre=brut;var tot=pro+pec+pre;var onss=Math.round(tot*TX_ONSS_W*100)/100;var pp=quickPP(tot);var net=Math.round((tot-onss-pp)*100)/100;var html="<!DOCTYPE html><html><head><meta charset=utf-8><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto}table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:6px 10px;border:1px solid #ccc}@media print{button{display:none!important}}</style></head><body><h2 style=text-align:center;text-decoration:underline>SOLDE DE TOUT COMPTE</h2><p>"+coName+" - Travailleur: <b>"+name+"</b></p><table><tr><th>Element</th><th>Montant</th></tr><tr><td>Prorata</td><td>"+f2(pro)+"</td></tr><tr><td>Pecule sortie</td><td>"+f2(pec)+"</td></tr><tr><td>Preavis</td><td>"+f2(pre)+"</td></tr><tr style=font-weight:700><td>Total brut</td><td>"+f2(tot)+"</td></tr><tr><td>ONSS</td><td>-"+f2(onss)+"</td></tr><tr><td>PP</td><td>-"+f2(pp)+"</td></tr><tr style=font-weight:700><td>NET</td><td>"+f2(net)+"</td></tr></table><p>Pour solde de tout compte.</p><div style=text-align:center;margin-top:20px><button onclick=window.print()>Imprimer</button></div></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Solde_'+name);}
+function generateSoldeCompte(emp,co){var coName=co?.name||"Aureus IA SPRL";var name=(emp.first||emp.fn||"")+" "+(emp.last||emp.ln||"");var brut=+(emp.monthlySalary||emp.gross||0);var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var pro=Math.round(brut*15/22*100)/100;var pec=Math.round(brut*PV_SIMPLE*100)/100;var pre=brut;var tot=pro+pec+pre;var onss=Math.round(tot*TX_ONSS_W*100)/100;var pp=quickPP(tot);var net=Math.round((tot-onss-pp)*100)/100;var html="<!DOCTYPE html><html><head><meta charset=utf-8><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto}table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:6px 10px;border:1px solid #ccc}@media print{button{display:none!important}}</style></head><body><h2 style=text-align:center;text-decoration:underline>SOLDE DE TOUT COMPTE</h2><p>"+coName+" - Travailleur: <b>"+name+"</b></p><table><tr><th>Element</th><th>Montant</th></tr><tr><td>Prorata</td><td>"+f2(pro)+"</td></tr><tr><td>Pecule sortie</td><td>"+f2(pec)+"</td></tr><tr><td>Préavis</td><td>"+f2(pre)+"</td></tr><tr style=font-weight:700><td>Total brut</td><td>"+f2(tot)+"</td></tr><tr><td>ONSS</td><td>-"+f2(onss)+"</td></tr><tr><td>PP</td><td>-"+f2(pp)+"</td></tr><tr style=font-weight:700><td>NET</td><td>"+f2(net)+"</td></tr></table><p>Pour solde de tout compte.</p><div style=text-align:center;margin-top:20px><button onclick=window.print()>Imprimer</button></div></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Solde_'+name);}
 function getAlertes(emps,co){
   const now=new Date();const alerts=[];
   emps.forEach(e=>{
@@ -23351,8 +23351,8 @@ td.bold{font-weight:700}
   <div class="info-grid">
     <div class="info-row"><span class="info-label">Nom:</span><span class="info-value">${empName}</span></div>
     <div class="info-row"><span class="info-label">NISS:</span><span class="info-value">${empNISS}</span></div>
-    <div class="info-row"><span class="info-label">Fonction:</span><span class="info-value">${emp.function||emp.job||'Employe'}</span></div>
-    <div class="info-row"><span class="info-label">Statut:</span><span class="info-value">${emp.statut||'Employe'}</span></div>
+    <div class="info-row"><span class="info-label">Fonction:</span><span class="info-value">${emp.function||emp.job||'Employé'}</span></div>
+    <div class="info-row"><span class="info-label">Statut:</span><span class="info-value">${emp.statut||'Employé'}</span></div>
     <div class="info-row"><span class="info-label">Entree:</span><span class="info-value">${emp.startDate||emp.start||'-'}</span></div>
     <div class="info-row"><span class="info-label">Regime:</span><span class="info-value">${emp.regime||emp.whWeek||38}h/sem</span></div>
   </div>
@@ -23374,8 +23374,8 @@ td.bold{font-weight:700}
   <table>
     <tr><th>Description</th><th class="right">Base</th><th class="right">Taux</th><th class="right">Montant</th></tr>
     <tr><td>Cotisation ONSS personnelle</td><td class="right">${f2(brut)}</td><td class="right">13,07%</td><td class="right" style="color:#c0392b">-${f2(onssP)}</td></tr>
-    <tr><td>Precompte professionnel</td><td class="right">${f2(imposable)}</td><td class="right">${imposable>0?(pp/imposable*100).toFixed(1)+'%':'-'}</td><td class="right" style="color:#c0392b">-${f2(pp)}</td></tr>
-    <tr><td>Cotisation speciale securite sociale</td><td class="right">-</td><td class="right">Bareme</td><td class="right" style="color:#c0392b">-${f2(csss)}</td></tr>
+    <tr><td>Précompte professionnel</td><td class="right">${f2(imposable)}</td><td class="right">${imposable>0?(pp/imposable*100).toFixed(1)+'%':'-'}</td><td class="right" style="color:#c0392b">-${f2(pp)}</td></tr>
+    <tr><td>Cotisation spéciale securite sociale</td><td class="right">-</td><td class="right">Bareme</td><td class="right" style="color:#c0392b">-${f2(csss)}</td></tr>
     <tr class="total-row"><td colspan="3">TOTAL RETENUES</td><td class="right" style="color:#c0392b">-${f2(onssP+pp+csss)}</td></tr>
   </table>
 </div>
@@ -23389,12 +23389,12 @@ ${empIBAN?`<div style="font-size:10px;color:#666;margin-top:4px">Virement sur: <
   <div class="title">Charges patronales (pour information)</div>
   <div class="info-grid">
     <div class="info-row"><span class="info-label">ONSS patronal (25,07%):</span><span class="info-value">${f2(onssE)}</span></div>
-    <div class="info-row"><span class="info-label">Cout total employeur:</span><span class="info-value" style="color:#c6a34e;font-weight:800">${f2(coutTotal)}</span></div>
+    <div class="info-row"><span class="info-label">Coût total employeur:</span><span class="info-value" style="color:#c6a34e;font-weight:800">${f2(coutTotal)}</span></div>
   </div>
 </div>
 ${mealV>0?`<div style="margin-top:6px;font-size:10px;color:#666">Cheques-repas: ${emp.mealVoucher||0} x 22j = ${f2(mealV)} EUR (part patronale ${f2((emp.mealVoucher||0)*22*0.83)})</div>`:''}
 <div class="footer">
-  <span>Genere par Aureus Social Pro | ${coName} | ${coVAT}</span>
+  <span>Généré par Aureus Social Pro | ${coName} | ${coVAT}</span>
   <span>Date edition: ${new Date().toLocaleDateString('fr-BE')}</span>
 </div>
 <div style="text-align:center;margin-top:15px"><button onclick="window.print()" style="background:#c6a34e;color:#fff;border:none;padding:10px 30px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Imprimer / Sauvegarder PDF</button></div>
@@ -23560,7 +23560,7 @@ function SimulateurNetBrutMod({s,d}){
       </div>
       <I label="Regime horaire (%)" type="number" value={reg} onChange={setReg}/>
       <div style={{marginTop:12,padding:16,borderRadius:8,background:"rgba(198,163,78,.05)",border:"1px solid rgba(198,163,78,.15)"}}>
-        {[{l:"Salaire brut",v:p.brut,c:"#e8e6e0"},{l:"ONSS personnel (-"+((LOIS_BELGES.onss.travailleur*100).toFixed(2))+"%)",v:-p.onssP,c:"#f87171"},{l:"Revenu imposable",v:p.imposable,c:"#9e9b93"},{l:"Precompte professionnel",v:-p.pp,c:"#f87171"},{l:"Cotisation speciale secu",v:-p.csss,c:"#f87171"},{l:"Bonus a emploi",v:p.bonusEmploi,c:"#4ade80"},{l:"SALAIRE NET",v:p.net,c:"#4ade80"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:i===6?"8px 0 0":"4px 0",borderTop:i===6?"2px solid rgba(198,163,78,.3)":"none",fontSize:i===6?13:12}}>
+        {[{l:"Salaire brut",v:p.brut,c:"#e8e6e0"},{l:"ONSS personnel (-"+((LOIS_BELGES.onss.travailleur*100).toFixed(2))+"%)",v:-p.onssP,c:"#f87171"},{l:"Revenu imposable",v:p.imposable,c:"#9e9b93"},{l:"Précompte professionnel",v:-p.pp,c:"#f87171"},{l:"Cotisation spéciale secu",v:-p.csss,c:"#f87171"},{l:"Bonus a emploi",v:p.bonusEmploi,c:"#4ade80"},{l:"SALAIRE NET",v:p.net,c:"#4ade80"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:i===6?"8px 0 0":"4px 0",borderTop:i===6?"2px solid rgba(198,163,78,.3)":"none",fontSize:i===6?13:12}}>
           <span style={{color:i===6?"#c6a34e":"#9e9b93"}}>{r.l}</span>
           <span style={{color:r.c,fontWeight:i===6?800:600}}>{r.v>=0?fmt(r.v):"-"+fmt(Math.abs(r.v))}</span>
         </div>)}
@@ -23571,7 +23571,7 @@ function SimulateurNetBrutMod({s,d}){
           <div style={{fontSize:16,fontWeight:700,color:"#f87171"}}>{fmt(p.onssE)}</div>
         </div>
         <div style={{padding:10,borderRadius:8,background:"rgba(198,163,78,.05)",border:"1px solid rgba(198,163,78,.15)"}}>
-          <div style={{fontSize:10,color:"#c6a34e"}}>Cout total employeur</div>
+          <div style={{fontSize:10,color:"#c6a34e"}}>Coût total employeur</div>
           <div style={{fontSize:16,fontWeight:700,color:"#c6a34e"}}>{fmt(p.coutTotal)}</div>
         </div>
       </div>
@@ -23585,10 +23585,10 @@ function SimulateurNetBrutMod({s,d}){
       </div>
     </C>}
     {tab==="annuel"&&<C><ST>Projection annuelle</ST>
-      {[{l:"Brut annuel ((12+1+PV_DOUBLE) mois)",v:p.brut*(12+1+PV_DOUBLE)},{l:"ONSS personnel annuel",v:p.onssP*(12+1+PV_DOUBLE)},{l:"PP annuel",v:p.pp*12},{l:"CSSS annuel",v:p.csss*12},{l:"Net annuel estime",v:p.net*12+pd.net+t13.net},{l:"ONSS patronal annuel",v:p.onssE*(12+1+PV_DOUBLE)},{l:"Cout total employeur/an",v:p.coutTotal*(12+1+PV_DOUBLE)}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i===4?"2px solid rgba(74,222,128,.3)":i===6?"2px solid rgba(198,163,78,.3)":"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#9e9b93",fontSize:12}}>{r.l}</span><span style={{color:i===4?"#4ade80":i===6?"#c6a34e":"#e8e6e0",fontWeight:i>=4?700:600}}>{fmt(r.v)}</span></div>)}
+      {[{l:"Brut annuel ((12+1+PV_DOUBLE) mois)",v:p.brut*(12+1+PV_DOUBLE)},{l:"ONSS personnel annuel",v:p.onssP*(12+1+PV_DOUBLE)},{l:"PP annuel",v:p.pp*12},{l:"CSSS annuel",v:p.csss*12},{l:"Net annuel estime",v:p.net*12+pd.net+t13.net},{l:"ONSS patronal annuel",v:p.onssE*(12+1+PV_DOUBLE)},{l:"Coût total employeur/an",v:p.coutTotal*(12+1+PV_DOUBLE)}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i===4?"2px solid rgba(74,222,128,.3)":i===6?"2px solid rgba(198,163,78,.3)":"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#9e9b93",fontSize:12}}>{r.l}</span><span style={{color:i===4?"#4ade80":i===6?"#c6a34e":"#e8e6e0",fontWeight:i>=4?700:600}}>{fmt(r.v)}</span></div>)}
     </C>}
     {tab==="pecule"&&<C><ST>Pecule vacances double</ST>
-      {[{l:"Base (92% du brut mensuel)",v:pd.base/12},{l:"ONSS "+((LOIS_BELGES.onss.travailleur*100).toFixed(2))+"%",v:-pd.onss/12},{l:"Cotisation speciale 1%",v:-pd.cotSpec/12},{l:"PP 23.15%",v:-pd.pp/12},{l:"Net pecule double",v:pd.net/12}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:i===4?"2px solid rgba(74,222,128,.3)":"1px solid rgba(255,255,255,.03)",fontSize:12}}><span style={{color:"#9e9b93"}}>{r.l}</span><span style={{color:i===4?"#4ade80":r.v<0?"#f87171":"#e8e6e0",fontWeight:i===4?700:600}}>{r.v>=0?fmt(r.v):"-"+fmt(Math.abs(r.v))}</span></div>)}
+      {[{l:"Base (92% du brut mensuel)",v:pd.base/12},{l:"ONSS "+((LOIS_BELGES.onss.travailleur*100).toFixed(2))+"%",v:-pd.onss/12},{l:"Cotisation spéciale 1%",v:-pd.cotSpec/12},{l:"PP 23.15%",v:-pd.pp/12},{l:"Net pecule double",v:pd.net/12}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:i===4?"2px solid rgba(74,222,128,.3)":"1px solid rgba(255,255,255,.03)",fontSize:12}}><span style={{color:"#9e9b93"}}>{r.l}</span><span style={{color:i===4?"#4ade80":r.v<0?"#f87171":"#e8e6e0",fontWeight:i===4?700:600}}>{r.v>=0?fmt(r.v):"-"+fmt(Math.abs(r.v))}</span></div>)}
       <ST>13eme mois</ST>
       {[{l:"Brut 13eme mois",v:t13.brut},{l:"ONSS "+((LOIS_BELGES.onss.travailleur*100).toFixed(2))+"%",v:-t13.onss},{l:"PP 23.15%",v:-t13.pp},{l:"Net 13eme mois",v:t13.net}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:i===3?"2px solid rgba(74,222,128,.3)":"1px solid rgba(255,255,255,.03)",fontSize:12}}><span style={{color:"#9e9b93"}}>{r.l}</span><span style={{color:i===3?"#4ade80":r.v<0?"#f87171":"#e8e6e0",fontWeight:i===3?700:600}}>{r.v>=0?fmt(r.v):"-"+fmt(Math.abs(r.v))}</span></div>)}
     </C>}
@@ -23706,10 +23706,10 @@ const categories=[
   {k:'csss.isole.4.montantFixe',l:'Plafond isole',v:fmt(L.csss.isole[4].montantFixe)+' EUR/trim',t:'num'},
 ]},
 {id:'rem',nom:'Remuneration',icon:'💶',color:'#22c55e',params:[
-  {k:'remuneration.RMMMG.montant18ans',l:'RMMMG (18 ans)',v:fmt(L.remuneration.RMMMG.montant18ans)+' EUR/mois',t:'num'},
-  {k:'remuneration.indexSante.coeff',l:'Coefficient index sante',v:L.remuneration.indexSante.coeff,t:'num'},
-  {k:'remuneration.peculeVacances.simple.pct',l:'Pecule vacances simple',v:pct(L.remuneration.peculeVacances.simple.pct),t:'pct'},
-  {k:'remuneration.peculeVacances.double.pct',l:'Pecule vacances double',v:pct(L.remuneration.peculeVacances.double.pct),t:'pct'},
+  {k:'rémunération.RMMMG.montant18ans',l:'RMMMG (18 ans)',v:fmt(L.rémunération.RMMMG.montant18ans)+' EUR/mois',t:'num'},
+  {k:'rémunération.indexSante.coeff',l:'Coefficient index sante',v:L.rémunération.indexSante.coeff,t:'num'},
+  {k:'rémunération.peculeVacances.simple.pct',l:'Pecule vacances simple',v:pct(L.rémunération.peculeVacances.simple.pct),t:'pct'},
+  {k:'rémunération.peculeVacances.double.pct',l:'Pecule vacances double',v:pct(L.rémunération.peculeVacances.double.pct),t:'pct'},
   {k:'chequesRepas.partTravailleur.min',l:'Cheques-repas part travailleur min',v:fmt(L.chequesRepas.partTravailleur.min)+' EUR',t:'num'},
   {k:'chequesRepas.valeurFaciale.max',l:'Cheques-repas valeur faciale max',v:fmt(L.chequesRepas.valeurFaciale.max)+' EUR',t:'num'},
   {k:'fraisPropres.forfaitBureau.max',l:'Forfait bureau/teletravail',v:fmt(L.fraisPropres.forfaitBureau.max)+' EUR/mois',t:'num'},
@@ -23727,7 +23727,7 @@ const categories=[
   {k:'tempsTravail.dureeHebdoLegale',l:'Duree hebdo legale',v:L.tempsTravail.dureeHebdoLegale+'h',t:'num'},
   {k:'tempsTravail.heuresSupp.majoration50',l:'Heures supp (+50%)',v:pct(L.tempsTravail.heuresSupp.majoration50),t:'pct'},
   {k:'tempsTravail.heuresSupp.plafondAnnuel',l:'Plafond heures supp/an',v:L.tempsTravail.heuresSupp.plafondAnnuel+'h',t:'num'},
-  {k:'tempsTravail.jourFerie.nombre',l:'Jours feries legaux',v:L.tempsTravail.jourFerie.nombre,t:'num'},
+  {k:'tempsTravail.jourFerie.nombre',l:'Jours fériés legaux',v:L.tempsTravail.jourFerie.nombre,t:'num'},
 ]},
 {id:'assur',nom:'Assurances & Seuils',icon:'🛡',color:'#06b6d4',params:[
   {k:'assurances.accidentTravail.taux',l:'Assurance accident travail',v:pct(L.assurances.accidentTravail.taux),t:'pct'},
@@ -23888,7 +23888,7 @@ return <div>
     <div style={{fontSize:11,color:"#4ade80",fontWeight:600}}>✅ Backend actif — Cron quotidien 06:30 CET</div>
     <div style={{fontSize:9,color:"#5e5c56"}}>{lastCheck?("Dernier scan: "+new Date(lastCheck).toLocaleString("fr-BE")):"Aucun scan effectue"}</div>
   </div>
-  <div style={{fontSize:10,color:"#9e9b93",marginTop:4}}>Le service /api/veille-juridique scrape {L.sources.length} sources officielles, detecte les changements AR/CCT, et notifie l administrateur pour validation avant mise a jour.</div>
+  <div style={{fontSize:10,color:"#9e9b93",marginTop:4}}>Le service /api/veille-juridique scrape {L.sources.length} sources officielles, detecte les changements AR/CCT, et notifie l administrateur pour validation avant mise à jour.</div>
   {updateHistory.length>0&&updateHistory[0].changes?.length>0&&<div style={{marginTop:6,padding:"6px 8px",background:"rgba(248,113,113,.06)",borderRadius:6}}>
     <div style={{fontSize:10,color:"#f87171",fontWeight:600}}>⚠️ {updateHistory[0].changes.length} changement(s) detecte(s):</div>
     {updateHistory[0].changes.slice(0,3).map((c,i)=><div key={i} style={{fontSize:10,color:"#fb923c",marginTop:2}}>{c.label}: {c.current} → {c.detected}</div>)}
@@ -23938,7 +23938,7 @@ updateHistory.map((h,i)=><div key={i} style={{display:"flex",gap:10,padding:"10p
     data={[
       {r:"Salaire brut",montant:fmt(brut)+" EUR",c:"#c6a34e",source:"Contrat de travail"},
       {r:"ONSS travailleur ("+pct(L.onss.travailleur)+")",montant:"- "+fmt(onssW)+" EUR",c:"#f87171",source:"Loi 27/06/1969"},
-      {r:"Precompte professionnel",montant:"- "+fmt(pp)+" EUR",c:"#f87171",source:"AR Annexe III - Formule-cle SPF"},
+      {r:"Précompte professionnel",montant:"- "+fmt(pp)+" EUR",c:"#f87171",source:"AR Annexe III - Formule-cle SPF"},
       {r:"CSSS",montant:"- "+fmt(csss)+" EUR",c:"#f87171",source:"AR 29/03/2012"},
       {r:"NET A PAYER",montant:fmt(net)+" EUR",c:"#4ade80",source:""},
       {r:"ONSS employeur ("+pct(L.onss.employeur.total)+")",montant:fmt(onssE)+" EUR",c:"#fb923c",source:"Loi 27/06/1969"},
@@ -24100,7 +24100,7 @@ return <div><PH title="Offboarding" sub="Processus de sortie - Preavis - Solde d
 {tab==="legal"&&<C><ST>Base legale licenciement</ST>
 {[{t:"Loi Statut Unique (01/01/2014)",d:"Harmonisation ouvriers/employes. Preavis unique base sur anciennete."},{t:"Motif grave (art. 35)",d:"Licenciement immediat sans preavis. Notification 3 jours ouvrables. Charge de la preuve employeur."},{t:"Licenciement manifestement deraisonnable",d:"CCT 109: si pas de lien avec aptitude/conduite/necessites entreprise. Indemnite 3-17 semaines."},{t:"Protection speciale",d:"Delegue syndical, femme enceinte, credit-temps, maladie. Preavis interdit pendant protection."},{t:"Outplacement",d:"Obligatoire si preavis 30+ semaines ou 45+ ans. 60h sur 12 mois. Cout 1.800 EUR min."},{t:"Clause non-concurrence",d:"Valable si brut > 38.665 EUR/an. Max 12 mois. Compensation = 50% du brut * duree."},{t:"Rupture de commun accord",d:"Convention signee. Pas de C4 chomage. Indemnite libre negociee."}].map((r,i)=><div key={i} style={{padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><b style={{color:"#c6a34e",fontSize:12}}>{r.t}</b><div style={{fontSize:10.5,color:"#9e9b93",marginTop:2}}>{r.d}</div></div>)}
 </C>}
-<C><ST>Documents de sortie — Telecharger</ST>{[{n:"C4 — Certificat de chomage",fn:()=>{if(typeof generateC4PDF==='function')generateC4PDF(emp,s)},col:"#ef4444"},{n:"Attestation d'emploi",fn:()=>{if(typeof generateAttestationEmploi==='function')generateAttestationEmploi(emp,s)},col:"#60a5fa"},{n:"Attestation de salaire",fn:()=>{if(typeof generateAttestationSalaire==='function')generateAttestationSalaire(emp,s)},col:"#60a5fa"},{n:"Solde de tout compte",fn:()=>{if(typeof generateSoldeCompte==='function')generateSoldeCompte(emp,s)},col:"#22c55e"},{n:"Lettre de licenciement",fn:()=>{aureuspdf('Lettre de Licenciement',[{type:'title',text:'LETTRE DE LICENCIEMENT'},{type:'text',text:'Recommandee avec accuse de reception',size:8,color:[198,163,78]},{type:'line'},{type:'space',h:4},{type:'kv',k:'Destinataire',v:(emp.first||'')+' '+(emp.last||'')},{type:'kv',k:'Date',v:new Date().toLocaleDateString('fr-BE')},{type:'kv',k:'Entreprise',v:s.co?.name||'[Entreprise]'},{type:'space',h:4},{type:'article',num:'Objet',text:'Notification de licenciement conformement aux dispositions de la Loi du 3 juillet 1978 relative aux contrats de travail et de la CCT n.109 du 12 fevrier 2014 concernant la motivation du licenciement.'},{type:'article',num:'Preavis',text:'Nous vous notifions un preavis de '+Math.max(1,Math.floor(anc*3+1))+' semaines prenant cours le '+new Date(Date.now()+7*86400000).toLocaleDateString('fr-BE')+'.'},{type:'article',num:'Motif',text:'[A completer conformement a l\'Art. 3 CCT 109 — motivation du licenciement]'},{type:'article',num:'Base legale',text:'Art. 37 Loi 03/07/1978 (preavis). CCT 109 (motivation). Art. 39 Loi 03/07/1978 (indemnite compensatoire). Loi 26/12/2013 (statut unique).'},{type:'article',num:'Conge sollicitation',text:'Durant le preavis, droit au conge de sollicitation (Art. 41 Loi 03/07/1978): 1 jour/semaine si preavis > 26 semaines, 1/2 jour sinon.'},{type:'space',h:8},{type:'signature'}],{filename:'lettre_licenciement_'+(emp.last||'emp'),enterprise:s.co?.name||''})},col:"#fb923c"},{n:"Notification de preavis",fn:()=>{aureuspdf('Notification de Preavis',[{type:'title',text:'NOTIFICATION DE PREAVIS'},{type:'text',text:'Art. 37 Loi 03/07/1978',size:8,color:[158,155,147]},{type:'line'},{type:'space',h:4},{type:'kv',k:'Destinataire',v:(emp.first||'')+' '+(emp.last||'')},{type:'kv',k:'Date',v:new Date().toLocaleDateString('fr-BE')},{type:'space',h:4},{type:'article',num:'Preavis',text:'Par la presente, nous vous notifions un preavis de '+Math.max(1,Math.floor(anc*3+1))+' semaines conformement a l\'article 37/2 de la Loi du 3 juillet 1978.'},{type:'article',num:'Periode',text:'Debut du preavis: '+new Date(Date.now()+7*86400000).toLocaleDateString('fr-BE')+'. Fin estimee: '+new Date(Date.now()+(Math.max(1,Math.floor(anc*3+1))*7+7)*86400000).toLocaleDateString('fr-BE')+'.'},{type:'article',num:'Conge sollicitation',text:'Art. 41 Loi 03/07/1978: 1 jour/semaine si preavis > 26 semaines, 1/2 jour/semaine si preavis inferieur ou egal a 26 semaines.'},{type:'article',num:'Alternative',text:'Indemnite compensatoire: '+new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format((emp.gross||emp.brut||0)*Math.max(1,Math.floor(anc*3+1))/4.33)+' EUR (remuneration x semaines / 4.33).'},{type:'space',h:8},{type:'signature'}],{filename:'notification_preavis_'+(emp.last||'emp'),enterprise:s.co?.name||''})},col:"#a78bfa"}].map((doc,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#e8e6e0",fontSize:12}}>{doc.n}</span><button onClick={doc.fn} style={{padding:"6px 14px",borderRadius:6,border:"none",background:"rgba("+( doc.col==="#ef4444"?"239,68,68":doc.col==="#22c55e"?"34,197,94":doc.col==="#60a5fa"?"96,165,250":doc.col==="#fb923c"?"251,146,56":"167,139,250")+",.12)",color:doc.col,fontSize:10,cursor:"pointer",fontWeight:600,fontFamily:"inherit"}}>Telecharger</button></div>)}</C></div>;}
+<C><ST>Documents de sortie — Telecharger</ST>{[{n:"C4 — Certificat de chomage",fn:()=>{if(typeof generateC4PDF==='function')generateC4PDF(emp,s)},col:"#ef4444"},{n:"Attestation d'emploi",fn:()=>{if(typeof generateAttestationEmploi==='function')generateAttestationEmploi(emp,s)},col:"#60a5fa"},{n:"Attestation de salaire",fn:()=>{if(typeof generateAttestationSalaire==='function')generateAttestationSalaire(emp,s)},col:"#60a5fa"},{n:"Solde de tout compte",fn:()=>{if(typeof generateSoldeCompte==='function')generateSoldeCompte(emp,s)},col:"#22c55e"},{n:"Lettre de licenciement",fn:()=>{aureuspdf('Lettre de Licenciement',[{type:'title',text:'LETTRE DE LICENCIEMENT'},{type:'text',text:'Recommandee avec accuse de reception',size:8,color:[198,163,78]},{type:'line'},{type:'space',h:4},{type:'kv',k:'Destinataire',v:(emp.first||'')+' '+(emp.last||'')},{type:'kv',k:'Date',v:new Date().toLocaleDateString('fr-BE')},{type:'kv',k:'Entreprise',v:s.co?.name||'[Entreprise]'},{type:'space',h:4},{type:'article',num:'Objet',text:'Notification de licenciement conformement aux dispositions de la Loi du 3 juillet 1978 relative aux contrats de travail et de la CCT n.109 du 12 fevrier 2014 concernant la motivation du licenciement.'},{type:'article',num:'Preavis',text:'Nous vous notifions un preavis de '+Math.max(1,Math.floor(anc*3+1))+' semaines prenant cours le '+new Date(Date.now()+7*86400000).toLocaleDateString('fr-BE')+'.'},{type:'article',num:'Motif',text:'[A completer conformement a l\'Art. 3 CCT 109 — motivation du licenciement]'},{type:'article',num:'Base legale',text:'Art. 37 Loi 03/07/1978 (preavis). CCT 109 (motivation). Art. 39 Loi 03/07/1978 (indemnite compensatoire). Loi 26/12/2013 (statut unique).'},{type:'article',num:'Conge sollicitation',text:'Durant le preavis, droit au conge de sollicitation (Art. 41 Loi 03/07/1978): 1 jour/semaine si preavis > 26 semaines, 1/2 jour sinon.'},{type:'space',h:8},{type:'signature'}],{filename:'lettre_licenciement_'+(emp.last||'emp'),enterprise:s.co?.name||''})},col:"#fb923c"},{n:"Notification de preavis",fn:()=>{aureuspdf('Notification de Preavis',[{type:'title',text:'NOTIFICATION DE PREAVIS'},{type:'text',text:'Art. 37 Loi 03/07/1978',size:8,color:[158,155,147]},{type:'line'},{type:'space',h:4},{type:'kv',k:'Destinataire',v:(emp.first||'')+' '+(emp.last||'')},{type:'kv',k:'Date',v:new Date().toLocaleDateString('fr-BE')},{type:'space',h:4},{type:'article',num:'Preavis',text:'Par la presente, nous vous notifions un preavis de '+Math.max(1,Math.floor(anc*3+1))+' semaines conformement a l\'article 37/2 de la Loi du 3 juillet 1978.'},{type:'article',num:'Periode',text:'Debut du preavis: '+new Date(Date.now()+7*86400000).toLocaleDateString('fr-BE')+'. Fin estimee: '+new Date(Date.now()+(Math.max(1,Math.floor(anc*3+1))*7+7)*86400000).toLocaleDateString('fr-BE')+'.'},{type:'article',num:'Conge sollicitation',text:'Art. 41 Loi 03/07/1978: 1 jour/semaine si preavis > 26 semaines, 1/2 jour/semaine si preavis inferieur ou egal a 26 semaines.'},{type:'article',num:'Alternative',text:'Indemnite compensatoire: '+new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format((emp.gross||emp.brut||0)*Math.max(1,Math.floor(anc*3+1))/4.33)+' EUR (rémunération x semaines / 4.33).'},{type:'space',h:8},{type:'signature'}],{filename:'notification_preavis_'+(emp.last||'emp'),enterprise:s.co?.name||''})},col:"#a78bfa"}].map((doc,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#e8e6e0",fontSize:12}}>{doc.n}</span><button onClick={doc.fn} style={{padding:"6px 14px",borderRadius:6,border:"none",background:"rgba("+( doc.col==="#ef4444"?"239,68,68":doc.col==="#22c55e"?"34,197,94":doc.col==="#60a5fa"?"96,165,250":doc.col==="#fb923c"?"251,146,56":"167,139,250")+",.12)",color:doc.col,fontSize:10,cursor:"pointer",fontWeight:600,fontFamily:"inherit"}}>Télécharger</button></div>)}</C></div>;}
 
 // ═══════════════════════════════════════════════════════════════
 //  AUREUS SUITE — Nos logiciels
@@ -24198,20 +24198,20 @@ Double calcul pour employes > 32.254 EUR (seuil 2013):
 
 ### Motivation du licenciement (CCT 109 du CNT):
 - Depuis 01/04/2014: motivation obligatoire a la demande du travailleur.
-- Licenciement manifestement deraisonnable = indemnite de 3 a 17 semaines de remuneration.
+- Licenciement manifestement deraisonnable = indemnite de 3 a 17 semaines de rémunération.
 - Critere: employeur normal et raisonnable n'aurait pas licencie.
 - Exclusions: 6 premiers mois, interim, etudiant, pension, RCC.
 
 ### Indemnite de rupture:
 - = Remuneration brute x duree du preavis non preste.
 - Inclut: salaire de base, avantages (cheques-repas, voiture, assurance groupe...).
-- Soumise a ONSS + precompte professionnel.
+- Soumise a ONSS + précompte professionnel.
 
 ### Outplacement obligatoire:
 - Travailleurs >= 45 ans licencies (sauf motif grave): 60h sur 12 mois.
 - Valeur min: 1.800 EUR.
 - Offre dans les 15 jours suivant la fin du preavis.
-- Sanction: 4 semaines de remuneration si pas d'offre.
+- Sanction: 4 semaines de rémunération si pas d'offre.
 
 ## ═══════════════════════════════════════════
 ## 3. ONSS — SECURITE SOCIALE
@@ -24224,7 +24224,7 @@ Double calcul pour employes > 32.254 EUR (seuil 2013):
 - Patronal marchand (Cat. 1): ~25% (inclut: pension 8,86%, maladie 3,80%, chomage 1,46%, AT 0,02%, alloc fam 7,00%, vacances annuelles 0%, fermeture 0,23%, etc.)
 - Patronal non-marchand (Cat. 2): ~32,40%.
 - Moderation salariale: +5,67% sur cotis patronales.
-- Cotisation speciale securite sociale: progressive selon revenu menage (max 60,94 EUR/mois pour hauts revenus).
+- Cotisation spéciale securite sociale: progressive selon revenu menage (max 60,94 EUR/mois pour hauts revenus).
 
 ### Reduction premier engagement (2026):
 Depuis 01/04/2016, reformee au 01/04/2026:
@@ -24242,7 +24242,7 @@ Base de calcul: cotisations patronales de base (sans moderation salariale).
 
 ### DmfA (Declaration Multifonctionnelle / Multifunctionele Aangifte):
 - Trimestrielle: T1 -> 30/04, T2 -> 31/07, T3 -> 31/10, T4 -> 31/01 N+1.
-- Contenu: donnees employeur, travailleurs, remunerations, prestations.
+- Contenu: donnees employeur, travailleurs, rémunérations, prestations.
 - Format XML via batch ou portail.
 - Provisions mensuelles: le 5 du mois suivant.
 
@@ -24256,10 +24256,10 @@ Base de calcul: cotisations patronales de base (sans moderation salariale).
 ## 4. PRECOMPTE PROFESSIONNEL
 ## ═══════════════════════════════════════════
 
-### Base legale: AR fixant les regles d'application du precompte professionnel (annuel)
+### Base legale: AR fixant les regles d'application du précompte professionnel (annuel)
 
 ### Methode: Formule-cle SPF Finances 2026 (exercice d'imposition 2027).
-- Base: remuneration brute - ONSS 13,07% = imposable.
+- Base: rémunération brute - ONSS 13,07% = imposable.
 - Bareme progressif:
   0 — 10.580 EUR: 25%
   10.580 — 15.200 EUR: 40%
@@ -24273,7 +24273,7 @@ Base de calcul: cotisations patronales de base (sans moderation salariale).
 - Scale II: conjoint a charge (1 revenu).
 - Scale III: pensionnes.
 
-### Bonus a l'emploi:
+### Bonus à l'emploi:
 - Volet social: reduction ONSS pour bas salaires (brut < ~2.800 EUR/mois).
 - Volet fiscal: reduction PP correspondante.
 - Montant max 2026: ~230 EUR/mois (social) + ~96 EUR/mois (fiscal).
@@ -24295,14 +24295,14 @@ ATTENTION: la dispense se calcule sur le PP retenu, PAS sur le salaire brut.
 - 19 ans + 6 mois anciennete: 2.080,63 EUR/mois.
 - 20 ans + 12 mois anciennete: 2.131,38 EUR/mois.
 
-### Pecule de vacances:
+### Pécule de vacances:
 EMPLOYES (paye par l'employeur):
 - Simple: salaire normal du mois de vacances.
 - Double: 92% du salaire mensuel brut.
 - 20 jours de conge/an (regime 5j/sem).
 
 OUVRIERS (paye par l'ONVA/Caisse sectorielle):
-- 15,38% de la remuneration brute a 108%.
+- 15,38% de la rémunération brute a 108%.
 - Cotisation patronale: 10,27% trimestrielle a l'ONSS.
 
 ### Prime de fin d'annee (13eme mois):
@@ -24356,7 +24356,7 @@ OUVRIERS (paye par l'ONVA/Caisse sectorielle):
 ### Conge parental:
 - 4 mois par enfant (< 12 ans). Temps plein, mi-temps ou 1/5.
 - Allocation ONEM forfaitaire.
-- Protection contre licenciement: debut demande jusqu'a 3 mois apres reprise.
+- Protection contre licenciement: debut demande jusqu'à 3 mois apres reprise.
 
 ## ═══════════════════════════════════════════
 ## 7. BIEN-ETRE AU TRAVAIL
@@ -24410,7 +24410,7 @@ OUVRIERS (paye par l'ONVA/Caisse sectorielle):
 - Employes CT eco: supplement fixe par CCT/plan.
 
 ### Allocation ONEM:
-- 65% de la remuneration plafonnee (plafond A: 3.199,26 EUR/mois 2026).
+- 65% de la rémunération plafonnee (plafond A: 3.199,26 EUR/mois 2026).
 - Precompte: 26,75%.
 
 ## ═══════════════════════════════════════════
@@ -24424,10 +24424,10 @@ OUVRIERS (paye par l'ONVA/Caisse sectorielle):
 - Anciennete: 40 ans (H) / 38 ans (F) avec convergence progressive.
 - Regimes speciaux: travail de nuit/equipes, construction, metiers lourds (a partir de 60 ans).
 
-### DECAVA (cotisation speciale):
+### DECAVA (cotisation spéciale):
 - Patronale par tranche d'age: < 52: 10%, 52-54: 8,33%, 55-57: 5,83%, 58-59: 4,17%, >= 60: 3,25%.
 - Travailleur: supprimee depuis 2023.
-- Duree: jusqu'a la pension legale (66 ans en 2025-2030, 67 ans des 2030).
+- Duree: jusqu'à la pension legale (66 ans en 2025-2030, 67 ans des 2030).
 
 ## ═══════════════════════════════════════════
 ## 10. AIDES A L'EMPLOI
@@ -24506,7 +24506,7 @@ Majoration: +79 EUR par enfant a charge.
 
 ### Types:
 - Saisie-arret execution: titre executoire (jugement). Huissier.
-- Cession de remuneration: convention volontaire. Max = quotite cessible.
+- Cession de rémunération: convention volontaire. Max = quotite cessible.
 - Delegation de sommes: ordonnance du tribunal. Pension alimentaire.
 - Reglement collectif de dettes: admissibilite tribunal travail.
 
@@ -24651,7 +24651,7 @@ const AGENT_QUICK={
 // ═══════════════════════════════════════════════════════
 
 function ClotureMensuelle({s,d}){const ae=(s.emps||[]).filter(e=>e.status==='active'||!e.status);const n=ae.length;const [running,setRunning]=useState(false);const [done,setDone]=useState([]);const [step,setStep]=useState(0);const mois=new Date().toLocaleDateString("fr-BE",{month:"long",year:"numeric"});const etapes=[{l:"Calcul salaires",d:"Brut \u2192 ONSS \u2192 PP \u2192 Net pour "+n+" travailleurs",f:"calcPayroll"},{l:"Generation fiches PDF",d:n+" fiches de paie individuelles",f:"generateAllPayslips"},{l:"Fichier SEPA",d:"Virements salaires — XML pain.001",f:"generateSEPAXML"},{l:"Export comptable",d:"Ecritures OD + journal paie",f:"generateExportCompta"},{l:"Declaration Dimona",d:"Verification IN/OUT du mois",f:"generateDimonaXML"},{l:"Archivage",d:"Classement mensuel automatique",f:null}];const runAll=()=>{setRunning(true);setStep(0);setDone([]);let i=0;const next=()=>{if(i<etapes.length){setStep(i+1);setTimeout(()=>{setDone(prev=>[...prev,i]);i++;next()},800+Math.random()*600)}else{setRunning(false)}};next()};return <div><PH title="Cloture Mensuelle" sub={"Automatisation complete — "+mois+" — "+n+" travailleurs"}/><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:18}}>{[{l:"Travailleurs",v:n,c:"#c6a34e"},{l:"Etapes",v:etapes.length,c:"#60a5fa"},{l:"Completees",v:done.length+"/"+etapes.length,c:done.length===etapes.length?"#22c55e":"#fb923c"},{l:"Status",v:running?"En cours...":done.length===etapes.length?"Termine":"Pret",c:running?"#fb923c":done.length===etapes.length?"#22c55e":"#9e9b93"}].map((k,i)=><div key={i} style={{padding:"14px 16px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid rgba(198,163,78,.08)"}}><div style={{fontSize:10,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div style={{fontSize:18,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div><div style={{textAlign:"center",marginBottom:24}}><button onClick={runAll} disabled={running||n===0} style={{padding:"16px 48px",borderRadius:12,border:"none",background:running?"rgba(251,146,56,.2)":n===0?"rgba(94,92,86,.2)":"linear-gradient(135deg,#c6a34e,#a68a3c)",color:running?"#fb923c":n===0?"#5e5c56":"#0c0b09",fontWeight:800,fontSize:16,cursor:running||n===0?"not-allowed":"pointer",fontFamily:"inherit"}}>{running?"Traitement en cours...":done.length===etapes.length?"\u2713 Cloture terminee":"🚀 Lancer la cloture mensuelle"}</button>{n===0&&<div style={{fontSize:11,color:"#ef4444",marginTop:8}}>Ajoutez des travailleurs avant de cloturer</div>}</div><C><ST>Etapes de cloture</ST>{etapes.map((et,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:"1px solid rgba(255,255,255,.03)",opacity:step>0&&i>=step&&!done.includes(i)?0.4:1}}><div style={{width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,background:done.includes(i)?"rgba(34,197,94,.15)":step===i+1&&running?"rgba(251,146,56,.15)":"rgba(255,255,255,.03)",color:done.includes(i)?"#22c55e":step===i+1&&running?"#fb923c":"#5e5c56"}}>{done.includes(i)?"\u2713":step===i+1&&running?"\u23f3":i+1}</div><div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:done.includes(i)?"#22c55e":step===i+1&&running?"#fb923c":"#e8e6e0"}}>{et.l}</div><div style={{fontSize:10,color:"#5e5c56"}}>{et.d}</div></div><span style={{fontSize:10,padding:"3px 10px",borderRadius:10,background:done.includes(i)?"rgba(34,197,94,.1)":step===i+1&&running?"rgba(251,146,56,.1)":"transparent",color:done.includes(i)?"#22c55e":step===i+1&&running?"#fb923c":"#5e5c56"}}>{done.includes(i)?"Complete":step===i+1&&running?"En cours...":"En attente"}</span></div>)}</C></div>;}
-function PortailClientSS({s,d}){const clients=s.clients||[];const ae=s.emps||[];const [tab,setTab]=useState("dashboard");const mois=new Date().toLocaleDateString("fr-BE",{month:"long",year:"numeric"});const masseSal=ae.reduce((a,e)=>a+(e.gross||e.brut||0),0);const nbActifs=ae.filter(e=>e.status==="active"||!e.status).length;const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v);const prochEch=[{d:"5 du mois",l:"ONSS — Paiement cotisations",u:true},{d:"15 du mois",l:"Precompte professionnel — SPF Finances",u:true},{d:"25 du mois",l:"SEPA — Virements salaires",u:false},{d:"Fin trimestre",l:"DmfA — Declaration trimestrielle ONSS",u:false},{d:"28 fevrier",l:"Belcotax — Fiches 281.10 annuelles",u:false}];return <div><PH title="Portail Client" sub={"Tableau de bord — "+mois+" — "+nbActifs+" travailleurs actifs"}/><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:18}}>{[{l:"Travailleurs actifs",v:nbActifs,c:"#c6a34e"},{l:"Masse salariale brute",v:f2(masseSal)+" EUR",c:"#60a5fa"},{l:"Fiches du mois",v:nbActifs+" fiches",c:"#22c55e"},{l:"Prochaine echeance",v:"ONSS J5",c:"#ef4444"}].map((k,i)=><div key={i} style={{padding:"14px 16px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid rgba(198,163,78,.08)"}}><div style={{fontSize:10,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div style={{fontSize:18,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div><div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"dashboard",l:"Tableau de bord"},{v:"fiches",l:"Fiches de paie"},{v:"docs",l:"Documents"},{v:"echeances",l:"Echeancier"},{v:"upload",l:"Upload documents"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>{tab==="dashboard"&&<div><C><ST>Recapitulatif mensuel — {mois}</ST>{[{l:"Salaires bruts",v:f2(masseSal),c:"#e8e6e0"},{l:"ONSS travailleur (13,07%)",v:f2(masseSal*0.1307),c:"#ef4444"},{l:"Precompte professionnel",v:"Voir fiches individuelles",c:"#9e9b93"},{l:"Net total estime",v:f2(masseSal*0.58),c:"#22c55e"},{l:"ONSS patronal",v:f2(masseSal*0.2507),c:"#ef4444"},{l:"Cout total employeur",v:f2(masseSal*1.35),c:"#c6a34e"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#9e9b93",fontSize:12}}>{r.l}</span><span style={{color:r.c,fontSize:13,fontWeight:600}}>{r.v}</span></div>)}</C><C><ST>Alertes</ST>{nbActifs===0?<div style={{color:"#fb923c",fontSize:12}}>Aucun travailleur encode — importez vos donnees via l'onglet Upload</div>:<div style={{color:"#22c55e",fontSize:12}}>Aucune alerte en cours</div>}</C></div>}{tab==="fiches"&&<C><ST>Fiches de paie — {mois}</ST>{ae.length===0?<div style={{textAlign:"center",padding:40,color:"#5e5c56"}}><div style={{fontSize:32,marginBottom:8}}>📄</div><div>Aucune fiche disponible</div></div>:<div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr style={{borderBottom:"2px solid rgba(198,163,78,.2)"}}>{["Nom","Brut","ONSS","PP","Net","PDF"].map(h=><th key={h} style={{padding:"8px",textAlign:"left",color:"#c6a34e",fontWeight:600,fontSize:10}}>{h}</th>)}</tr></thead><tbody>{ae.map((e,i)=>{const brut=e.gross||e.brut||0;const onss=Math.round(brut*0.1307*100)/100;const pp=quickPP?quickPP(brut):Math.round(brut*0.22*100)/100;const net=Math.round((brut-onss-pp)*100)/100;return <tr key={e.id||i} style={{borderBottom:"1px solid rgba(255,255,255,.03)"}}><td style={{padding:"6px",fontWeight:600}}>{(e.first||e.fn||"")+" "+(e.last||e.ln||"")}</td><td style={{padding:"6px"}}>{f2(brut)}</td><td style={{padding:"6px",color:"#ef4444"}}>{f2(onss)}</td><td style={{padding:"6px",color:"#ef4444"}}>{f2(pp)}</td><td style={{padding:"6px",fontWeight:700,color:"#22c55e"}}>{f2(net)}</td><td style={{padding:"6px"}}><button onClick={()=>{if(typeof generatePayslipPDF==="function")generatePayslipPDF(e,s)}} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"rgba(198,163,78,.15)",color:"#c6a34e",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>PDF</button></td></tr>})}</tbody></table></div>}</C>}{tab==="docs"&&<C><ST>Documents disponibles</ST>{[{n:"Attestation d'emploi",f:"generateAttestationEmploi"},{n:"Attestation de salaire",f:"generateAttestationSalaire"},{n:"Dimona — Historique",f:null},{n:"DmfA — Derniere declaration",f:null},{n:"Belcotax — Fiches 281.10",f:"generateBelcotaxXML"}].map((doc,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#e8e6e0",fontSize:12}}>{doc.n}</span>{doc.f?<button onClick={()=>{const fn=eval(doc.f);if(typeof fn==="function")fn(ae,s)}} style={{padding:"4px 12px",borderRadius:6,border:"none",background:"rgba(34,197,94,.15)",color:"#22c55e",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>Telecharger</button>:<span style={{fontSize:10,color:"#5e5c56"}}>Bientot disponible</span>}</div>)}</C>}{tab==="echeances"&&<C><ST>Prochaines echeances</ST>{prochEch.map((e,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div><div style={{fontSize:12,fontWeight:600,color:e.u?"#fb923c":"#e8e6e0"}}>{e.l}</div><div style={{fontSize:10,color:"#5e5c56"}}>{e.d}</div></div><span style={{fontSize:10,padding:"3px 8px",borderRadius:10,background:e.u?"rgba(251,146,56,.1)":"rgba(96,165,250,.1)",color:e.u?"#fb923c":"#60a5fa"}}>{e.u?"Urgent":"A venir"}</span></div>)}</C>}{tab==="upload"&&<C><ST>Upload de documents</ST><div style={{padding:40,border:"2px dashed rgba(198,163,78,.2)",borderRadius:12,textAlign:"center"}}><div style={{fontSize:32,marginBottom:8}}>📁</div><div style={{fontSize:14,color:"#e8e6e0",fontWeight:600}}>Glissez vos fichiers ici</div><div style={{fontSize:11,color:"#5e5c56",marginTop:4}}>Justificatifs absences, notes de frais, attestations medicales</div><div style={{fontSize:10,color:"#5e5c56",marginTop:8}}>Formats acceptes : PDF, JPG, PNG, XLSX</div></div></C>}</div>;}
+function PortailClientSS({s,d}){const clients=s.clients||[];const ae=s.emps||[];const [tab,setTab]=useState("dashboard");const mois=new Date().toLocaleDateString("fr-BE",{month:"long",year:"numeric"});const masseSal=ae.reduce((a,e)=>a+(e.gross||e.brut||0),0);const nbActifs=ae.filter(e=>e.status==="active"||!e.status).length;const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v);const prochEch=[{d:"5 du mois",l:"ONSS — Paiement cotisations",u:true},{d:"15 du mois",l:"Précompte professionnel — SPF Finances",u:true},{d:"25 du mois",l:"SEPA — Virements salaires",u:false},{d:"Fin trimestre",l:"DmfA — Déclaration trimestrielle ONSS",u:false},{d:"28 fevrier",l:"Belcotax — Fiches 281.10 annuelles",u:false}];return <div><PH title="Portail Client" sub={"Tableau de bord — "+mois+" — "+nbActifs+" travailleurs actifs"}/><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:18}}>{[{l:"Travailleurs actifs",v:nbActifs,c:"#c6a34e"},{l:"Masse salariale brute",v:f2(masseSal)+" EUR",c:"#60a5fa"},{l:"Fiches du mois",v:nbActifs+" fiches",c:"#22c55e"},{l:"Prochaine echeance",v:"ONSS J5",c:"#ef4444"}].map((k,i)=><div key={i} style={{padding:"14px 16px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid rgba(198,163,78,.08)"}}><div style={{fontSize:10,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div style={{fontSize:18,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div><div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"dashboard",l:"Tableau de bord"},{v:"fiches",l:"Fiches de paie"},{v:"docs",l:"Documents"},{v:"echeances",l:"Echeancier"},{v:"upload",l:"Upload documents"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>{tab==="dashboard"&&<div><C><ST>Recapitulatif mensuel — {mois}</ST>{[{l:"Salaires bruts",v:f2(masseSal),c:"#e8e6e0"},{l:"ONSS travailleur (13,07%)",v:f2(masseSal*0.1307),c:"#ef4444"},{l:"Précompte professionnel",v:"Voir fiches individuelles",c:"#9e9b93"},{l:"Net total estime",v:f2(masseSal*0.58),c:"#22c55e"},{l:"ONSS patronal",v:f2(masseSal*0.2507),c:"#ef4444"},{l:"Coût total employeur",v:f2(masseSal*1.35),c:"#c6a34e"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#9e9b93",fontSize:12}}>{r.l}</span><span style={{color:r.c,fontSize:13,fontWeight:600}}>{r.v}</span></div>)}</C><C><ST>Alertes</ST>{nbActifs===0?<div style={{color:"#fb923c",fontSize:12}}>Aucun travailleur encode — importez vos donnees via l'onglet Upload</div>:<div style={{color:"#22c55e",fontSize:12}}>Aucune alerte en cours</div>}</C></div>}{tab==="fiches"&&<C><ST>Fiches de paie — {mois}</ST>{ae.length===0?<div style={{textAlign:"center",padding:40,color:"#5e5c56"}}><div style={{fontSize:32,marginBottom:8}}>📄</div><div>Aucune fiche disponible</div></div>:<div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr style={{borderBottom:"2px solid rgba(198,163,78,.2)"}}>{["Nom","Brut","ONSS","PP","Net","PDF"].map(h=><th key={h} style={{padding:"8px",textAlign:"left",color:"#c6a34e",fontWeight:600,fontSize:10}}>{h}</th>)}</tr></thead><tbody>{ae.map((e,i)=>{const brut=e.gross||e.brut||0;const onss=Math.round(brut*0.1307*100)/100;const pp=quickPP?quickPP(brut):Math.round(brut*0.22*100)/100;const net=Math.round((brut-onss-pp)*100)/100;return <tr key={e.id||i} style={{borderBottom:"1px solid rgba(255,255,255,.03)"}}><td style={{padding:"6px",fontWeight:600}}>{(e.first||e.fn||"")+" "+(e.last||e.ln||"")}</td><td style={{padding:"6px"}}>{f2(brut)}</td><td style={{padding:"6px",color:"#ef4444"}}>{f2(onss)}</td><td style={{padding:"6px",color:"#ef4444"}}>{f2(pp)}</td><td style={{padding:"6px",fontWeight:700,color:"#22c55e"}}>{f2(net)}</td><td style={{padding:"6px"}}><button onClick={()=>{if(typeof generatePayslipPDF==="function")generatePayslipPDF(e,s)}} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"rgba(198,163,78,.15)",color:"#c6a34e",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>PDF</button></td></tr>})}</tbody></table></div>}</C>}{tab==="docs"&&<C><ST>Documents disponibles</ST>{[{n:"Attestation d'emploi",f:"generateAttestationEmploi"},{n:"Attestation de salaire",f:"generateAttestationSalaire"},{n:"Dimona — Historique",f:null},{n:"DmfA — Derniere declaration",f:null},{n:"Belcotax — Fiches 281.10",f:"generateBelcotaxXML"}].map((doc,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#e8e6e0",fontSize:12}}>{doc.n}</span>{doc.f?<button onClick={()=>{const fn=eval(doc.f);if(typeof fn==="function")fn(ae,s)}} style={{padding:"4px 12px",borderRadius:6,border:"none",background:"rgba(34,197,94,.15)",color:"#22c55e",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>Télécharger</button>:<span style={{fontSize:10,color:"#5e5c56"}}>Bientot disponible</span>}</div>)}</C>}{tab==="echeances"&&<C><ST>Prochaines echeances</ST>{prochEch.map((e,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div><div style={{fontSize:12,fontWeight:600,color:e.u?"#fb923c":"#e8e6e0"}}>{e.l}</div><div style={{fontSize:10,color:"#5e5c56"}}>{e.d}</div></div><span style={{fontSize:10,padding:"3px 8px",borderRadius:10,background:e.u?"rgba(251,146,56,.1)":"rgba(96,165,250,.1)",color:e.u?"#fb923c":"#60a5fa"}}>{e.u?"Urgent":"A venir"}</span></div>)}</C>}{tab==="upload"&&<C><ST>Upload de documents</ST><div style={{padding:40,border:"2px dashed rgba(198,163,78,.2)",borderRadius:12,textAlign:"center"}}><div style={{fontSize:32,marginBottom:8}}>📁</div><div style={{fontSize:14,color:"#e8e6e0",fontWeight:600}}>Glissez vos fichiers ici</div><div style={{fontSize:11,color:"#5e5c56",marginTop:4}}>Justificatifs absences, notes de frais, attestations medicales</div><div style={{fontSize:10,color:"#5e5c56",marginTop:8}}>Formats acceptes : PDF, JPG, PNG, XLSX</div></div></C>}</div>;}
 
 function FloatingLegalAgent({onAction}){
   const[open,setOpen]=useState(false);
