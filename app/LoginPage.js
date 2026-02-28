@@ -9,7 +9,10 @@ export default function LoginPage({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [mode, setMode] = useState('login'); // login, reset, signup
+  const [mode, setMode] = useState('login'); // login, reset, signup, mfa
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaFactorId, setMfaFactorId] = useState(null);
+  const [mfaChallengeId, setMfaChallengeId] = useState(null);
 
   if (!supabase) return <div style={{minHeight:"100vh",background:"#060810",display:"flex",alignItems:"center",justifyContent:"center",color:"#ef4444",fontFamily:"Inter,sans-serif",padding:40,textAlign:"center"}}><div><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{fontSize:18,fontWeight:600,color:"#e5e5e5",marginBottom:8}}>Configuration requise</div><div style={{fontSize:13,color:"#999",lineHeight:1.6}}>Les variables d'environnement Supabase ne sont pas configurées.<br/>Ajoutez NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY dans Vercel.</div></div></div>;
 
@@ -31,8 +34,70 @@ export default function LoginPage({ onLogin }) {
       return;
     }
 
+    // Check if MFA is required
+    if (data?.session && !data.session.access_token && data.user?.factors?.length > 0) {
+      // MFA enrolled but challenge needed — handled by Supabase MFA flow
+      await startMfaChallenge(data.user);
+      setLoading(false);
+      return;
+    }
+
+    // Check for MFA via AAL (Authenticator Assurance Level)
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aalData && aalData.currentLevel === 'aal1' && aalData.nextLevel === 'aal2') {
+      // User has MFA enrolled, needs to verify
+      await startMfaChallenge();
+      setLoading(false);
+      return;
+    }
+
     if (data?.user) {
       onLogin(data.user);
+    }
+    setLoading(false);
+  };
+
+  const startMfaChallenge = async () => {
+    try {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const totpFactor = factors?.totp?.[0];
+      if (!totpFactor) {
+        setError('Aucun facteur TOTP configuré');
+        return;
+      }
+      const { data: challenge, error: chErr } = await supabase.auth.mfa.challenge({ factorId: totpFactor.id });
+      if (chErr) { setError(chErr.message); return; }
+      setMfaFactorId(totpFactor.id);
+      setMfaChallengeId(challenge.id);
+      setMode('mfa');
+    } catch (err) {
+      setError('Erreur MFA: ' + err.message);
+    }
+  };
+
+  const handleMfaVerify = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    const { data, error: verifyErr } = await supabase.auth.mfa.verify({
+      factorId: mfaFactorId,
+      challengeId: mfaChallengeId,
+      code: mfaCode,
+    });
+
+    if (verifyErr) {
+      setError(verifyErr.message === 'Invalid TOTP code'
+        ? 'Code incorrect. Réessayez.'
+        : verifyErr.message);
+      setLoading(false);
+      return;
+    }
+
+    // MFA verified — get current user
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData?.user) {
+      onLogin(userData.user);
     }
     setLoading(false);
   };
@@ -269,6 +334,48 @@ export default function LoginPage({ onLogin }) {
 
             <div style={{ textAlign: 'center', marginTop: 16 }}>
               <button type="button" onClick={() => { setMode('login'); setError(''); setSuccess(''); }} style={{
+                background: 'none', border: 'none', color: '#c6a34e',
+                fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline',
+              }}>
+                Retour à la connexion
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ═══ MFA TOTP ═══ */}
+        {mode === 'mfa' && (
+          <form onSubmit={handleMfaVerify}>
+            <div style={{
+              padding: '12px 14px', marginBottom: 16, borderRadius: 8,
+              background: 'rgba(198,163,78,0.04)', border: '1px solid rgba(198,163,78,0.15)',
+              fontSize: 12, color: '#c6a34e', lineHeight: 1.5, textAlign: 'center',
+            }}>
+              Vérification en deux étapes activée. Entrez le code à 6 chiffres de votre application d'authentification.
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 12, color: '#9e9b93', marginBottom: 6 }}>Code TOTP</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                required
+                style={{ ...inputStyle, textAlign: 'center', fontSize: 24, letterSpacing: 12, fontWeight: 700 }}
+                placeholder="000000"
+                autoFocus
+              />
+            </div>
+
+            <button type="submit" disabled={loading || mfaCode.length !== 6} style={btnStyle(true)}>
+              {loading ? 'Vérification...' : 'Vérifier'}
+            </button>
+
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <button type="button" onClick={() => { setMode('login'); setError(''); setMfaCode(''); }} style={{
                 background: 'none', border: 'none', color: '#c6a34e',
                 fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline',
               }}>

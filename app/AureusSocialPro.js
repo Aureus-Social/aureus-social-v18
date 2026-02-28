@@ -3,6 +3,7 @@
 import { useState, useReducer, useRef, useMemo, useEffect, useCallback, createContext, useContext } from "react";
 import AccessManagement from "./modules/AccessManagement";
 import CommissionsModule from "./modules/CommissionsModule";
+import TwoFactorSetup from "./modules/TwoFactorSetup";
 import dynamic from "next/dynamic";
 const ProceduresRHHub = dynamic(() => import("./modules/ProceduresRHHub"), { ssr: false });
 const AdminBaremes = dynamic(() => import("./modules/AdminBaremes"), { ssr: false });
@@ -22776,6 +22777,10 @@ function SettingsPage({s,d}) {
         <div style={{padding:8,background:'rgba(168,85,247,.06)',borderRadius:8,textAlign:'center'}}><div style={{fontSize:16,fontWeight:700,color:'#a855f7'}}>{(s.clients||[]).length}</div><div style={{fontSize:9,color:'#888'}}>Clients</div></div>
         <div style={{padding:8,background:'rgba(34,197,94,.06)',borderRadius:8,textAlign:'center'}}><div style={{fontSize:16,fontWeight:700,color:'#22c55e'}}>{Math.round(JSON.stringify(s).length/1024)} KB</div><div style={{fontSize:9,color:'#888'}}>Taille données</div></div>
       </div>
+    </div>
+    {/* 2FA / MFA TOTP */}
+    <div style={{marginBottom:18,padding:16,background:'linear-gradient(135deg,rgba(198,163,78,.06),rgba(198,163,78,.02))',border:'1px solid rgba(198,163,78,.15)',borderRadius:12}}>
+      <TwoFactorSetup/>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
       <C><ST>Identification</ST><div style={{display:'grid',gap:9}}>

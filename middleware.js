@@ -48,7 +48,7 @@ export function middleware(request) {
     return response;
   }
 
-  // ALL ROUTES — Security Headers (no CSP for now to avoid blocking)
+  // ALL ROUTES — Security Headers
   const response = NextResponse.next();
   response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   response.headers.set('X-Frame-Options', 'DENY');
@@ -56,6 +56,26 @@ export function middleware(request) {
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+
+  // CSP — Content Security Policy
+  const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+    ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
+    : '*.supabase.co';
+  const csp = [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdnjs.cloudflare.com`,
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+    `font-src 'self' https://fonts.gstatic.com data:`,
+    `img-src 'self' data: blob: https:`,
+    `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://api.anthropic.com https://api.resend.com`,
+    `worker-src 'self' blob:`,
+    `child-src 'self' blob:`,
+    `frame-ancestors 'none'`,
+    `form-action 'self'`,
+    `base-uri 'self'`,
+  ].join('; ');
+  response.headers.set('Content-Security-Policy', csp);
+
   return response;
 }
 

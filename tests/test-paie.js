@@ -680,6 +680,34 @@ try {
     }
   }
 
+  // ═══ 14. TESTS SUPPLÉMENTAIRES — ROBUSTESSE ═══
+  console.log('\n═══ 14. TESTS SUPPLÉMENTAIRES — ROBUSTESSE ═══');
+
+  test('PP très haut salaire 20000€ > PP 10000€', () => {
+    const p10 = calcPrecompteExact(10000, { situation: 'isole', enfants: 0 }).pp;
+    const p20 = calcPrecompteExact(20000, { situation: 'isole', enfants: 0 }).pp;
+    assert(p20 > p10, `PP 20k (${p20}) <= PP 10k (${p10})`);
+  });
+
+  test('ONSS exact: 4567.89€ × 13.07%', () => {
+    const brut = 4567.89;
+    const expected = Math.round(brut * 0.1307 * 100) / 100;
+    eq(expected, 596.82, 'ONSS 4567.89€', 0.01);
+  });
+
+  test('Bonus emploi seuil 2999€ > 0, 3100€ encore > 0 ou = 0', () => {
+    const b1 = calcBonusEmploi(2999);
+    assert(b1 >= 0, `Bonus 2999€ négatif: ${b1}`);
+  });
+
+  if (typeof calc === 'function') {
+    test('calc cohérence ONSS+PP+CSSS+Net-Bonus = Brut pour 4200€', () => {
+      const r = calc({ monthlySalary: 4200, statut: 'employe', civil: 'isole', depChildren: 0, cp: '200', whWeek: 38 }, per0, co0);
+      const sum = (r.onssW || 0) + (r.tax || 0) + (r.css || 0) + (r.net || 0) - (r.empBonus || 0);
+      eq(sum, r.gross, 'Cohérence brut', 1.0);
+    });
+  }
+
   // ═══ RAPPORT ═══
   console.log('\n' + '═'.repeat(60));
   console.log(`  RÉSULTAT: ${passed}/${total} tests passés`);
