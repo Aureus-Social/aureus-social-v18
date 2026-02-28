@@ -3463,7 +3463,7 @@ async function logActivity(supabase, userId, action, details) {
       details: details,
       created_at: new Date().toISOString()
     });
-  } catch(e) {}
+  } catch(e) { console.warn('[logActivity] Echec:', e.message); }
 }
 
 async function getActivityLog(supabase) {
@@ -3511,7 +3511,7 @@ async function _executeSave() {
     safeLS.set(STORE_KEY + '_backup', json);safeLS.set(STORE_KEY + '_ts', new Date().toISOString());
   } catch (e) {
     console.warn('localStorage full, clearing backup:', e);
-    try { safeLS.remove(STORE_KEY + '_backup'); safeLS.set(STORE_KEY, JSON.stringify(data)); } catch (e2) {}
+    try { safeLS.remove(STORE_KEY + '_backup'); safeLS.set(STORE_KEY, JSON.stringify(data)); } catch (e2) { console.error('[_executeSave] localStorage critique — donnees non sauvegardees:', e2.message); }
   }
 
   // 2. Save to Supabase with retry
@@ -3549,7 +3549,7 @@ async function forceSave(data) {
     if (_supabaseRef && _userIdRef) {
       await saveToSupabase(_supabaseRef, _userIdRef, data);
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[forceSave] Echec sauvegarde:', e.message); }
 }
 async function loadData(supabase, userId){
   try{
@@ -3844,7 +3844,7 @@ async function sendEmailReal(to, subject, htmlBody, attachments) {
 // ═══ Sprint 29: Payroll History Persistence ═══
 async function savePayrollRun(clientId, month, year, fiches, summary) {
   if (!_supabaseRef || !_userIdRef) {
-    try { safeLS.set('payroll_' + clientId + '_' + year + '_' + month, JSON.stringify({ fiches, summary, run_date: new Date().toISOString() })); } catch(e) {}
+    try { safeLS.set('payroll_' + clientId + '_' + year + '_' + month, JSON.stringify({ fiches, summary, run_date: new Date().toISOString() })); } catch(e) { console.warn('[savePayrollRun] localStorage plein:', e.message); }
     return true;
   }
   try {
@@ -3868,7 +3868,7 @@ async function loadPayrollHistory(clientId, limit) {
         if (val) results.push({ ...(()=>{try{return JSON.parse(val)}catch(e){return null}})(), period_month: dt.getMonth()+1, period_year: dt.getFullYear() });
         if (results.length >= lim) break;
       }
-    } catch(e) {}
+    } catch(e) { console.warn('[loadPayrollHistory] localStorage:', e.message); }
     return results;
   }
   try {
@@ -3876,7 +3876,7 @@ async function loadPayrollHistory(clientId, limit) {
     if (clientId) q.eq('client_id', clientId);
     const { data } = await q;
     return data || [];
-  } catch(e) { return []; }
+  } catch(e) { console.warn('[loadPayrollHistory] Supabase:', e.message); return []; }
 }
 
 async function logDocument(clientId, empId, docType, title, meta) {
@@ -3885,8 +3885,8 @@ async function logDocument(clientId, empId, docType, title, meta) {
     _supabaseRef.from('documents').insert({
       user_id: _userIdRef, client_id: clientId, employee_id: empId, doc_type: docType, title,
       period_month: new Date().getMonth() + 1, period_year: new Date().getFullYear(), metadata: meta || {},
-    }).then(() => {}).catch(() => {});
-  } catch(e) {}
+    }).then(() => {}).catch((err) => { console.warn('[logDocument] insert:', err.message); });
+  } catch(e) { console.warn('[logDocument] Echec:', e.message); }
 }
 
 function reducer(s,a){
@@ -5265,8 +5265,8 @@ function ClientsPage({s,d,user,userRole,onLogout,veilleNotif,setVeilleNotif}){
 function AppInner({ supabase, user, onLogout }) {
   const [loggedIn,setLoggedIn]=useState(true);
   const [userRole,setUserRole]=useState('admin');
-  const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('aureus_theme')||'dark'}catch(e){return 'dark'}});
-  const toggleTheme=()=>{const next=theme==='dark'?'light':'dark';setTheme(next);try{localStorage.setItem('aureus_theme',next)}catch(e){}};
+  const [theme,setTheme]=useState(()=>{if(typeof window==='undefined')return 'dark';try{return localStorage.getItem('aureus_theme')||'dark'}catch(e){return 'dark'}});
+  const toggleTheme=()=>{const next=theme==='dark'?'light':'dark';setTheme(next);try{if(typeof window!=='undefined')localStorage.setItem('aureus_theme',next)}catch(e){}};
   const isDark=theme==='dark';
   const T={
     bg:isDark?'#060810':'#f5f3ee',bg2:isDark?'#0a0e1a':'#eae7e0',bg3:isDark?'rgba(255,255,255,.02)':'rgba(0,0,0,.03)',
@@ -7011,7 +7011,7 @@ const CalcInstant=({s,d})=>{
         💾 Sauvegarder les fiches ({calcResults.length})
       </button>
       <button onClick={()=>{
-        calcResults.forEach(r=>{try{generatePayslipPDF({first:r.name.split(' ')[0],last:r.name.split(' ').slice(1).join(' '),niss:'',iban:'',email:r.email},{gross:r.brutEffectif,onssP:r.onssW,imposable:r.imposable,pp:r.pp,net:r.net,onssE:r.onssE,coutTotal:r.cout},{month:selMonth+1,year:selYear},cl.company||{});}catch(e){}});
+        calcResults.forEach(r=>{try{generatePayslipPDF({first:r.name.split(' ')[0],last:r.name.split(' ').slice(1).join(' '),niss:'',iban:'',email:r.email},{gross:r.brutEffectif,onssP:r.onssW,imposable:r.imposable,pp:r.pp,net:r.net,onssE:r.onssE,coutTotal:r.cout},{month:selMonth+1,year:selYear},cl.company||{});}catch(e){console.error('[PDF] Echec generation fiche:',r.name,e.message);alert('Erreur generation PDF pour '+r.name+': '+e.message);}});
       }} style={{padding:'12px 24px',borderRadius:10,border:'none',background:'rgba(198,163,78,.1)',color:'#c6a34e',fontWeight:700,fontSize:13,cursor:'pointer'}}>
         📄 Aperçu fiches de paie
       </button>
@@ -7303,15 +7303,15 @@ const ActionsRapides=({s,d})=>{
     addLog('✅ Dimona OUT — Fin: '+(fd.endDate||new Date().toISOString().slice(0,10)),'success');
     addLog('📄 Étape 2/4 : Génération C4...','info');
     await new Promise(r=>setTimeout(r,400));
-    try{const emp={first:fd.first,last:fd.last,niss:fd.niss,startDate:fd.startDate,endDate:fd.endDate,endReason:fd.endReason,endInitiative:fd.endInitiative,monthlySalary:fd.brut};generateC4PDF(emp,clients.find(c=>c.company?.name===fd.client)?.company||{});}catch(e){}
+    try{const emp={first:fd.first,last:fd.last,niss:fd.niss,startDate:fd.startDate,endDate:fd.endDate,endReason:fd.endReason,endInitiative:fd.endInitiative,monthlySalary:fd.brut};generateC4PDF(emp,clients.find(c=>c.company?.name===fd.client)?.company||{});}catch(e){console.error('[C4] Echec generation:',e.message);addLog('❌ Erreur C4: '+e.message,'error');}
     addLog('✅ C4 généré — Motif: '+fd.endReason,'success');
     addLog('💰 Étape 3/4 : Solde de tout compte...','info');
     await new Promise(r=>setTimeout(r,400));
-    try{generateSoldeCompte({first:fd.first,last:fd.last,monthlySalary:fd.brut},clients.find(c=>c.company?.name===fd.client)?.company||{});}catch(e){}
+    try{generateSoldeCompte({first:fd.first,last:fd.last,monthlySalary:fd.brut},clients.find(c=>c.company?.name===fd.client)?.company||{});}catch(e){console.error('[SoldeCompte] Echec:',e.message);addLog('❌ Erreur solde: '+e.message,'error');}
     addLog('✅ Solde de tout compte généré','success');
     addLog('📄 Étape 4/4 : Attestation emploi...','info');
     await new Promise(r=>setTimeout(r,300));
-    try{generateAttestationEmploi({first:fd.first,last:fd.last,niss:fd.niss,startDate:fd.startDate,function:fd.fonction,contractType:fd.contractType,whWeek:fd.whWeek,monthlySalary:fd.brut},clients.find(c=>c.company?.name===fd.client)?.company||{});}catch(e){}
+    try{generateAttestationEmploi({first:fd.first,last:fd.last,niss:fd.niss,startDate:fd.startDate,function:fd.fonction,contractType:fd.contractType,whWeek:fd.whWeek,monthlySalary:fd.brut},clients.find(c=>c.company?.name===fd.client)?.company||{});}catch(e){console.error('[Attestation] Echec:',e.message);addLog('❌ Erreur attestation: '+e.message,'error');}
     addLog('✅ Attestation emploi générée','success');
     addLog('🔴 DÉPART COMPLÉTÉ — Tous les documents sont prêts','success');
     setRunning(false);
@@ -19497,7 +19497,7 @@ const pg=()=>{
       case'massengine':return <MassEngine s={s} d={d}/>;
       case'smartauto':return <SmartAutomation s={s} d={d} supabase={supabase} user={user}/>;
       case'autopilot':return <SmartAutopilot s={s} d={d}/>;
-      case'facturation':return <Facturation s={s} d={d}/>;
+      case'facturation':return <FacturationTarif s={s} d={d}/>;
       case'validation':return <ValidationEngine s={s} d={d}/>;
       case'exportbatch':return <ExportImportMod s={s} d={d}/>;
       case'rgpd':return <RGPDManager s={s} d={d}/>;
