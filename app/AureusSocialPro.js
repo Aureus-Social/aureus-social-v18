@@ -1,12 +1,12 @@
 // Aureus Social Pro v20.2
 "use client"
 import { useState, useReducer, useRef, useMemo, useEffect, useCallback, createContext, useContext } from "react";
-import AccessManagement from "./modules/AccessManagement";
-import CommissionsModule from "./modules/CommissionsModule";
-import TwoFactorSetup from "./modules/TwoFactorSetup";
 import dynamic from "next/dynamic";
-const ProceduresRHHub = dynamic(() => import("./modules/ProceduresRHHub"), { ssr: false });
-const AdminBaremes = dynamic(() => import("./modules/AdminBaremes"), { ssr: false });
+const AccessManagement = dynamic(() => import("./modules/AccessManagement"), { ssr: false, loading: () => <div style={{padding:40,textAlign:'center',color:'#5e5c56'}}>Chargement...</div> });
+const CommissionsModule = dynamic(() => import("./modules/CommissionsModule"), { ssr: false, loading: () => <div style={{padding:40,textAlign:'center',color:'#5e5c56'}}>Chargement...</div> });
+const TwoFactorSetup = dynamic(() => import("./modules/TwoFactorSetup"), { ssr: false });
+const ProceduresRHHub = dynamic(() => import("./modules/ProceduresRHHub"), { ssr: false, loading: () => <div style={{padding:40,textAlign:'center',color:'#5e5c56'}}>Chargement...</div> });
+const AdminBaremes = dynamic(() => import("./modules/AdminBaremes"), { ssr: false, loading: () => <div style={{padding:40,textAlign:'center',color:'#5e5c56'}}>Chargement...</div> });
 
 // ═══ SPRINT 37: MOTEUR CENTRAL LOIS BELGES — AUTO-UPDATE 1 CLIC  ═══
 // ══════════════════════════════════════════════════════════════════════
