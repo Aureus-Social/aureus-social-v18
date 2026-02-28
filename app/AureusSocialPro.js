@@ -6996,7 +6996,7 @@ const Facturation=({s})=>{
         <div><span style={{padding:'2px 8px',borderRadius:4,fontSize:9,fontWeight:600,background:fact.status==='paid'?'rgba(34,197,94,.1)':'rgba(234,179,8,.1)',color:fact.status==='paid'?'#22c55e':'#eab308'}}>{fact.status==='paid'?'Paye':'En attente'}</span></div>
         <div style={{display:'flex',gap:4}}>
           <button onClick={()=>generateInvoicePDF(fact)} style={{padding:'4px 8px',borderRadius:4,border:'none',background:'rgba(198,163,78,.08)',color:'#c6a34e',fontSize:9,cursor:'pointer',fontFamily:'inherit'}}>📄 PDF</button>
-          <button onClick={()=>{try{sendEmailReal(fact.client+'@email.com','Facture '+fact.id+' — Aureus Social Pro','<p>Veuillez trouver ci-joint votre facture '+fact.id+'.</p>',[]);}catch(e){}}} style={{padding:'4px 8px',borderRadius:4,border:'none',background:'rgba(59,130,246,.08)',color:'#3b82f6',fontSize:9,cursor:'pointer',fontFamily:'inherit'}}>📧 Envoyer</button>
+          <button onClick={()=>{try{sendEmailReal(fact.client+'@email.com','Facture '+fact.id+' — Aureus Social Pro','<p>Veuillez trouver ci-joint votre facture '+fact.id+'.</p>',[]);if(typeof addToast==='function')addToast('📧 Facture '+fact.id+' envoyée à '+fact.client);else alert('📧 Facture '+fact.id+' envoyée à '+fact.client);}catch(e){alert('❌ Erreur envoi email: '+e.message+'\n\nVérifiez la configuration RESEND_API_KEY.');}}} style={{padding:'4px 8px',borderRadius:4,border:'none',background:'rgba(59,130,246,.08)',color:'#3b82f6',fontSize:9,cursor:'pointer',fontFamily:'inherit'}}>📧 Envoyer</button>
         </div>
       </div>)}
       <div style={{display:'grid',gridTemplateColumns:'120px 180px 80px 100px 80px 100px 100px 1fr',padding:'10px 12px',background:'rgba(198,163,78,.04)',fontSize:12,fontWeight:700}}>
@@ -7277,7 +7277,7 @@ const RGPDManager=({s})=>{
         </div>
         <div style={{display:'flex',gap:4}}>
           <button onClick={()=>exportEmployeeData(e)} style={{padding:'3px 8px',borderRadius:4,border:'none',background:'rgba(59,130,246,.08)',color:'#3b82f6',fontSize:9,cursor:'pointer',fontFamily:'inherit'}}>📥 Exporter (Art.20)</button>
-          <button onClick={()=>{if(confirm('Supprimer toutes les donnees de '+(e.first||'')+' '+(e.last||'')+'? Cette action est irreversible.')){}}} style={{padding:'3px 8px',borderRadius:4,border:'none',background:'rgba(239,68,68,.08)',color:'#ef4444',fontSize:9,cursor:'pointer',fontFamily:'inherit'}}>🗑 Effacer (Art.17)</button>
+          <button onClick={()=>{const empName=(e.first||'')+' '+(e.last||'');if(confirm('RGPD Art. 17 — Droit à l\'effacement\n\nSupprimer toutes les données de '+empName+'?\n\nCette action est IRRÉVERSIBLE.\nLes données seront anonymisées conformément au RGPD.')){const updClients=(s.clients||[]).map(cl=>({...cl,emps:(cl.emps||[]).map(emp=>emp.id===e.id?{...emp,first:'[EFFACE]',last:'[EFFACE]',niss:'',email:'',phone:'',iban:'',address:'',status:'deleted',deletedAt:new Date().toISOString(),deletedReason:'RGPD Art.17'}:emp)}));d({type:'SET_CLIENTS',data:updClients});if(typeof addToast==='function')addToast('🗑 Données de '+empName+' effacées (RGPD Art.17)');else alert('✅ Données de '+empName+' effacées conformément au RGPD Art.17');}}} style={{padding:'3px 8px',borderRadius:4,border:'none',background:'rgba(239,68,68,.08)',color:'#ef4444',fontSize:9,cursor:'pointer',fontFamily:'inherit'}}>🗑 Effacer (Art.17)</button>
         </div>
       </div>)}
     </div>
@@ -14003,7 +14003,7 @@ const ArchivesNumeriques=({s})=>{
         <div></div><div>Document</div><div>Client</div><div>Date</div><div>Type</div><div>Taille</div>
       </div>
       <div style={{maxHeight:400,overflowY:'auto'}}>
-        {filtered.map((d,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'30px 1fr 120px 80px 60px 60px',padding:'6px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center',cursor:'pointer'}} onClick={()=>{}}>
+        {filtered.map((d,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'30px 1fr 120px 80px 60px 60px',padding:'6px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center',cursor:'pointer'}} onClick={()=>{const emp=d.emp||(s.emps||[]).find(e=>(e.first+' '+e.last)===d.name?.replace(/Fiche_|Contrat_|Dimona_|Solde_|C4_/g,'').replace(/_/g,' '))||s.emps?.[0]||{};const co=d.co||((s.clients||[]).find(c=>c.company?.name===d.client)||{}).company||s.co||{};if(d.cat==='fiches'&&typeof generatePayslipPDF==='function'){try{generatePayslipPDF(emp,null,null,co);}catch(ex){}}else if(d.cat==='contrats'){try{generateContractPDF?generateContractPDF(emp,co):previewHTML('<h2>Contrat — '+(emp.first||'')+' '+(emp.last||'')+'</h2><p>Type: '+(emp.contractType||'CDI')+'</p>','Contrat');}catch(ex){}}else if(d.cat==='onss'){try{generateDimonaXML(emp,'IN',co);}catch(ex){}}else if(d.cat==='fiscal'){try{generateBelcotaxXML([emp],new Date().getFullYear(),co);}catch(ex){}}else{try{generatePayslipPDF(emp,null,null,co);}catch(ex){}}}}>
           <span style={{fontSize:14}}>{d.cat==='fiches'?'📄':d.cat==='contrats'?'📋':d.cat==='onss'?'🏛':d.cat==='fiscal'?'🧾':'📒'}</span>
           <div>
             <div style={{color:'#e5e5e5',fontWeight:500,fontSize:10}}>{d.name}</div>
