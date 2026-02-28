@@ -14100,6 +14100,89 @@ const TestSuiteDash=({s})=>{
   </div>;
 };
 
+// ═══ PRIME TYPES & CATEGORIES — Constantes module-level ═══
+var PRIME_CATS=[
+  {id:'all',label:'Toutes (56)',icon:'🎁'},
+  {id:'remuneration',label:'Remuneration',icon:'💶'},
+  {id:'cheques',label:'Cheques & Avantages',icon:'🎫'},
+  {id:'mobilite',label:'Mobilite & Transport',icon:'🚲'},
+  {id:'teletravail',label:'Teletravail & Frais',icon:'🏠'},
+  {id:'assurance',label:'Assurances & Pension',icon:'🛡'},
+  {id:'conges',label:'Conges & Absences',icon:'🏖'},
+  {id:'fiscal',label:'Fiscal & Optimisation',icon:'💡'},
+];
+var PRIME_TYPES=[
+  // ═══ REMUNERATION & PRIMES SALARIALES (1-10) ═══
+  {id:'prime_fin_annee',label:'Prime de fin d\'annee (13eme mois)',icon:'🎄',taxable:true,onss:true,cat:'remuneration',desc:'Obligatoire CP 200 — equivalent 1 mois brut'},
+  {id:'prime_resultat',label:'Prime de resultat',icon:'📊',taxable:true,onss:true,cat:'remuneration',desc:'Prime liee aux performances individuelles'},
+  {id:'prime_anciennete',label:'Prime d\'anciennete',icon:'⭐',taxable:true,onss:true,cat:'remuneration',desc:'Prime liee aux annees de service'},
+  {id:'bonus_cct90',label:'Bonus CCT 90 (non-recurrent)',icon:'🎯',taxable:false,onss:false,max:4020,cat:'remuneration',desc:'Avantage non-recurrent lie aux resultats — max 4.020 EUR/an (2026)'},
+  {id:'prime_equipe',label:'Prime d\'equipe / shift',icon:'👥',taxable:true,onss:true,cat:'remuneration',desc:'Supplement pour travail en equipes successives'},
+  {id:'prime_nuit',label:'Prime de nuit',icon:'🌙',taxable:true,onss:true,cat:'remuneration',desc:'Supplement pour prestations entre 20h et 6h'},
+  {id:'prime_weekend',label:'Prime de week-end',icon:'📅',taxable:true,onss:true,cat:'remuneration',desc:'Supplement samedi/dimanche — taux selon CCT'},
+  {id:'prime_jf',label:'Prime jours feries',icon:'🎉',taxable:true,onss:true,cat:'remuneration',desc:'Supplement pour prestation un jour ferie legal'},
+  {id:'prime_heures_sup',label:'Heures supplementaires',icon:'⏰',taxable:true,onss:true,cat:'remuneration',desc:'Majoration 50% (semaine) ou 100% (dimanche/JF)'},
+  {id:'prime_productivite',label:'Prime de productivite',icon:'🏆',taxable:true,onss:true,cat:'remuneration',desc:'Prime liee aux objectifs de production'},
+
+  // ═══ CHEQUES & AVANTAGES EN NATURE (11-20) ═══
+  {id:'cheques_repas',label:'Cheques-repas',icon:'🍽',taxable:false,onss:false,max:8,cat:'cheques',desc:'Max 8 EUR/jour — part patronale max 6,91 EUR'},
+  {id:'eco_cheques',label:'Eco-cheques',icon:'🌿',taxable:false,onss:false,max:250,cat:'cheques',desc:'Max 250 EUR/an — produits ecologiques uniquement'},
+  {id:'cheques_sport',label:'Cheques sport & culture',icon:'🏋',taxable:false,onss:false,max:100,cat:'cheques',desc:'Max 100 EUR/an'},
+  {id:'cheques_cadeau',label:'Cheques-cadeaux',icon:'🎁',taxable:false,onss:false,max:40,cat:'cheques',desc:'Max 40 EUR/an par occasion (Noel, mariage, naissance)'},
+  {id:'avantage_vehicule',label:'Avantage vehicule / ATN',icon:'🚗',taxable:true,onss:false,cat:'cheques',desc:'ATN calcule selon CO2 et valeur catalogue'},
+  {id:'carte_carburant',label:'Carte carburant',icon:'⛽',taxable:true,onss:false,cat:'cheques',desc:'ATN sur carburant prive — inclus dans ATN vehicule'},
+  {id:'gsm_avantage',label:'GSM / smartphone',icon:'📱',taxable:true,onss:false,cat:'cheques',desc:'ATN forfaitaire 3 EUR/mois (appareils) + 4 EUR/mois (abonnement)'},
+  {id:'laptop_avantage',label:'PC / laptop',icon:'💻',taxable:true,onss:false,cat:'cheques',desc:'ATN forfaitaire 6 EUR/mois pour usage prive'},
+  {id:'internet_avantage',label:'Internet domicile',icon:'🌐',taxable:true,onss:false,cat:'cheques',desc:'ATN forfaitaire 5 EUR/mois'},
+  {id:'logement_avantage',label:'Logement / habitation',icon:'🏡',taxable:true,onss:true,cat:'cheques',desc:'ATN selon revenu cadastral — avantage significatif'},
+
+  // ═══ MOBILITE & TRANSPORT (21-28) ═══
+  {id:'budget_mobilite',label:'Budget mobilite',icon:'🚲',taxable:false,onss:false,cat:'mobilite',desc:'3 piliers: voiture eco / transport durable / cash'},
+  {id:'indemnite_velo',label:'Indemnite velo',icon:'🚴',taxable:false,onss:false,max:0.35,cat:'mobilite',desc:'Max 0,35 EUR/km — exonere ONSS et fiscalement'},
+  {id:'transport_commun',label:'Transport en commun',icon:'🚆',taxable:false,onss:false,cat:'mobilite',desc:'Intervention obligatoire — 75% minimum (CP 200)'},
+  {id:'transport_prive',label:'Transport prive',icon:'🚘',taxable:false,onss:false,cat:'mobilite',desc:'Indemnite km voiture — forfait ONSS applicable'},
+  {id:'parking',label:'Place de parking',icon:'🅿️',taxable:false,onss:false,cat:'mobilite',desc:'Mise a disposition gratuite — pas d\'ATN si lie au travail'},
+  {id:'covoiturage',label:'Prime covoiturage',icon:'🤝',taxable:false,onss:false,cat:'mobilite',desc:'Encouragement covoiturage domicile-travail'},
+  {id:'trottinette',label:'Trottinette electrique',icon:'🛴',taxable:false,onss:false,cat:'mobilite',desc:'Meme regime que le velo — indemnite km exoneree'},
+  {id:'abonnement_transport',label:'Abonnement transport',icon:'🎫',taxable:false,onss:false,cat:'mobilite',desc:'Remboursement SNCB / TEC / STIB / De Lijn'},
+
+  // ═══ TELETRAVAIL & FRAIS (29-36) ═══
+  {id:'indemnite_teletravail',label:'Indemnite teletravail',icon:'🏠',taxable:false,onss:false,max:FORF_BUREAU,cat:'teletravail',desc:'Forfait bureau max 154,74 EUR/mois (ONSS)'},
+  {id:'frais_bureau',label:'Frais de bureau',icon:'🪑',taxable:false,onss:false,cat:'teletravail',desc:'Mobilier, materiel — remboursement sur justificatifs'},
+  {id:'frais_representation',label:'Frais de representation',icon:'🤵',taxable:false,onss:false,cat:'teletravail',desc:'Forfait ou reel — repas clients, evenements pro'},
+  {id:'frais_deplacement',label:'Frais de deplacement',icon:'✈️',taxable:false,onss:false,cat:'teletravail',desc:'Missions professionnelles — reel ou forfait'},
+  {id:'frais_vetements',label:'Vetements de travail',icon:'👔',taxable:false,onss:false,cat:'teletravail',desc:'Uniforme, EPI — obligation employeur'},
+  {id:'frais_formation',label:'Frais de formation',icon:'📚',taxable:false,onss:false,cat:'teletravail',desc:'Formation professionnelle — 5 jours/an (droit individuel)'},
+  {id:'prime_outillage',label:'Prime d\'outillage',icon:'🔧',taxable:false,onss:false,cat:'teletravail',desc:'Outils propres du travailleur — forfait sectoriel'},
+  {id:'frais_garage',label:'Indemnite garage',icon:'🏗',taxable:false,onss:false,cat:'teletravail',desc:'Remboursement si pas de parking entreprise'},
+
+  // ═══ ASSURANCES & PENSION (37-44) ═══
+  {id:'assurance_groupe',label:'Assurance groupe',icon:'🛡',taxable:false,onss:true,cat:'assurance',desc:'Pension complementaire — cotisation employeur deductible'},
+  {id:'assurance_hospitalisation',label:'Assurance hospitalisation',icon:'🏥',taxable:false,onss:false,cat:'assurance',desc:'Couverture hospitaliere — avantage non taxable si collectif'},
+  {id:'assurance_ambulatoire',label:'Assurance soins ambulatoires',icon:'💊',taxable:false,onss:false,cat:'assurance',desc:'Soins dentaires, optique, kine — complement collectif'},
+  {id:'assurance_revenu_garanti',label:'Revenu garanti (maladie)',icon:'🩺',taxable:false,onss:false,cat:'assurance',desc:'Assurance incapacite de travail — complement au salaire garanti'},
+  {id:'assurance_vie',label:'Assurance vie individuelle',icon:'💎',taxable:false,onss:true,cat:'assurance',desc:'Capital ou rente au beneficiaire — regime fiscal branche 21'},
+  {id:'assurance_accident',label:'Assurance accident extra-prof.',icon:'⛑',taxable:false,onss:false,cat:'assurance',desc:'Couverture accidents hors travail — avantage employeur'},
+  {id:'pension_libre_compl',label:'PLCS (Pension Libre Compl.)',icon:'🏦',taxable:false,onss:true,cat:'assurance',desc:'Pension Libre Complementaire Salarie — deduction fiscale'},
+  {id:'plan_bonus_pension',label:'Plan bonus pension',icon:'🎯',taxable:false,onss:true,cat:'assurance',desc:'Engagement collectif de pension — regle des 80%'},
+
+  // ═══ CONGES & ABSENCES REMUNEREES (45-50) ═══
+  {id:'pecule_vacances',label:'Pecule de vacances',icon:'🏖',taxable:true,onss:true,cat:'conges',desc:'Simple + double pecule — 15,38% brut annuel (employes)'},
+  {id:'pecule_sortie',label:'Pecule de sortie',icon:'🚪',taxable:true,onss:true,cat:'conges',desc:'Solde conges non pris — calcul au prorata'},
+  {id:'petit_chomage',label:'Petit chomage (conge circ.)',icon:'📋',taxable:true,onss:true,cat:'conges',desc:'Mariage, deces, communion — jours payes (AR 28/08/1963)'},
+  {id:'conge_education',label:'Conge-education paye',icon:'🎓',taxable:true,onss:true,cat:'conges',desc:'Formation reconnue — remboursement par la Region'},
+  {id:'jour_carence',label:'Jour de carence (supprime)',icon:'🤒',taxable:true,onss:true,cat:'conges',desc:'Salaire garanti des le 1er jour maladie (depuis 2014)'},
+  {id:'conge_anciennete',label:'Conge d\'anciennete',icon:'📆',taxable:true,onss:true,cat:'conges',desc:'Jours supplementaires selon anciennete — CCT sectorielle'},
+
+  // ═══ FISCAL & OPTIMISATION (51-56) ═══
+  {id:'warrants',label:'Warrants / Stock Options',icon:'📈',taxable:true,onss:false,cat:'fiscal',desc:'Regime fiscal specifique — imposition a l\'attribution'},
+  {id:'plan_cafeteria',label:'Plan cafeteria',icon:'☕',taxable:false,onss:false,cat:'fiscal',desc:'Budget flexible — le travailleur choisit ses avantages'},
+  {id:'droits_auteur',label:'Droits d\'auteur',icon:'✍️',taxable:true,onss:false,max:73070,cat:'fiscal',desc:'Regime fiscal avantageux — precompte 15% (max 73.070 EUR/an)'},
+  {id:'flexi_job',label:'Flexi-job (complement)',icon:'⚡',taxable:false,onss:false,cat:'fiscal',desc:'Pas d\'ONSS ni IPP — horeca, retail, sante (depuis 2024 elargi)'},
+  {id:'prime_innovation',label:'Prime d\'innovation',icon:'💡',taxable:false,onss:false,max:4020,cat:'fiscal',desc:'Idem CCT 90 — liee a l\'innovation dans l\'entreprise'},
+  {id:'participation_benefices',label:'Participation aux benefices',icon:'💰',taxable:true,onss:false,cat:'fiscal',desc:'Loi du 22/05/2001 — taxe speciale 7% (pas ONSS)'},
+];
+
 const GestionPrimes=({s,d})=>{
   const clients=s.clients||[];
   const [selClient,setSelClient]=useState(0);
@@ -14110,89 +14193,9 @@ const GestionPrimes=({s,d})=>{
   const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
   const cl=clients[selClient];
   const emps=cl?.emps||[];
-  const primeCats=[
-    {id:'all',label:'Toutes (56)',icon:'🎁'},
-    {id:'remuneration',label:'Remuneration',icon:'💶'},
-    {id:'cheques',label:'Cheques & Avantages',icon:'🎫'},
-    {id:'mobilite',label:'Mobilite & Transport',icon:'🚲'},
-    {id:'teletravail',label:'Teletravail & Frais',icon:'🏠'},
-    {id:'assurance',label:'Assurances & Pension',icon:'🛡'},
-    {id:'conges',label:'Conges & Absences',icon:'🏖'},
-    {id:'fiscal',label:'Fiscal & Optimisation',icon:'💡'},
-  ];
+  const primeCats=PRIME_CATS;
+  const primeTypes=PRIME_TYPES;
   const filteredPrimes=filterCat==='all'?primeTypes:primeTypes.filter(t=>t.cat===filterCat);
-
-  const primeTypes=[
-    // ═══ REMUNERATION & PRIMES SALARIALES (1-10) ═══
-    {id:'prime_fin_annee',label:'Prime de fin d\'annee (13eme mois)',icon:'🎄',taxable:true,onss:true,cat:'remuneration',desc:'Obligatoire CP 200 — equivalent 1 mois brut'},
-    {id:'prime_resultat',label:'Prime de resultat',icon:'📊',taxable:true,onss:true,cat:'remuneration',desc:'Prime liee aux performances individuelles'},
-    {id:'prime_anciennete',label:'Prime d\'anciennete',icon:'⭐',taxable:true,onss:true,cat:'remuneration',desc:'Prime liee aux annees de service'},
-    {id:'bonus_cct90',label:'Bonus CCT 90 (non-recurrent)',icon:'🎯',taxable:false,onss:false,max:4020,cat:'remuneration',desc:'Avantage non-recurrent lie aux resultats — max 4.020 EUR/an (2026)'},
-    {id:'prime_equipe',label:'Prime d\'equipe / shift',icon:'👥',taxable:true,onss:true,cat:'remuneration',desc:'Supplement pour travail en equipes successives'},
-    {id:'prime_nuit',label:'Prime de nuit',icon:'🌙',taxable:true,onss:true,cat:'remuneration',desc:'Supplement pour prestations entre 20h et 6h'},
-    {id:'prime_weekend',label:'Prime de week-end',icon:'📅',taxable:true,onss:true,cat:'remuneration',desc:'Supplement samedi/dimanche — taux selon CCT'},
-    {id:'prime_jf',label:'Prime jours feries',icon:'🎉',taxable:true,onss:true,cat:'remuneration',desc:'Supplement pour prestation un jour ferie legal'},
-    {id:'prime_heures_sup',label:'Heures supplementaires',icon:'⏰',taxable:true,onss:true,cat:'remuneration',desc:'Majoration 50% (semaine) ou 100% (dimanche/JF)'},
-    {id:'prime_productivite',label:'Prime de productivite',icon:'🏆',taxable:true,onss:true,cat:'remuneration',desc:'Prime liee aux objectifs de production'},
-
-    // ═══ CHEQUES & AVANTAGES EN NATURE (11-20) ═══
-    {id:'cheques_repas',label:'Cheques-repas',icon:'🍽',taxable:false,onss:false,max:8,cat:'cheques',desc:'Max 8 EUR/jour — part patronale max 6,91 EUR'},
-    {id:'eco_cheques',label:'Eco-cheques',icon:'🌿',taxable:false,onss:false,max:250,cat:'cheques',desc:'Max 250 EUR/an — produits ecologiques uniquement'},
-    {id:'cheques_sport',label:'Cheques sport & culture',icon:'🏋',taxable:false,onss:false,max:100,cat:'cheques',desc:'Max 100 EUR/an'},
-    {id:'cheques_cadeau',label:'Cheques-cadeaux',icon:'🎁',taxable:false,onss:false,max:40,cat:'cheques',desc:'Max 40 EUR/an par occasion (Noel, mariage, naissance)'},
-    {id:'avantage_vehicule',label:'Avantage vehicule / ATN',icon:'🚗',taxable:true,onss:false,cat:'cheques',desc:'ATN calcule selon CO2 et valeur catalogue'},
-    {id:'carte_carburant',label:'Carte carburant',icon:'⛽',taxable:true,onss:false,cat:'cheques',desc:'ATN sur carburant prive — inclus dans ATN vehicule'},
-    {id:'gsm_avantage',label:'GSM / smartphone',icon:'📱',taxable:true,onss:false,cat:'cheques',desc:'ATN forfaitaire 3 EUR/mois (appareils) + 4 EUR/mois (abonnement)'},
-    {id:'laptop_avantage',label:'PC / laptop',icon:'💻',taxable:true,onss:false,cat:'cheques',desc:'ATN forfaitaire 6 EUR/mois pour usage prive'},
-    {id:'internet_avantage',label:'Internet domicile',icon:'🌐',taxable:true,onss:false,cat:'cheques',desc:'ATN forfaitaire 5 EUR/mois'},
-    {id:'logement_avantage',label:'Logement / habitation',icon:'🏡',taxable:true,onss:true,cat:'cheques',desc:'ATN selon revenu cadastral — avantage significatif'},
-
-    // ═══ MOBILITE & TRANSPORT (21-28) ═══
-    {id:'budget_mobilite',label:'Budget mobilite',icon:'🚲',taxable:false,onss:false,cat:'mobilite',desc:'3 piliers: voiture eco / transport durable / cash'},
-    {id:'indemnite_velo',label:'Indemnite velo',icon:'🚴',taxable:false,onss:false,max:0.35,cat:'mobilite',desc:'Max 0,35 EUR/km — exonere ONSS et fiscalement'},
-    {id:'transport_commun',label:'Transport en commun',icon:'🚆',taxable:false,onss:false,cat:'mobilite',desc:'Intervention obligatoire — 75% minimum (CP 200)'},
-    {id:'transport_prive',label:'Transport prive',icon:'🚘',taxable:false,onss:false,cat:'mobilite',desc:'Indemnite km voiture — forfait ONSS applicable'},
-    {id:'parking',label:'Place de parking',icon:'🅿️',taxable:false,onss:false,cat:'mobilite',desc:'Mise a disposition gratuite — pas d\'ATN si lie au travail'},
-    {id:'covoiturage',label:'Prime covoiturage',icon:'🤝',taxable:false,onss:false,cat:'mobilite',desc:'Encouragement covoiturage domicile-travail'},
-    {id:'trottinette',label:'Trottinette electrique',icon:'🛴',taxable:false,onss:false,cat:'mobilite',desc:'Meme regime que le velo — indemnite km exoneree'},
-    {id:'abonnement_transport',label:'Abonnement transport',icon:'🎫',taxable:false,onss:false,cat:'mobilite',desc:'Remboursement SNCB / TEC / STIB / De Lijn'},
-
-    // ═══ TELETRAVAIL & FRAIS (29-36) ═══
-    {id:'indemnite_teletravail',label:'Indemnite teletravail',icon:'🏠',taxable:false,onss:false,max:FORF_BUREAU,cat:'teletravail',desc:'Forfait bureau max 154,74 EUR/mois (ONSS)'},
-    {id:'frais_bureau',label:'Frais de bureau',icon:'🪑',taxable:false,onss:false,cat:'teletravail',desc:'Mobilier, materiel — remboursement sur justificatifs'},
-    {id:'frais_representation',label:'Frais de representation',icon:'🤵',taxable:false,onss:false,cat:'teletravail',desc:'Forfait ou reel — repas clients, evenements pro'},
-    {id:'frais_deplacement',label:'Frais de deplacement',icon:'✈️',taxable:false,onss:false,cat:'teletravail',desc:'Missions professionnelles — reel ou forfait'},
-    {id:'frais_vetements',label:'Vetements de travail',icon:'👔',taxable:false,onss:false,cat:'teletravail',desc:'Uniforme, EPI — obligation employeur'},
-    {id:'frais_formation',label:'Frais de formation',icon:'📚',taxable:false,onss:false,cat:'teletravail',desc:'Formation professionnelle — 5 jours/an (droit individuel)'},
-    {id:'prime_outillage',label:'Prime d\'outillage',icon:'🔧',taxable:false,onss:false,cat:'teletravail',desc:'Outils propres du travailleur — forfait sectoriel'},
-    {id:'frais_garage',label:'Indemnite garage',icon:'🏗',taxable:false,onss:false,cat:'teletravail',desc:'Remboursement si pas de parking entreprise'},
-
-    // ═══ ASSURANCES & PENSION (37-44) ═══
-    {id:'assurance_groupe',label:'Assurance groupe',icon:'🛡',taxable:false,onss:true,cat:'assurance',desc:'Pension complementaire — cotisation employeur deductible'},
-    {id:'assurance_hospitalisation',label:'Assurance hospitalisation',icon:'🏥',taxable:false,onss:false,cat:'assurance',desc:'Couverture hospitaliere — avantage non taxable si collectif'},
-    {id:'assurance_ambulatoire',label:'Assurance soins ambulatoires',icon:'💊',taxable:false,onss:false,cat:'assurance',desc:'Soins dentaires, optique, kine — complement collectif'},
-    {id:'assurance_revenu_garanti',label:'Revenu garanti (maladie)',icon:'🩺',taxable:false,onss:false,cat:'assurance',desc:'Assurance incapacite de travail — complement au salaire garanti'},
-    {id:'assurance_vie',label:'Assurance vie individuelle',icon:'💎',taxable:false,onss:true,cat:'assurance',desc:'Capital ou rente au beneficiaire — regime fiscal branche 21'},
-    {id:'assurance_accident',label:'Assurance accident extra-prof.',icon:'⛑',taxable:false,onss:false,cat:'assurance',desc:'Couverture accidents hors travail — avantage employeur'},
-    {id:'pension_libre_compl',label:'PLCS (Pension Libre Compl.)',icon:'🏦',taxable:false,onss:true,cat:'assurance',desc:'Pension Libre Complementaire Salarie — deduction fiscale'},
-    {id:'plan_bonus_pension',label:'Plan bonus pension',icon:'🎯',taxable:false,onss:true,cat:'assurance',desc:'Engagement collectif de pension — regle des 80%'},
-
-    // ═══ CONGES & ABSENCES REMUNEREES (45-50) ═══
-    {id:'pecule_vacances',label:'Pecule de vacances',icon:'🏖',taxable:true,onss:true,cat:'conges',desc:'Simple + double pecule — 15,38% brut annuel (employes)'},
-    {id:'pecule_sortie',label:'Pecule de sortie',icon:'🚪',taxable:true,onss:true,cat:'conges',desc:'Solde conges non pris — calcul au prorata'},
-    {id:'petit_chomage',label:'Petit chomage (conge circ.)',icon:'📋',taxable:true,onss:true,cat:'conges',desc:'Mariage, deces, communion — jours payes (AR 28/08/1963)'},
-    {id:'conge_education',label:'Conge-education paye',icon:'🎓',taxable:true,onss:true,cat:'conges',desc:'Formation reconnue — remboursement par la Region'},
-    {id:'jour_carence',label:'Jour de carence (supprime)',icon:'🤒',taxable:true,onss:true,cat:'conges',desc:'Salaire garanti des le 1er jour maladie (depuis 2014)'},
-    {id:'conge_anciennete',label:'Conge d\'anciennete',icon:'📆',taxable:true,onss:true,cat:'conges',desc:'Jours supplementaires selon anciennete — CCT sectorielle'},
-
-    // ═══ FISCAL & OPTIMISATION (51-56) ═══
-    {id:'warrants',label:'Warrants / Stock Options',icon:'📈',taxable:true,onss:false,cat:'fiscal',desc:'Regime fiscal specifique — imposition a l\'attribution'},
-    {id:'plan_cafeteria',label:'Plan cafeteria',icon:'☕',taxable:false,onss:false,cat:'fiscal',desc:'Budget flexible — le travailleur choisit ses avantages'},
-    {id:'droits_auteur',label:'Droits d\'auteur',icon:'✍️',taxable:true,onss:false,max:73070,cat:'fiscal',desc:'Regime fiscal avantageux — precompte 15% (max 73.070 EUR/an)'},
-    {id:'flexi_job',label:'Flexi-job (complement)',icon:'⚡',taxable:false,onss:false,cat:'fiscal',desc:'Pas d\'ONSS ni IPP — horeca, retail, sante (depuis 2024 elargi)'},
-    {id:'prime_innovation',label:'Prime d\'innovation',icon:'💡',taxable:false,onss:false,max:4020,cat:'fiscal',desc:'Idem CCT 90 — liee a l\'innovation dans l\'entreprise'},
-    {id:'participation_benefices',label:'Participation aux benefices',icon:'💰',taxable:true,onss:false,cat:'fiscal',desc:'Loi du 22/05/2001 — taxe speciale 7% (pas ONSS)'},
-  ];
 
   const addPrime=()=>{
     const type=primeTypes.find(t=>t.id===newPrime.type);
