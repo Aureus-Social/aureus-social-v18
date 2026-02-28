@@ -8621,7 +8621,27 @@ const ImportCSV=({s,d})=>{
   const [selClient,setSelClient]=useState('');
   const [separator,setSeparator]=useState(',');
   const [errors,setErrors]=useState([]);
+  const [csvProfile,setCsvProfile]=useState('auto');
+  const [detectedProfiles,setDetectedProfiles]=useState([]);
   const clients=s.clients||[];
+
+  // Parser profiles for competitor payroll software
+  const PROFILES={
+    auto:{name:'Auto-detection',desc:'Detection automatique des colonnes'},
+    gappaie:{name:'GapPaie',desc:'Export personnel GapPaie'},
+    partena:{name:'Partena Professional',desc:'Export signaletique Partena'},
+    securex:{name:'Securex',desc:'Export personnel Securex My HR'},
+    sdworx:{name:'SD Worx',desc:'Export SD Worx / Blox'},
+    liantis:{name:'Liantis',desc:'Export personnel Liantis'},
+  };
+
+  const PROFILE_MAPS={
+    gappaie:{'Matricule':'_id','Nom':'last','Prenom':'first','Prénom':'first','N° Registre National':'niss','NRN':'niss','Email':'email','E-mail':'email','IBAN':'iban','Salaire brut':'monthlySalary','Salaire mensuel':'monthlySalary','Brut mensuel':'monthlySalary','Date entree':'startDate','Date entrée':'startDate','Fonction':'function','Categorie':'statut','Catégorie':'statut','Regime':'whWeek','Régime':'whWeek','Commission paritaire':'cp','CP':'cp','Situation familiale':'civil','Enfants a charge':'depChildren','Enfants':'depChildren','Nationalite':'nationalite','Nationalité':'nationalite','Telephone':'phone','GSM':'phone','Adresse':'address','Contrat':'contractType','Type contrat':'contractType'},
+    partena:{'N° travailleur':'_id','Nom de famille':'last','Nom':'last','Prénom':'first','NISS':'niss','Numéro national':'niss','E-mail privé':'email','Email':'email','N° de compte':'iban','IBAN':'iban','Salaire mensuel brut':'monthlySalary','Rémunération mensuelle':'monthlySalary','Salaire de base':'monthlySalary','Date entrée en service':'startDate','Date d\'entrée':'startDate','Nature du contrat':'contractType','Type de contrat':'contractType','Fonction':'function','Description fonction':'function','Catégorie':'statut','Type travailleur':'statut','Régime de travail':'whWeek','Durée hebdomadaire':'whWeek','Commission paritaire':'cp','N° CP':'cp','CP':'cp','Situation familiale':'civil','État civil':'civil','Personnes à charge':'depChildren','Enfants à charge':'depChildren','Nationalité':'nationalite','Tél. privé':'phone','GSM':'phone','Adresse complète':'address'},
+    securex:{'N° personnel':'_id','Matricule':'_id','Nom':'last','Familienaam':'last','Prénom':'first','Voornaam':'first','NISS':'niss','N° registre national':'niss','Rijksregisternummer':'niss','Email':'email','E-mail':'email','IBAN':'iban','Compte bancaire':'iban','Salaire brut':'monthlySalary','Brut mensuel':'monthlySalary','Brutoloon':'monthlySalary','Date entrée':'startDate','Date d\'entrée en service':'startDate','Type contrat':'contractType','Contracttype':'contractType','Fonction':'function','Functie':'function','Catégorie':'statut','Statuut':'statut','Régime':'whWeek','Arbeidsregime':'whWeek','Heures/semaine':'whWeek','Commission paritaire':'cp','Paritair comité':'cp','CP':'cp','Situation familiale':'civil','Enfants à charge':'depChildren','Nationalité':'nationalite','Téléphone':'phone','GSM':'phone','Adresse':'address'},
+    sdworx:{'WorkerNumber':'_id','N° travailleur':'_id','LastName':'last','Nom':'last','FirstName':'first','Prénom':'first','NationalNumber':'niss','NISS':'niss','Email':'email','Phone':'phone','BankAccount':'iban','IBAN':'iban','GrossSalary':'monthlySalary','Salaire brut':'monthlySalary','StartDate':'startDate','EndDate':'endDate','ContractType':'contractType','JobTitle':'function','Fonction':'function','WorkerCategory':'statut','WeeklyHours':'whWeek','JointCommittee':'cp','CP':'cp','MaritalStatus':'civil','DependentChildren':'depChildren','Nationality':'nationalite'},
+    liantis:{'Werknemersnummer':'_id','Naam':'last','Nom':'last','Voornaam':'first','Prénom':'first','Rijksregisternr':'niss','NISS':'niss','E-mail':'email','Telefoon':'phone','IBAN':'iban','Brutoloon':'monthlySalary','Salaire brut':'monthlySalary','Indienstdatum':'startDate','Uitdienstdatum':'endDate','Contracttype':'contractType','Functie':'function','Fonction':'function','Statuut':'statut','Arbeidsregime':'whWeek','Paritair comité':'cp','CP':'cp'},
+  };
 
   const FIELDS=[
     {key:'first',label:'Prenom',required:true},
@@ -8677,9 +8697,25 @@ const ImportCSV=({s,d})=>{
       const result=parseCSV(text,detectedSep);
       if(result){
         setParsed(result);
-        // Auto-map columns
+        // Detect matching profiles
+        const matches=[];
+        Object.entries(PROFILE_MAPS).forEach(([key,pmap])=>{
+          const matched=result.headers.filter(h=>pmap[h]||pmap[h.trim()]);
+          if(matched.length>=2) matches.push({key,name:PROFILES[key]?.name||key,score:Math.round(matched.length/result.headers.length*100),matched:matched.length});
+        });
+        matches.sort((a,b)=>b.score-a.score);
+        setDetectedProfiles(matches);
+        if(matches.length>0&&csvProfile==='auto') setCsvProfile(matches[0].key);
+
+        // Auto-map columns — use profile if available
         const autoMap={};
-        result.headers.forEach(h=>{
+        const activeProfile=csvProfile!=='auto'&&PROFILE_MAPS[csvProfile]?csvProfile:(matches[0]?.key||null);
+        if(activeProfile&&PROFILE_MAPS[activeProfile]){
+          result.headers.forEach(h=>{
+            const mapped=PROFILE_MAPS[activeProfile][h]||PROFILE_MAPS[activeProfile][h.trim()];
+            if(mapped&&mapped!=='_id') autoMap[h]=mapped;
+          });
+        } else result.headers.forEach(h=>{
           const hl=h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
           if(hl.includes('prenom')||hl.includes('first')||hl==='prenom') autoMap[h]='first';
           else if(hl.includes('nom')||hl.includes('last')||hl==='nom') autoMap[h]='last';
@@ -8774,6 +8810,13 @@ const ImportCSV=({s,d})=>{
 
     {step===2&&parsed&&<div>
       <div style={{fontSize:13,fontWeight:600,color:'#e5e5e5',marginBottom:12}}>Mappez vos colonnes ({parsed.headers.length} colonnes detectees, {parsed.rows.length} lignes)</div>
+      {detectedProfiles.length>0&&<div style={{padding:10,background:'rgba(34,197,94,.04)',border:'1px solid rgba(34,197,94,.15)',borderRadius:10,marginBottom:12}}>
+        <div style={{fontSize:10,fontWeight:600,color:'#22c55e',marginBottom:6}}>Profil logiciel detecte</div>
+        <select value={csvProfile} onChange={e=>{setCsvProfile(e.target.value);const pm=PROFILE_MAPS[e.target.value];if(pm){const am={};parsed.headers.forEach(h=>{const m=pm[h]||pm[h.trim()];if(m&&m!=='_id')am[h]=m;});setMapping(am);}}} style={{padding:'6px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#c6a34e',fontSize:11,fontFamily:'inherit',width:'100%'}}>
+          <option value="auto">Auto-detection</option>
+          {detectedProfiles.map(p=><option key={p.key} value={p.key}>{p.name} ({p.score}% match, {p.matched} colonnes)</option>)}
+        </select>
+      </div>}
       <div style={{display:'grid',gridTemplateColumns:'1fr 20px 1fr',gap:8,alignItems:'center'}}>
         <div style={{fontSize:10,fontWeight:600,color:'#888'}}>COLONNE CSV</div>
         <div></div>
@@ -9444,6 +9487,67 @@ function emailRecapEmployeur(client, period, data) {
 </div>
 
 <p style="text-align:center;margin-top:20px;"><a href="https://aureussocial.be" class="btn">Acceder au Dashboard</a></p>
+`;
+  return emailWrap(content);
+}
+
+function emailAlerteLegale(type, message, details) {
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const severityColor = type === 'critical' ? '#dc2626' : type === 'warning' ? '#f59e0b' : '#3b82f6';
+  const severityLabel = type === 'critical' ? 'CRITIQUE' : type === 'warning' ? 'ATTENTION' : 'INFO';
+  const content = `
+<h1 style="color:${severityColor}">Alerte ${severityLabel}</h1>
+<p>${message}</p>
+${details?.echeance ? '<div class="highlight"><div class="label">Echeance</div><div class="value" style="color:'+severityColor+';font-size:16px">'+details.echeance+'</div></div>' : ''}
+${details?.action ? '<p><strong>Action requise :</strong> '+details.action+'</p>' : ''}
+${details?.baseLegale ? '<p style="font-size:11px;color:#888;"><strong>Base legale :</strong> '+details.baseLegale+'</p>' : ''}
+${details?.sanction ? '<p style="font-size:11px;color:#dc2626;"><strong>Sanction :</strong> '+details.sanction+'</p>' : ''}
+<p style="text-align:center;margin-top:20px;"><a href="https://app.aureussocial.be" class="btn">Voir dans Aureus Social</a></p>
+`;
+  return emailWrap(content);
+}
+
+function emailRappelEcheance(echeances) {
+  const rows = (echeances || []).map(e =>
+    `<tr><td><span class="badge badge-${e.urgent?'red':'blue'}">${e.date}</span></td><td>${e.label}</td><td style="text-align:right;font-weight:600">${e.montant||''}</td></tr>`
+  ).join('');
+  const content = `
+<h1>Rappel echeances du mois</h1>
+<p>Bonjour,</p>
+<p>Voici les echeances a ne pas manquer ce mois-ci :</p>
+<div class="table-wrap">
+<table>
+  <tr><th>Date</th><th>Obligation</th><th style="text-align:right">Montant</th></tr>
+  ${rows}
+</table>
+</div>
+<p style="font-size:11px;color:#888;">Ce rappel est genere automatiquement par Aureus Social Pro. Verifiez les montants exacts dans votre tableau de bord.</p>
+<p style="text-align:center;margin-top:20px;"><a href="https://app.aureussocial.be" class="btn">Acceder au Dashboard</a></p>
+`;
+  return emailWrap(content);
+}
+
+function emailFactureClient(facture) {
+  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
+  const content = `
+<h1>Facture ${facture.numero||''}</h1>
+<p>Bonjour,</p>
+<p>Veuillez trouver ci-joint votre facture pour les prestations de gestion de paie.</p>
+<div class="table-wrap">
+<table>
+  <tr><th colspan="2">Detail facture</th></tr>
+  <tr><td>Numero</td><td style="text-align:right;font-weight:700">${facture.numero||'N/A'}</td></tr>
+  <tr><td>Periode</td><td style="text-align:right">${facture.periode||'N/A'}</td></tr>
+  <tr><td>HTVA</td><td style="text-align:right">${f2(facture.htva)} EUR</td></tr>
+  <tr><td>TVA (21%)</td><td style="text-align:right">${f2(facture.tva)} EUR</td></tr>
+  <tr style="background:#f8f6f0"><td style="font-weight:700">Total TTC</td><td style="text-align:right;font-weight:700;color:#c6a34e;font-size:14px">${f2(facture.ttc)} EUR</td></tr>
+</table>
+</div>
+<div class="highlight">
+  <div class="label">Echeance de paiement</div>
+  <div class="value" style="font-size:16px;color:#1a1a2e">${facture.echeance||'30 jours'}</div>
+</div>
+<p style="font-size:11px;color:#888;">Paiement par virement sur le compte BE XX XXXX XXXX XXXX — Communication: ${facture.numero||''}</p>
 `;
   return emailWrap(content);
 }

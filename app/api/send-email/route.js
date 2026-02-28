@@ -1,8 +1,9 @@
-// Aureus Social Pro — Email Sending API Route
-// Uses Resend (or falls back to a log) for sending payslip emails
-// Add RESEND_API_KEY to your Vercel env variables
+// ═══════════════════════════════════════════════════════════
+// AUREUS SOCIAL PRO — Email API (Item 15 — Production-ready)
+// Resend integration with domain verification, retry, templates
+// Set RESEND_API_KEY + verify aureussocial.be domain in Resend
+// ═══════════════════════════════════════════════════════════
 
-// Basic HTML sanitization: strip dangerous tags/attributes
 function sanitizeHTML(html) {
   if (!html) return '';
   return html
@@ -20,16 +21,56 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+const TEMPLATES = {
+  payslip: { subject: 'Fiche de paie {period}', from: 'Aureus Paie <paie@aureussocial.be>' },
+  recap: { subject: 'Récap mensuel {period}', from: 'Aureus Social <recap@aureussocial.be>' },
+  alert: { subject: 'Alerte légale — {type}', from: 'Aureus Alertes <alertes@aureussocial.be>' },
+  reminder: { subject: 'Rappel échéances — {period}', from: 'Aureus Social <rappels@aureussocial.be>' },
+  invoice: { subject: 'Facture {numero}', from: 'Aureus Facturation <facturation@aureussocial.be>' },
+};
+
+async function sendWithRetry(payload, apiKey, maxRetries = 2) {
+  let lastError = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) return { success: true, data };
+      if (res.status === 429 && attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+      lastError = data;
+    } catch (err) {
+      lastError = { message: err.message };
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+    }
+  }
+  return { success: false, error: lastError };
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { to, subject, html, attachments, from } = body;
+    const { to, subject, html, attachments, from, template, templateData } = body;
 
     if (!to || !subject) {
       return Response.json({ error: 'Missing to or subject' }, { status: 400 });
     }
 
-    // Validate email addresses
     const recipients = Array.isArray(to) ? to : [to];
     for (const addr of recipients) {
       if (!isValidEmail(addr)) {
@@ -37,7 +78,6 @@ export async function POST(request) {
       }
     }
 
-    // Validate subject length
     if (subject.length > 500) {
       return Response.json({ error: 'Subject too long (max 500 chars)' }, { status: 400 });
     }
@@ -45,71 +85,97 @@ export async function POST(request) {
     const apiKey = process.env.RESEND_API_KEY;
 
     if (!apiKey) {
-      // No Resend key — log and return success (dev mode)
-      console.log('[EMAIL-DEV]', { to, subject, htmlLength: html?.length || 0 });
+      console.log('[EMAIL-DEV]', { to, subject, template, htmlLength: html?.length || 0 });
       return Response.json({
         success: true,
         mode: 'dev',
-        message: 'Email logged (no RESEND_API_KEY configured)',
+        message: 'Email logged (RESEND_API_KEY non configurée). Ajoutez-la dans Vercel pour envoyer en production.',
+        setup: {
+          step1: 'Créer un compte sur resend.com',
+          step2: 'Vérifier le domaine aureussocial.be (DNS SPF + DKIM)',
+          step3: 'Copier la clé API → Vercel env RESEND_API_KEY',
+        },
         to,
         subject,
       });
     }
 
-    // Build Resend payload with sanitized HTML
+    // Resolve template
+    let resolvedSubject = subject;
+    let resolvedFrom = from || 'Aureus Social Pro <noreply@aureussocial.be>';
+    if (template && TEMPLATES[template]) {
+      const tpl = TEMPLATES[template];
+      resolvedFrom = tpl.from;
+      if (!from) {
+        resolvedSubject = tpl.subject.replace(/\{(\w+)\}/g, (_, k) => templateData?.[k] || '');
+      }
+    }
+
     const payload = {
-      from: from || 'Aureus Social Pro <noreply@aureussocial.be>',
+      from: resolvedFrom,
       to: recipients,
-      subject: subject.slice(0, 500),
+      subject: resolvedSubject.slice(0, 500),
       html: sanitizeHTML(html) || '<p>Voir pièce jointe</p>',
     };
 
-    // Add attachments if provided (base64 encoded)
-    if (attachments && attachments.length > 0) {
-      payload.attachments = attachments.map(att => ({
-        filename: att.filename || 'document.html',
-        content: att.content, // base64 string
-        content_type: att.contentType || 'text/html',
+    if (attachments?.length > 0) {
+      payload.attachments = attachments.slice(0, 5).map(att => ({
+        filename: (att.filename || 'document.pdf').slice(0, 100),
+        content: att.content,
+        content_type: att.contentType || 'application/pdf',
       }));
     }
 
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    const result = await sendWithRetry(payload, apiKey);
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error('[EMAIL-ERROR]', data);
-      return Response.json({ error: data.message || 'Resend error', details: data }, { status: res.status });
+    if (!result.success) {
+      return Response.json({
+        error: result.error?.message || 'Email sending failed',
+        details: result.error,
+      }, { status: 502 });
     }
 
     return Response.json({
       success: true,
       mode: 'resend',
-      id: data.id,
+      id: result.data.id,
       to: payload.to,
-      subject,
+      subject: resolvedSubject,
     });
 
   } catch (error) {
-    console.error('[EMAIL-CRASH]', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
 
-// Health check
 export async function GET() {
   const hasKey = !!process.env.RESEND_API_KEY;
+
+  // Check domain verification status if key exists
+  let domainStatus = null;
+  if (hasKey) {
+    try {
+      const res = await fetch('https://api.resend.com/domains', {
+        headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}` },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        domainStatus = (data.data || []).map(d => ({
+          name: d.name,
+          status: d.status,
+          verified: d.status === 'verified',
+        }));
+      }
+    } catch { /* best effort */ }
+  }
+
   return Response.json({
     service: 'Aureus Social Pro — Email API',
     status: 'ok',
     resend: hasKey ? 'configured' : 'not configured (dev mode)',
+    domains: domainStatus,
+    templates: Object.keys(TEMPLATES),
     timestamp: new Date().toISOString(),
   });
 }
