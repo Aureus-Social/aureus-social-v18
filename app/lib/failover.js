@@ -34,7 +34,7 @@ async function checkHealth(config) {
     const timeout = setTimeout(() => controller.abort(), TIMEOUT);
     const client = createClient(config.url, config.key);
     const start = Date.now();
-    const { error } = await client.from('app_state').select('key').limit(1).abortSignal(controller.signal);
+    const { error } = await client.from('app_state').select('state_key').limit(1).abortSignal(controller.signal);
     clearTimeout(timeout);
     const latency = Date.now() - start;
     return { healthy: !error, latency, region: config.region, label: config.label };

@@ -129,7 +129,7 @@ async function checkAllServices(baseUrl) {
         if (!sbUrl || !sbKey) { status = 'down'; error = 'Not configured'; }
         else {
           const sb = createClient(sbUrl, sbKey);
-          const { error: dbErr } = await sb.from('app_state').select('key').limit(1).maybeSingle();
+          const { error: dbErr } = await sb.from('app_state').select('state_key').limit(1).maybeSingle();
           latencyMs = Date.now() - start;
           if (dbErr) { status = latencyMs > 3000 ? 'down' : 'degraded'; error = dbErr.message; }
           else if (latencyMs > 2000) status = 'degraded';

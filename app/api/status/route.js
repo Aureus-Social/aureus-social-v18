@@ -12,7 +12,7 @@ export async function GET() {
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const dbStart = Date.now();
-    const { error } = await supabase.from('app_state').select('key').limit(1);
+    const { error } = await supabase.from('app_state').select('state_key').limit(1);
     const dbLatency = Date.now() - dbStart;
     components.push({
       name: 'Database (Supabase EU)',

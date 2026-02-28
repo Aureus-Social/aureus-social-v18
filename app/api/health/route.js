@@ -14,7 +14,7 @@ async function checkDB() {
   try {
     if (!supabaseUrl || !supabaseKey) return { status: DOWN, latencyMs: 0, error: 'Not configured' };
     const sb = createClient(supabaseUrl, supabaseKey);
-    const { error } = await sb.from('app_state').select('key').limit(1).maybeSingle();
+    const { error } = await sb.from('app_state').select('state_key').limit(1).maybeSingle();
     const ms = Date.now() - t;
     if (error) return { status: ms > 3000 ? DOWN : DEGRADED, latencyMs: ms };
     return { status: ms > 2000 ? DEGRADED : OK, latencyMs: ms };
