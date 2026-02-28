@@ -1,493 +1,4 @@
-var LOIS_BELGES = {
-  _meta: { version: '2026.1.0', dateMAJ: '2026-01-01', source: 'SPF Finances / ONSS / CNT / Moniteur Belge', année: 2026 },
-
-  // ═══ ONSS ═══
-  onss: {
-    travailleur: 0.1307,
-    employeur: { total: 0.2507, detail: { pension: 0.0886, maladie: 0.0370, chômage: 0.0138, accidents: 0.0087, maladiesPro: 0.0102, fermeture: 0.0012, modération: 0.0560, cotisationsSpec: 0.0352 }},
-    plafondAnnuel: null, // pas de plafond en Belgique
-    ouvrier108: 1.08, // majoration 8% ouvriers
-    reductionStructurelle: { seuil: 9932.40, forfait: 0, pctAuDessus: 0 },
-    groupeCible: { jeunesNonQualifies: { age: 25, reduc: 1500 }, agees: { age: 55, reduc: 1500 }, handicapes: { reduc: 1500 }},
-  },
-
-  // ═══ PRÉCOMPTE PROFESSIONNEL ═══
-  pp: {
-    tranches: [
-      { min: 0, max: 16310, taux: 0.2675 },
-      { min: 16310, max: 28790, taux: 0.4280 },
-      { min: 28790, max: 49820, taux: 0.4815 },
-      { min: 49820, max: Infinity, taux: 0.5350 },
-    ],
-    fraisPro: { salarie: { pct: 0.30, max: 5930 }, dirigeant: { pct: 0.03, max: 3120 }},
-    quotiteExemptee: { bareme1: 2987.98, bareme2: 5975.96 },
-    quotientConjugal: { pct: 0.30, max: 12520 },
-    reductionsEnfants: [0, 624, 1656, 4404, 7620, 11100, 14592, 18120, 21996],
-    reductionEnfantSupp: 3864,
-    reductionParentIsole: 624,
-    reductionHandicape: 624,
-    reductionConjointHandicape: 624,
-    reductionConjointRevenuLimite: 1698,
-    reductionConjointPensionLimitee: 3390,
-    reductionPersonne65: 1992,
-    reductionAutreCharge: 624,
-    bonusEmploi: {
-      // Volet A+B depuis 01/04/2024 — Montants indexés 01/01/2026 (ONSS)
-      jan2026: {
-        voletA: { employes: { seuilBas: 2833.36, seuilHaut: 3271.48, max: 123.00, coeff: 0.2807 }, ouvriers: { seuilBas: 2833.36, seuilHaut: 3271.48, max: 132.84, coeff: 0.3032 }},
-        voletB: { employes: { seuilBas: 2218.73, seuilHaut: 2833.36, max: 165.87, coeff: 0.2699 }, ouvriers: { seuilBas: 2218.73, seuilHaut: 2833.36, max: 179.14, coeff: 0.2915 }},
-      },
-      mars2026: {
-        voletA: { employes: { seuilBas: 2833.36, seuilHaut: 3336.98, max: 123.00, coeff: 0.2442 }, ouvriers: { seuilBas: 2833.36, seuilHaut: 3336.98, max: 132.84, coeff: 0.2638 }},
-        voletB: { employes: { seuilBas: 2218.73, seuilHaut: 2833.36, max: 165.87, coeff: 0.2699 }, ouvriers: { seuilBas: 2218.73, seuilHaut: 2833.36, max: 179.14, coeff: 0.2915 }},
-      },
-      fiscalTauxA: 0.3314,  // 33.14% du volet A social
-      fiscalTauxB: 0.5254,  // 52.54% du volet B social
-      // Rétro-compatibilité (ancien format pour BONUS_MAX etc.)
-      pctReduction: 0.3314, maxMensuel: 288.87, seuilBrut1: 2833.36, seuilBrut2: 3336.98,
-    },
-  },
-
-  // ═══ CSSS — Cotisation Spéciale Sécurité Sociale ═══
-  csss: {
-    isole: [
-      { min: 0, max: 18592.02, montant: 0, taux: 0 },
-      { min: 18592.02, max: 21070.96, montant: 0, taux: 0.076 },
-      { min: 21070.96, max: 37344.02, montant: 9.30, taux: 0.011 },
-      { min: 37344.02, max: 60181.95, montant: 9.30, tauxBase: 0.011, taux: 0.013, palierBase: 37344.02 },
-      { min: 60181.95, max: Infinity, montantFixe: 51.64 },
-    ],
-    menage2revenus: [
-      { min: 0, max: 18592.02, montant: 0, taux: 0 },
-      { min: 18592.02, max: 21070.96, montant: 0, taux: 0.076 },
-      { min: 21070.96, max: 60181.95, montant: 9.30, taux: 0.011 },
-      { min: 60181.95, max: Infinity, montantFixe: 51.64 },
-    ],
-    menage1revenu: [
-      { min: 0, max: 18592.02, montant: 0, taux: 0 },
-      { min: 18592.02, max: 21070.96, montant: 0, taux: 0.076 },
-      { min: 21070.96, max: 37344.02, montant: 9.30, taux: 0.011 },
-      { min: 37344.02, max: 60181.95, montant: 0, taux: 0.013 },
-      { min: 60181.95, max: Infinity, montantFixe: 51.64 },
-    ],
-  },
-
-  // ═══ RÉMUNÉRATION ═══
-  rémunération: {
-    RMMMG: { montant18ans: RMMMG, montant20ans6m: RMMMG, montant21ans12m: RMMMG, source: 'CNT - CCT 43/15' },
-    indexSante: { coeff: 2.0399, pivot: 125.60, dateDerniereIndex: '2024-12-01', prochainPivotEstime: '2026-06-01' },
-    péculeVacances: {
-      simple: { pct: PV_SIMPLE, base: 'brut annuel precedent' },
-      double: { pct: 0.9200, base: 'brut mensuel' },
-      patronal: { pct: (PV_SIMPLE*2+0.001), base: 'brut annuel precedent' },
-    },
-    treizieme: { obligatoire: true, cp200: true, base: 'salaire mensuel brut', onss: true },
-  },
-
-  // ═══ CHÈQUES-REPAS ═══
-  chequesRepas: {
-    partTravailleur: { min: 1.09, max: null },
-    valeurFaciale: { max: 10.00 },
-    partPatronale: { max: 8.91 },
-    conditions: 'Par jour effectivement preste',
-    exonerationFiscale: true,
-    exonerationONSS: true,
-  },
-
-  // ═══ FRAIS PROPRES EMPLOYEUR ═══
-  fraisPropres: {
-    forfaitBureau: { max: 157.83, base: 'mensuel' },
-    forfaitDeplacement: { voiture: FORF_KM, velo: 0.35, transportCommun: 1.00 },
-    forfaitReprésentation: { max: 40, base: 'mensuel sans justificatif' },
-    télétravail: { max: 157.83, base: 'mensuel structurel' },
-  },
-
-  // ═══ ATN — AVANTAGES EN NATURE ═══
-  atn: {
-    voiture: { CO2Ref: { essence: 102, diesel: 84, hybride: 84 }, coeff: 0.055, min: 1600, formule: '(catalogue x 6/7 x vetuste) x %CO2 / 12' },
-    logement: { cadastralx100: true, meuble: 1.333 },
-    gsm: { forfait: 3, mensuel: true },
-    pc: { forfait: 6, mensuel: true },
-    internet: { forfait: 5, mensuel: true },
-    electricite: { cadre: 2130, noncadre: 960, annuel: true },
-    chauffage: { cadre: 4720, noncadre: 2130, annuel: true },
-  },
-
-  // ═══ PRÉAVIS (CCT 109 / Loi Statut Unique) ═══
-  preavis: {
-    // Durée en semaines par anciennete (années)
-    employeur: [
-      { ancMin: 0, ancMax: 0.25, semaines: 1 },
-      { ancMin: 0.25, ancMax: 0.5, semaines: 3 },
-      { ancMin: 0.5, ancMax: 0.75, semaines: 4 },
-      { ancMin: 0.75, ancMax: 1, semaines: 5 },
-      { ancMin: 1, ancMax: 2, semaines: 6 },
-      { ancMin: 2, ancMax: 3, semaines: 7 },
-      { ancMin: 3, ancMax: 4, semaines: 9 },
-      { ancMin: 4, ancMax: 5, semaines: 12 },
-      { ancMin: 5, ancMax: 6, semaines: 15 },
-      { ancMin: 6, ancMax: 7, semaines: 18 },
-      { ancMin: 7, ancMax: 8, semaines: 21 },
-      { ancMin: 8, ancMax: 9, semaines: 24 },
-      { ancMin: 9, ancMax: 10, semaines: 27 },
-      { ancMin: 10, ancMax: 11, semaines: 30 },
-      { ancMin: 11, ancMax: 12, semaines: 33 },
-      { ancMin: 12, ancMax: 13, semaines: 36 },
-      { ancMin: 13, ancMax: 14, semaines: 39 },
-      { ancMin: 14, ancMax: 15, semaines: 42 },
-      { ancMin: 15, ancMax: 16, semaines: 45 },
-      { ancMin: 16, ancMax: 17, semaines: 48 },
-      { ancMin: 17, ancMax: 18, semaines: 51 },
-      { ancMin: 18, ancMax: 19, semaines: 54 },
-      { ancMin: 19, ancMax: 20, semaines: 57 },
-      { ancMin: 20, ancMax: 21, semaines: 60 },
-      { ancMin: 21, ancMax: 22, semaines: 62 },
-      { ancMin: 22, ancMax: 23, semaines: 63 },
-      { ancMin: 23, ancMax: 24, semaines: 64 },
-      { ancMin: 24, ancMax: 25, semaines: 65 },
-    ],
-    parAnSupp: 3, // +3 semaines par année > 25 ans
-    travailleur: { facteur: 0.5, min: 1, max: 13 },
-    motifGrave: 0,
-    outplacement: { seuil: 30, semaines: 4 },
-  },
-
-  // ═══ TEMPS DE TRAVAIL ═══
-  tempsTravail: {
-    duréeHebdoLegale: 38,
-    duréeHebdoMax: 38,
-    heuresSupp: { majoration50: 0.50, majoration100: 1.00, recuperation: true, plafondAnnuel: 120, plafondVolontaire: 360 },
-    nuit: { debut: '20:00', fin: '06:00', majoration: 0 },
-    dimanche: { majoration: 1.00, repos: true },
-    jourFerie: { nombre: 10, majoration: 2.00, remplacement: true },
-    petitChômage: { mariage: 2, deces1: 3, deces2: 1, communion: 1, demenagement: 1 },
-  },
-
-  // ═══ CONTRATS ═══
-  contrats: {
-    periodeEssai: { supprimee: true, exception: 'travail etudiant/interim/occupation temporaire' },
-    clauseNonConcurrence: { duréeMax: 12, brut_min: 44447, brut_mid: 88895, indemnitéMin: 0.50 },
-    ecolecholage: { duréeMax: 36, brut_min: 44447, formationMin: 80 },
-  },
-
-  // ═══ SEUILS SOCIAUX ═══
-  seuils: {
-    electionsSociales: { cppt: 50, ce: 100 },
-    planFormation: 20,
-    bilanSocial: 20,
-    reglementTravail: 1,
-    delegationSyndicale: { cp200: 50 },
-    servicePPT: { interne: 20 },
-    conseillerPrevention: { interne: 20 },
-  },
-
-  // ═══ ASSURANCES ═══
-  assurances: {
-    accidentTravail: { taux: 0.01, obligatoire: true },
-    médecineTravail: { coût: COUT_MED, parTravailleur: true, annuel: false },
-    assuranceLoi: { obligatoire: true },
-    assuranceGroupe: { deductible: true, plafond80pct: true },
-  },
-
-  // ═══ ALLOCATIONS FAMILIALES (Région Bruxelles) ═══
-  allocFamBxl: {
-    base: { montant: 171.08, parEnfant: true },
-    supplement1218: 29.64,
-    supplementSocial: { plafondRevenu: 35978, montant: 54.38 },
-    primeNaissance: { premier: 1214.73, suivants: 607.37 },
-  },
-
-  // ═══ DIMONA ═══
-  dimona: {
-    delaiIN: 'Avant debut prestations',
-    delaiOUT: 'Le jour meme',
-    types: ['IN','OUT','UPDATE','CANCEL'],
-    canal: 'Portail sécurité sociale ou batch',
-    sanctionNiveau: 3,
-  },
-
-  // ═══ DMFA ═══
-  dmfa: {
-    periodicite: 'Trimestrielle',
-    delai: 'Dernier jour du mois suivant le trimestre',
-    format: 'XML via batch ou portail',
-    cotisationsPNP: true,
-  },
-
-  // ═══ BELCOTAX ═══
-  belcotax: {
-    delai: '1er mars année N+1',
-    format: 'XML BelcotaxOnWeb',
-    fiches: ['281.10','281.13','281.14','281.20','281.30','281.50'],
-  },
-
-  // ═══ SOURCES OFFICIELLES ═══
-  sources: [
-    { id: 'spf', nom: 'SPF Finances', url: 'https://finances.belgium.be/fr/entreprises/personnel_et_rémunération/précompte_professionnel', type: 'PP/Fiscal' },
-    { id: 'onss', nom: 'ONSS', url: 'https://www.socialsecurity.be', type: 'Cotisations sociales' },
-    { id: 'cnt', nom: 'Conseil National du Travail', url: 'https://www.cnt-nar.be', type: 'CCT/RMMMG' },
-    { id: 'spf_emploi', nom: 'SPF Emploi', url: 'https://emploi.belgique.be', type: 'Droit du travail' },
-    { id: 'moniteur', nom: 'Moniteur Belge', url: 'https://www.ejustice.just.fgov.be/cgi/summary.pl', type: 'Legislation' },
-    { id: 'statbel', nom: 'Statbel', url: 'https://statbel.fgov.be/fr/themes/prix-la-consommation/indice-sante', type: 'Index/Prix' },
-    { id: 'bnb', nom: 'Banque Nationale', url: 'https://www.nbb.be', type: 'Bilan social' },
-    { id: 'refli', nom: 'Refli.be', url: 'https://refli.be/fr/documentation/computation/tax', type: 'Référence technique' },
-    { id: 'inasti', nom: 'INASTI/NISSE', url: 'https://www.nisse.be', type: 'Cotisations indépendants' },
-  ],
-
-  // ═══ RÉGIME INDÉPENDANTS — INASTI/NISSE 2026 ═══
-  // Source: AR 19/12/1967 + Loi 05/08/2022 + Index 01/01/2026
-  // Caisse sociale: perception trimestrielle (pas ONSS)
-  inasti: {
-    // ── Cotisations sociales trimestrielles (sur revenu net imposable annuel) ──
-    cotisations: {
-      // Taux principal: 20,50% jusqu'au plafond 1, puis 14,16% jusqu'au plafond 2
-      tranche1: { taux: 0.2050, plafond: 73907.41 },  // indexé 2026
-      tranche2: { taux: 0.1416, plafond: 108942.74 },  // indexé 2026
-      // Au-delà du plafond 2: 0%
-      plafondAbsolu: 108942.74,
-    },
-    // ── Frais de gestion caisse sociale (en sus des cotisations) ──
-    fraisGestion: 0.0305, // 3,05% — variable selon caisse d'assurances sociales
-    
-    // ── Minimums trimestriels par categorie (indexés 2026) ──
-    minimums: {
-      principal: {
-        provisoire: 876.42,      // cotisation provisoire minimum/trimestre
-        définitif: 876.42,       // cotisation définitive minimum/trimestre
-        annuel: 3505.68,         // = 4 × 876.42
-      },
-      complémentaire: {
-        provisoire: 87.64,       // minimum beaucoup plus bas
-        définitif: 87.64,
-        annuel: 350.56,
-      },
-      pensionActif: {            // indépendant pensionné < 65 ans
-        provisoire: 876.42,      // même que principal si activité principale
-        définitif: 876.42,
-      },
-      pensionRetraite: {         // pensionné ≥ 65 ans (activité autorisée)
-        provisoire: 87.64,       // minimum réduit
-        définitif: 87.64,
-      },
-      conjointAidant: {
-        maxiStatut: 876.42,      // maxi-statut = même que principal
-        miniStatut: 292.14,      // mini-statut (uniquement maladie/invalidité)
-      },
-      etudiant: {
-        provisoire: 87.64,       // étudiant-entrepreneur (< 25 ans)
-        définitif: 87.64,
-        seuilExoneration: 8429.88, // si revenu net < ce seuil → pas de cotisation
-      },
-    },
-
-    // ── Primo-starters (4 premiers trimestres d'activité) ──
-    primoStarter: {
-      reductionPct: 0,           // pas de réduction automatique
-      cotisProvisoire: 876.42,   // cotisation provisoire minimum (peut demander réduction)
-      cotisReduite: 438.21,      // si réduction accordée par caisse sociale
-    },
-
-    // ── Dispense de cotisations (Art. 22 AR 19/12/1967) ──
-    // Possible si difficultés financières — demande à la caisse sociale
-    // Couverture maintenue mais droits pension réduits
-
-    // ── Couverture sociale incluse dans les cotisations ──
-    couverture: {
-      pension: true,             // pension de retraite + survie
-      maladieInvalidite: true,   // soins de santé + incapacité de travail
-      allocationsFamiliales: true, // via Famiwal/Fons/Kind&Gezin
-      maternite: true,           // repos maternité (12 sem employée, 12 sem indépendante)
-      aidantProche: true,        // droit passerelle (faillite, cessation forcée)
-      droitPasserelle: true,     // max 12 mois d'allocation en cas de cessation
-      // PAS inclus: chômage (pas de droit), accident du travail (assurance privée)
-    },
-
-    // ── IPP (Impôt des Personnes Physiques) — même barème que salariés ──
-    // Mais pas de precompte professionnel retenu à la source
-    // → Versements anticipés obligatoires (VA1-VA4) sinon majoration 4,5%
-    versementsAnticipes: {
-      VA1: { trimestre: 'Q1', echeance: '10 avril', avantage: 3.0 },    // % de bonification
-      VA2: { trimestre: 'Q2', echeance: '10 juillet', avantage: 2.5 },
-      VA3: { trimestre: 'Q3', echeance: '10 octobre', avantage: 2.0 },
-      VA4: { trimestre: 'Q4', echeance: '20 décembre', avantage: 1.5 },
-      majoration: 0.045,         // 4,5% majoration si pas de VA suffisants
-    },
-
-    // ── Frais professionnels (forfait ou réels) ──
-    fraisPro: {
-      forfait: { pct: 0.30, max: 5930 }, // 30% plafonné (même barème que salariés)
-      reel: true,                // l'indépendant peut déduire les frais réels (comptabilité)
-    },
-
-    // ── Statut social du conjoint aidant ──
-    // Obligatoire depuis 01/07/2005 pour conjoint non divorcé d'un indépendant
-    // qui aide régulièrement dans l'activité
-    conjointAidant: {
-      miniStatut: { couverture: ['maladie', 'invalidité', 'maternite'], pension: false },
-      maxiStatut: { couverture: ['pension', 'maladie', 'invalidité', 'maternite', 'droitPasserelle'], pension: true },
-    },
-
-    // ── Société de management / Dirigeant d'entreprise (Art. 32 CIR 92) ──
-    // Le dirigeant peut percevoir une rémunération (soumise ONSS comme salarié)
-    // ET/OU des dividendes (precompte mobilier 30% ou VVPRbis 15%/20%)
-    // Règle des 80%: pension complémentaire limitée à 80% de la dernière rémunération
-    // Rémunération minimale recommandée: 45.000€ pour taux réduit ISOC
-    dirigeant: {
-      rémunérationMinISO: 45000, // pour bénéficier du taux réduit ISOC 20%
-      dividendeSeuil: 0.30,      // PM 30% (standard)
-      vvprbisTaux1: 0.15,        // VVPRbis: 15% à partir de 3ème exercice
-      vvprbisTaux2: 0.20,        // VVPRbis: 20% au 2ème exercice
-      regle80pct: 0.80,          // pension complémentaire max 80% dernière rémunération
-    },
-  },
-};
-
-var LB=LOIS_BELGES;
-
-var TX_ONSS_W=LB.onss.travailleur; // 0.1307
-var TX_ONSS_E=LB.onss.employeur.total; // 0.2507
-var TX_OUV108=LB.onss.ouvrier108; // 1.08
-var TX_AT=LB.assurances.accidentTravail.taux; // 0.01
-var COUT_MED=LB.assurances.médecineTravail.coût; // COUT_MED
-var CR_TRAV=LB.chequesRepas.partTravailleur.min; // CR_TRAV
-var PP_EST=0.22; // PP estimation moyenne (~22% de l'imposable)
-var NET_FACTOR=(1-TX_ONSS_W)*(1-PP_EST); // facteur net approx = ~0.5645
-var quickNetEst=(b)=>Math.round(b*NET_FACTOR*100)/100; // estimation rapide net
-var CR_MAX=LB.chequesRepas.valeurFaciale.max; // 8.00
-var CR_PAT=LB.chequesRepas.partPatronale.max; // 6.91
-var FORF_BUREAU=LB.fraisPropres.forfaitBureau.max; // FORF_BUREAU
-var FORF_KM=LB.fraisPropres.forfaitDeplacement.voiture; // 0.4415
-var PV_SIMPLE=LB.rémunération.péculeVacances.simple.pct; // PV_SIMPLE
-var PV_DOUBLE=LB.rémunération.péculeVacances.double.pct; // 0.92
-var RMMMG=LB.rémunération.RMMMG.montant18ans; // RMMMG
-var BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 288.87 (volet A 123 + volet B 165.87, jan 2026)
-var SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
-var SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
-var HEURES_HEBDO=LB.tempsTravail.duréeHebdoLegale; // 38
-var JOURS_FERIES=LB.tempsTravail.jourFerie.nombre; // 10
-
-
-// Fonction centralisée: obtenir une valeur légale
-function getLoi(path, fallback) {
-  const parts = path.split('.');
-  let val = LOIS_BELGES;
-  for (const p of parts) { val = val?.[p]; if (val === undefined) return fallback; }
-  return val;
-}
-
-var TX_ONSS_E=LB.onss.employeur.total; // 0.2507
-var TX_OUV108=LB.onss.ouvrier108; // 1.08
-var TX_AT=LB.assurances.accidentTravail.taux; // 0.01
-var COUT_MED=LB.assurances.médecineTravail.coût; // COUT_MED
-var CR_TRAV=LB.chequesRepas.partTravailleur.min; // CR_TRAV
-var PP_EST=0.22; // PP estimation moyenne (~22% de l'imposable)
-var NET_FACTOR=(1-TX_ONSS_W)*(1-PP_EST); // facteur net approx = ~0.5645
-var quickNetEst=(b)=>Math.round(b*NET_FACTOR*100)/100; // estimation rapide net
-var CR_MAX=LB.chequesRepas.valeurFaciale.max; // 8.00
-var CR_PAT=LB.chequesRepas.partPatronale.max; // 6.91
-var FORF_BUREAU=LB.fraisPropres.forfaitBureau.max; // FORF_BUREAU
-var FORF_KM=LB.fraisPropres.forfaitDeplacement.voiture; // 0.4415
-var PV_SIMPLE=LB.rémunération.péculeVacances.simple.pct; // PV_SIMPLE
-var PV_DOUBLE=LB.rémunération.péculeVacances.double.pct; // 0.92
-var RMMMG=LB.rémunération.RMMMG.montant18ans; // RMMMG
-var BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 288.87 (volet A 123 + volet B 165.87, jan 2026)
-var SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
-var SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
-var HEURES_HEBDO=LB.tempsTravail.duréeHebdoLegale; // 38
-var JOURS_FERIES=LB.tempsTravail.jourFerie.nombre; // 10
-
-
-// Fonction centralisée: obtenir une valeur légale
-function getLoi(path, fallback) {
-  const parts = path.split('.');
-  let val = LOIS_BELGES;
-  for (const p of parts) { val = val?.[p]; if (val === undefined) return fallback; }
-  return val;
-}
-
-function calcPPFromLois(brut, opts) {
-  const L = LOIS_BELGES;
-  const onss = Math.round(brut * L.onss.travailleur * 100) / 100;
-  const imposable = brut - onss;
-  const annuel = imposable * 12;
-  const dirigeant = opts?.dirigeant || false;
-  const fp = dirigeant ? L.pp.fraisPro.dirigeant : L.pp.fraisPro.salarie;
-  const forfait = Math.min(annuel * fp.pct, fp.max);
-  const base = Math.max(0, annuel - forfait);
-  const isB2 = opts?.bareme2 || false;
-  let qc = 0, baseNet = base;
-  if (isB2) { qc = Math.min(base * L.pp.quotientConjugal.pct, L.pp.quotientConjugal.max); baseNet = base - qc; }
-  const calcTr = (b) => { let imp = 0, prev = 0; for (const t of L.pp.tranches) { const slice = Math.min(b, t.max) - Math.max(prev, t.min); if (slice > 0) imp += slice * t.taux; prev = t.max; } return imp; };
-  let impot = calcTr(baseNet);
-  if (isB2 && qc > 0) impot += calcTr(qc);
-  const qe = isB2 ? L.pp.quotiteExemptee.bareme2 : L.pp.quotiteExemptee.bareme1;
-  const enf = +(opts?.enfants || 0);
-  const enfH = +(opts?.enfantsHandicapes || 0);
-  const enfFisc = enf + enfH;
-  let redEnf = 0;
-  if (enfFisc > 0) { redEnf = enfFisc <= 8 ? L.pp.reductionsEnfants[enfFisc] : L.pp.reductionsEnfants[8] + (enfFisc - 8) * L.pp.reductionEnfantSupp; }
-  let totalRed = qe + redEnf;
-  if (opts?.parentIsole && enf > 0) totalRed += L.pp.reductionParentIsole;
-  if (opts?.handicape) totalRed += L.pp.reductionHandicape;
-  const taxeCom = (opts?.taxeCom || 7) / 100;
-  const ppAn = Math.max(0, impot - totalRed) * (1 + taxeCom);
-  return Math.round(ppAn / 12 * 100) / 100;
-}
-
-var _OW = LOIS_BELGES.onss.travailleur; // 0.1307
-var _OE = LOIS_BELGES.onss.employeur.total; // 0.2507
-var _OUV108 = LOIS_BELGES.onss.ouvrier108; // 1.08
-var _AT = LOIS_BELGES.assurances.accidentTravail.taux; // 0.01
-var _MED = LOIS_BELGES.assurances.médecineTravail.coût; // _MED
-var _CR_W = LOIS_BELGES.chequesRepas.partTravailleur.min; // _CR_W
-var _CR_VF = LOIS_BELGES.chequesRepas.valeurFaciale.max; // 8.00
-var _CR_E = LOIS_BELGES.chequesRepas.partPatronale.max; // 6.91
-var _PVS = LOIS_BELGES.rémunération.péculeVacances.simple.pct; // PV_SIMPLE
-var _PVD = LOIS_BELGES.rémunération.péculeVacances.double.pct; // 0.92
-var _PVE = LOIS_BELGES.rémunération.péculeVacances.patronal.pct; // _PVP()
-var _KM = LOIS_BELGES.fraisPropres.forfaitDeplacement.voiture; // _KM
-var _BUREAU = LOIS_BELGES.fraisPropres.forfaitBureau.max; // 157.83
-var _RMMMG = LOIS_BELGES.rémunération.RMMMG.montant18ans; // 2070.48
-var _IDX = LOIS_BELGES.rémunération.indexSante.coeff; // 2.0399
-
-
-// ═══════════════════════════════════════════════════════════════
-//  AUREUS SOCIAL PRO — Logiciel de Paie Belge Professionnel
-//  Modules: ONSS (Dimona/DMFA), Belcotax 281.xx, Formule-clé
-//  SPF Finances, Documents sociaux (C4, attestations)
-//  🌐 Multilingue: FR / NL
-// ═══════════════════════════════════════════════════════════════
-
-// ── I18N — Dictionnaire FR / NL / EN / DE ──
-// [removed]
-
-var _OE = LOIS_BELGES.onss.employeur.total; // 0.2507
-var _OUV108 = LOIS_BELGES.onss.ouvrier108; // 1.08
-var _AT = LOIS_BELGES.assurances.accidentTravail.taux; // 0.01
-var _MED = LOIS_BELGES.assurances.médecineTravail.coût; // _MED
-var _CR_W = LOIS_BELGES.chequesRepas.partTravailleur.min; // _CR_W
-var _CR_VF = LOIS_BELGES.chequesRepas.valeurFaciale.max; // 8.00
-var _CR_E = LOIS_BELGES.chequesRepas.partPatronale.max; // 6.91
-var _PVS = LOIS_BELGES.rémunération.péculeVacances.simple.pct; // PV_SIMPLE
-var _PVD = LOIS_BELGES.rémunération.péculeVacances.double.pct; // 0.92
-var _PVE = LOIS_BELGES.rémunération.péculeVacances.patronal.pct; // _PVP()
-var _KM = LOIS_BELGES.fraisPropres.forfaitDeplacement.voiture; // _KM
-var _BUREAU = LOIS_BELGES.fraisPropres.forfaitBureau.max; // 157.83
-var _RMMMG = LOIS_BELGES.rémunération.RMMMG.montant18ans; // 2070.48
-var _IDX = LOIS_BELGES.rémunération.indexSante.coeff; // 2.0399
-
-
-// ═══════════════════════════════════════════════════════════════
-//  AUREUS SOCIAL PRO — Logiciel de Paie Belge Professionnel
-//  Modules: ONSS (Dimona/DMFA), Belcotax 281.xx, Formule-clé
-//  SPF Finances, Documents sociaux (C4, attestations)
-//  🌐 Multilingue: FR / NL
-// ═══════════════════════════════════════════════════════════════
-
-// ── I18N — Dictionnaire FR / NL / EN / DE ──
-// [removed]
-
-var LEGAL={ONSS_W:_OW,ONSS_E:_OE,BONUS_2026:{
+var LEGAL={ONSS_W:TX_ONSS_W,ONSS_E:TX_ONSS_E,BONUS_2026:{
     // Bonus à l'emploi — Volet A (bas salaires) + Volet B (très bas salaires)
     // Source: Instructions ONSS T1/2026 — indexé 01/01/2026
     // Employés (déclarés à 100%)
@@ -531,8 +42,8 @@ var LEGAL={ONSS_W:_OW,ONSS_E:_OE,BONUS_2026:{
     // Barème progressif ANNUEL (tranches 2026 indexées)
     TRANCHES:[
       {lim:16310,rate:0.2675},
-      {lim:28790,rate:0.4280},
-      {lim:49820,rate:0.4815},
+      {lim:29940,rate:0.4280},
+      {lim:41370,rate:0.4815},
       {lim:Infinity,rate:0.5350}
     ],
     // Quotité exemptée d'impôt 2026
@@ -554,11 +65,11 @@ var LEGAL={ONSS_W:_OW,ONSS_E:_OE,BONUS_2026:{
   // ── Modulations sectorielles ONSS ──
   // Depuis tax-shift 2018: taux facial = 25% secteur marchand privé (inclut modération salariale 7,48%)
   // Non-marchand: ≈ 32,40% (réduction via Maribel social)
-  // Ouvriers: cotisations calculées sur brut × 108% (compensation pecule vacances)
+  // Ouvriers: cotisations calculées sur brut × 108% (compensation pécule vacances)
   ONSS_DETAIL_2026:{
     // Ventilation du taux patronal 25% (secteur marchand, employés)
     base:0.1993,           // cotisation de base
-    modération:0.0507,     // modération salariale (intégrée dans 25% facial)
+    moderation:0.0507,     // modération salariale (intégrée dans 25% facial)
     total_marchand:0.25,   // = cotisation globale secteur marchand (tax-shift 2018)
     // Cotisation supplémentaire ≥ 10 travailleurs
     supp_10trav:0.0169,    // 1,60% + modération = 1,69% si ≥ 10 travailleurs
@@ -571,7 +82,7 @@ var LEGAL={ONSS_W:_OW,ONSS_E:_OE,BONUS_2026:{
     // Cotisations spéciales patronales T1/2026
     ffe_petit:0.0032,      // Fonds fermeture < 20 trav.
     ffe_grand:0.0037,      // Fonds fermeture ≥ 20 trav.
-    chômage_temp:0.0009,   // chômage temporaire T1/2026
+    chomage_temp:0.0009,   // chômage temporaire T1/2026
     amiante:0.0001,        // Fonds amiante (T1-T3 2026 seulement)
     maladies_prof:0.0017,  // cotisation maladies professionnelles (Fedris)
     // Étudiants
@@ -605,10 +116,10 @@ var LEGAL={ONSS_W:_OW,ONSS_E:_OE,BONUS_2026:{
   DMFA_CODES:{'495':'Employé ordinaire',"015":'Ouvrier ordinaire',"487":'Dirigeant',"027":'Apprenti',"840":'Étudiant',"050":'Intérimaire'},
   FICHE_281:{'10':'Rémunérations employés/dirigeants',"13":'Pensions/rentes',"14":'Revenus remplacement',"17":'Rentes alimentaires',"18":'Rém. non-marchand',"20":'Honoraires/commissions',"30":'Jetons de présence',"50":'Revenus mobiliers'},
   SOCIAL_DOCS:{C4:'Certificat de chômage C4',C131A:'Certificat chômage temporaire',C3_2:'Carte contrôle chômage',VACATION:'Attestation de vacances',WORK_CERT:'Certificat de travail',ACCOUNT:'Compte individuel'},
-  CP:{'100':'CP 100 - Auxiliaire ouvriers',"101":'CP 101 - Mines',"102":'CP 102 - Carrières',"104":'CP 104 - Sidérurgie',"105":'CP 105 - Métaux non-ferreux',"106":'CP 106 - Ciment',"107":'CP 107 - Maîtres-tailleurs',"109":'CP 109 - Habillement/Confection',"110":'CP 110 - Entretien textile',"111":'CP 111 - Métal/Mécanique/Électrique',"112":'CP 112 - Garage',"113":'CP 113 - Céramique',"114":'CP 114 - Briqueterie',"115":'CP 115 - Verrerie',"116":'CP 116 - Chimie',"117":'CP 117 - Pétrôle',"118":'CP 118 - Industrie alimentaire',"119":'CP 119 - Commerce alimentaire',"120":'CP 120 - Textile/Bonneterie',"121":'CP 121 - Nettoyage',"124":'CP 124 - Construction',"125":'CP 125 - Industrie du bois',"126":'CP 126 - Ameublement',"127":'CP 127 - Commerce combustibles',"128":'CP 128 - Cuirs et peaux',"129":'CP 129 - Pâtes/Papiers/Cartons',"130":'CP 130 - Imprimerie/Arts graphiques',"132":'CP 132 - Travaux techniques agricoles',"133":'CP 133 - Tabacs',"136":'CP 136 - Transformation papier/carton',"139":'CP 139 - Batellerie',"140":'CP 140 - Transport',"142":'CP 142 - Récupération matières premières',"143":'CP 143 - Pêche maritime',"144":'CP 144 - Agriculture',"145":'CP 145 - Horticulture',"146":'CP 146 - Entreprises forestières',"147":'CP 147 - Armurerie',"148":'CP 148 - Fourrure/Peau en poil',"149":'CP 149 - Secteurs connexes métal',"149.01":'CP 149.01 - Électriciens installation',"149.02":'CP 149.02 - Carrosserie',"149.03":'CP 149.03 - Métaux précieux',"149.04":'CP 149.04 - Commerce du métal',"150":'CP 150 - Poterie',"152":'CP 152 - Enseignement libre',"200":'CP 200 - Auxiliaire employés',"201":'CP 201 - Commerce de détail indépendant',"202":'CP 202 - Commerce détail alimentaire',"203":'CP 203 - Carrières petit granit (empl.)',"204":'CP 204 - Carrières porphyre (empl.)',"205":'CP 205 - Charbonnages (empl.)',"207":'CP 207 - Industrie chimique (empl.)',"209":'CP 209 - Fabrications métalliques (empl.)',"210":'CP 210 - Sidérurgie (empl.)',"211":'CP 211 - Pétrôle (empl.)',"214":'CP 214 - Textile/Bonneterie (empl.)',"215":'CP 215 - Habillement/Confection (empl.)',"216":'CP 216 - Notaires (empl.)',"217":'CP 217 - Casino (empl.)',"218":'CP 218 - CNT auxiliaire employés',"219":'CP 219 - Organismes contrôle agréés',"220":'CP 220 - Industrie alimentaire (empl.)',"221":'CP 221 - Industrie papetière (empl.)',"222":'CP 222 - Transformation papier/carton (empl.)',"223":'CP 223 - Sports',"224":'CP 224 - Métaux non-ferreux (empl.)',"225":'CP 225 - Enseignement libre (empl.)',"226":'CP 226 - Commerce international/Transport',"227":'CP 227 - Secteur audio-visuel',"301":'CP 301 - Ports',"302":'CP 302 - Hôtellerie',"303":'CP 303 - Cinématographie',"304":'CP 304 - Spectacle',"306":'CP 306 - Assurances',"307":'CP 307 - Courtage assurances',"308":'CP 308 - Prêts hypothécaires',"309":'CP 309 - Sociétés de bourse',"310":'CP 310 - Banques',"311":'CP 311 - Grandes surfaces',"312":'CP 312 - Grands magasins',"313":'CP 313 - Pharmacies',"314":'CP 314 - Coiffure/Soins de beauté',"315":'CP 315 - Aviation commerciale',"316":'CP 316 - Marine marchande',"317":'CP 317 - Gardiennage',"318":'CP 318 - Aides familiales/seniors',"319":'CP 319 - Éducation/Hébergement',"320":'CP 320 - Pompes funèbres',"321":'CP 321 - Grossistes médicaments',"322":'CP 322 - Intérimaire/Titres-services',"322.01":'CP 322.01 - Titres-services',"323":'CP 323 - Gestion immeubles/Domestiques',"324":'CP 324 - Diamant',"325":'CP 325 - Institutions publiques crédit',"326":'CP 326 - Gaz/Électricité',"327":'CP 327 - Travail adapté/Ateliers sociaux',"328":'CP 328 - Transport urbain/régional',"329":'CP 329 - Socio-culturel',"330":'CP 330 - Santé',"331":'CP 331 - Aide sociale (Flandre)',"332":'CP 332 - Aide sociale (francophone)',"333":'CP 333 - Attractions touristiques',"336":'CP 336 - Professions libérales'},
+  CP:{'100':'CP 100 - Auxiliaire ouvriers',"101":'CP 101 - Mines',"102":'CP 102 - Carrières',"104":'CP 104 - Sidérurgie',"105":'CP 105 - Métaux non-ferreux',"106":'CP 106 - Ciment',"107":'CP 107 - Maîtres-tailleurs',"109":'CP 109 - Habillement/Confection',"110":'CP 110 - Entretien textile',"111":'CP 111 - Métal/Mécanique/Électrique',"112":'CP 112 - Garage',"113":'CP 113 - Céramique',"114":'CP 114 - Briqueterie',"115":'CP 115 - Verrerie',"116":'CP 116 - Chimie',"117":'CP 117 - Pétrole',"118":'CP 118 - Industrie alimentaire',"119":'CP 119 - Commerce alimentaire',"120":'CP 120 - Textile/Bonneterie',"121":'CP 121 - Nettoyage',"124":'CP 124 - Construction',"125":'CP 125 - Industrie du bois',"126":'CP 126 - Ameublement',"127":'CP 127 - Commerce combustibles',"128":'CP 128 - Cuirs et peaux',"129":'CP 129 - Pâtes/Papiers/Cartons',"130":'CP 130 - Imprimerie/Arts graphiques',"132":'CP 132 - Travaux techniques agricoles',"133":'CP 133 - Tabacs',"136":'CP 136 - Transformation papier/carton',"139":'CP 139 - Batellerie',"140":'CP 140 - Transport',"142":'CP 142 - Récupération matières premières',"143":'CP 143 - Pêche maritime',"144":'CP 144 - Agriculture',"145":'CP 145 - Horticulture',"146":'CP 146 - Entreprises forestières',"147":'CP 147 - Armurerie',"148":'CP 148 - Fourrure/Peau en poil',"149":'CP 149 - Secteurs connexes métal',"149.01":'CP 149.01 - Électriciens installation',"149.02":'CP 149.02 - Carrosserie',"149.03":'CP 149.03 - Métaux précieux',"149.04":'CP 149.04 - Commerce du métal',"150":'CP 150 - Poterie',"152":'CP 152 - Enseignement libre',"200":'CP 200 - Auxiliaire employés',"201":'CP 201 - Commerce de détail indépendant',"202":'CP 202 - Commerce détail alimentaire',"203":'CP 203 - Carrières petit granit (empl.)',"204":'CP 204 - Carrières porphyre (empl.)',"205":'CP 205 - Charbonnages (empl.)',"207":'CP 207 - Industrie chimique (empl.)',"209":'CP 209 - Fabrications métalliques (empl.)',"210":'CP 210 - Sidérurgie (empl.)',"211":'CP 211 - Pétrole (empl.)',"214":'CP 214 - Textile/Bonneterie (empl.)',"215":'CP 215 - Habillement/Confection (empl.)',"216":'CP 216 - Notaires (empl.)',"217":'CP 217 - Casino (empl.)',"218":'CP 218 - CNT auxiliaire employés',"219":'CP 219 - Organismes contrôle agréés',"220":'CP 220 - Industrie alimentaire (empl.)',"221":'CP 221 - Industrie papetière (empl.)',"222":'CP 222 - Transformation papier/carton (empl.)',"223":'CP 223 - Sports',"224":'CP 224 - Métaux non-ferreux (empl.)',"225":'CP 225 - Enseignement libre (empl.)',"226":'CP 226 - Commerce international/Transport',"227":'CP 227 - Secteur audio-visuel',"301":'CP 301 - Ports',"302":'CP 302 - Hôtellerie',"303":'CP 303 - Cinématographie',"304":'CP 304 - Spectacle',"306":'CP 306 - Assurances',"307":'CP 307 - Courtage assurances',"308":'CP 308 - Prêts hypothécaires',"309":'CP 309 - Sociétés de bourse',"310":'CP 310 - Banques',"311":'CP 311 - Grandes surfaces',"312":'CP 312 - Grands magasins',"313":'CP 313 - Pharmacies',"314":'CP 314 - Coiffure/Soins de beauté',"315":'CP 315 - Aviation commerciale',"316":'CP 316 - Marine marchande',"317":'CP 317 - Gardiennage',"318":'CP 318 - Aides familiales/seniors',"319":'CP 319 - Éducation/Hébergement',"320":'CP 320 - Pompes funèbres',"321":'CP 321 - Grossistes médicaments',"322":'CP 322 - Intérimaire/Titres-services',"322.01":'CP 322.01 - Titres-services',"323":'CP 323 - Gestion immeubles/Domestiques',"324":'CP 324 - Diamant',"325":'CP 325 - Institutions publiques crédit',"326":'CP 326 - Gaz/Électricité',"327":'CP 327 - Travail adapté/Ateliers sociaux',"328":'CP 328 - Transport urbain/régional',"329":'CP 329 - Socio-culturel',"330":'CP 330 - Santé',"331":'CP 331 - Aide sociale (Flandre)',"332":'CP 332 - Aide sociale (francophone)',"333":'CP 333 - Attractions touristiques',"336":'CP 336 - Professions libérales'},
   REDUCTIONS:{base:157.29,married1:258.33,children:[0,52.50,141.67,318.33,514.17,618.33],childX:618.33,handicap:52.50,isolated:52.50},
   // ── Cotisation Spéciale Sécurité Sociale — retenue MENSUELLE (provisions) ──
-  // Source: socialsecurity.be/employer/instructions/dmfa
+  // Source: socialsecurity.be/employer/instructions/dmfa + montants-socio-juridiques
   // Basée sur la rémunération TRIMESTRIELLE, retenue mensuellement = 1/3 du montant trimestriel
   // ISOLÉ / conjoint SANS revenus prof. (barème 1)
   CSS_SINGLE:[
@@ -656,8 +167,8 @@ var LEGAL={ONSS_W:_OW,ONSS_E:_OE,BONUS_2026:{
       {nom:"VDAB",url:"vdab.be",desc:"Flandre — aides emploi, doelgroepverminderingen"},
     ],
     secsoc:[
-      {nom:"Veille sectorielle",url:"socialsecurity.be",desc:"Alertes législatives, montants socio-juridiques"},
-      {nom:"Emploi Belgique",url:"emploi.belgique.be",desc:"Analyses juridiques, guides pratiques"},
+      {nom:"Veille sectorielle",url:"socialsecurity.be",desc:"Alertes législatives, montants socio-juridiques, analyses"},
+      {nom:"Analyses juridiques",url:"emploi.belgique.be",desc:"Analyses juridiques, guides pratiques"},
       {nom:"Acerta",url:"acerta.be",desc:"Juricible, publications juridiques, simulations"},
       {nom:"Liantis",url:"liantis.be",desc:"Actualités sociales, guides PME"},
       {nom:"UCM",url:"ucm.be",desc:"Union Classes Moyennes, analyses PME, cotisations"},
@@ -735,9 +246,9 @@ function calc(emp, per, co) {
     if (r.miTempsINAMI === 0) {
       const brutJourNormal = (emp.monthlySalary || 0) / LEGAL.WD;
       const plafondINAMI = 106.16; // plafond journalier INAMI 2026 (adapté)
-      const brutJourPlafonne = Math.min(brutJourNormal, plafondINAMI);
+      const brutJourPlafonné = Math.min(brutJourNormal, plafondINAMI);
       const tauxINAMI = 0.60; // 60% (cohabitant) — peut être 65% (chef de famille) ou 55% (isolé)
-      r.miTempsINAMI = Math.round(brutJourPlafonne * tauxINAMI * LEGAL.WD * (1 - r.miTempsFraction) * 100) / 100;
+      r.miTempsINAMI = Math.round(brutJourPlafonné * tauxINAMI * LEGAL.WD * (1 - r.miTempsFraction) * 100) / 100;
     }
   }
 
@@ -747,7 +258,7 @@ function calc(emp, per, co) {
   const carCO2 = parseInt(emp.carCO2) || 0;
   const carCatVal = parseFloat(emp.carCatVal) || 0;
   if (carFuel !== 'none' && carCatVal > 0) {
-    if (carFuel === 'électrique') {
+    if (carFuel === 'electrique') {
       r.atnPct = 4;
       r.atnCar = Math.max(1600/12, (carCatVal * (6/7) * 0.04) / 12);
       r.cotCO2 = 31.34; // minimum
@@ -865,7 +376,7 @@ function calc(emp, per, co) {
   r.onssE_type = sectInfo.type || 'marchand';
   // Cotisations spéciales patronales
   r.onss_ffe = onssBase * (emp.staffCount >= 20 ? LEGAL.ONSS_DETAIL_2026.ffe_grand : LEGAL.ONSS_DETAIL_2026.ffe_petit);
-  r.onss_chomTemp = onssBase * LEGAL.ONSS_DETAIL_2026.chômage_temp;
+  r.onss_chomTemp = onssBase * LEGAL.ONSS_DETAIL_2026.chomage_temp;
   r.onss_amiante = onssBase * LEGAL.ONSS_DETAIL_2026.amiante;
 
   // ── Réduction structurelle ONSS T1/2026 ──
@@ -1000,7 +511,7 @@ function calc(emp, per, co) {
   //   - Barème normal appliqué (même formule-clé)
   //   - MAIS: quotité exemptée peut être différente si le pensionné
   //     cumule pension + revenu → art. 154bis CIR
-  //   - La pension elle-même est imposée séparément par le SFP (precompte pension)
+  //   - La pension elle-même est imposée séparément par le SFP (précompte pension)
   //
   // FLEXI-JOB PENSIONNÉ:
   //   - Plafond 12.000€/an NE s'applique PAS aux pensionnés → cumul illimité
@@ -1029,7 +540,7 @@ function calc(emp, per, co) {
     if (r.pensionType === 'legal' && age >= 66) {
       r.pensionCumulIllimite = true; // Âge légal atteint (66 en 2026)
     }
-    if (r.pensionType === 'anticipée' && carriere >= 45) {
+    if (r.pensionType === 'anticipee' && carriere >= 45) {
       r.pensionCumulIllimite = true; // 45 ans de carrière
     }
     if (r.pensionType === 'survie' && age >= 65) {
@@ -1038,7 +549,7 @@ function calc(emp, per, co) {
 
     if (!r.pensionCumulIllimite) {
       // Plafonds de cumul annuels (indexés 2026)
-      if (r.pensionType === 'anticipée') {
+      if (r.pensionType === 'anticipee') {
         r.pensionPlafond = depEnfants ? 13266 : 10613;
       } else if (r.pensionType === 'survie') {
         r.pensionPlafond = depEnfants ? 28136 : 22509;
@@ -1133,10 +644,7 @@ function calc(emp, per, co) {
   r.famRed = redFam / 12;
   r.taxNet = revNetImposable / 12;
   r.tax = Math.max(0, r.baseTax);
-  // ── Taxe communale (Art. 466 CIR 92) ──
-  const _taxCom = (emp.taxeCom ?? 7) / 100;
-  r.tax = Math.round(r.tax * (1 + _taxCom) * 100) / 100;
-  // ── Bonus à l'emploi FISCAL (réduction precompte professionnel) ──
+  // ── Bonus à l'emploi FISCAL (réduction précompte professionnel) ──
   // 33,14% du volet A + 52,54% du volet B (depuis 01/04/2024)
   r.empBonusFiscA = r.empBonusA * 0.3314;
   r.empBonusFiscB = r.empBonusB * 0.5254;
@@ -1146,7 +654,7 @@ function calc(emp, per, co) {
   // Special SS contribution (Art. 106-112 Loi-programme 30/12/1988)
   // Barème trimestriel — retenue mensuelle = 1/3 du montant trimestriel
   // Différent pour isolés vs ménages avec 2 revenus
-  // Source: socialsecurity.be montants-socio-juridiques 2026
+  // Source: socialsecurity.be + montants-socio-juridiques 2026
   r.css = 0;
   const grossTrim = r.gross * 3; // salaire trimestriel
   const grossTrimOuv = isOuvrier ? grossTrim * 1.08 : grossTrim;
@@ -1214,7 +722,7 @@ function calc(emp, per, co) {
   // Le travailleur peut demander par écrit à l'employeur de retenir un PP supplémentaire
   // au-delà du minimum légal. Récupérable via déclaration IPP si trop-retenu.
   // L'employeur est tenu de reverser l'intégralité au SPF Finances.
-  // Base: AR 09/01/2024 fixant les baremes de PP — dispense n'affecte pas ce montant.
+  // Base: AR 09/01/2024 fixant les barèmes de PP — dispense n'affecte pas ce montant.
   r.ppVolontaire = per.ppVolontaire || 0;
 
   // ══════════════════════════════════════════════════════════════
@@ -1223,12 +731,12 @@ function calc(emp, per, co) {
 
   // ── 1. DOUBLE PÉCULE VACANCES (Employés — payé par employeur) ──
   // Art. 19 §2 AR 28/11/1969 — ONSS sur 2ème partie (7%) uniquement
-  // Double pecule = 92% du brut (85% = 1ère partie + 7% = 2ème partie)
+  // Double pécule = 92% du brut (85% = 1ère partie + 7% = 2ème partie)
   // 2ème partie soumise ONSS trav 13,07% + cotisation spéciale 1%
-  r.doublePécule = per.doublePécule || 0;
+  r.doublePecule = per.doublePecule || 0;
   r.dpOnss = 0; r.dpCotisSpec = 0;
-  if (r.doublePécule > 0) {
-    const dp2 = r.doublePécule * (7/92); // extraire la 2ème partie
+  if (r.doublePecule > 0) {
+    const dp2 = r.doublePecule * (7/92); // extraire la 2ème partie
     r.dpOnss = dp2 * TX_ONSS_W;      // ONSS travailleur sur 2è partie
     r.dpCotisSpec = dp2 * 0.01;    // cotisation spéciale 1%
   }
@@ -1236,21 +744,21 @@ function calc(emp, per, co) {
   // ── 2. PÉCULE VACANCES DE DÉPART (Art. 46 Loi 12/04/1965) ──
   // Payé lors de la sortie de service — simple + double anticipé
   // Soumis ONSS 13,07% sur totalité
-  r.péculeDepart = per.péculeDepart || 0;
-  r.pdOnss = r.péculeDepart > 0 ? r.péculeDepart * TX_ONSS_W : 0;
+  r.peculeDepart = per.peculeDepart || 0;
+  r.pdOnss = r.peculeDepart > 0 ? r.peculeDepart * TX_ONSS_W : 0;
 
   // ── 3. PRIME D'ANCIENNETÉ (Art. 19 §2 14° AR ONSS) ──
   // Exonérée ONSS et IPP si: 1× entre 25-35 ans anc. et 1× ≥ 35 ans anc.
   // Plafond 2026: max 1× brut mensuel ou fraction (prorata)
   // Montant max exonéré: employé = 1 mois brut, ouvrier = idem
-  r.primeAncienneté = per.primeAncienneté || 0;
+  r.primeAnciennete = per.primeAnciennete || 0;
   const ancAns = emp.anciennete || 0;
-  const primeAncExo = (ancAns >= 25) ? Math.min(r.primeAncienneté, emp.monthlySalary) : 0;
-  r.primeAncTaxable = Math.max(0, r.primeAncienneté - primeAncExo);
-  r.primeAncExonérée = primeAncExo;
+  const primeAncExo = (ancAns >= 25) ? Math.min(r.primeAnciennete, emp.monthlySalary) : 0;
+  r.primeAncTaxable = Math.max(0, r.primeAnciennete - primeAncExo);
+  r.primeAncExoneree = primeAncExo;
 
   // ── 4. PRIME DE NAISSANCE / MARIAGE / ÉVÉNEMENT (Circ. ONSS 2024/1) ──
-  // Exonérée ONSS si ≤ plafond (naissance: coûtume, mariage: idem)
+  // Exonérée ONSS si ≤ plafond (naissance: coutume, mariage: idem)
   // Considéré comme avantage social si modique et lié à événement
   r.primeNaissance = per.primeNaissance || 0;
 
@@ -1260,10 +768,10 @@ function calc(emp, per, co) {
   r.primeInnovation = per.primeInnovation || 0;
 
   // ── 6. INDEMNITÉ TÉLÉTRAVAIL (Circ. 2021/C/20 du 26/02/2021) ──
-  // Max 157,83€/mois (montant 2026 — indexé chaque année)
+  // Max 154,74€/mois (montant 2026 — indexé chaque année)
   // Exonérée ONSS et IPP si structurel (min 1 jour/semaine régulier)
   // Couvre: chauffage, électricité, petit matériel, amortissement mobilier
-  r.indemTélétravail = Math.min(per.indemTélétravail || 0, FORF_BUREAU);
+  r.indemTeletravail = Math.min(per.indemTeletravail || 0, FORF_BUREAU);
 
   // ── 7. INDEMNITÉ FRAIS DE BUREAU (AR/CIR92 Art. 31) ──
   // Frais propres de l'employeur — exonérés si justifiés ou forfaitaires
@@ -1305,27 +813,27 @@ function calc(emp, per, co) {
   // Ne change pas le net du travailleur, réduit le coût employeur
   r.dispensePPNuit = (per.nightH || 0) > 0 ? r.tax * 0.228 : 0;
 
-  // ── 13. PP À TAUX EXCEPTIONNEL — Double pecule & 13è mois ──
-  // (AR 09/01/2024 annexe III — Barèmes precompte professionnel)
-  // Double pecule vacances: taxé à taux fixe (pas barème progressif)
+  // ── 13. PP À TAUX EXCEPTIONNEL — Double pécule & 13è mois ──
+  // (AR 09/01/2024 annexe III — Barèmes précompte professionnel)
+  // Double pécule vacances: taxé à taux fixe (pas barème progressif)
   //   Taux = basé sur rémunération annuelle brute:
   //   ≤ 17.280€: 0% | ≤ 32.280€: 19,17% | ≤ 43.380€: 23,22% | > 43.380€: 30,28%
   // 13è mois: taux fixe idem (annexe III AR)
-  // Indemnité de départ/preavis: taux fixe selon rémunération annuelle
+  // Indemnité de départ/préavis: taux fixe selon rémunération annuelle
   // NB: ces taux s'appliquent sur le MONTANT EXCEPTIONNEL, pas le salaire mensuel
   r.ppTauxExcep = 0; r.ppTauxExcepRate = 0;
   const typeSpec = per.typeSpecial || 'normal';
-  if (typeSpec === 'doublePécule' || typeSpec === 'y13' || typeSpec === 'depart' || typeSpec === 'préavis') {
+  if (typeSpec === 'doublePecule' || typeSpec === 'y13' || typeSpec === 'depart' || typeSpec === 'preavis') {
     const annBrut = r.base * 12;
     if (annBrut <= 17280) r.ppTauxExcepRate = 0;
     else if (annBrut <= 32280) r.ppTauxExcepRate = 0.1917;
     else if (annBrut <= 43380) r.ppTauxExcepRate = 0.2322;
     else r.ppTauxExcepRate = 0.3028;
     // Appliquer sur le montant exceptionnel
-    const montantExcep = (typeSpec === 'doublePécule' ? r.doublePécule : 0)
+    const montantExcep = (typeSpec === 'doublePecule' ? r.doublePecule : 0)
       + (typeSpec === 'y13' ? r.y13 : 0)
-      + (typeSpec === 'depart' ? r.péculeDepart : 0)
-      + (typeSpec === 'préavis' ? (per.indemPréavis || 0) : 0);
+      + (typeSpec === 'depart' ? r.peculeDepart : 0)
+      + (typeSpec === 'preavis' ? (per.indemPreavis || 0) : 0);
     r.ppTauxExcep = montantExcep * r.ppTauxExcepRate;
     r.tax += r.ppTauxExcep;
   }
@@ -1342,8 +850,8 @@ function calc(emp, per, co) {
   // Mariage travailleur: 2 jours | Décès conjoint/enfant: 3 jours
   // Naissance enfant (co-parent): 15 jours | Communion: 1 jour
   // Déménagement: 1 jour | Comparution tribunal: nécessaire
-  r.petitChômage = per.petitChômage || 0; // nombre jours
-  r.petitChômageVal = r.petitChômage * (r.base / LEGAL.WD); // valeur = salaire/jour
+  r.petitChomage = per.petitChomage || 0; // nombre jours
+  r.petitChomageVal = r.petitChomage * (r.base / LEGAL.WD); // valeur = salaire/jour
 
   // ── 16. ÉCO-CHÈQUES (CCT 98 du 20/02/2009 — CNT) ──
   // Max 250€/an par travailleur temps plein (prorata temps partiel)
@@ -1449,7 +957,7 @@ function calc(emp, per, co) {
   // SINE (économie sociale): variable
   //
   // Traitement fiscal: l'allocation de travail est un revenu de remplacement pour le travailleur
-  // → Soumise au precompte professionnel (retenue par ONEM/CAPAC)
+  // → Soumise au précompte professionnel (retenue par ONEM/CAPAC)
   // → NON soumise ONSS (pas de rémunération au sens ONSS)
   // → L'employeur ne la déclare PAS en DmfA (c'est l'ONEM qui déclare)
   //
@@ -1484,7 +992,7 @@ function calc(emp, per, co) {
   //   boulangerie CP118.03, agriculture CP144/145, intérim CP322, sport, culture...
   // Travailleur: 0% ONSS, 0% PP (exonéré si ≤ 12.000€/an)
   // Employeur: 28% cotisation patronale spéciale (Art.38§3ter Loi 29/06/1981)
-  // Flexi-salaire min: 12,29€/h + 7,67% flexi-pecule vacances (2026)
+  // Flexi-salaire min: 12,29€/h + 7,67% flexi-pécule vacances (2026)
   // Plafond IPP: 12.000€/an (pensionnés: illimité)
   // Dimona: type "FLX" | DmfA: code "050"
   r.isFlexiJob = (emp.contract === 'flexi');
@@ -1495,9 +1003,9 @@ function calc(emp, per, co) {
     r.flexiSalaireH = flexiTauxH;
     r.flexiHeures = flexiH;
     r.flexiBrut = Math.round(flexiH * flexiTauxH * 100) / 100;
-    r.flexiPécule = Math.round(r.flexiBrut * 0.0767 * 100) / 100;
-    r.flexiOnssPatronal = Math.round((r.flexiBrut + r.flexiPécule) * 0.28 * 100) / 100;
-    r.gross = r.flexiBrut + r.flexiPécule;
+    r.flexiPecule = Math.round(r.flexiBrut * PV_SIMPLE * 100) / 100;
+    r.flexiOnssPatronal = Math.round((r.flexiBrut + r.flexiPecule) * 0.28 * 100) / 100;
+    r.gross = r.flexiBrut + r.flexiPecule;
     r.base = r.flexiBrut;
     r.onssW = 0; r.onssNet = 0; r.empBonus = 0; r.empBonusA = 0; r.empBonusB = 0;
     r.tax = 0; r.css = 0; r.ppVolontaire = 0; r.ppTauxExcep = 0; r.ppTauxExcepRate = 0;
@@ -1524,69 +1032,6 @@ function calc(emp, per, co) {
     if (r.gross * 12 <= 7340) { r.tax = 0; r.css = 0; }
   }
 
-  // ── 15b. INDÉPENDANT — Régime INASTI (pas ONSS) ──
-  // Types: indep_princ, indep_compl, mandataire, freelance
-  // Short-circuit: pas d'ONSS, pas de PP retenu → cotisations INASTI + IPP via versements anticipés
-  const indepTypes = ['indep_princ','indep_compl','mandataire','freelance'];
-  r.isIndependant = indepTypes.includes(emp.contract);
-  if (r.isIndependant) {
-    const indepType = emp.contract === 'indep_princ' ? 'principal'
-      : emp.contract === 'indep_compl' ? 'complémentaire'
-      : emp.contract === 'mandataire' ? 'mandataire'
-      : 'principal'; // freelance = principal
-    
-    const indepResult = calcIndependant({
-      revenuNet: r.gross * 12,
-      type: indepType,
-      trimestre: 'provisoire',
-      primoStarter: !!emp.primoStarter,
-      primoReduite: !!emp.primoReduite,
-      fraisReels: !!emp.fraisReels,
-      fraisReelsMontant: +(emp.fraisReelsMontant || 0),
-      situation: emp.civil === 'married_1' ? 'marie_1r' : emp.civil === 'married_2' ? 'marie_2r' : 'isole',
-      enfants: emp.depChildren || 0,
-      taxeCom: emp.taxeCom || 7,
-      dirigeant: emp.contract === 'mandataire',
-    });
-
-    // Remplacer les champs ONSS par les cotisations INASTI
-    r.onssW = 0; r.onssNet = 0; r.onssE = 0;
-    r.empBonus = 0; r.empBonusA = 0; r.empBonusB = 0;
-    r.empBonusFisc = 0; r.empBonusFiscA = 0; r.empBonusFiscB = 0;
-    r.redStructMois = 0; r.redStruct = 0;
-    r.css = 0; // pas de CSSS pour indépendants
-
-    // Cotisations sociales INASTI (équivalent ONSS)
-    r.inasti = indepResult;
-    r.inastiCotisMens = indepResult.cotisMensuelle;
-    r.inastiFraisGestion = indepResult.fraisGestionMens;
-    r.inastiTotalMens = indepResult.totalSocialMens;
-
-    // PP: pas retenu à la source → versements anticipés
-    r.tax = 0; // pas de PP retenu par un employeur
-    r.ppVolontaire = 0;
-    r.vaMensuelRecommandé = indepResult.vaMensuelRecommandé;
-    r.ippEstimeMensuel = indepResult.ippMensuel;
-    r.majorationSansVA = indepResult.majorationSansVA;
-
-    // Recalcul retenues et net
-    r.totalDed = r.inastiTotalMens + (per.advance || 0) + (per.otherDed || 0);
-    r.net = r.gross - r.totalDed + (r.expense || 0) + (r.transport || 0);
-    r.netAprèsIPP = r.net - r.ippEstimeMensuel; // net réel après provision IPP
-
-    // Pas de coût employeur (l'indépendant EST l'employeur)
-    r.costTotal = r.gross; // son propre coût = son revenu brut
-    r.costTotalAvecCharges = r.gross + r.inastiTotalMens + r.ippEstimeMensuel;
-
-    // Résumé
-    r.indepNetDisponible = indepResult.netDisponibleMensuel;
-    r.indepTauxCharges = indepResult.tauxChargesTotal;
-    r.indepPasDeChômage = true;
-    r.indepDroitPasserelle = indepResult.droitPasserelle;
-
-    return r;
-  }
-
   // ── 16. FRAIS PROFESSIONNELS FORFAITAIRES (Art. 51 CIR 92) ──
   // Déjà calculé ci-dessus: 30% avec plafond (employés et ouvriers)
 
@@ -1607,7 +1052,7 @@ function calc(emp, per, co) {
   //   Double: 92% du brut mensuel → payé avant les vacances (généralement mai/juin)
   //     - 1ère partie (85%): soumise PP normal
   //     - 2ème partie (7%): soumise ONSS 13,07% + cotisation spéciale 1%
-  //   → Le simple pecule = salaire normal du mois de vacances (déjà dans le brut)
+  //   → Le simple pécule = salaire normal du mois de vacances (déjà dans le brut)
   //
   // OUVRIERS (payé par la Caisse de Vacances / ONVA):
   //   Total: 15,38% du brut annuel N-1 (à 108%)
@@ -1616,7 +1061,7 @@ function calc(emp, per, co) {
   //   → Versé via l'ONVA ou la Caisse sectorielle, PAS par l'employeur
   //   → L'employeur paie la cotisation vacances 15,84% trimestrielle à l'ONSS
   //
-  r.péculeVacCalc = {
+  r.peculeVacCalc = {
     type: isOuvrier ? 'ouvrier' : 'employe',
     brutRef: isOuvrier ? (r.gross * 1.08 * 12) : (emp.monthlySalary || 0), // brut annuel N-1 à 108% pour ouvriers
     simple: 0,
@@ -1629,26 +1074,26 @@ function calc(emp, per, co) {
   };
   if (!isOuvrier) {
     // Employé: simple = 1 mois brut (déjà inclus dans salaire normal du mois de vacances)
-    r.péculeVacCalc.simple = emp.monthlySalary || 0;
+    r.peculeVacCalc.simple = emp.monthlySalary || 0;
     // Double = 92% du brut mensuel (LOIS_BELGES)
-    r.péculeVacCalc.double = (emp.monthlySalary || 0) * LOIS_BELGES.rémunération.péculeVacances.double.pct;
-    r.péculeVacCalc.total = r.péculeVacCalc.simple + r.péculeVacCalc.double;
-    // 2ème partie du double pecule (7/92 du double) → ONSS 13,07% + cotis spéciale 1%
-    const dp2 = r.péculeVacCalc.double * (7/92);
-    r.péculeVacCalc.onss2emePartie = Math.round(dp2 * TX_ONSS_W * 100) / 100;
-    r.péculeVacCalc.cotisSpec1pct = Math.round(dp2 * 0.01 * 100) / 100;
+    r.peculeVacCalc.double = (emp.monthlySalary || 0) * LOIS_BELGES.remuneration.peculeVacances.double.pct;
+    r.peculeVacCalc.total = r.peculeVacCalc.simple + r.peculeVacCalc.double;
+    // 2ème partie du double pécule (7/92 du double) → ONSS 13,07% + cotis spéciale 1%
+    const dp2 = r.peculeVacCalc.double * (7/92);
+    r.peculeVacCalc.onss2emePartie = Math.round(dp2 * TX_ONSS_W * 100) / 100;
+    r.peculeVacCalc.cotisSpec1pct = Math.round(dp2 * 0.01 * 100) / 100;
     // PP exceptionnel sur le double pécule
     const annBrutDP = (emp.monthlySalary || 0) * 12;
-    if (annBrutDP <= 17280) r.péculeVacCalc.ppExcepRate = 0;
-    else if (annBrutDP <= 32280) r.péculeVacCalc.ppExcepRate = 0.1917;
-    else if (annBrutDP <= 43380) r.péculeVacCalc.ppExcepRate = 0.2322;
-    else r.péculeVacCalc.ppExcepRate = 0.3028;
-    r.péculeVacCalc.ppExcep = Math.round(r.péculeVacCalc.double * (r.péculeVacCalc.ppExcepRate || 0) * 100) / 100;
+    if (annBrutDP <= 17280) r.peculeVacCalc.ppExcepRate = 0;
+    else if (annBrutDP <= 32280) r.peculeVacCalc.ppExcepRate = 0.1917;
+    else if (annBrutDP <= 43380) r.peculeVacCalc.ppExcepRate = 0.2322;
+    else r.peculeVacCalc.ppExcepRate = 0.3028;
+    r.peculeVacCalc.ppExcep = Math.round(r.peculeVacCalc.double * (r.peculeVacCalc.ppExcepRate || 0) * 100) / 100;
   } else {
     // Ouvrier: 15,38% du brut annuel N-1 × 108%
-    r.péculeVacCalc.simple = Math.round(r.péculeVacCalc.brutRef * 0.0680 * 100) / 100;
-    r.péculeVacCalc.double = Math.round(r.péculeVacCalc.brutRef * 0.0858 * 100) / 100;
-    r.péculeVacCalc.total = Math.round(r.péculeVacCalc.brutRef * (PV_SIMPLE*2+0.001) * 100) / 100;
+    r.peculeVacCalc.simple = Math.round(r.peculeVacCalc.brutRef * 0.0680 * 100) / 100;
+    r.peculeVacCalc.double = Math.round(r.peculeVacCalc.brutRef * LOIS_BELGES.remuneration.peculeVacances.ouvrierDouble.pct * 100) / 100;
+    r.peculeVacCalc.total = Math.round(r.peculeVacCalc.brutRef * (PV_SIMPLE*2+0.001) * 100) / 100;
   }
 
   // ══════════════════════════════════════════════════════════════
@@ -1713,7 +1158,7 @@ function calc(emp, per, co) {
     + r.garnish + r.advance + r.otherDed + r.ppVolontaire
     + r.atnCar + r.atnAutresTot
     + r.dpOnss + r.dpCotisSpec       // ONSS double pécule
-    + r.pdOnss                        // ONSS pecule départ
+    + r.pdOnss                        // ONSS pécule départ
     + r.pensionCompl                  // retenue pension complémentaire
     + r.retSyndicale                  // retenue syndicale
     + r.saisieAlim                    // pension alimentaire
@@ -1721,13 +1166,13 @@ function calc(emp, per, co) {
 
   // Net à payer
   r.net = r.gross - r.totalDed + r.expense + r.transport
-    + r.doublePécule - r.dpOnss - r.dpCotisSpec    // double pecule net
-    + r.péculeDepart - r.pdOnss                      // pecule départ net
-    + r.primeAncExonérée                              // prime anciennete exonérée
+    + r.doublePecule - r.dpOnss - r.dpCotisSpec    // double pécule net
+    + r.peculeDepart - r.pdOnss                      // pécule départ net
+    + r.primeAncExoneree                              // prime ancienneté exonérée
     + r.primeNaissance                                // prime naissance (exo)
-    + r.indemTélétravail                              // indemnite télétravail (exo)
+    + r.indemTeletravail                              // indemnité télétravail (exo)
     + r.indemBureau                                   // frais bureau (exo)
-    + r.petitChômageVal                               // petit chômage (salaire maintenu)
+    + r.petitChomageVal                               // petit chômage (salaire maintenu)
     + r.budgetMobPilier2                             // budget mobilité pilier 2 (exo)
     + r.hsBrutNetTotal;                                // HS volontaires brut=net (exo ONSS+PP)
 
@@ -1747,8 +1192,8 @@ function calc(emp, per, co) {
   r.costTotal = r.gross + r.onssE + r.mvEmployer + r.expense + r.transport + r.insAT + r.cotCO2
     + r.cotisVacOuv                                     // vacances ouvriers 15,84%
     + r.pensionComplEmpl + r.cotisWijninckx              // pension complémentaire
-    + r.doublePécule + r.péculeDepart + r.primeAncienneté + r.primeNaissance + r.primeInnovation
-    + r.indemTélétravail + r.indemBureau
+    + r.doublePecule + r.peculeDepart + r.primeAnciennete + r.primeNaissance + r.primeInnovation
+    + r.indemTeletravail + r.indemBureau
     + r.ecoCheques + r.cadeaux                           // éco-chèques + cadeaux
     + r.budgetMobCotis38                                 // budget mobilité pilier 3
     + r.veloLeasingMois                                   // leasing vélo
@@ -1782,7 +1227,7 @@ function calcPrecompteExact(brutMensuel, options) {
   if (brut <= 0) return { pp: 0, rate: 0, forfait: 0, reduction: 0, bonusEmploi: 0, detail: {} };
 
   // 1. ONSS travailleur 13.07%
-  const onss = Math.round(brut * _OW * 100) / 100;
+  const onss = Math.round(brut * TX_ONSS_W * 100) / 100;
   const imposable = brut - onss;
 
   // 2. Annualisation
@@ -1870,9 +1315,7 @@ function calcPrecompteExact(brutMensuel, options) {
   const impotAvecTaxeCom = Math.round(impotApresReduc * (1 + taxeCom) * 100) / 100;
 
   // Bonus emploi fiscal (33.14% réduction sur bonus social ONSS)
-  // C3: Bonus fiscal déduit du PP (33.14% volet A + 52.54% volet B)
-  const _bonusDetail = calcBonusEmploiDetail(brutMensuel, opts.typeWorker || 'employe', opts.fractionOccupation || 1.0, opts.moisPaie || null);
-  const bonusEmploi = _bonusDetail.totalFiscal;
+  const bonusEmploi = 0; // calculé séparément si nécessaire
 
   // PP mensuel
   const ppMensuel = Math.round(impotAvecTaxeCom / 12 * 100) / 100;
@@ -1903,7 +1346,7 @@ function calcPrecompteExact(brutMensuel, options) {
 
 function calcCSSS(brutMensuel, situation) {
   const brut = brutMensuel;
-  const onss = Math.round(brut * _OW * 100) / 100;
+  const onss = Math.round(brut * TX_ONSS_W * 100) / 100;
   const imposable = brut - onss;
   const annuel = imposable * 12;
   const isole = !situation || situation === 'isole';
@@ -1925,290 +1368,18 @@ function calcCSSS(brutMensuel, situation) {
   return Math.round(plafond / 12 * 100) / 100;
 }
 
-function calcBonusEmploi(brutMensuel, typeWorker, fractionOccupation, moisPaie) {
-  const detail = calcBonusEmploiDetail(brutMensuel, typeWorker, fractionOccupation, moisPaie);
-  return detail.totalSocial;
-}
-
-function calcBonusEmploiDetail(brutMensuel, typeWorker, fractionOccupation, moisPaie) {
-  const r = { voletA: 0, voletB: 0, totalSocial: 0, fiscalA: 0, fiscalB: 0, totalFiscal: 0 };
-  if (!brutMensuel || brutMensuel <= 0) return r;
-
-  const tw = typeWorker || 'employe';
-  const frac = fractionOccupation || 1.0;
-
-  // Déterminer période (jan/fév = jan2026, mars+ = mars2026)
-  let periode = 'mars2026';
-  if (moisPaie) {
-    const d = typeof moisPaie === 'string' ? new Date(moisPaie) : moisPaie;
-    if (d.getMonth() <= 1) periode = 'jan2026'; // 0=jan, 1=fev
-  }
-
+function calcBonusEmploi(brutMensuel) {
+  if (brutMensuel <= 0) return 0;
+  const onss = Math.round(brutMensuel * TX_ONSS_W * 100) / 100;
+  const refSalaire = brutMensuel;
   const BE = LOIS_BELGES.pp.bonusEmploi;
-  const params = BE[periode] || BE.mars2026;
-  const type = tw === 'ouvrier' ? 'ouvriers' : 'employes';
-
-  // Salaire de référence temps plein
-  const S = frac > 0 ? brutMensuel / frac : brutMensuel;
-
-  // ── VOLET A (bas salaires) ──
-  const pA = params.voletA[type];
-  let vA = 0;
-  if (S <= pA.seuilBas) vA = pA.max;
-  else if (S <= pA.seuilHaut) vA = Math.max(0, pA.max - (pA.coeff * (S - pA.seuilBas)));
-
-  // ── VOLET B (très bas salaires) ──
-  const pB = params.voletB[type];
-  let vB = 0;
-  if (S <= pB.seuilBas) vB = pB.max;
-  else if (S <= pB.seuilHaut) vB = Math.max(0, pB.max - (pB.coeff * (S - pB.seuilBas)));
-
-  // Proratiser temps partiel
-  vA = Math.round(vA * frac * 100) / 100;
-  vB = Math.round(vB * frac * 100) / 100;
-
-  // Écrêtement: bonus social ≤ cotisations ONSS personnelles
-  const onssPerso = Math.round(brutMensuel * _OW * 100) / 100;
-  const totalBrut = vA + vB;
-  const totalSocial = Math.round(Math.min(totalBrut, onssPerso) * 100) / 100;
-
-  // Si écrêtement, réduire volet B d'abord, puis volet A
-  if (totalBrut > onssPerso) {
-    const excedent = totalBrut - onssPerso;
-    if (excedent <= vB) { vB = Math.round((vB - excedent) * 100) / 100; }
-    else { vA = Math.round(Math.max(0, vA - (excedent - vB)) * 100) / 100; vB = 0; }
+  const seuil1 = BE.seuilBrut1;
+  const seuil2 = BE.seuilBrut2;
+  const maxBonus = BE.maxMensuel;
+  
+  if (refSalaire <= seuil1) return maxBonus;
+  if (refSalaire <= seuil2) {
+    return Math.round(maxBonus * (1 - (refSalaire - seuil1) / (seuil2 - seuil1)) * 100) / 100;
   }
-
-  // Bonus fiscal: 33.14% volet A + 52.54% volet B
-  const fA = Math.round(vA * (BE.fiscalTauxA || 0.3314) * 100) / 100;
-  const fB = Math.round(vB * (BE.fiscalTauxB || 0.5254) * 100) / 100;
-
-  r.voletA = vA;
-  r.voletB = vB;
-  r.totalSocial = totalSocial;
-  r.fiscalA = fA;
-  r.fiscalB = fB;
-  r.totalFiscal = Math.round((fA + fB) * 100) / 100;
-  return r;
-}
-
-function calcIndependant(options) {
-  const opts = options || {};
-  const INS = LOIS_BELGES.inasti;
-  const r = {};
-
-  // ── Paramètres d'entrée ──
-  const revenuNetAnnuel = +(opts.revenuNet || 0);         // revenu net imposable annuel (estimé ou N-3)
-  const type = opts.type || 'principal';                   // principal | complémentaire | pensionActif | pensionRetraite | conjointMaxi | conjointMini | etudiant | mandataire
-  const trimestre = opts.trimestre || 'provisoire';        // provisoire | définitif
-  const primoStarter = !!opts.primoStarter;                // 4 premiers trimestres
-  const primoReduite = !!opts.primoReduite;                // réduction demandée et accordée
-  const deductionFraisReels = !!opts.fraisReels;           // frais réels au lieu du forfait
-  const fraisReelsMontant = +(opts.fraisReelsMontant || 0);
-  const caisseReduction = +(opts.caisseReduction || 0);    // réduction obtenue de la caisse
-  const situationFiscale = opts.situation || 'isole';      // isole | marie_1r | marie_2r
-  const enfants = +(opts.enfants || 0);
-  const taxeCom = +(opts.taxeCom || 7) / 100;
-  const dirigeant = !!opts.dirigeant;                      // gérant/admin → frais pro dirigeant
-
-  r.type = type;
-  r.revenuNetAnnuel = revenuNetAnnuel;
-  r.revenuNetMensuel = Math.round(revenuNetAnnuel / 12 * 100) / 100;
-
-  // ═══ 1. COTISATIONS SOCIALES INASTI ═══
-  // Calculées sur le revenu net imposable professionnel de l'année N-3
-  // (en régime provisoire) ou de l'année elle-même (en régime définitif)
-  // Régularisation après 2-3 ans quand le SPF communique le revenu réel
-
-  let cotisAnnuelle = 0;
-
-  if (type === 'conjointMini') {
-    // Mini-statut: cotisation fixe (uniquement maladie/invalidité)
-    cotisAnnuelle = INS.minimums.conjointAidant.miniStatut * 4;
-    r.couverturePension = false;
-  } else {
-    // Calcul sur tranches
-    if (revenuNetAnnuel <= INS.cotisations.tranche1.plafond) {
-      cotisAnnuelle = revenuNetAnnuel * INS.cotisations.tranche1.taux;
-    } else if (revenuNetAnnuel <= INS.cotisations.tranche2.plafond) {
-      cotisAnnuelle = INS.cotisations.tranche1.plafond * INS.cotisations.tranche1.taux
-        + (revenuNetAnnuel - INS.cotisations.tranche1.plafond) * INS.cotisations.tranche2.taux;
-    } else {
-      // Au-delà du plafond absolu: plafonné
-      cotisAnnuelle = INS.cotisations.tranche1.plafond * INS.cotisations.tranche1.taux
-        + (INS.cotisations.tranche2.plafond - INS.cotisations.tranche1.plafond) * INS.cotisations.tranche2.taux;
-    }
-    r.couverturePension = true;
-
-    // Appliquer les minimums par catégorie
-    let minTrim = 0;
-    if (type === 'principal' || type === 'conjointMaxi' || type === 'mandataire') {
-      minTrim = INS.minimums.principal[trimestre];
-    } else if (type === 'complémentaire') {
-      minTrim = INS.minimums.complémentaire[trimestre];
-    } else if (type === 'pensionActif') {
-      minTrim = INS.minimums.pensionActif[trimestre];
-    } else if (type === 'pensionRetraite') {
-      minTrim = INS.minimums.pensionRetraite[trimestre];
-    } else if (type === 'etudiant') {
-      // Étudiant-entrepreneur: exonéré si revenu < seuil
-      if (revenuNetAnnuel < INS.minimums.etudiant.seuilExoneration) {
-        cotisAnnuelle = 0;
-        minTrim = 0;
-      } else {
-        minTrim = INS.minimums.etudiant[trimestre];
-      }
-    }
-
-    // Minimum annuel = 4 × minimum trimestriel
-    const minAnnuel = minTrim * 4;
-    if (cotisAnnuelle < minAnnuel) {
-      cotisAnnuelle = minAnnuel;
-      r.auMinimum = true;
-    }
-  }
-
-  // Primo-starter: réduction possible
-  if (primoStarter && primoReduite) {
-    cotisAnnuelle = Math.min(cotisAnnuelle, INS.primoStarter.cotisReduite * 4);
-    r.primoStarter = true;
-  }
-
-  // Réduction accordée par la caisse sociale
-  if (caisseReduction > 0) {
-    cotisAnnuelle = Math.max(0, cotisAnnuelle - caisseReduction * 4);
-    r.caisseReduction = caisseReduction * 4;
-  }
-
-  r.cotisAnnuelle = Math.round(cotisAnnuelle * 100) / 100;
-  r.cotisTrimestre = Math.round(cotisAnnuelle / 4 * 100) / 100;
-  r.cotisMensuelle = Math.round(cotisAnnuelle / 12 * 100) / 100;
-
-  // Frais de gestion caisse sociale (en sus)
-  r.fraisGestion = Math.round(cotisAnnuelle * INS.fraisGestion * 100) / 100;
-  r.fraisGestionTrim = Math.round(r.fraisGestion / 4 * 100) / 100;
-  r.fraisGestionMens = Math.round(r.fraisGestion / 12 * 100) / 100;
-
-  // Total cotisations + frais
-  r.totalSocialAnnuel = Math.round((cotisAnnuelle + r.fraisGestion) * 100) / 100;
-  r.totalSocialTrim = Math.round(r.totalSocialAnnuel / 4 * 100) / 100;
-  r.totalSocialMens = Math.round(r.totalSocialAnnuel / 12 * 100) / 100;
-
-  // Taux effectif social
-  r.tauxSocial = revenuNetAnnuel > 0
-    ? Math.round(r.totalSocialAnnuel / revenuNetAnnuel * 10000) / 100 : 0;
-
-  // ═══ 2. IMPÔT DES PERSONNES PHYSIQUES (IPP) ═══
-  // Même barème progressif que les salariés
-  // Mais l'indépendant n'a PAS de precompte professionnel retenu à la source
-  // → Il doit faire des versements anticipés (VA) sinon majoration
-
-  // Base imposable = revenu net - cotisations sociales - frais professionnels
-  const baseAvantFrais = Math.max(0, revenuNetAnnuel - cotisAnnuelle);
-
-  // Frais professionnels: forfait 30% ou réels
-  let fraisPro = 0;
-  if (deductionFraisReels && fraisReelsMontant > 0) {
-    fraisPro = fraisReelsMontant;
-    r.fraisProType = 'reel';
-  } else {
-    const fpPct = dirigeant ? LOIS_BELGES.pp.fraisPro.dirigeant.pct : LOIS_BELGES.pp.fraisPro.salarie.pct;
-    const fpMax = dirigeant ? LOIS_BELGES.pp.fraisPro.dirigeant.max : LOIS_BELGES.pp.fraisPro.salarie.max;
-    fraisPro = Math.min(baseAvantFrais * fpPct, fpMax);
-    r.fraisProType = 'forfait';
-  }
-  r.fraisPro = Math.round(fraisPro * 100) / 100;
-
-  const baseImposable = Math.max(0, baseAvantFrais - fraisPro);
-  r.baseImposable = Math.round(baseImposable * 100) / 100;
-
-  // Quotient conjugal (barème 2)
-  const isBareme2 = (situationFiscale === 'marie_1r');
-  let qcAttribue = 0;
-  let basePrincipale = baseImposable;
-  if (isBareme2) {
-    qcAttribue = Math.min(baseImposable * LOIS_BELGES.pp.quotientConjugal.pct, LOIS_BELGES.pp.quotientConjugal.max);
-    basePrincipale = baseImposable - qcAttribue;
-  }
-  r.qcAttribue = Math.round(qcAttribue * 100) / 100;
-
-  // Barème progressif (même tranches que salariés)
-  const calcImpot = (base) => {
-    if (base <= 0) return 0;
-    const T = LOIS_BELGES.pp.tranches;
-    let imp = 0, prev = 0;
-    for (const t of T) {
-      const s = Math.min(base, t.max) - Math.max(prev, t.min);
-      if (s > 0) imp += s * t.taux;
-      prev = t.max;
-    }
-    return imp;
-  };
-
-  let impotBrut = calcImpot(basePrincipale);
-  if (isBareme2 && qcAttribue > 0) {
-    impotBrut += calcImpot(qcAttribue);
-  }
-
-  // Réduction quotité exemptée
-  const qeBase = isBareme2 ? LOIS_BELGES.pp.quotiteExemptee.bareme2 : LOIS_BELGES.pp.quotiteExemptee.bareme1;
-  let reductions = qeBase;
-
-  // Réduction enfants
-  const tabEnfants = LOIS_BELGES.pp.reductionsEnfants;
-  const suppEnfant = LOIS_BELGES.pp.reductionEnfantSupp;
-  if (enfants > 0) {
-    if (enfants <= 8) reductions += tabEnfants[enfants];
-    else reductions += tabEnfants[8] + (enfants - 8) * suppEnfant;
-  }
-
-  const impotApresReduc = Math.max(0, impotBrut - reductions);
-
-  // Taxe communale
-  const impotAvecTaxeCom = Math.round(impotApresReduc * (1 + taxeCom) * 100) / 100;
-
-  r.ippAnnuel = impotAvecTaxeCom;
-  r.ippMensuel = Math.round(impotAvecTaxeCom / 12 * 100) / 100;
-  r.ippTrimestre = Math.round(impotAvecTaxeCom / 4 * 100) / 100;
-  r.ippTauxEffectif = revenuNetAnnuel > 0
-    ? Math.round(impotAvecTaxeCom / revenuNetAnnuel * 10000) / 100 : 0;
-
-  // ═══ 3. VERSEMENTS ANTICIPÉS ═══
-  // Si pas de VA suffisants → majoration de 4,5% sur l'IPP
-  const vaParTrimestre = Math.round(impotAvecTaxeCom / 4 * 100) / 100;
-  r.vaMensuelRecommandé = Math.round(vaParTrimestre / 3 * 100) / 100;
-  r.vaTrimRecommandé = vaParTrimestre;
-  r.vaAnnuelRecommandé = impotAvecTaxeCom;
-  r.majorationSansVA = Math.round(impotAvecTaxeCom * INS.versementsAnticipes.majoration * 100) / 100;
-
-  // ═══ 4. NET DISPONIBLE ═══
-  r.totalChargesAnnuel = Math.round((r.totalSocialAnnuel + impotAvecTaxeCom) * 100) / 100;
-  r.totalChargesMensuel = Math.round(r.totalChargesAnnuel / 12 * 100) / 100;
-  r.netDisponibleAnnuel = Math.round((revenuNetAnnuel - r.totalChargesAnnuel) * 100) / 100;
-  r.netDisponibleMensuel = Math.round(r.netDisponibleAnnuel / 12 * 100) / 100;
-  r.tauxChargesTotal = revenuNetAnnuel > 0
-    ? Math.round(r.totalChargesAnnuel / revenuNetAnnuel * 10000) / 100 : 0;
-  r.tauxNetDisponible = revenuNetAnnuel > 0
-    ? Math.round(r.netDisponibleAnnuel / revenuNetAnnuel * 10000) / 100 : 0;
-
-  // ═══ 5. COMPARAISON AVEC SALARIÉ ═══
-  // Permet de comparer le coût total d'un indépendant vs un salarié
-  // pour le même "pouvoir d'achat net"
-  const brutSalarieEquiv = revenuNetAnnuel / 12; // approximation grossière
-  r.comparaisonSalarie = {
-    brutEquivMensuel: Math.round(brutSalarieEquiv * 100) / 100,
-    onssWSalarie: Math.round(brutSalarieEquiv * LOIS_BELGES.onss.travailleur * 100) / 100,
-    coûtEmployeurEstime: Math.round(brutSalarieEquiv * (1 + LOIS_BELGES.onss.employeur.total) * 100) / 100,
-  };
-
-  // ═══ 6. INFOS COMPLÉMENTAIRES ═══
-  r.pasDeChômage = true;          // l'indépendant n'a PAS droit au chômage
-  r.assuranceATObligatoire = false; // AT: assurance privée recommandée mais pas obligatoire
-  r.droitPasserelle = type !== 'complémentaire'; // droit passerelle si cessation forcée
-  r.pensionLegale = type !== 'conjointMini';     // droit pension si maxi-statut ou principal
-
-  // Cotisations déductibles fiscalement
-  r.cotisationsDeductibles = r.cotisAnnuelle; // 100% déductible du revenu imposable
-
-  return r;
-}
+  return 0;
+}
