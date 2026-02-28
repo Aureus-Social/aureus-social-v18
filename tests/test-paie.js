@@ -48,7 +48,14 @@ global.CSS = { supports:()=>false };
 global.matchMedia = ()=>({matches:false});
 global.supabase = null;
 
-// ═══ CHARGER ═══
+// ═══ CHARGER LIB LOIS-BELGES (source unique de vérité) ═══
+console.log('⏳ Chargement lib/lois-belges.js...');
+const libPath = path.join(__dirname, '..', 'app', 'lib', 'lois-belges.js');
+let libSrc = fs.readFileSync(libPath, 'utf-8');
+libSrc = libSrc.replace(/^export\s+\{[^}]+\};?/gm, '');
+libSrc = libSrc.replace(/^import\s+.*?from\s+['"].*?['"];?\s*/gm, '');
+
+// ═══ CHARGER MONOLITHE ═══
 console.log('⏳ Chargement AureusSocialPro.js...');
 const srcPath = path.join(__dirname, '..', 'app', 'AureusSocialPro.js');
 const fullSrc = fs.readFileSync(srcPath, 'utf-8');
@@ -93,15 +100,9 @@ function _extractBalanced(startIdx) {
 // ═══ EXTRACTION CIBLÉE ═══
 const parts = [];
 
-// 1. LOIS_BELGES (le gros objet)
-const loisIdx = _findTopLevel('var LOIS_BELGES');
-if (loisIdx >= 0 && !lines[loisIdx].includes('TIMELINE') && !lines[loisIdx].includes('CURRENT')) {
-  const { text } = _extractBalanced(loisIdx);
-  if (text.split('\n').length > 10) {
-    parts.push(text);
-    console.log(`  ✓ LOIS_BELGES: ligne ${loisIdx+1} (${text.split('\n').length} lignes)`);
-  }
-}
+// 1. LOIS_BELGES — maintenant chargé depuis lib/lois-belges.js
+console.log('  ✓ LOIS_BELGES: chargé depuis lib/lois-belges.js');
+const loisIdx = -1; // plus inline dans le monolithe
 
 // 2. WHITELIST top-level entre LOIS_BELGES et LEGAL
 const legalIdx = _findTopLevel('var LEGAL=');
@@ -195,6 +196,11 @@ try {
   };
 
   const ctx = vm.createContext(sandbox);
+
+  // Charger la lib lois-belges.js en premier (source unique de vérité)
+  vm.runInContext(libSrc, ctx);
+  console.log('  ✓ lib/lois-belges.js chargé dans le sandbox');
+
   fs.writeFileSync(path.join(__dirname, 'extracted-logic.js'), src);
   console.log(`\n  Total: ${src.split('\n').length} lignes → extracted-logic.js`);
   vm.runInContext(src, ctx);
@@ -631,14 +637,14 @@ try {
       // Annuel imposable = (4000 - 4000*0.1307) * 12 - frais pro
       const imposable = 4000 - 4000 * 0.1307;
       const annuel = imposable * 12;
-      assert(annuel > 16310, 'Annuel devrait dépasser 1ère tranche');
+      assert(annuel > LOIS_BELGES.pp.tranches[0].max, 'Annuel devrait dépasser 1ère tranche');
     });
 
-    test('Frais pro salarié: 30% plafonné 5930€/an', () => {
+    test('Frais pro salarié: 30% plafonné', () => {
       const r1 = calcPrecompteExact(3000, { situation: 'isole' });
       const r2 = calcPrecompteExact(8000, { situation: 'isole' });
-      // Pour 8000€: annuel imposable = ~83k → forfait = min(83k×30%, 5930) = 5930 annuel
-      assert(r2.detail.forfaitAn <= 5930 + 1, `Forfait annuel ${r2.detail.forfaitAn} > plafond 5930`);
+      const maxFP = LOIS_BELGES.pp.fraisPro.salarie.max;
+      assert(r2.detail.forfaitAn <= maxFP + 1, `Forfait annuel ${r2.detail.forfaitAn} > plafond ${maxFP}`);
     });
 
     test('Quotient conjugal marié 1 rev: 30% max 12520€', () => {
@@ -692,7 +698,7 @@ try {
   test('ONSS exact: 4567.89€ × 13.07%', () => {
     const brut = 4567.89;
     const expected = Math.round(brut * 0.1307 * 100) / 100;
-    eq(expected, 596.82, 'ONSS 4567.89€', 0.01);
+    eq(expected, 597.02, 'ONSS 4567.89€', 0.01);
   });
 
   test('Bonus emploi seuil 2999€ > 0, 3100€ encore > 0 ou = 0', () => {

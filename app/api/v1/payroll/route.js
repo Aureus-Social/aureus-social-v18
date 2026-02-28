@@ -1,24 +1,21 @@
 import { apiRateLimit, auditLog } from "../../../lib/api-security";
+import { TX_ONSS_W, TX_ONSS_E, LOIS_BELGES } from "../../../lib/lois-belges";
 // Aureus Social Pro — API v1 Payroll
-// Calculate payslips via REST API
+// Calculate payslips via REST API — constantes depuis lib/lois-belges.js
 
-const TX_ONSS_W = 0.1307;
-const TX_ONSS_E = 0.2507;
 const CSSS_RATES = [{ min: 0, max: 1945.38, rate: 0 }, { min: 1945.38, max: 2190.18, rate: 0 }, { min: 2190.18, max: Infinity, rate: 0.09 }];
 
 function quickPP(brut, situation = 'isole', enfants = 0) {
   const onss = Math.round(brut * TX_ONSS_W * 100) / 100;
   let imposable = brut - onss;
-  const fraisPro = Math.min(imposable * 0.30, 5930 / 12);
+  const fraisPro = Math.min(imposable * 0.30, LOIS_BELGES.pp.fraisPro.salarie.max / 12);
   imposable -= fraisPro;
 
-  // 2026 brackets
-  const brackets = [
-    { limit: 15200 / 12, rate: 0.2675 },
-    { limit: 26830 / 12, rate: 0.4280 },
-    { limit: 46440 / 12, rate: 0.4815 },
-    { limit: Infinity, rate: 0.5350 },
-  ];
+  // Brackets depuis LOIS_BELGES (annuels → mensuels via /12)
+  const brackets = LOIS_BELGES.pp.tranches.map(t => ({
+    limit: t.max === Infinity ? Infinity : t.max / 12,
+    rate: t.taux,
+  }));
 
   let pp = 0, remaining = imposable;
   let prev = 0;
@@ -40,8 +37,9 @@ function quickPP(brut, situation = 'isole', enfants = 0) {
 
 function calcBonusEmploi(brut) {
   const S = brut;
-  if (S <= 2072.09) return Math.round(Math.min(S * TX_ONSS_W, 277.68) * 100) / 100;
-  if (S <= 2726.16) return Math.round(Math.max(0, 277.68 - (S - 2072.09) * 0.2446) * 100) / 100;
+  const be = LOIS_BELGES.pp.bonusEmploi;
+  if (S <= be.seuilBrut1) return Math.round(Math.min(S * TX_ONSS_W, be.maxMensuel) * 100) / 100;
+  if (S <= be.seuilBrut2) return Math.round(Math.max(0, be.maxMensuel - (S - be.seuilBrut1) * be.pctReduction) * 100) / 100;
   return 0;
 }
 
@@ -109,7 +107,7 @@ export async function POST(request) {
         onssWorker: onssW,
         onssEmployer: onssE,
         imposable: Math.round(imposable * 100) / 100,
-        fraisPro: Math.round(Math.min(imposable * 0.30, 5930 / 12) * 100) / 100,
+        fraisPro: Math.round(Math.min(imposable * 0.30, LOIS_BELGES.pp.fraisPro.salarie.max / 12) * 100) / 100,
         precompte: pp,
         csss,
         bonusEmploi,

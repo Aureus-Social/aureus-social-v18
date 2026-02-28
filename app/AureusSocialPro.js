@@ -8,14 +8,19 @@ import dynamic from "next/dynamic";
 const ProceduresRHHub = dynamic(() => import("./modules/ProceduresRHHub"), { ssr: false });
 const AdminBaremes = dynamic(() => import("./modules/AdminBaremes"), { ssr: false });
 
-// ═══ SPRINT 37: MOTEUR CENTRAL LOIS BELGES — AUTO-UPDATE 1 CLIC  ═══
-// ══════════════════════════════════════════════════════════════════════
-// Base centralisée de TOUTES les constantes légales belges
-// Un seul endroit à modifier → propage partout automatiquement
+// ═══ LOIS BELGES — Source unique: app/lib/lois-belges.js ═══
+import { LOIS_BELGES, LB, TX_ONSS_W, TX_ONSS_E, TX_OUV108, TX_AT, COUT_MED, CR_TRAV,
+  PP_EST, NET_FACTOR, quickNetEst, CR_MAX, CR_PAT, FORF_BUREAU, FORF_KM,
+  PV_SIMPLE, PV_DOUBLE, RMMMG, BONUS_MAX, SEUIL_CPPT, SEUIL_CE, HEURES_HEBDO, JOURS_FERIES,
+  getLoi, calcPPFromLois, _PVP, _HLEG, _RMMMG, _IDX, fmt, fi, fmtP,
+  LOIS_BELGES_TIMELINE, LOIS_BELGES_CURRENT, LOIS_BELGES_HISTORIQUE,
+  applyTimeline, syncLoisBelges, checkLoisBelgesOutdated
+} from './lib/lois-belges';
 
+// LOIS_BELGES, aliases et calcPPFromLois importés de ./lib/lois-belges.js
 
-
-var LOIS_BELGES = {
+/* _LEGACY_REMOVED_
+{
   _meta: { version: '2026.1.0', dateMAJ: '2026-01-01', source: 'SPF Finances / ONSS / CNT / Moniteur Belge', annee: 2026 },
 
   // ═══ ONSS ═══
@@ -260,18 +265,7 @@ var LOIS_BELGES = {
     { id: 'refli', nom: 'Refli.be', url: 'https://refli.be/fr/documentation/computation/tax', type: 'Reference technique' },
   ],
 };
-
-// Aliases courts pour accès rapide dans tout le code
-var LB=LOIS_BELGES;
-var TX_ONSS_W=LB.onss.travailleur; // 0.1307
-var TX_ONSS_E=LB.onss.employeur.total; // 0.2507
-var TX_OUV108=LB.onss.ouvrier108; // 1.08
-var TX_AT=LB.assurances.accidentTravail.taux; // 0.01
-var COUT_MED=LB.assurances.medecineTravail.cout; // COUT_MED
-var CR_TRAV=LB.chequesRepas.partTravailleur.min; // CR_TRAV
-var PP_EST=0.22; // PP estimation moyenne (~22% de l'imposable)
-var NET_FACTOR=(1-TX_ONSS_W)*(1-PP_EST); // facteur net approx = ~0.5645
-var quickNetEst=(b)=>Math.round(b*NET_FACTOR*100)/100; // estimation rapide net
+_LEGACY_REMOVED_ */
 
 // ═══ SPRINT 41: EXPORTS COMPTABLES RÉELS ═══
 function generateExportCompta(format,ops,periode,company){
@@ -482,76 +476,7 @@ var obf={
   maskIBAN:(i)=>{if(!i||i.length<8)return i;return i.slice(0,4)+' **** **** '+i.slice(-4);}
 };
 var safeLS={get:(k)=>{try{if(typeof window==='undefined')return null;return window.localStorage.getItem(k);}catch(e){return null;}},set:(k,v)=>{try{if(typeof window==='undefined')return;window.localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}},remove:(k)=>{try{if(typeof window==='undefined')return;window.localStorage.removeItem(k);}catch(e){}}};
-var CR_MAX=LB.chequesRepas.valeurFaciale.max; // 8.00
-var CR_PAT=LB.chequesRepas.partPatronale.max; // 6.91
-var FORF_BUREAU=LB.fraisPropres.forfaitBureau.max; // FORF_BUREAU
-var FORF_KM=LB.fraisPropres.forfaitDeplacement.voiture; // 0.4415
-var PV_SIMPLE=LB.remuneration.peculeVacances.simple.pct; // PV_SIMPLE
-var PV_DOUBLE=LB.remuneration.peculeVacances.double.pct; // 0.92
-var RMMMG=LB.remuneration.RMMMG.montant18ans; // RMMMG
-var BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 194.03
-var SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
-var SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
-var HEURES_HEBDO=LB.tempsTravail.dureeHebdoLegale; // 38
-var JOURS_FERIES=LB.tempsTravail.jourFerie.nombre; // 10
-
-
-// Fonction centralisée: obtenir une valeur légale
-function getLoi(path, fallback) {
-  const parts = path.split('.');
-  let val = LOIS_BELGES;
-  for (const p of parts) { val = val?.[p]; if (val === undefined) return fallback; }
-  return val;
-}
-
-
-// Aliases courts pour calculs — connectés à LOIS_BELGES
-// (voir bloc RACCOURCIS CENTRALISÉS plus bas)
-var _PVP = LOIS_BELGES.remuneration.peculeVacances.patronal.pct;
-var _HLEG = LOIS_BELGES.tempsTravail.dureeHebdoLegale;
-
-// Fonction centralisée: calculer PP via LOIS_BELGES
-function calcPPFromLois(brut, opts) {
-  const L = LOIS_BELGES;
-  const onss = Math.round(brut * L.onss.travailleur * 100) / 100;
-  const imposable = brut - onss;
-  const annuel = imposable * 12;
-  const dirigeant = opts?.dirigeant || false;
-  const fp = dirigeant ? L.pp.fraisPro.dirigeant : L.pp.fraisPro.salarie;
-  const forfait = Math.min(annuel * fp.pct, fp.max);
-  const base = Math.max(0, annuel - forfait);
-  const isB2 = opts?.bareme2 || false;
-  let qc = 0, baseNet = base;
-  if (isB2) { qc = Math.min(base * L.pp.quotientConjugal.pct, L.pp.quotientConjugal.max); baseNet = base - qc; }
-  const calcTr = (b) => { let imp = 0, prev = 0; for (const t of L.pp.tranches) { const slice = Math.min(b, t.max) - Math.max(prev, t.min); if (slice > 0) imp += slice * t.taux; prev = t.max; } return imp; };
-  let impot = calcTr(baseNet);
-  if (isB2 && qc > 0) impot += calcTr(qc);
-  const qe = isB2 ? L.pp.quotiteExemptee.bareme2 : L.pp.quotiteExemptee.bareme1;
-  const enf = +(opts?.enfants || 0);
-  const enfH = +(opts?.enfantsHandicapes || 0);
-  const enfFisc = enf + enfH;
-  let redEnf = 0;
-  if (enfFisc > 0) { redEnf = enfFisc <= 8 ? L.pp.reductionsEnfants[enfFisc] : L.pp.reductionsEnfants[8] + (enfFisc - 8) * L.pp.reductionEnfantSupp; }
-  let totalRed = qe + redEnf;
-  if (opts?.parentIsole && enf > 0) totalRed += L.pp.reductionParentIsole;
-  if (opts?.handicape) totalRed += L.pp.reductionHandicape;
-  const taxeCom = (opts?.taxeCom || 7) / 100;
-  const ppAn = Math.max(0, impot - totalRed) * (1 + taxeCom);
-  return Math.round(ppAn / 12 * 100) / 100;
-}
-
-
-// ═══ RACCOURCIS CENTRALISÉS — Toute modif dans LOIS_BELGES se propage ICI ═══
-var _RMMMG = LOIS_BELGES.remuneration.RMMMG.montant18ans; // 2070.48
-var _IDX = LOIS_BELGES.remuneration.indexSante.coeff; // 2.0399
-
-
-// ═══════════════════════════════════════════════════════════════
-//  AUREUS SOCIAL PRO — Logiciel de Paie Belge Professionnel
-//  Modules: ONSS (Dimona/DMFA), Belcotax 281.xx, Formule-clé
-//  SPF Finances, Documents sociaux (C4, attestations)
-//  🌐 Multilingue: FR / NL
-// ═══════════════════════════════════════════════════════════════
+// Aliases et fonctions centralisées maintenant importées de ./lib/lois-belges
 
 // ── I18N — Dictionnaire FR / NL / EN / DE ──
 const LangCtx = createContext({lang:'fr',t:(k)=>k,setLang:()=>{}});

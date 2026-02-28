@@ -1,12 +1,11 @@
 'use client';
 import{useState,useEffect,useMemo,useCallback,useRef}from'react';
+import{TX_ONSS_W,TX_ONSS_E}from'../lib/lois-belges';
 
 // ═══════════════════════════════════════════════════════════
 // SMART OPS CENTER — Notifications + Smart Alerts + Journal
 // Aureus Social Pro — Sprint 37
 // ═══════════════════════════════════════════════════════════
-
-const TX_ONSS_E=0.2507,TX_ONSS_W=0.1307;
 const fmt=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
 const fi=v=>new Intl.NumberFormat('fr-BE',{maximumFractionDigits:0}).format(v||0);
 const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];

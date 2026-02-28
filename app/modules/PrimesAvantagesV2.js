@@ -1,5 +1,6 @@
 'use client';
 import{useState,useMemo}from'react';
+import{TX_ONSS_W,TX_ONSS_E}from'../lib/lois-belges';
 
 const fmt=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
 const fi=v=>new Intl.NumberFormat('fr-BE',{maximumFractionDigits:0}).format(v||0);
@@ -14,7 +15,6 @@ const I=({label,type,value,onChange,style:st,options})=>{
 const Badge=({text,color})=><span style={{padding:'2px 7px',borderRadius:5,fontSize:8,fontWeight:600,background:(color||'#888')+'15',color:color||'#888'}}>{text}</span>;
 const Bar=({pct,color})=><div style={{width:'100%',height:6,background:'rgba(255,255,255,.05)',borderRadius:3,overflow:'hidden'}}><div style={{width:Math.min(pct,100)+'%',height:'100%',background:color||'#c6a34e',borderRadius:3}}/></div>;
 
-const TX_ONSS_W=0.1307,TX_ONSS_E=0.2507;
 const quickPP=(brut,anc)=>{const imp=brut*(1-TX_ONSS_W);if(imp<=1170)return 0;if(imp<=2050)return imp*0.2615;if(imp<=3600)return imp*0.3218;return imp*0.3500;};
 
 // ════════════════════════════════════════════════════════════

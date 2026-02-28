@@ -17,12 +17,12 @@ var LOIS_BELGES = {
   // ═══ PRÉCOMPTE PROFESSIONNEL ═══
   pp: {
     tranches: [
-      { min: 0, max: 16310, taux: 0.2675 },
-      { min: 16310, max: 28790, taux: 0.4280 },
-      { min: 28790, max: 49820, taux: 0.4815 },
-      { min: 49820, max: Infinity, taux: 0.5350 },
+      { min: 0, max: 16710, taux: 0.2675 },
+      { min: 16710, max: 29500, taux: 0.4280 },
+      { min: 29500, max: 51050, taux: 0.4815 },
+      { min: 51050, max: Infinity, taux: 0.5350 },
     ],
-    fraisPro: { salarie: { pct: 0.30, max: 5930 }, dirigeant: { pct: 0.03, max: 3120 }},
+    fraisPro: { salarie: { pct: 0.30, max: 6070 }, dirigeant: { pct: 0.03, max: 3120 }},
     quotiteExemptee: { bareme1: 2987.98, bareme2: 5975.96 },
     quotientConjugal: { pct: 0.30, max: 12520 },
     reductionsEnfants: [0, 624, 1656, 4404, 7620, 11100, 14592, 18120, 21996],
@@ -63,12 +63,13 @@ var LOIS_BELGES = {
 
   // ═══ RÉMUNÉRATION ═══
   remuneration: {
-    RMMMG: { montant18ans: RMMMG, montant20ans6m: RMMMG, montant21ans12m: RMMMG, source: 'CNT - CCT 43/15' },
+    RMMMG: { montant18ans: 2070.48, montant20ans6m: 2070.48, montant21ans12m: 2070.48, source: 'CNT - CCT 43/15' },
     indexSante: { coeff: 2.0399, pivot: 125.60, dateDerniereIndex: '2024-12-01', prochainPivotEstime: '2026-06-01' },
     peculeVacances: {
-      simple: { pct: PV_SIMPLE, base: 'brut annuel precedent' },
+      simple: { pct: 0.0767, base: 'brut annuel precedent' },
       double: { pct: 0.9200, base: 'brut mensuel' },
-      patronal: { pct: (PV_SIMPLE*2+0.001), base: 'brut annuel precedent' },
+      patronal: { pct: 0.1535, base: 'brut annuel precedent' },
+      ouvrierDouble: { pct: 0.0858, base: 'brut ouvrier x 108%' },
     },
     treizieme: { obligatoire: true, cp200: true, base: 'salaire mensuel brut', onss: true },
   },
@@ -86,9 +87,30 @@ var LOIS_BELGES = {
   // ═══ FRAIS PROPRES EMPLOYEUR ═══
   fraisPropres: {
     forfaitBureau: { max: 157.83, base: 'mensuel' },
-    forfaitDeplacement: { voiture: FORF_KM, velo: 0.35, transportCommun: 1.00 },
+    forfaitDeplacement: { voiture: 0.4415, velo: 0.35, transportCommun: 1.00 },
     forfaitRepresentation: { max: 40, base: 'mensuel sans justificatif' },
     teletravail: { max: 157.83, base: 'mensuel structurel' },
+  },
+
+  // ═══ AVANTAGES — ALIAS POUR MODULES ═══
+  avantages: {
+    fraisPropres: {
+      bureau: 154.74,
+      km: 0.4415,
+      repas: 19.22,
+      teletravail: 154.74,
+    },
+    atnGSM: 3,
+    atnPC: 6,
+    atnInternet: 5,
+    ecoMax: 250,
+  },
+
+  // ═══ COTISATIONS SPÉCIALES ═══
+  cotisations: {
+    cotCO2Min: 31.34,
+    plafondONSS: 75038.09,
+    flexiJob: { plafond: 12000, taux: 0.2807 },
   },
 
   // ═══ ATN — AVANTAGES EN NATURE ═══
@@ -173,7 +195,7 @@ var LOIS_BELGES = {
   // ═══ ASSURANCES ═══
   assurances: {
     accidentTravail: { taux: 0.01, obligatoire: true },
-    medecineTravail: { cout: COUT_MED, parTravailleur: true, annuel: false },
+    medecineTravail: { cout: 91.50, parTravailleur: true, annuel: false },
     assuranceLoi: { obligatoire: true },
     assuranceGroupe: { deductible: true, plafond80pct: true },
   },
@@ -304,7 +326,7 @@ var LOIS_BELGES = {
 
     // ── Frais professionnels (forfait ou réels) ──
     fraisPro: {
-      forfait: { pct: 0.30, max: 5930 }, // 30% plafonné (même barème que salariés)
+      forfait: { pct: 0.30, max: 6070 }, // 30% plafonné (même barème que salariés)
       reel: true,                // l'indépendant peut déduire les frais réels (comptabilité)
     },
 
@@ -374,7 +396,7 @@ var LOIS_BELGES_TIMELINE = [
     cct90: { plafondONSS: 4255, plafondFiscal: 3701 },
     chequesRepas: { valeurMax: 10.00, partPatronaleMax: 8.91, partTravailleurMin: 1.09, deductibilite: 4.00 },
     seuils: { ecolage: 44447, nonConcurrenceBas: 44447, nonConcurrenceHaut: 88895, arbitrage: 88895, supplementChomTemp: 4284 },
-    pp: { fraisProMax: 5930, quotiteExemptee1: 2987.98 },
+    pp: { fraisProMax: 6070, quotiteExemptee1: 2987.98 },
     rmmmg: { montant18: 2070.48 },
   },
   // Le forfait télétravail n'a PAS changé en mars 2026 (reste 157,83 depuis mars 2025)
@@ -390,7 +412,7 @@ var LOIS_BELGES_CURRENT = {
   teletravail: { forfaitBureau: 157.83, internet: 20, pc: 20, ecran: 5 },
   rmmmg: { montant18: 2070.48 },
   indemKm: { voiture: 0.4415, velo: 0.35 },
-  pp: { fraisProMax: 5930, quotiteExemptee1: 2987.98 },
+  pp: { fraisProMax: 6070, quotiteExemptee1: 2987.98 },
   _lastApplied: '2026-01-01',
 };
 
@@ -580,19 +602,20 @@ var _RMMMG = LOIS_BELGES.remuneration.RMMMG.montant18ans; // 2070.48
 var _IDX = LOIS_BELGES.remuneration.indexSante.coeff; // 2.0399
 
 
-// ═══════════════════════════════════════════════════════════════
-//  AUREUS SOCIAL PRO — Logiciel de Paie Belge Professionnel
-//  Modules: ONSS (Dimona/DMFA), Belcotax 281.xx, Formule-clé
-//  SPF Finances, Documents sociaux (C4, attestations)
-//  🌐 Multilingue: FR / NL
-// ═══════════════════════════════════════════════════════════════
+// ═══ FORMATEURS CENTRALISÉS ═══
+var fmt = (v) => new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR' }).format(v);
+var fi = (v) => new Intl.NumberFormat('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+var fmtP = (v) => (v * 100).toFixed(2) + ' %';
 
 // ═══ EXPORTS ═══
 export { LOIS_BELGES, LOIS_BELGES_TIMELINE, LOIS_BELGES_CURRENT, LOIS_BELGES_HISTORIQUE,
-  applyTimeline, syncLoisBelges, getLoi, calcPPFromLois,
-  LB, TX_ONSS_W, TX_ONSS_E, TX_OUV108, TX_AT,
+  applyTimeline, syncLoisBelges, getLoi, calcPPFromLois, checkLoisBelgesOutdated,
+  LB, TX_ONSS_W, TX_ONSS_E, TX_OUV108, TX_AT, COUT_MED, CR_TRAV,
   PP_EST, NET_FACTOR, quickNetEst,
   CR_MAX, CR_PAT, FORF_BUREAU, FORF_KM,
   PV_SIMPLE, PV_DOUBLE, RMMMG, BONUS_MAX,
   SEUIL_CPPT, SEUIL_CE, HEURES_HEBDO, JOURS_FERIES,
-  _OW, _OE, _PVP, _HLEG };
+  _OW, _OE, _PVP, _HLEG,
+  _OUV108, _AT, _MED, _CR_W, _CR_VF, _CR_E,
+  _PVS, _PVD, _PVE, _KM, _BUREAU, _RMMMG, _IDX,
+  fmt, fi, fmtP };

@@ -1,7 +1,6 @@
 'use client';
 import{useState,useMemo}from'react';
-
-const TX_ONSS_E=0.2507,TX_ONSS_W=0.1307;
+import{TX_ONSS_W,TX_ONSS_E}from'../lib/lois-belges';
 const fmt=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
 const fi=v=>new Intl.NumberFormat('fr-BE',{maximumFractionDigits:0}).format(v||0);
 const C=({children,title:t})=><div style={{background:'rgba(198,163,78,.03)',borderRadius:12,padding:16,border:'1px solid rgba(198,163,78,.08)',marginBottom:14}}>{t&&<div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:12}}>{t}</div>}{children}</div>;
