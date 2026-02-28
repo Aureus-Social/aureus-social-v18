@@ -1066,8 +1066,7 @@ var LEGAL={ONSS_W:TX_ONSS_W,ONSS_E:TX_ONSS_E,BONUS_2026:{
   },
 };
 
-const fmt=n=>new Intl.NumberFormat('fr-BE',{style:'currency',currency:'EUR'}).format(n||0);
-const fmtP=n=>`${((n||0)*100).toFixed(2)}%`;
+// fmt, fmtP importés depuis lib/lois-belges.js
 const uid=()=>`${Date.now()}-${Math.random().toString(36).substr(2,5)}`;
 const MN_FR=['Janvier',"Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
 const MN_NL=['Januari',"Februari","Maart","April","Mei","Juni","Juli","Augustus","September","Oktober","November","December"];
@@ -25463,7 +25462,7 @@ const handleRollback=async(id)=>{
 };
 
 const L=LOIS_BELGES;
-const fmt=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);
+const fmtNum=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);
 const pct=v=>(v*100).toFixed(2)+'%';
 
 // Catégories de paramètres
@@ -25478,39 +25477,39 @@ const categories=[
   {k:'onss.ouvrier108',l:'Majoration ouvriers',v:'x '+L.onss.ouvrier108,t:'num'},
 ]},
 {id:'pp',nom:'Precompte Professionnel',icon:'💰',color:'#a855f7',params:[
-  {k:'pp.tranches.0',l:'Tranche 1: 0-'+fmt(L.pp.tranches[0].max),v:pct(L.pp.tranches[0].taux),t:'pct'},
-  {k:'pp.tranches.1',l:'Tranche 2: '+fmt(L.pp.tranches[1].min)+'-'+fmt(L.pp.tranches[1].max),v:pct(L.pp.tranches[1].taux),t:'pct'},
-  {k:'pp.tranches.2',l:'Tranche 3: '+fmt(L.pp.tranches[2].min)+'-'+fmt(L.pp.tranches[2].max),v:pct(L.pp.tranches[2].taux),t:'pct'},
-  {k:'pp.tranches.3',l:'Tranche 4: '+fmt(L.pp.tranches[3].min)+'+',v:pct(L.pp.tranches[3].taux),t:'pct'},
-  {k:'pp.fraisPro.salarie.pct',l:'Frais pro salarie',v:pct(L.pp.fraisPro.salarie.pct)+' max '+fmt(L.pp.fraisPro.salarie.max),t:'txt'},
-  {k:'pp.fraisPro.dirigeant.pct',l:'Frais pro dirigeant',v:pct(L.pp.fraisPro.dirigeant.pct)+' max '+fmt(L.pp.fraisPro.dirigeant.max),t:'txt'},
-  {k:'pp.quotiteExemptee.bareme1',l:'Quotite exemptee (bareme 1)',v:fmt(L.pp.quotiteExemptee.bareme1)+' EUR/an',t:'num'},
-  {k:'pp.quotiteExemptee.bareme2',l:'Quotite exemptee (bareme 2)',v:fmt(L.pp.quotiteExemptee.bareme2)+' EUR/an',t:'num'},
-  {k:'pp.quotientConjugal.max',l:'Quotient conjugal max',v:fmt(L.pp.quotientConjugal.max)+' EUR/an',t:'num'},
-  {k:'pp.reductionsEnfants',l:'Reductions enfants (1-8)',v:L.pp.reductionsEnfants.slice(1).map(v=>fmt(v)).join(' | '),t:'arr'},
-  {k:'pp.bonusEmploi.maxMensuel',l:'Bonus emploi max',v:fmt(L.pp.bonusEmploi.maxMensuel)+' EUR/mois',t:'num'},
+  {k:'pp.tranches.0',l:'Tranche 1: 0-'+fmtNum(L.pp.tranches[0].max),v:pct(L.pp.tranches[0].taux),t:'pct'},
+  {k:'pp.tranches.1',l:'Tranche 2: '+fmtNum(L.pp.tranches[1].min)+'-'+fmtNum(L.pp.tranches[1].max),v:pct(L.pp.tranches[1].taux),t:'pct'},
+  {k:'pp.tranches.2',l:'Tranche 3: '+fmtNum(L.pp.tranches[2].min)+'-'+fmtNum(L.pp.tranches[2].max),v:pct(L.pp.tranches[2].taux),t:'pct'},
+  {k:'pp.tranches.3',l:'Tranche 4: '+fmtNum(L.pp.tranches[3].min)+'+',v:pct(L.pp.tranches[3].taux),t:'pct'},
+  {k:'pp.fraisPro.salarie.pct',l:'Frais pro salarie',v:pct(L.pp.fraisPro.salarie.pct)+' max '+fmtNum(L.pp.fraisPro.salarie.max),t:'txt'},
+  {k:'pp.fraisPro.dirigeant.pct',l:'Frais pro dirigeant',v:pct(L.pp.fraisPro.dirigeant.pct)+' max '+fmtNum(L.pp.fraisPro.dirigeant.max),t:'txt'},
+  {k:'pp.quotiteExemptee.bareme1',l:'Quotite exemptee (bareme 1)',v:fmtNum(L.pp.quotiteExemptee.bareme1)+' EUR/an',t:'num'},
+  {k:'pp.quotiteExemptee.bareme2',l:'Quotite exemptee (bareme 2)',v:fmtNum(L.pp.quotiteExemptee.bareme2)+' EUR/an',t:'num'},
+  {k:'pp.quotientConjugal.max',l:'Quotient conjugal max',v:fmtNum(L.pp.quotientConjugal.max)+' EUR/an',t:'num'},
+  {k:'pp.reductionsEnfants',l:'Reductions enfants (1-8)',v:L.pp.reductionsEnfants.slice(1).map(v=>fmtNum(v)).join(' | '),t:'arr'},
+  {k:'pp.bonusEmploi.maxMensuel',l:'Bonus emploi max',v:fmtNum(L.pp.bonusEmploi.maxMensuel)+' EUR/mois',t:'num'},
 ]},
 {id:'csss',nom:'CSSS',icon:'🔒',color:'#f97316',params:[
-  {k:'csss.isole.0.max',l:'Seuil exoneration',v:fmt(L.csss.isole[0].max)+' EUR/an',t:'num'},
-  {k:'csss.isole.4.montantFixe',l:'Plafond isole',v:fmt(L.csss.isole[4].montantFixe)+' EUR/trim',t:'num'},
+  {k:'csss.isole.0.max',l:'Seuil exoneration',v:fmtNum(L.csss.isole[0].max)+' EUR/an',t:'num'},
+  {k:'csss.isole.4.montantFixe',l:'Plafond isole',v:fmtNum(L.csss.isole[4].montantFixe)+' EUR/trim',t:'num'},
 ]},
 {id:'rem',nom:'Remuneration',icon:'💶',color:'#22c55e',params:[
-  {k:'remuneration.RMMMG.montant18ans',l:'RMMMG (18 ans)',v:fmt(L.remuneration.RMMMG.montant18ans)+' EUR/mois',t:'num'},
+  {k:'remuneration.RMMMG.montant18ans',l:'RMMMG (18 ans)',v:fmtNum(L.remuneration.RMMMG.montant18ans)+' EUR/mois',t:'num'},
   {k:'remuneration.indexSante.coeff',l:'Coefficient index sante',v:L.remuneration.indexSante.coeff,t:'num'},
   {k:'remuneration.peculeVacances.simple.pct',l:'Pecule vacances simple',v:pct(L.remuneration.peculeVacances.simple.pct),t:'pct'},
   {k:'remuneration.peculeVacances.double.pct',l:'Pecule vacances double',v:pct(L.remuneration.peculeVacances.double.pct),t:'pct'},
-  {k:'chequesRepas.partTravailleur.min',l:'Cheques-repas part travailleur min',v:fmt(L.chequesRepas.partTravailleur.min)+' EUR',t:'num'},
-  {k:'chequesRepas.valeurFaciale.max',l:'Cheques-repas valeur faciale max',v:fmt(L.chequesRepas.valeurFaciale.max)+' EUR',t:'num'},
-  {k:'fraisPropres.forfaitBureau.max',l:'Forfait bureau/teletravail',v:fmt(L.fraisPropres.forfaitBureau.max)+' EUR/mois',t:'num'},
-  {k:'fraisPropres.forfaitDeplacement.voiture',l:'Indemnite km voiture',v:fmt(L.fraisPropres.forfaitDeplacement.voiture)+' EUR/km',t:'num'},
+  {k:'chequesRepas.partTravailleur.min',l:'Cheques-repas part travailleur min',v:fmtNum(L.chequesRepas.partTravailleur.min)+' EUR',t:'num'},
+  {k:'chequesRepas.valeurFaciale.max',l:'Cheques-repas valeur faciale max',v:fmtNum(L.chequesRepas.valeurFaciale.max)+' EUR',t:'num'},
+  {k:'fraisPropres.forfaitBureau.max',l:'Forfait bureau/teletravail',v:fmtNum(L.fraisPropres.forfaitBureau.max)+' EUR/mois',t:'num'},
+  {k:'fraisPropres.forfaitDeplacement.voiture',l:'Indemnite km voiture',v:fmtNum(L.fraisPropres.forfaitDeplacement.voiture)+' EUR/km',t:'num'},
 ]},
 {id:'atn',nom:'ATN / Avantages',icon:'🚗',color:'#3b82f6',params:[
-  {k:'atn.voiture.min',l:'ATN voiture minimum',v:fmt(L.atn.voiture.min)+' EUR/an',t:'num'},
-  {k:'atn.gsm.forfait',l:'ATN GSM/tablette',v:fmt(L.atn.gsm.forfait)+' EUR/mois',t:'num'},
-  {k:'atn.pc.forfait',l:'ATN PC/laptop',v:fmt(L.atn.pc.forfait)+' EUR/mois',t:'num'},
-  {k:'atn.internet.forfait',l:'ATN Internet',v:fmt(L.atn.internet.forfait)+' EUR/mois',t:'num'},
-  {k:'atn.electricite.cadre',l:'ATN electricite (cadre)',v:fmt(L.atn.electricite.cadre)+' EUR/an',t:'num'},
-  {k:'atn.chauffage.cadre',l:'ATN chauffage (cadre)',v:fmt(L.atn.chauffage.cadre)+' EUR/an',t:'num'},
+  {k:'atn.voiture.min',l:'ATN voiture minimum',v:fmtNum(L.atn.voiture.min)+' EUR/an',t:'num'},
+  {k:'atn.gsm.forfait',l:'ATN GSM/tablette',v:fmtNum(L.atn.gsm.forfait)+' EUR/mois',t:'num'},
+  {k:'atn.pc.forfait',l:'ATN PC/laptop',v:fmtNum(L.atn.pc.forfait)+' EUR/mois',t:'num'},
+  {k:'atn.internet.forfait',l:'ATN Internet',v:fmtNum(L.atn.internet.forfait)+' EUR/mois',t:'num'},
+  {k:'atn.electricite.cadre',l:'ATN electricite (cadre)',v:fmtNum(L.atn.electricite.cadre)+' EUR/an',t:'num'},
+  {k:'atn.chauffage.cadre',l:'ATN chauffage (cadre)',v:fmtNum(L.atn.chauffage.cadre)+' EUR/an',t:'num'},
 ]},
 {id:'travail',nom:'Temps de travail',icon:'⏰',color:'#eab308',params:[
   {k:'tempsTravail.dureeHebdoLegale',l:'Duree hebdo legale',v:L.tempsTravail.dureeHebdoLegale+'h',t:'num'},
@@ -25520,7 +25519,7 @@ const categories=[
 ]},
 {id:'assur',nom:'Assurances & Seuils',icon:'🛡',color:'#06b6d4',params:[
   {k:'assurances.accidentTravail.taux',l:'Assurance accident travail',v:pct(L.assurances.accidentTravail.taux),t:'pct'},
-  {k:'assurances.medecineTravail.cout',l:'Medecine du travail',v:fmt(L.assurances.medecineTravail.cout)+' EUR/trav',t:'num'},
+  {k:'assurances.medecineTravail.cout',l:'Medecine du travail',v:fmtNum(L.assurances.medecineTravail.cout)+' EUR/trav',t:'num'},
   {k:'seuils.electionsSociales.cppt',l:'Seuil elections CPPT',v:L.seuils.electionsSociales.cppt+' travailleurs',t:'num'},
   {k:'seuils.electionsSociales.ce',l:'Seuil elections CE',v:L.seuils.electionsSociales.ce+' travailleurs',t:'num'},
   {k:'seuils.planFormation',l:'Seuil plan formation',v:L.seuils.planFormation+' travailleurs',t:'num'},
