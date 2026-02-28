@@ -2,7 +2,7 @@
 // Extrait du monolithe pour reutilisation dans les modules
 "use client";
 
-import { LOIS_BELGES, TX_ONSS_W } from "@/app/lib/lois-belges";
+import { LOIS_BELGES, TX_ONSS_W, TX_ONSS_E, TX_AT, PV_SIMPLE, PV_DOUBLE, PP_EST, SAISIE_2026_TRAVAIL, SAISIE_2026_REMPLACEMENT, SAISIE_IMMUN_ENFANT_2026, AF_REGIONS } from "@/app/lib/lois-belges";
 
 export function calcPrecompteExact(brutMensuel, options) {
   const opts = options || {};
@@ -186,4 +186,104 @@ export function calcBonusEmploi(brutMensuel) {
 export function quickPP(brut,sit,enf){return calcPrecompteExact(brut,{situation:sit||'isole',enfants:enf||0}).pp;}
 
 export function quickNet(brut,sit,enf){const o=Math.round(brut*TX_ONSS_W*100)/100;return Math.round((brut-o-quickPP(brut,sit,enf))*100)/100;}
+
+// ═══ CALCUL PAYROLL COMPLET ═══
+export function calcPayroll(brut,statut,familial,charges,regime){
+  if(!brut||brut<=0)return{brut:0,onssP:0,imposable:0,pp:0,csss:0,bonusEmploi:0,net:0,onssE:0,coutTotal:0,details:{}};
+  const r=(regime||100)/100;
+  const brutR=brut*r;
+  const onssP=Math.round(brutR*TX_ONSS_W*100)/100;
+  const imposable=Math.round((brutR-onssP)*100)/100;
+  const qe=statut==='independant'?0:880.83;
+  const chDed=(charges||0)*175;
+  const baseImp=Math.max(0,imposable-qe-chDed);
+  let pp=0;
+  if(baseImp>0){
+    const t1=Math.min(baseImp,1128.33)*0.2675;
+    const t2=baseImp>1128.33?Math.min(baseImp-1128.33,450)*0.3210:0;
+    const t3=baseImp>1578.33?Math.min(baseImp-1578.33,1140)*0.4280:0;
+    const t4=baseImp>2718.33?(baseImp-2718.33)*0.4815:0;
+    pp=Math.round((t1+t2+t3+t4)*100)/100;
+  }
+  if(familial==='marie_1rev')pp=Math.round(pp*0.70*100)/100;
+  if(familial==='marie_2rev')pp=Math.round(pp*PV_DOUBLE*100)/100;
+  let csss=0;
+  if(brutR<=1945.38)csss=0;
+  else if(brutR<=2190.18)csss=brutR*0.076-147.87;
+  else if(brutR<=6038.82)csss=brutR*0.011-5.25;
+  else csss=60.94;
+  csss=Math.round(Math.max(0,csss)*100)/100;
+  let bonusEmploi=0;
+  if(imposable<=1945.38)bonusEmploi=Math.min(pp,308.33);
+  else if(imposable<=2721.56)bonusEmploi=Math.min(pp,Math.max(0,308.33-((imposable-1945.38)*0.3969)));
+  bonusEmploi=Math.round(bonusEmploi*100)/100;
+  const ppFinal=Math.round(Math.max(0,pp-bonusEmploi)*100)/100;
+  const net=Math.round((brutR-onssP-ppFinal-csss)*100)/100;
+  const onssE=Math.round(brutR*TX_ONSS_E*100)/100;
+  const coutTotal=Math.round((brutR+onssE)*100)/100;
+  return{brut:brutR,onssP,imposable,pp:ppFinal,csss,bonusEmploi,baseImp:Math.round(baseImp*100)/100,coutTotal,onssE,net,details:{qe,chDed,ppBrut:Math.round(pp*100)/100,tauxPP:imposable>0?Math.round(ppFinal/imposable*10000)/100:0,tauxNet:brutR>0?Math.round(net/brutR*10000)/100:0}};
+}
+
+// ═══ PÉCULE VACANCES DOUBLE ═══
+export function calcPeculeDouble(brutAnnuel){
+  const base=Math.round(brutAnnuel*PV_DOUBLE*100)/100;
+  const onss=Math.round(base*TX_ONSS_W*100)/100;
+  const cotSpec=Math.round(base*TX_AT*100)/100;
+  const imposable=Math.round((base-onss)*100)/100;
+  const pp=Math.round(imposable*0.2315*100)/100;
+  const net=Math.round((base-onss-cotSpec-pp)*100)/100;
+  return{base,onss,cotSpec,imposable,pp,net};
+}
+
+// ═══ PRORATA ═══
+export function calcProrata(brut,joursPreste,joursMois){
+  const jm=joursMois||22;
+  const ratio=Math.min(joursPreste,jm)/jm;
+  return Math.round(brut*ratio*100)/100;
+}
+
+// ═══ 13ÈME MOIS ═══
+export function calc13eMois(brutMensuel){
+  const brut=brutMensuel;
+  const onss=Math.round(brut*TX_ONSS_W*100)/100;
+  const imposable=Math.round((brut-onss)*100)/100;
+  const pp=Math.round(imposable*0.2315*100)/100;
+  const net=Math.round((brut-onss-pp)*100)/100;
+  return{brut,onss,imposable,pp,net};
+}
+
+// ═══ QUOTITÉ SAISISSABLE (Art. 1409-1412 Code judiciaire) ═══
+export function calcQuotiteSaisissable(netMensuel,nbEnfantsCharge=0,isRemplacement=false,isPensionAlim=false){
+  if(isPensionAlim)return{saisissable:netMensuel,protege:0,tranches:[],enfantImmun:0,note:"Créance alimentaire: saisissable en totalité (art. 1412 CJ)"};
+  const bareme=isRemplacement?SAISIE_2026_REMPLACEMENT:SAISIE_2026_TRAVAIL;
+  let totalSaisissable=0;const tranches=[];
+  for(const t of bareme){
+    if(netMensuel<=t.min)break;
+    const dansLaTranche=Math.min(netMensuel,t.max)-t.min;
+    if(dansLaTranche<=0)continue;
+    const retenue=+(dansLaTranche*t.pct/100).toFixed(2);
+    tranches.push({min:t.min,max:Math.min(t.max,netMensuel),pct:t.pct,montantTranche:+dansLaTranche.toFixed(2),retenue,label:t.label});
+    totalSaisissable+=retenue;
+  }
+  const enfantImmun=nbEnfantsCharge*SAISIE_IMMUN_ENFANT_2026;
+  const saisissable=Math.max(0,+(totalSaisissable-enfantImmun).toFixed(2));
+  const protege=+(netMensuel-saisissable).toFixed(2);
+  return{saisissable,protege,tranches,enfantImmun,totalAvantImmun:+totalSaisissable.toFixed(2),note:null};
+}
+
+// ═══ ALLOCATIONS FAMILIALES ═══
+export function calcAllocEnfant(region,birthYear,age){
+  const reg=AF_REGIONS[region];if(!reg)return 0;
+  const isNew=birthYear>=reg.cutoff;
+  if(isNew){
+    const tranche=reg.base.find(t=>age>=t.age&&age<=t.to);
+    return tranche?tranche.amt:0;
+  } else {
+    if(region==='BXL'){
+      const tranche=reg.base.find(t=>age>=t.age&&age<=t.to);
+      return tranche?Math.max(tranche.amt-(reg.ancienReduction||0),0):0;
+    }
+    return reg.ancien?reg.ancien.rang1:0;
+  }
+}
 

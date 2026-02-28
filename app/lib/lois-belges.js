@@ -480,3 +480,30 @@ export const SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
 export const SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
 export const HEURES_HEBDO=LB.tempsTravail.dureeHebdoLegale; // 38
 export const JOURS_FERIES=LB.tempsTravail.jourFerie.nombre; // 10
+
+
+// ═══ SAISIES SUR SALAIRE — Barèmes 2026 (Art. 1409-1412 Code judiciaire) ═══
+export const SAISIE_2026_TRAVAIL = [
+  { min: 0, max: 1278, pct: 0, label: "Insaisissable" },
+  { min: 1278, max: 1372, pct: 20, label: "20%" },
+  { min: 1372, max: 1513, pct: 30, label: "30%" },
+  { min: 1513, max: 1654, pct: 40, label: "40%" },
+  { min: 1654, max: Infinity, pct: 100, label: "Saisissable en totalité" },
+];
+
+export const SAISIE_2026_REMPLACEMENT = [
+  { min: 0, max: 1278, pct: 0, label: "Insaisissable" },
+  { min: 1278, max: 1372, pct: 20, label: "20%" },
+  { min: 1372, max: 1513, pct: 30, label: "30%" },
+  { min: 1513, max: 1654, pct: 40, label: "40%" },
+  { min: 1654, max: Infinity, pct: 100, label: "Saisissable en totalité" },
+];
+
+export const SAISIE_IMMUN_ENFANT_2026 = 73;
+
+// ═══ ALLOCATIONS FAMILIALES PAR RÉGION ═══
+export const AF_REGIONS = {
+  BXL: { cutoff: 2020, base: [{ age: 0, to: 11, amt: 171.08 }, { age: 12, to: 17, amt: 171.08 + 29.64 }, { age: 18, to: 24, amt: 171.08 + 29.64 }], ancien: { rang1: 97.73 }, ancienReduction: 0 },
+  WAL: { cutoff: 2020, base: [{ age: 0, to: 5, amt: 181.61 }, { age: 6, to: 11, amt: 181.61 }, { age: 12, to: 17, amt: 181.61 + 22.53 }, { age: 18, to: 24, amt: 181.61 + 30.88 }], ancien: { rang1: 97.73 } },
+  VL: { cutoff: 2019, base: [{ age: 0, to: 11, amt: 173.20 }, { age: 12, to: 17, amt: 173.20 + 6.32 }, { age: 18, to: 24, amt: 173.20 + 10.44 }], ancien: { rang1: 97.73 } },
+};
