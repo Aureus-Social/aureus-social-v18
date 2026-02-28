@@ -139,7 +139,7 @@ async function checkAllServices(baseUrl) {
       try {
         const res = await fetch(`${baseUrl}${svc.url}`, { signal: AbortSignal.timeout(5000) });
         latencyMs = Date.now() - start;
-        if (!res.ok) { status = res.status >= 500 ? 'down' : 'degraded'; }
+        if (!res.ok && res.status !== 401 && res.status !== 403) { status = res.status >= 500 ? 'down' : 'degraded'; }
         else if (latencyMs > 2000) status = 'degraded';
       } catch (e) { status = 'down'; error = e.message; latencyMs = Date.now() - start; }
     }
