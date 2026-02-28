@@ -5,6 +5,22 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { NextResponse } from 'next/server';
+import { apiRateLimit } from '../../lib/api-security';
+
+// ── Rate limiting per-IP for agent endpoint (10 req/min) ──
+const agentLimits = new Map();
+const AGENT_LIMIT = 10;
+const AGENT_WINDOW = 60000;
+
+function checkAgentLimit(ip) {
+  const now = Date.now();
+  const entry = agentLimits.get(ip) || { count: 0, resetAt: now + AGENT_WINDOW };
+  if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + AGENT_WINDOW; }
+  entry.count++;
+  agentLimits.set(ip, entry);
+  if (agentLimits.size > 5000) { for (const [k, v] of agentLimits) { if (now > v.resetAt) agentLimits.delete(k); } }
+  return entry.count <= AGENT_LIMIT;
+}
 
 // ── System prompt complet injecté avec LOIS_BELGES live ──
 const SYSTEM_PROMPT = `# AGENT IA JURIDIQUE — AUREUS SOCIAL PRO
@@ -186,6 +202,16 @@ const LANG_SUFFIX = {
 // ── POST Handler ──
 export async function POST(request) {
   try {
+    // Rate limiting: 10 req/min per IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+               request.headers.get('x-real-ip') || 'unknown';
+    if (!checkAgentLimit(ip)) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded — max 10 requests/minute', retryAfter: 60 },
+        { status: 429, headers: { 'Retry-After': '60' } }
+      );
+    }
+
     const { messages, lang = 'fr', context } = await request.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -194,11 +220,10 @@ export async function POST(request) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      // Fallback: return structured error so client uses local KB
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'API_KEY_MISSING',
         fallback: true,
-        text: null 
+        text: null
       }, { status: 200 });
     }
 
@@ -242,10 +267,8 @@ export async function POST(request) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Anthropic API error:', response.status, errorData);
-      return NextResponse.json({ 
-        error: `API error: ${response.status}`,
+      return NextResponse.json({
+        error: 'AI service temporarily unavailable',
         fallback: true,
         text: null
       }, { status: 200 });
@@ -264,11 +287,10 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error('Agent API error:', error);
-    return NextResponse.json({ 
-      error: error.message,
+    return NextResponse.json({
+      error: 'Agent temporarily unavailable',
       fallback: true,
-      text: null 
+      text: null
     }, { status: 200 });
   }
 }

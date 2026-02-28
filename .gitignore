@@ -1,4 +1,23 @@
-﻿node_modules
+node_modules
 .next
 .env.local
+.env
+.env.*
 .github/
+
+# ONSS private keys and certificates — NEVER commit
+.onss-credentials/
+
+# Temp/debug files
+*.backup-*
+*.bak
+auto-fix.js
+fix-*.js
+patch-*.js
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# ZAP security scans
+.zap/

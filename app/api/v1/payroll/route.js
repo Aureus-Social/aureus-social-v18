@@ -45,16 +45,26 @@ function calcBonusEmploi(brut) {
   return 0;
 }
 
-function cors() {
+const ALLOWED_ORIGINS = [
+  process.env.ALLOWED_ORIGIN,
+  'https://aureussocial.be', 'https://www.aureussocial.be',
+  'https://app.aureussocial.be',
+  'https://aureus-social-v18.vercel.app',
+].filter(Boolean);
+
+function cors(request) {
+  const origin = request?.headers?.get?.('origin') || '';
+  const allowed = ALLOWED_ORIGINS.some(o => origin.startsWith(o));
   return {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowed ? origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Vary': 'Origin',
   };
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: cors() });
+export async function OPTIONS(request) {
+  return new Response(null, { status: 204, headers: cors(request) });
 }
 
 export async function POST(request) {
@@ -62,7 +72,7 @@ export async function POST(request) {
     const body = await request.json();
     const { brut, situation, enfants, statut, regime } = body;
 
-    if (!brut || brut <= 0) return Response.json({ error: 'brut must be > 0' }, { status: 400, headers: cors() });
+    if (!brut || brut <= 0) return Response.json({ error: 'brut must be > 0' }, { status: 400, headers: cors(request) });
 
     const isOuvrier = statut === 'ouvrier';
     const baseONSS = isOuvrier ? brut * 1.08 : brut;
@@ -101,8 +111,8 @@ export async function POST(request) {
         onssRate: '13.07% / 25.07%',
         ppSource: 'SPF Finances — Formule-clé 2026',
       },
-    }, { headers: cors() });
+    }, { headers: cors(request) });
   } catch (e) {
-    return Response.json({ error: e.message }, { status: 500, headers: cors() });
+    return Response.json({ error: e.message }, { status: 500, headers: cors(request) });
   }
 }

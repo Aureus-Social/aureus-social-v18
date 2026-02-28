@@ -4,12 +4,13 @@
 
 import webPush from 'web-push';
 
-const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BEzikUSdbDX7h86TxD0PmRFcjeuroq6E2B7ZUJkJVOveZRqVIfKwj-FrHHNdsBVCuv-0zAhfunHVbPKvxdtQgVk';
-const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || '6gwItnUdjIXWYNi5Utl-aKQX9oo166XJkYcQq87FpzU';
+const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
 const VAPID_EMAIL = 'mailto:info@aureus-ia.com';
 
-// In-memory store (in production: use Supabase table push_subscriptions)
-let subscriptions = [];
+if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
+  console.warn('[PUSH] VAPID keys not configured — push notifications disabled');
+}
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -21,6 +22,10 @@ function getSupabase() {
 
 export async function POST(request) {
   try {
+    if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
+      return Response.json({ error: 'Push notifications not configured — VAPID keys missing' }, { status: 503 });
+    }
+
     const url = new URL(request.url);
     const action = url.searchParams.get('action') || 'subscribe';
     const body = await request.json();
@@ -46,9 +51,8 @@ export async function POST(request) {
           updated_at: new Date().toISOString(),
         }, { onConflict: 'endpoint' });
       } else {
-        // Fallback: in-memory
-        subscriptions = subscriptions.filter(s => s.endpoint !== subscription.endpoint);
-        subscriptions.push({ ...subscription, user_email, tenant_id, created_at: new Date().toISOString() });
+        // No Supabase available — reject
+        return Response.json({ error: 'Push storage unavailable — configure Supabase' }, { status: 503 });
       }
 
       return Response.json({ success: true, message: 'Abonnement push enregistré' });
@@ -90,9 +94,7 @@ export async function POST(request) {
           keys: { p256dh: d.keys_p256dh, auth: d.keys_auth },
         }));
       } else {
-        targets = subscriptions
-          .filter(s => !tenant_id || s.tenant_id === tenant_id)
-          .filter(s => !target_email || s.user_email === target_email);
+        return Response.json({ error: 'Push storage unavailable — configure Supabase' }, { status: 503 });
       }
 
       let sent = 0, failed = 0;
@@ -124,16 +126,16 @@ export async function POST(request) {
     return Response.json({ error: 'Action inconnue: ' + action }, { status: 400 });
 
   } catch (error) {
-    console.error('[PUSH-ERROR]', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[PUSH-ERROR]', error.message);
+    return Response.json({ error: 'Internal push error' }, { status: 500 });
   }
 }
 
-// GET: Return VAPID public key
+// GET: Return VAPID public key (public key only, never private)
 export async function GET() {
   return Response.json({
-    publicKey: VAPID_PUBLIC,
-    supported: true,
+    publicKey: VAPID_PUBLIC || null,
+    supported: !!VAPID_PUBLIC,
     provider: 'web-push',
   });
 }
