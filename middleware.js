@@ -46,7 +46,7 @@ export function middleware(request) {
     if (!checkIpWhitelist(ip)) {
       return NextResponse.json(
         { error: 'IP non autorisée', code: 'IP_BLOCKED' },
-        { status: 403, headers: { 'X-Blocked-IP': ip } }
+        { status: 403 }
       );
     }
   }
@@ -64,7 +64,7 @@ export function middleware(request) {
       'https://aureus-social-v18.vercel.app',
       'http://localhost:3000'
     ].filter(Boolean);
-    const isAllowed = allowedOrigins.some(o => origin.startsWith(o)) || !origin;
+    const isAllowed = allowedOrigins.some(o => origin === o) || !origin;
 
     if (request.method === 'OPTIONS') {
       return new NextResponse(null, { status: 204, headers: {

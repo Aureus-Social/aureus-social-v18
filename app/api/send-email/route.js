@@ -12,9 +12,16 @@ function sanitizeHTML(html) {
     .replace(/<object[\s\S]*?<\/object>/gi, '')
     .replace(/<embed[\s\S]*?>/gi, '')
     .replace(/<form[\s\S]*?<\/form>/gi, '')
+    .replace(/<svg[\s\S]*?<\/svg>/gi, '')
+    .replace(/<math[\s\S]*?<\/math>/gi, '')
+    .replace(/<meta[\s\S]*?>/gi, '')
+    .replace(/<link[\s\S]*?>/gi, '')
+    .replace(/<base[\s\S]*?>/gi, '')
     .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
     .replace(/on\w+\s*=\s*[^\s>]+/gi, '')
-    .replace(/javascript\s*:/gi, 'blocked:');
+    .replace(/javascript\s*:/gi, 'blocked:')
+    .replace(/vbscript\s*:/gi, 'blocked:')
+    .replace(/data\s*:\s*text\/html/gi, 'blocked:');
 }
 
 function isValidEmail(email) {

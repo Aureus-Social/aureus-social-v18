@@ -112,6 +112,10 @@ async function notifyDiscord(message, severity = 'info') {
   } catch { return false; }
 }
 
+// Harmonized thresholds (consistent with /api/health and /api/status)
+const LATENCY_DEGRADED = 2000;
+const LATENCY_DOWN = 3000;
+
 // ── Health check all services ──
 async function checkAllServices(baseUrl) {
   const results = [];
@@ -131,8 +135,8 @@ async function checkAllServices(baseUrl) {
           const sb = createClient(sbUrl, sbKey);
           const { error: dbErr } = await sb.from('app_state').select('state_key').limit(1).maybeSingle();
           latencyMs = Date.now() - start;
-          if (dbErr) { status = latencyMs > 3000 ? 'down' : 'degraded'; error = dbErr.message; }
-          else if (latencyMs > 2000) status = 'degraded';
+          if (dbErr) { status = latencyMs > LATENCY_DOWN ? 'down' : 'degraded'; error = dbErr.message; }
+          else if (latencyMs > LATENCY_DEGRADED) status = 'degraded';
         }
       } catch (e) { status = 'down'; error = e.message; latencyMs = Date.now() - start; }
     } else if (svc.url) {
@@ -140,7 +144,7 @@ async function checkAllServices(baseUrl) {
         const res = await fetch(`${baseUrl}${svc.url}`, { signal: AbortSignal.timeout(5000) });
         latencyMs = Date.now() - start;
         if (!res.ok && res.status !== 401 && res.status !== 403) { status = res.status >= 500 ? 'down' : 'degraded'; }
-        else if (latencyMs > 2000) status = 'degraded';
+        else if (latencyMs > LATENCY_DEGRADED) status = 'degraded';
       } catch (e) { status = 'down'; error = e.message; latencyMs = Date.now() - start; }
     }
 
@@ -187,8 +191,18 @@ export async function POST(request) {
   }
 }
 
-// GET /api/monitoring — Full health check of all 8 services
+// GET /api/monitoring — Full health check of all 8 services (requires CRON_SECRET)
 export async function GET(request) {
+  // Auth: require CRON_SECRET to prevent unauthenticated users from spamming alerts
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const auth = request.headers.get('authorization') || '';
+    const isAuthed = auth === 'Bearer ' + cronSecret;
+    if (!isAuthed) {
+      return Response.json({ error: 'Unauthorized — Bearer CRON_SECRET required' }, { status: 401 });
+    }
+  }
+
   const url = new URL(request.url);
   const baseUrl = `${url.protocol}//${url.host}`;
 

@@ -5,6 +5,9 @@ const COMMISSION_PER_FICHE = 2;
 const fmt = v => new Intl.NumberFormat('fr-BE', { style:'currency', currency:'EUR' }).format(v||0);
 const f2 = v => new Intl.NumberFormat('fr-BE', { minimumFractionDigits:2, maximumFractionDigits:2 }).format(v||0);
 
+// Shared input styles (used across RelancesModule and CommissionsModule)
+const INPUT_STYLE = { width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid rgba(198,163,78,0.2)', background:'rgba(0,0,0,0.3)', color:'#e8e6e0', fontSize:13, fontFamily:'inherit', outline:'none' };
+
 // ═══ CONSTANTES DROIT BELGE — RELANCES ═══
 const TAUX_INTERET_LEGAL = 0.08; // 8% annuel B2B (Loi 02/08/2002, Art. 5)
 const CLAUSE_PENALE_PCT = 0.10;  // 10% du principal
@@ -203,8 +206,8 @@ function generateMiseEnDemeurePDF(facture, relancesData) {
 
     <h2>MODALITÉS DE PAIEMENT</h2>
     <table>
-      <tr><td style="font-weight:600">IBAN</td><td>BE00 0000 0000 0000</td></tr>
-      <tr><td style="font-weight:600">BIC</td><td>GEBABEBB</td></tr>
+      <tr><td style="font-weight:600">IBAN</td><td>${typeof window !== 'undefined' && window.__AUREUS_IBAN || 'À configurer dans les paramètres'}</td></tr>
+      <tr><td style="font-weight:600">BIC</td><td>${typeof window !== 'undefined' && window.__AUREUS_BIC || 'À configurer dans les paramètres'}</td></tr>
       <tr><td style="font-weight:600">Communication</td><td>${factureId}</td></tr>
       <tr><td style="font-weight:600">Montant à virer</td><td style="font-weight:700;color:#ef4444">${f2(total)} EUR</td></tr>
     </table>
@@ -236,6 +239,7 @@ function generateMiseEnDemeurePDF(facture, relancesData) {
   </body></html>`;
   const w = window.open('','_blank');
   if(w){ w.document.write(html); w.document.close(); }
+  else { alert('Le popup a été bloqué. Autorisez les popups pour générer le PDF de mise en demeure.'); }
 }
 
 
@@ -271,7 +275,7 @@ function RelancesModule({ factures, sendEmailFn }) {
       dateEcheance: f.echeance,
       joursRetard,
       relances: existing.relances || [],
-      statut: statut === 'paye' ? 'paye' : statut,
+      statut,
       datePaiement: existing.datePaiement || (f.status === 'paid' ? f.paidAt || new Date().toISOString() : null),
       niveauSuggere: statut === 'paye' ? null : niveauRelanceSuggere(joursRetard, statut),
     };
@@ -342,7 +346,7 @@ function RelancesModule({ factures, sendEmailFn }) {
     filter === 'retard' ? allFactures.filter(f => f.joursRetard > 0 && f.statut !== 'paye') :
     allFactures.filter(f => f.statut === filter);
 
-  const iS = { width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid rgba(198,163,78,0.2)', background:'rgba(0,0,0,0.3)', color:'#e8e6e0', fontSize:13, fontFamily:'inherit', outline:'none' };
+  const iS = INPUT_STYLE;
 
   return (
     <div style={{ maxWidth:1400, margin:'0 auto' }}>
@@ -604,7 +608,7 @@ export default function CommissionsModule({ userRole, user, factures, sendEmailF
   const globalPending = globalTotal - globalPaid;
   const totalFiches = commercials.reduce((a,[,c])=>a+c.entries.reduce((b,e)=>b+e.fichesCount,0),0);
 
-  const iS = { width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid rgba(198,163,78,0.2)', background:'rgba(0,0,0,0.3)', color:'#e8e6e0', fontSize:13, fontFamily:'inherit', outline:'none' };
+  const iS = INPUT_STYLE;
 
   const KPIs = (items) => (
     <div style={{ display:'grid', gridTemplateColumns:`repeat(${items.length},1fr)`, gap:12, marginBottom:24 }}>

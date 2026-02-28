@@ -108,8 +108,6 @@ export async function POST(request) {
           if (e.statusCode === 410 || e.statusCode === 404) {
             if (sb) {
               await sb.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
-            } else {
-              subscriptions = subscriptions.filter(s => s.endpoint !== sub.endpoint);
             }
           }
         }
@@ -123,7 +121,7 @@ export async function POST(request) {
       return Response.json({ publicKey: VAPID_PUBLIC });
     }
 
-    return Response.json({ error: 'Action inconnue: ' + action }, { status: 400 });
+    return Response.json({ error: 'Action inconnue. Utilisez: subscribe, send, vapid' }, { status: 400 });
 
   } catch (error) {
     console.error('[PUSH-ERROR]', error.message);

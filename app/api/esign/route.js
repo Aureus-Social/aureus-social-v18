@@ -47,6 +47,17 @@ export async function POST(request) {
           return Response.json({ error: 'documentBase64 and signers required' }, { status: 400 });
         }
 
+        // Validate signer data
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        for (const s of signers) {
+          if (!s.email || !emailRegex.test(s.email)) {
+            return Response.json({ error: 'Each signer must have a valid email address' }, { status: 400 });
+          }
+          if (!s.firstName || !s.lastName) {
+            return Response.json({ error: 'Each signer must have firstName and lastName' }, { status: 400 });
+          }
+        }
+
         // 1. Create signature request
         const reqRes = await fetch(`${baseUrl}/signature_requests`, {
           method: 'POST',
@@ -59,7 +70,7 @@ export async function POST(request) {
         });
         if (!reqRes.ok) {
           const err = await reqRes.json();
-          return Response.json({ error: err.detail || 'Yousign error', raw: err }, { status: reqRes.status });
+          return Response.json({ error: err.detail || 'E-signature service error' }, { status: reqRes.status });
         }
         const sigReq = await reqRes.json();
 
@@ -78,7 +89,7 @@ export async function POST(request) {
         });
         if (!docRes.ok) {
           const err = await docRes.json();
-          return Response.json({ error: 'Upload failed', raw: err }, { status: docRes.status });
+          return Response.json({ error: 'Document upload failed' }, { status: docRes.status });
         }
         const doc = await docRes.json();
 

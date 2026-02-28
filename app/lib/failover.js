@@ -108,7 +108,7 @@ export async function withRetry(fn, maxRetries = 3, baseDelay = 500) {
 export function getConnectionInfo() {
   return {
     primary: { ...PRIMARY, healthy: _primaryHealthy },
-    secondary: { ...SECONDARY, healthy: !_primaryHealthy || true },
+    secondary: { ...SECONDARY, healthy: !_primaryHealthy },
     lastCheck: _lastCheck ? new Date(_lastCheck).toISOString() : null,
   };
 }

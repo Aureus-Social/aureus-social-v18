@@ -3,44 +3,54 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+// Harmonized status values (consistent with /api/health and /api/monitoring)
+const OK = 'ok', DEGRADED = 'degraded', DOWN = 'down';
+const LATENCY_DEGRADED = 2000;
+const LATENCY_DOWN = 3000;
+
 export async function GET() {
   const start = Date.now();
   const components = [];
-  
-  components.push({ name: 'API', status: 'operational', latency: 0 });
-  
+
+  components.push({ name: 'API', status: OK, latency: 0 });
+
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    const dbStart = Date.now();
-    const { error } = await supabase.from('app_state').select('state_key').limit(1);
-    const dbLatency = Date.now() - dbStart;
-    components.push({
-      name: 'Database (Supabase EU)',
-      status: error ? 'degraded' : dbLatency > 2000 ? 'degraded' : 'operational',
-      latency: dbLatency
-    });
+    if (!supabaseUrl || !supabaseKey) {
+      components.push({ name: 'Database (Supabase EU)', status: DOWN, latency: null, error: 'Not configured' });
+    } else {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const dbStart = Date.now();
+      const { error } = await supabase.from('app_state').select('state_key').limit(1).maybeSingle();
+      const dbLatency = Date.now() - dbStart;
+      let dbStatus = OK;
+      if (error) dbStatus = dbLatency > LATENCY_DOWN ? DOWN : DEGRADED;
+      else if (dbLatency > LATENCY_DEGRADED) dbStatus = DEGRADED;
+      components.push({ name: 'Database (Supabase EU)', status: dbStatus, latency: dbLatency });
+    }
   } catch (e) {
-    components.push({ name: 'Database (Supabase EU)', status: 'major_outage', latency: null });
+    components.push({ name: 'Database (Supabase EU)', status: DOWN, latency: null });
   }
-  
-  components.push({ name: 'Authentication', status: 'operational' });
-  components.push({ name: 'Realtime (WebSocket)', status: 'operational' });
-  components.push({ name: 'CDN (Vercel Edge)', status: 'operational' });
-  
-  const hasOutage = components.some(c => c.status === 'major_outage');
-  const hasDegraded = components.some(c => c.status === 'degraded');
-  const overall = hasOutage ? 'major_outage' : hasDegraded ? 'degraded' : 'operational';
-  
+
+  components.push({ name: 'Authentication', status: OK });
+  components.push({ name: 'Realtime (WebSocket)', status: OK });
+  components.push({ name: 'CDN (Vercel Edge)', status: OK });
+
+  const hasDown = components.some(c => c.status === DOWN);
+  const hasDegraded = components.some(c => c.status === DEGRADED);
+  const overall = hasDown ? DOWN : hasDegraded ? DEGRADED : OK;
+
+  const code = overall === DOWN ? 503 : overall === DEGRADED ? 207 : 200;
+
   return Response.json({
     status: overall,
     version: '20.4',
     checked_at: new Date().toISOString(),
     response_time_ms: Date.now() - start,
     components,
-    uptime: { last_24h: '100.0%', last_7d: '99.97%', last_30d: '99.95%', last_90d: '99.93%' },
     incidents: [],
     page: { name: 'Aureus Social Pro', url: 'https://app.aureussocial.be', support: 'info@aureus-ia.com' },
   }, {
+    status: code,
     headers: { 'Cache-Control': 'public, max-age=30', 'Access-Control-Allow-Origin': '*' }
   });
 }
