@@ -205,9 +205,9 @@ export function PortailEmployeV2({s,d}){
   const clients=s.clients||[];const [selC,setSelC]=useState(0);const [selE,setSelE]=useState(0);
   const [tab,setTab]=useState('accueil');const [demandes,setDemandes]=useState([]);
   const [newDem,setNewDem]=useState({type:'conge',dateDebut:'',dateFin:'',motif:''});
-  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const mois=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const cl=clients[selC]||{emps:[]};const emp=(cl.emps||[])[selE];
-  if(!emp)return <div style={{padding:24,textAlign:'center',color:'#888'}}>Ajoutez des clients et employes pour acceder au portail.</div>;
+  if(!emp)return <div style={{padding:24,textAlign:'center',color:'#888'}}>Ajoutez des clients et employés pour accéder au portail.</div>;
 
   const name=(emp.first||emp.fn||'')+' '+(emp.last||emp.ln||'');
   const brut=+(emp.monthlySalary||emp.gross||0);
@@ -242,7 +242,7 @@ export function PortailEmployeV2({s,d}){
     <div style={{padding:18,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14,marginBottom:16}}>
       <div style={{display:'flex',alignItems:'center',gap:14}}>
         <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#c6a34e,#a07d3e)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,color:'#060810',fontWeight:800}}>{(emp.first||'?')[0]}{(emp.last||'?')[0]}</div>
-        <div><div style={{fontSize:16,fontWeight:700,color:'#e5e5e5'}}>Bonjour, {emp.first||name} 👋</div><div style={{fontSize:11,color:'#888'}}>{emp.function||emp.job||'Employe'} — {cl.company?.name} — {emp.contractType||'CDI'} — {anc} mois anciennete</div></div>
+        <div><div style={{fontSize:16,fontWeight:700,color:'#e5e5e5'}}>Bonjour, {emp.first||name} 👋</div><div style={{fontSize:11,color:'#888'}}>{emp.function||emp.job||'Employé'} — {cl.company?.name} — {emp.contractType||'CDI'} — {anc} mois ancienneté</div></div>
       </div>
     </div>
 
