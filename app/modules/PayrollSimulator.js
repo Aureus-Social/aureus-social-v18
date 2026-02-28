@@ -29,14 +29,14 @@ export function netToBrut(targetNet, calcPayrollFn, opts = {}) {
 // ═══════════════════════════════════════════════════════════════════
 // COÛT TOTAL → BRUT (Dichotomie)
 // ═══════════════════════════════════════════════════════════════════
-export function coûtToBrut(targetCoût, calcPayrollFn, opts = {}) {
+export function coutToBrut(targetCout, calcPayrollFn, opts = {}) {
   const { familial = 'isole', charges = 0, statut = 'employe', regime = 100 } = opts;
-  let lo = targetCoût * 0.3, hi = targetCoût * 0.95;
+  let lo = targetCout * 0.3, hi = targetCout * 0.95;
   for (let i = 0; i < 120; i++) {
     const mid = (lo + hi) / 2;
     const r = calcPayrollFn(mid, statut, familial, charges, regime, opts);
-    if (Math.abs(r.coûtTotal - targetCoût) < 0.01) return { brut: R2(mid), ...r, iterations: i };
-    if (r.coûtTotal > targetCoût) hi = mid; else lo = mid;
+    if (Math.abs(r.coutTotal - targetCout) < 0.01) return { brut: R2(mid), ...r, iterations: i };
+    if (r.coutTotal > targetCout) hi = mid; else lo = mid;
   }
   const mid = (lo + hi) / 2;
   const r = calcPayrollFn(mid, statut, familial, charges, regime, opts);
@@ -60,45 +60,45 @@ export function optimizePackage(budgetMensuel, calcPayrollFn, LOIS_BELGES, opts 
   const crVF = LB.chequesRepas?.valeurFaciale?.max || 8;
   const crE = LB.chequesRepas?.partPatronale?.max || 6.91;
   const crW = LB.chequesRepas?.partTravailleur?.min || 1.09;
-  const coûtCR = crE * joursOuvrables; // coût employeur CR
+  const coutCR = crE * joursOuvrables; // coût employeur CR
   const netCR = (crVF - crW) * joursOuvrables; // avantage net travailleur
-  const budgetAprèsCR = budgetMensuel - coûtCR;
-  const sc2 = budgetAprèsCR > 0 ? calcPayrollFn(budgetAprèsCR / (1 + LB.onss.employeur.total), statut, familial, charges, regime, opts) : null;
+  const budgetApresCR = budgetMensuel - coutCR;
+  const sc2 = budgetApresCR > 0 ? calcPayrollFn(budgetApresCR / (1 + LB.onss.employeur.total), statut, familial, charges, regime, opts) : null;
 
   // Scénario 3: Brut + CR + Frais propres bureau
   const forfaitBureau = LB.fraisPropres?.forfaitBureau?.max || 148.73;
-  const budgetAprèsCRFP = budgetMensuel - coûtCR - forfaitBureau;
-  const sc3 = budgetAprèsCRFP > 0 ? calcPayrollFn(budgetAprèsCRFP / (1 + LB.onss.employeur.total), statut, familial, charges, regime, opts) : null;
+  const budgetApresCRFP = budgetMensuel - coutCR - forfaitBureau;
+  const sc3 = budgetApresCRFP > 0 ? calcPayrollFn(budgetApresCRFP / (1 + LB.onss.employeur.total), statut, familial, charges, regime, opts) : null;
 
   // Scénario 4: Brut + CR + FP + Éco-chèques
   const ecoMax = 250 / 12; // max 250€/an = 20.83€/mois
-  const budgetAprèsTout = budgetMensuel - coûtCR - forfaitBureau - ecoMax;
-  const sc4 = budgetAprèsTout > 0 ? calcPayrollFn(budgetAprèsTout / (1 + LB.onss.employeur.total), statut, familial, charges, regime, opts) : null;
+  const budgetApresTout = budgetMensuel - coutCR - forfaitBureau - ecoMax;
+  const sc4 = budgetApresTout > 0 ? calcPayrollFn(budgetApresTout / (1 + LB.onss.employeur.total), statut, familial, charges, regime, opts) : null;
 
   const scenarios = [
     {
       id: 'brut_pur', label: '100% Salaire brut',
-      brut: sc1.brut, net: sc1.net, coût: sc1.coûtTotal,
+      brut: sc1.brut, net: sc1.net, cout: sc1.coutTotal,
       avantagesNets: 0, totalNet: sc1.net,
       detail: { brut: sc1.brut, onssP: sc1.onssP, pp: sc1.pp, csss: sc1.csss }
     },
     sc2 ? {
       id: 'brut_cr', label: 'Brut + Chèques-repas',
-      brut: sc2.brut, net: sc2.net, coût: R2(sc2.coûtTotal + coûtCR),
+      brut: sc2.brut, net: sc2.net, cout: R2(sc2.coutTotal + coutCR),
       avantagesNets: R2(netCR), totalNet: R2(sc2.net + netCR),
       detail: { brut: sc2.brut, chequesRepas: R2(crVF * joursOuvrables), partTravailleur: R2(crW * joursOuvrables) }
     } : null,
     sc3 ? {
       id: 'brut_cr_fp', label: 'Brut + CR + Frais propres',
-      brut: sc3.brut, net: sc3.net, coût: R2(sc3.coûtTotal + coûtCR + forfaitBureau),
+      brut: sc3.brut, net: sc3.net, cout: R2(sc3.coutTotal + coutCR + forfaitBureau),
       avantagesNets: R2(netCR + forfaitBureau), totalNet: R2(sc3.net + netCR + forfaitBureau),
       detail: { brut: sc3.brut, chequesRepas: R2(crVF * joursOuvrables), fraisPropres: forfaitBureau }
     } : null,
     sc4 ? {
       id: 'optimal', label: 'Package optimal',
-      brut: sc4.brut, net: sc4.net, coût: R2(sc4.coûtTotal + coûtCR + forfaitBureau + ecoMax),
+      brut: sc4.brut, net: sc4.net, cout: R2(sc4.coutTotal + coutCR + forfaitBureau + ecoMax),
       avantagesNets: R2(netCR + forfaitBureau + ecoMax), totalNet: R2(sc4.net + netCR + forfaitBureau + ecoMax),
-      detail: { brut: sc4.brut, chequesRepas: R2(crVF * joursOuvrables), fraisPropres: forfaitBureau, ecoChèques: R2(ecoMax) }
+      detail: { brut: sc4.brut, chequesRepas: R2(crVF * joursOuvrables), fraisPropres: forfaitBureau, ecoCheques: R2(ecoMax) }
     } : null,
   ].filter(Boolean);
 
@@ -131,7 +131,7 @@ export function PayrollSimulatorAdvanced({ calcPayroll, LOIS_BELGES }) {
   const n2b = useMemo(() => netToBrut(targetNet, calcPayroll, { familial: fam, charges: ch, statut, regime: reg }), [targetNet, fam, ch, statut, reg]);
 
   // ── Coût → Brut/Net ──
-  const c2b = useMemo(() => coûtToBrut(targetCost, calcPayroll, { familial: fam, charges: ch, statut, regime: reg }), [targetCost, fam, ch, statut, reg]);
+  const c2b = useMemo(() => coutToBrut(targetCost, calcPayroll, { familial: fam, charges: ch, statut, regime: reg }), [targetCost, fam, ch, statut, reg]);
 
   // ── Package optimizer ──
   const pkg = useMemo(() => optimizePackage(budget, calcPayroll, LOIS_BELGES, { familial: fam, charges: ch, statut, regime: reg }), [budget, fam, ch, statut, reg]);
@@ -140,7 +140,7 @@ export function PayrollSimulatorAdvanced({ calcPayroll, LOIS_BELGES }) {
   const comparison = useMemo(() => {
     return [2000, 2500, 3000, 3500, 4000, 5000, 6000, 8000, 10000].map(b => {
       const r = calcPayroll(b, statut, fam, ch, reg);
-      return { brut: b, ...r, tauxNet: R2(r.net / b * 100), tauxCoût: R2(r.coûtTotal / b * 100) };
+      return { brut: b, ...r, tauxNet: R2(r.net / b * 100), tauxCout: R2(r.coutTotal / b * 100) };
     });
   }, [statut, fam, ch, reg]);
 
@@ -229,7 +229,7 @@ export function PayrollSimulatorAdvanced({ calcPayroll, LOIS_BELGES }) {
         b2n.bonusEmploi > 0 && React.createElement(ResultRow, { label: 'Bonus à l\'emploi', value: b2n.bonusEmploi, color: GREEN }),
         React.createElement(ResultRow, { label: 'SALAIRE NET', value: b2n.net, color: GREEN, bold: true, separator: true }),
         React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 16 } },
-          [{ l: 'ONSS patronal', v: b2n.onssE, c: RED }, { l: 'Coût total', v: b2n.coûtTotal, c: GOLD }, { l: 'Taux net/brut', v: b2n.details?.tauxNet + '%', c: BLUE }].map((k, i) =>
+          [{ l: 'ONSS patronal', v: b2n.onssE, c: RED }, { l: 'Coût total', v: b2n.coutTotal, c: GOLD }, { l: 'Taux net/brut', v: b2n.details?.tauxNet + '%', c: BLUE }].map((k, i) =>
             React.createElement('div', { key: i, style: { padding: 12, borderRadius: 10, background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.04)', textAlign: 'center' } },
               React.createElement('div', { style: { fontSize: 9, color: '#666', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 } }, k.l),
               React.createElement('div', { style: { fontSize: 18, fontWeight: 300, color: k.c } }, typeof k.v === 'number' ? fmt(k.v) : k.v)
@@ -263,7 +263,7 @@ export function PayrollSimulatorAdvanced({ calcPayroll, LOIS_BELGES }) {
         React.createElement('div', { style: { padding: 20, borderRadius: 12, background: 'linear-gradient(135deg,rgba(198,163,78,.08),rgba(198,163,78,.02))', border: '1px solid rgba(198,163,78,.15)', textAlign: 'center', marginBottom: 16 } },
           React.createElement('div', { style: { fontSize: 10, color: '#888', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 } }, 'Salaire brut nécessaire'),
           React.createElement('div', { style: { fontSize: 32, fontWeight: 300, color: GOLD } }, fmt(n2b.brut) + ' €'),
-          React.createElement('div', { style: { fontSize: 11, color: '#888', marginTop: 6 } }, 'Net obtenu : ' + fmt(n2b.net) + ' €  ·  Coût total : ' + fmt(n2b.coûtTotal) + ' €')
+          React.createElement('div', { style: { fontSize: 11, color: '#888', marginTop: 6 } }, 'Net obtenu : ' + fmt(n2b.net) + ' €  ·  Coût total : ' + fmt(n2b.coutTotal) + ' €')
         ),
         React.createElement(ResultRow, { label: 'Brut calculé', value: n2b.brut }),
         React.createElement(ResultRow, { label: 'ONSS personnel', value: -n2b.onssP, color: RED }),
@@ -271,7 +271,7 @@ export function PayrollSimulatorAdvanced({ calcPayroll, LOIS_BELGES }) {
         React.createElement(ResultRow, { label: 'CSSS', value: -n2b.csss, color: RED }),
         React.createElement(ResultRow, { label: 'Net obtenu', value: n2b.net, color: GREEN, bold: true, separator: true }),
         React.createElement(ResultRow, { label: 'ONSS patronal', value: n2b.onssE, color: RED }),
-        React.createElement(ResultRow, { label: 'Coût total employeur', value: n2b.coûtTotal, color: GOLD, bold: true })
+        React.createElement(ResultRow, { label: 'Coût total employeur', value: n2b.coutTotal, color: GOLD, bold: true })
       )
     ),
 
@@ -363,7 +363,7 @@ export function PayrollSimulatorAdvanced({ calcPayroll, LOIS_BELGES }) {
               ),
               React.createElement('div', null,
                 React.createElement('div', { style: { color: '#555' } }, 'Coût employeur'),
-                React.createElement('div', { style: { color: GOLD, fontWeight: 600 } }, fmt(sc.coût))
+                React.createElement('div', { style: { color: GOLD, fontWeight: 600 } }, fmt(sc.cout))
               )
             )
           ))
@@ -394,8 +394,8 @@ export function PayrollSimulatorAdvanced({ calcPayroll, LOIS_BELGES }) {
               React.createElement('td', { style: { padding: '7px 6px', fontSize: 12, fontWeight: 700, color: GREEN, textAlign: 'right' } }, fmt(r.net)),
               React.createElement('td', { style: { padding: '7px 6px', fontSize: 10, color: BLUE, textAlign: 'right' } }, r.tauxNet + '%'),
               React.createElement('td', { style: { padding: '7px 6px', fontSize: 11, color: '#f97316', textAlign: 'right' } }, fmt(r.onssE)),
-              React.createElement('td', { style: { padding: '7px 6px', fontSize: 12, fontWeight: 600, color: GOLD, textAlign: 'right' } }, fmt(r.coûtTotal)),
-              React.createElement('td', { style: { padding: '7px 6px', fontSize: 10, color: '#888', textAlign: 'right' } }, r.tauxCoût + '%')
+              React.createElement('td', { style: { padding: '7px 6px', fontSize: 12, fontWeight: 600, color: GOLD, textAlign: 'right' } }, fmt(r.coutTotal)),
+              React.createElement('td', { style: { padding: '7px 6px', fontSize: 10, color: '#888', textAlign: 'right' } }, r.tauxCout + '%')
             )
           ))
         ),

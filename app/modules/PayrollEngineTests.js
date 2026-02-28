@@ -26,7 +26,7 @@ export function netToBrut(targetNet, calcPayrollFn, options) {
   let hi = targetNet * 3.5;
   let iterations = 0;
   const MAX_ITER = 100;
-  const TOLERANCE = 0.01; // €0.01 de précision
+  const TOLERANCE = 0.01; // €0.01 de precision
   
   while (iterations < MAX_ITER) {
     const mid = (lo + hi) / 2;
@@ -40,9 +40,9 @@ export function netToBrut(targetNet, calcPayrollFn, options) {
         pp: result.pp,
         onssP: result.onssP,
         csss: result.csss,
-        coûtTotal: result.coûtTotal,
+        coutTotal: result.coutTotal,
         iterations,
-        précision: R2(Math.abs(diff)),
+        precision: R2(Math.abs(diff)),
       };
     }
     
@@ -54,29 +54,29 @@ export function netToBrut(targetNet, calcPayrollFn, options) {
   // Fallback : retourner le meilleur résultat
   const best = (lo + hi) / 2;
   const res = calcPayrollFn(best, statut, familial, charges, regime, opts);
-  return { brut: R2(best), net: res.net, pp: res.pp, onssP: res.onssP, csss: res.csss, coûtTotal: res.coûtTotal, iterations, précision: R2(Math.abs(res.net - targetNet)) };
+  return { brut: R2(best), net: res.net, pp: res.pp, onssP: res.onssP, csss: res.csss, coutTotal: res.coutTotal, iterations, precision: R2(Math.abs(res.net - targetNet)) };
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // COÛT TOTAL → NET (Résolution inverse)
 // ═══════════════════════════════════════════════════════════════════
-export function coûtTotalToNet(targetCoût, calcPayrollFn, options) {
+export function coutTotalToNet(targetCout, calcPayrollFn, options) {
   const opts = options || {};
-  let lo = targetCoût * 0.2;
-  let hi = targetCoût * 0.9;
+  let lo = targetCout * 0.2;
+  let hi = targetCout * 0.9;
   let iterations = 0;
   
   while (iterations < 100) {
     const mid = (lo + hi) / 2;
     const result = calcPayrollFn(mid, opts.statut||'employe', opts.familial||'isole', opts.charges||0, opts.regime||100, opts);
-    const diff = result.coûtTotal - targetCoût;
-    if (Math.abs(diff) < 0.01) return { brut: R2(mid), net: result.net, coûtTotal: result.coûtTotal, iterations };
+    const diff = result.coutTotal - targetCout;
+    if (Math.abs(diff) < 0.01) return { brut: R2(mid), net: result.net, coutTotal: result.coutTotal, iterations };
     if (diff > 0) hi = mid; else lo = mid;
     iterations++;
   }
   const mid = (lo + hi) / 2;
   const res = calcPayrollFn(mid, opts.statut||'employe', opts.familial||'isole', opts.charges||0, opts.regime||100, opts);
-  return { brut: R2(mid), net: res.net, coûtTotal: res.coûtTotal, iterations };
+  return { brut: R2(mid), net: res.net, coutTotal: res.coutTotal, iterations };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -215,7 +215,7 @@ export function buildTestSuite(calcPayroll, calcPrecompteExact, calcCSSS, calcBo
     tolerance:0.02,source:'Formule fondamentale net'});
 
   tests.push({cat:'Pipeline Net',id:'NET-02',name:'Coût total = Brut + ONSS employeur',
-    fn:()=>{const r=calcPayroll(3500,'employe','isole',0,100);return{got:r.coûtTotal,expect:R2(r.brut+r.onssE),field:'coûtTotal'}},
+    fn:()=>{const r=calcPayroll(3500,'employe','isole',0,100);return{got:r.coutTotal,expect:R2(r.brut+r.onssE),field:'coutTotal'}},
     tolerance:0.02,source:'Coût total employeur'});
 
   tests.push({cat:'Pipeline Net',id:'NET-03',name:'Net 2000€ isolé → ratio net/brut ~56-68%',
@@ -263,9 +263,9 @@ export function buildTestSuite(calcPayroll, calcPrecompteExact, calcCSSS, calcBo
     fn:()=>{const r=calcONSSEmployeurComplet(3000,{statut:'employe'});return{got:r.detail?.pension,expect:R2(3000*0.0886),field:'pension'}},
     tolerance:0.01,source:'ONSS pension 8.86%'});
 
-  tests.push({cat:'ONSS Employeur',id:'OE-06',name:'Détail ONSS : modération 5.60%',
-    fn:()=>{const r=calcONSSEmployeurComplet(3000,{statut:'employe'});return{got:r.detail?.modération,expect:R2(3000*0.0560),field:'modération'}},
-    tolerance:0.01,source:'ONSS modération salariale 5.60%'});
+  tests.push({cat:'ONSS Employeur',id:'OE-06',name:'Détail ONSS : moderation 5.60%',
+    fn:()=>{const r=calcONSSEmployeurComplet(3000,{statut:'employe'});return{got:r.detail?.moderation,expect:R2(3000*0.0560),field:'moderation'}},
+    tolerance:0.01,source:'ONSS moderation salariale 5.60%'});
 
   // ── Catégorie 7 : Pécule de vacances ──
   tests.push({cat:'Pécule Vacances',id:'PV-01',name:'Employé : simple pécule = brut mensuel',
@@ -307,7 +307,7 @@ export function buildTestSuite(calcPayroll, calcPrecompteExact, calcCSSS, calcBo
     tolerance:0.001,source:'Taux légal 2026'});
 
   tests.push({cat:'Constantes',id:'CST-03',name:'RMMMG 18+ = 2070.48€',
-    fn:()=>{return{got:LB.rémunération.RMMMG.montant18ans,expect:2070.48,field:'RMMMG'}},
+    fn:()=>{return{got:LB.remuneration.RMMMG.montant18ans,expect:2070.48,field:'RMMMG'}},
     tolerance:0.01,source:'CNT — CCT 43/15 indexée 2026'});
 
   tests.push({cat:'Constantes',id:'CST-04',name:'Chèque-repas VF max = 10.00€',
@@ -335,7 +335,7 @@ export function buildTestSuite(calcPayroll, calcPrecompteExact, calcCSSS, calcBo
     tolerance:0,source:'Spécificité belge — pas de plafond'});
 
   tests.push({cat:'Constantes',id:'CST-10',name:'Double pécule = 92%',
-    fn:()=>{return{got:LB.rémunération.péculeVacances.double.pct,expect:0.92,field:'pécule double %'}},
+    fn:()=>{return{got:LB.remuneration.peculeVacances.double.pct,expect:0.92,field:'pécule double %'}},
     tolerance:0,source:'AR Royal — pécule vacances employés'});
 
   // ── Catégorie 10 : Edge Cases ──
@@ -360,7 +360,7 @@ export function buildTestSuite(calcPayroll, calcPrecompteExact, calcCSSS, calcBo
     tolerance:0,source:'Invariant fondamental'});
 
   tests.push({cat:'Edge Cases',id:'EDGE-06',name:'Cohérence: coût total > brut toujours',
-    fn:()=>{const tests=[1000,2000,3000,5000,10000];const ok=tests.every(b=>{const r=calcPayroll(b,'employe','isole',0,100);return r.coûtTotal>r.brut;});return{got:ok?1:0,expect:1,field:'coût > brut'}},
+    fn:()=>{const tests=[1000,2000,3000,5000,10000];const ok=tests.every(b=>{const r=calcPayroll(b,'employe','isole',0,100);return r.coutTotal>r.brut;});return{got:ok?1:0,expect:1,field:'coût > brut'}},
     tolerance:0,source:'Charges patronales > 0'});
 
   tests.push({cat:'Edge Cases',id:'EDGE-07',name:'Monotonie: brut↑ → net↑ (pas de piège fiscal)',
@@ -377,7 +377,7 @@ export function buildTestSuite(calcPayroll, calcPrecompteExact, calcCSSS, calcBo
     tolerance:null,source:'Famille avec quotient conjugal',validate:r=>r.got>2500&&r.got<3300});
 
   tests.push({cat:'Scénarios',id:'SCEN-03',name:'Ouvrier 2500€ brut → coût total ~3100-3400€',
-    fn:()=>{const r=calcPayroll(2500,'ouvrier','isole',0,100);return{got:r.coûtTotal,expect:null,field:'coût total'}},
+    fn:()=>{const r=calcPayroll(2500,'ouvrier','isole',0,100);return{got:r.coutTotal,expect:null,field:'coût total'}},
     tolerance:null,source:'Ouvrier avec 108% + patronal',validate:r=>r.got>3000&&r.got<3600});
 
   tests.push({cat:'Scénarios',id:'SCEN-04',name:'RMMMG → net minimum viable',
@@ -558,4 +558,4 @@ export function PayrollEngineTestDashboard({ calcPayroll, calcPrecompteExact, ca
   );
 }
 
-export default { netToBrut, coûtTotalToNet, buildTestSuite, runTests, PayrollEngineTestDashboard };
+export default { netToBrut, coutTotalToNet, buildTestSuite, runTests, PayrollEngineTestDashboard };

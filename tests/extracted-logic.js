@@ -15,8 +15,8 @@ var LEGAL={ONSS_W:TX_ONSS_W,ONSS_E:TX_ONSS_E,BONUS_2026:{
   // ── Réduction structurelle ONSS T1/2026 — Source: Easypay Group / ONSS 09/01/2026 ──
   RED_STRUCT_2026:{
     // Cat 1: Secteur privé marchand (25%) — F=0, δ=0 → seuls bas/très bas salaires
-    CAT1_alpha:0.1400, CAT1_S0:11458.57,  // composante bas salaires: α*(S0-S)
-    CAT1_gamma:0.1500, CAT1_S2:9547.20,   // composante très bas salaires: γ*(S2-S)
+    CAT1_alpha:0.1400, CAT1_S0:11458.57,  // composanté bas salaires: α*(S0-S)
+    CAT1_gamma:0.1500, CAT1_S2:9547.20,   // composanté très bas salaires: γ*(S2-S)
     CAT1_F:0, CAT1_delta:0, CAT1_S1:0,
     // Cat 2: Maribel social / non-marchand (±32.40%)
     CAT2_F:79.00, CAT2_alpha:0.2300, CAT2_S0:9975.60,
@@ -37,7 +37,7 @@ var LEGAL={ONSS_W:TX_ONSS_W,ONSS_E:TX_ONSS_E,BONUS_2026:{
   PP2026:{
     // Frais professionnels forfaitaires (salariés)
     FP_PCT:0.30, FP_MAX:5930,
-    // Frais professionnels dirigeants d'entreprise
+    // Frais professionnels dirigeants d\'entreprise
     FP_DIR_PCT:0.03, FP_DIR_MAX:3120,
     // Barème progressif ANNUEL (tranches 2026 indexées)
     TRANCHES:[
@@ -50,13 +50,13 @@ var LEGAL={ONSS_W:TX_ONSS_W,ONSS_E:TX_ONSS_E,BONUS_2026:{
     EXEMPT:10900,
     // Réductions annuelles pour charges de famille
     RED:{
-      isolee:144.00,          // personne isolée
+      isolée:144.00,          // personne isolée
       veuf_enfant:540.00,     // veuf/veuve non remarié(e) + enfant
       enfants:[0,612,1620,3672,5928,7116],  // 0,1,2,3,4,5 enfants
       enfantX:7116,           // par enfant supplémentaire > 5
-      handicap:612,           // supplément par enfant handicapé
+      handicap:612,           // supplément par enfant handicape
       ascendant65:1728,       // parent/grand-parent ≥65 ans à charge
-      ascendant65_handi:2100, // idem handicapé
+      ascendant65_handi:2100, // idem handicape
       conjoint_charge:0,      // quotient conjugal: traité séparément
     },
     // Quotient conjugal (barème 2): max 30% du revenu, plafonné à 12 520 €
@@ -86,13 +86,13 @@ var LEGAL={ONSS_W:TX_ONSS_W,ONSS_E:TX_ONSS_E,BONUS_2026:{
     amiante:0.0001,        // Fonds amiante (T1-T3 2026 seulement)
     maladies_prof:0.0017,  // cotisation maladies professionnelles (Fedris)
     // Étudiants
-    etudiant_patronal:0.0542, // cotisation solidarité patronale (650h/an)
-    etudiant_personnel:0.0271,// cotisation solidarité personnelle
-    etudiant_total:0.0813,    // total solidarité = 8,13%
+    étudiant_patronal:0.0542, // cotisation solidarité patronale (650h/an)
+    étudiant_personnel:0.0271,// cotisation solidarité personnelle
+    étudiant_total:0.0813,    // total solidarité = 8,13%
     // Flexi-jobs
     flexi_patronal:0.28,   // 28% cotisation patronale spéciale
     // CSS annuelle max
-    css_max_isole:731.28,  // max annuel isolé/conjoint sans revenus
+    css_max_isolé:731.28,  // max annuel isolé/conjoint sans revenus
     css_max_menage:731.28, // max annuel ménage 2 revenus (identique mais retenues mensuelles différentes)
     // Provisions mensuelles: le 5 de chaque mois
     // Solde trimestriel: dernier jour du mois suivant le trimestre
@@ -153,10 +153,10 @@ var LEGAL={ONSS_W:TX_ONSS_W,ONSS_E:TX_ONSS_E,BONUS_2026:{
       {nom:"BCSS/KSZ",url:"ksz-bcss.fgov.be",desc:"Banque Carrefour SS, flux DRS, formulaires électroniques"},
       {nom:"CAPAC",url:"capac.fgov.be",desc:"Allocations chômage, formulaires C4, chômage temporaire"},
       {nom:"INASTI",url:"inasti.be",desc:"Cotisations indépendants, statut mixte dirigeants"},
-      {nom:"SPF Économie",url:"economie.fgov.be",desc:"Index santé, indices prix, index-pivot"},
+      {nom:"SPF Économie",url:"économie.fgov.be",desc:"Index santé, indices prix, index-pivot"},
       {nom:"Statbel",url:"statbel.fgov.be",desc:"Statistiques emploi, enquêtes structure salaires"},
       {nom:"BNB",url:"nbb.be",desc:"Bilan social, centrale des bilans, données macro"},
-      {nom:"BCE",url:"kbo-bce-search.economie.fgov.be",desc:"Registre entreprises, NACE, données sociétés"},
+      {nom:"BCE",url:"kbo-bce-search.économie.fgov.be",desc:"Registre entreprises, NACE, données sociétés"},
       {nom:"FLA",url:"federallearningaccount.be",desc:"Federal Learning Account — obligation formation employeurs"},
       {nom:"Belcotax",url:"belcotaxonweb.be",desc:"Fiches fiscales 281.xx"},
       {nom:"Chambre/Sénat",url:"lachambre.be",desc:"Projets de loi EN COURS — alertes précoces"},
@@ -236,9 +236,9 @@ function calc(emp, per, co) {
 
   if (r.miTempsMed && r.miTempsHeures > 0 && (emp.whWeek || 38) > 0) {
     r.miTempsFraction = r.miTempsHeures / (emp.whWeek || 38);
-    // Recalculer le brut au prorata des heures prestées
+    // Recalculér le brut au prorata des heures prestées
     r.base = Math.round((emp.monthlySalary || 0) * r.miTempsFraction * 100) / 100;
-    // Recalculer les composantes proportionnelles
+    // Recalculér les composantés proportionnelles
     r.sickPay = (per.sickG || 0) * (r.base / LEGAL.WD);
     r.gross = r.base + r.overtime + r.sunday + r.night + r.bonus + r.y13 + r.sickPay;
     // Estimation du complément INAMI si pas renseigné
@@ -246,9 +246,9 @@ function calc(emp, per, co) {
     if (r.miTempsINAMI === 0) {
       const brutJourNormal = (emp.monthlySalary || 0) / LEGAL.WD;
       const plafondINAMI = 106.16; // plafond journalier INAMI 2026 (adapté)
-      const brutJourPlafonné = Math.min(brutJourNormal, plafondINAMI);
+      const brutJourPlafonne = Math.min(brutJourNormal, plafondINAMI);
       const tauxINAMI = 0.60; // 60% (cohabitant) — peut être 65% (chef de famille) ou 55% (isolé)
-      r.miTempsINAMI = Math.round(brutJourPlafonné * tauxINAMI * LEGAL.WD * (1 - r.miTempsFraction) * 100) / 100;
+      r.miTempsINAMI = Math.round(brutJourPlafonne * tauxINAMI * LEGAL.WD * (1 - r.miTempsFraction) * 100) / 100;
     }
   }
 
@@ -305,7 +305,7 @@ function calc(emp, per, co) {
   // ── VÉLO DE SOCIÉTÉ (Loi 25/11/2021 + Art. 38§1er 14°a CIR 92) ──
   // Depuis 01/01/2024: l'ATN vélo de société = 0€ (exonéré IPP et ONSS)
   // Conditions: usage effectif pour déplacements domicile-travail (même partiel)
-  // L'employeur supporte le coût du leasing (déductible 100%)
+  // L'employeur supporte le coût du leasing (deductible 100%)
   // Types: vélo classique, vélo électrique (≤25km/h), speed pedelec (≤45km/h)
   // CUMULABLE avec l'indemnité vélo 0,27€/km (pour les km effectivement parcourus)
   // Le speed pedelec est fiscalement assimilé à un vélo (pas une moto)
@@ -335,10 +335,10 @@ function calc(emp, per, co) {
   // L'employeur déduit le coût à 100% (si borne intelligente bidirectionnelle)
   // L'électricité de recharge pour usage privé: ATN = coût réel ou forfait
   r.borneRecharge = emp.borneRecharge || false;
-  r.borneRechargeCoût = emp.borneRechargeCoût || 0;
+  r.borneRechargeCout = emp.borneRechargeCout || 0;
   // ATN borne: 0€ si voiture de société (fait partie du package)
   // ATN borne: coût réel si pas de voiture de société
-  r.atnBorne = (r.borneRecharge && !r.atnCar) ? r.borneRechargeCoût : 0;
+  r.atnBorne = (r.borneRecharge && !r.atnCar) ? r.borneRechargeCout : 0;
 
   // Ajouter aux ATN autres si applicable
   r.atnAutresTot += r.atnCarteCarburant + r.atnBorne;
@@ -391,7 +391,7 @@ function calc(emp, per, co) {
   const fractionPrest = emp.regime === 'full' ? 1 : (emp.whWeek || 38) / 38;
   r.redStructCat = r.onssE_type === 'non-marchand' ? 2 :
     (emp.statut === 'eta' ? 3 : (emp.statut === 'eta_handi' ? 4 : 1));
-  // cat 1=marchand, 2=non-marchand, 3=ETA, 4=ETA handicapé
+  // cat 1=marchand, 2=non-marchand, 3=ETA, 4=ETA handicape
   let redR = 0;
   if (r.redStructCat === 1) {
     // Catégorie 1: secteur marchand privé
@@ -478,11 +478,11 @@ function calc(emp, per, co) {
     // Si exonération PP (ancien régime FR pré-2012 — cas résiduel très rare):
     if (r.frontalierExoPP) {
       r.frontalierPPExo = r.tax; // montant PP qui serait retenu
-      // r.tax reste calculé normalement pour info mais n'est pas retenu
-      // → c'est au travailleur de déclarer dans son pays de résidence
+      // r.tax reste calculé normalement pour info mais n\'est pas retenu
+      // → c\'est au travailleur de déclarer dans son pays de résidence
     }
     // Le travailleur frontalier a droit aux mêmes avantages sociaux belges
-    // (chèques-repas, transport, etc.) puisqu'il travaille en Belgique
+    // (chèques-repas, transport, etc.) puisqu\'il travaille en Belgique
   }
 
   // ── TRAVAILLEUR PENSIONNÉ — CUMUL PENSION / TRAVAIL ──
@@ -504,40 +504,40 @@ function calc(emp, per, co) {
   //   - Cotisation patronale: normale (pas de réduction spéciale)
   //   - Cotisation travailleur: cotisation de solidarité 0% (pas d'ONSS perso)
   //     si pension + revenu > plafond → retenue normale 13,07%
-  //   → EN PRATIQUE: ONSS normal 13,07% s'applique (la solidarité est passée)
-  //   → Le pensionné n'est PLUS exonéré d'ONSS travailleur depuis 2024
+  //   → EN PRATIQUE: ONSS normal 13,07% s\'applique (la solidarité est passée)
+  //   → Le pensionne n\'est PLUS exonéré d'ONSS travailleur depuis 2024
   //
   // IMPACT PP:
-  //   - Barème normal appliqué (même formule-clé)
-  //   - MAIS: quotité exemptée peut être différente si le pensionné
+  //   - Barème normal\'appliqué (même formule-clé)
+  //   - MAIS: quotité exemptée peut être différente si le pensionne
   //     cumule pension + revenu → art. 154bis CIR
   //   - La pension elle-même est imposée séparément par le SFP (précompte pension)
   //
   // FLEXI-JOB PENSIONNÉ:
-  //   - Plafond 12.000€/an NE s'applique PAS aux pensionnés → cumul illimité
-  //   - C'est le principal avantage du statut pensionné pour les flexi-jobs
+  //   - Plafond 12.000€/an NE s\'applique PAS aux pensionnes → cumul illimité
+  //   - C'est le principal avantage du statut pensionne pour les flexi-jobs
   //
-  // COTISATION SPÉCIALE 1,5% (solidarité pensionné):
-  //   - Si le pensionné gagne > plafond, cotisation spéciale de solidarité
-  //   - Retenue par l'employeur et versée à l'ONSS
+  // COTISATION SPÉCIALE 1,5% (solidarité pensionne):
+  //   - Si le pensionne gagne > plafond, cotisation spéciale de solidarité
+  //   - Retenue par l\'employeur et versée à l'ONSS
   //   - Art. 68 Loi 30/03/1994
   //
-  // SIGEDIS / SFP: l'employeur déclare les revenus via DmfA.
+  // SIGEDIS / SFP: l\'employeur déclare les revenus via DmfA.
   //   Le SFP (Service fédéral des Pensions) vérifie le cumul automatiquement.
 
-  r.pensionné = emp.pensionné || false;
+  r.pensionne = emp.pensionne || false;
   r.pensionType = emp.pensionType || 'none';
   r.pensionCumulIllimite = emp.pensionCumulIllimite || false;
   r.pensionPlafond = 0;
   r.pensionDepassement = false;
 
-  if (r.pensionné) {
+  if (r.pensionne) {
     const age = emp.pensionAge || 0;
     const carriere = emp.pensionCarriere || 0;
     const depEnfants = emp.depChildren > 0;
 
     // Déterminer si cumul illimité
-    if (r.pensionType === 'legal' && age >= 66) {
+    if (r.pensionType === 'légal' && age >= 66) {
       r.pensionCumulIllimite = true; // Âge légal atteint (66 en 2026)
     }
     if (r.pensionType === 'anticipee' && carriere >= 45) {
@@ -562,7 +562,7 @@ function calc(emp, per, co) {
       }
     }
 
-    // Cotisation spéciale solidarité pensionné (Art. 68 Loi 30/03/1994)
+    // Cotisation spéciale solidarité pensionne (Art. 68 Loi 30/03/1994)
     // Si le total pension + revenus activité > seuil → retenue 0% à 2%
     // En pratique: déjà incluse dans les cotisations ONSS standard
     // Le SFP vérifie a posteriori via DmfA/SIGEDIS
@@ -625,18 +625,18 @@ function calc(emp, per, co) {
   if (ch > 0 && ch <= 5) redFam += PP.RED.enfants[ch];
   else if (ch > 5) redFam += PP.RED.enfants[5] + (ch - 5) * PP.RED.enfantX;
   if (emp.handiChildren > 0) redFam += emp.handiChildren * PP.RED.handicap;
-  if (emp.civil === 'single' && ch === 0) redFam += PP.RED.isolee;
+  if (emp.civil === 'single' && ch === 0) redFam += PP.RED.isolée;
   if ((emp.civil === 'single' || emp.civil === 'widowed') && ch > 0) redFam += PP.RED.veuf_enfant;
   // Ascendants ≥ 65 ans à charge (Art. 132 CIR 92 — revenus nets < 3.820€)
   const depAsc = emp.depAscendant || 0;
   const depAscHandi = emp.depAscendantHandi || 0;
   if (depAsc > 0) redFam += depAsc * PP.RED.ascendant65;
   if (depAscHandi > 0) redFam += depAscHandi * PP.RED.ascendant65_handi;
-  // Conjoint handicapé (Art. 132 CIR — supplément quotité exemptée)
+  // Conjoint handicape (Art. 132 CIR — supplément quotité exemptée)
   if (emp.conjointHandicap) redFam += PP.RED.handicap;
   // Autres personnes à charge (Art. 136 CIR — max 3.820€ revenus nets)
   const depAutres = emp.depAutres || 0;
-  if (depAutres > 0) redFam += depAutres * PP.RED.isolee; // même réduction qu'isolé par personne
+  if (depAutres > 0) redFam += depAutres * PP.RED.isolée; // même réduction qu'isolé par personne
   impotAnnuel -= redFam;
 
   // Étape 7: Précompte mensuel = impôt annuel / 12
@@ -651,7 +651,7 @@ function calc(emp, per, co) {
   r.empBonusFisc = r.empBonusFiscA + r.empBonusFiscB;
   r.tax = Math.max(0, r.tax - r.empBonusFisc);
 
-  // Special SS contribution (Art. 106-112 Loi-programme 30/12/1988)
+  // Spécial SS contribution (Art. 106-112 Loi-programme 30/12/1988)
   // Barème trimestriel — retenue mensuelle = 1/3 du montant trimestriel
   // Différent pour isolés vs ménages avec 2 revenus
   // Source: socialsecurity.be + montants-socio-juridiques 2026
@@ -719,7 +719,7 @@ function calc(emp, per, co) {
   r.advance = per.advance || 0;
   r.otherDed = per.otherDed || 0;
   // ── PP VOLONTAIRE (Art. 275§1 CIR 92 + AR/PP Art. 88) ──
-  // Le travailleur peut demander par écrit à l'employeur de retenir un PP supplémentaire
+  // Le travailleur peut demander par écrit à l\'employeur de retenir un PP supplémentaire
   // au-delà du minimum légal. Récupérable via déclaration IPP si trop-retenu.
   // L'employeur est tenu de reverser l'intégralité au SPF Finances.
   // Base: AR 09/01/2024 fixant les barèmes de PP — dispense n'affecte pas ce montant.
@@ -770,11 +770,11 @@ function calc(emp, per, co) {
   // ── 6. INDEMNITÉ TÉLÉTRAVAIL (Circ. 2021/C/20 du 26/02/2021) ──
   // Max 154,74€/mois (montant 2026 — indexé chaque année)
   // Exonérée ONSS et IPP si structurel (min 1 jour/semaine régulier)
-  // Couvre: chauffage, électricité, petit matériel, amortissement mobilier
+  // Couvre: chauffage, électricité, petit materiel, amortissement mobilier
   r.indemTeletravail = Math.min(per.indemTeletravail || 0, FORF_BUREAU);
 
   // ── 7. INDEMNITÉ FRAIS DE BUREAU (AR/CIR92 Art. 31) ──
-  // Frais propres de l'employeur — exonérés si justifiés ou forfaitaires
+  // Frais propres de l\'employeur — exonérés si justifiés ou forfaitaires
   // Forfait bureau: max 10% brut (tolérance admin. — non cumulable télétravail)
   r.indemBureau = per.indemBureau || 0;
 
@@ -797,9 +797,9 @@ function calc(emp, per, co) {
   // ── 11. RÉDUCTION PP HEURES SUPPLÉMENTAIRES (Art. 154bis CIR 92) ──
   // Travailleur: réduction PP sur sursalaire (50% ou 100%)
   // Max 180h/an (2026 — Art.154bis §3 CIR — Accord Arizona structurel)
-  // Horeca: 360h | Construction+enregistrement: 180h
+  // Horeca: 360h | Construction+enregistrément: 180h
   // Employeur: dispense versement PP 32,19% (Art. 275/1 CIR)
-  // Applicable sur heures au-delà de 9h/j ou 38h/sem (ou limite secteur)
+  // Applicable sur heures au-delà de 9h/j ou 38h/sem (ou limité secteur)
   const hsfisc = per.heuresSupFisc || 0;
   r.heuresSupFisc = hsfisc;
   const sursalaire = hsfisc * hr * 0.5; // sursalaire = 50% du taux horaire normal
@@ -820,10 +820,10 @@ function calc(emp, per, co) {
   //   ≤ 17.280€: 0% | ≤ 32.280€: 19,17% | ≤ 43.380€: 23,22% | > 43.380€: 30,28%
   // 13è mois: taux fixe idem (annexe III AR)
   // Indemnité de départ/préavis: taux fixe selon rémunération annuelle
-  // NB: ces taux s'appliquent sur le MONTANT EXCEPTIONNEL, pas le salaire mensuel
+  // NB: ces taux s\'appliquent sur le MONTANT EXCEPTIONNEL, pas le salaire mensuel
   r.ppTauxExcep = 0; r.ppTauxExcepRate = 0;
   const typeSpec = per.typeSpecial || 'normal';
-  if (typeSpec === 'doublePecule' || typeSpec === 'y13' || typeSpec === 'depart' || typeSpec === 'preavis') {
+  if (typeSpec === 'doublePecule' || typeSpec === 'y13' || typeSpec === 'départ' || typeSpec === 'préavis') {
     const annBrut = r.base * 12;
     if (annBrut <= 17280) r.ppTauxExcepRate = 0;
     else if (annBrut <= 32280) r.ppTauxExcepRate = 0.1917;
@@ -832,14 +832,14 @@ function calc(emp, per, co) {
     // Appliquer sur le montant exceptionnel
     const montantExcep = (typeSpec === 'doublePecule' ? r.doublePecule : 0)
       + (typeSpec === 'y13' ? r.y13 : 0)
-      + (typeSpec === 'depart' ? r.peculeDepart : 0)
-      + (typeSpec === 'preavis' ? (per.indemPreavis || 0) : 0);
+      + (typeSpec === 'départ' ? r.peculeDepart : 0)
+      + (typeSpec === 'préavis' ? (per.indemPreavis || 0) : 0);
     r.ppTauxExcep = montantExcep * r.ppTauxExcepRate;
     r.tax += r.ppTauxExcep;
   }
 
   // ── 14. JOURS FÉRIÉS PAYÉS (Loi 04/01/1974 + AR 18/04/1974) ──
-  // 10 jours fériés légaux/an (Belgique) — payés par l'employeur
+  // 10 jours fériés légaux/an (Belgique) — payés par l\'employeur
   // Ouvrier: salaire journalier normal (inclus dans les jours prestés si travaillés)
   // Employé: salaire mensuel normal (pas d'impact sur calcul mensuel)
   // Jour férié travaillé: supplément 200% (déjà couvert par sundayH si encodé)
@@ -871,7 +871,7 @@ function calc(emp, per, co) {
   // Pilier 2: mobilité durable (transport en commun, vélo, logement) — exonéré ONSS+IPP
   // Pilier 3: solde en cash — cotisation spéciale 38,07% (employeur + travailleur)
   // Montant = TCO annuel voiture de société (1/5 × catalogue × coeff. âge + carburant + CO2)
-  r.budgetMobilite = per.budgetMobilite || 0;
+  r.budgetMobilité = per.budgetMobilité || 0;
   r.budgetMobPilier2 = per.budgetMobP2 || 0; // part exonérée
   r.budgetMobPilier3 = per.budgetMobP3 || 0; // part cash → cotisation 38,07%
   r.budgetMobCotis38 = r.budgetMobPilier3 * 0.3807;
@@ -936,7 +936,7 @@ function calc(emp, per, co) {
   // Jeunes < 26 ans peu qualifiés (AR Activation jeunes)
   // Réduction trimestrielle: 1.500€ (très peu qualifié) ou 1.150€ (peu qualifié)
   r.redGCJeune = per.redGCJeune || 0;
-  // Travailleurs handicapés
+  // Travailleurs handicapes
   r.redGCHandicap = per.redGCHandicap || 0;
   r.redGCTotal = r.redGCPremier + r.redGCAge + r.redGCJeune + r.redGCHandicap;
 
@@ -948,7 +948,7 @@ function calc(emp, per, co) {
   // Mécanisme: le travailleur reçoit une allocation de l'ONEM via CAPAC/syndicat.
   // L'employeur DÉDUIT ce montant du salaire net à payer.
   // Le travailleur touche: salaire net (employeur) + allocation ONEM = rémunération totale.
-  // → Le coût réel de l'employeur baisse du montant de l'allocation.
+  // → Le coût réel de l\'employeur baisse du montant de l'allocation.
   //
   // Types d'allocations de travail:
   // Activa.brussels (Actiris): max €350/mois × 12 mois — DE ≥ 12 mois, résid. Bruxelles
@@ -959,7 +959,7 @@ function calc(emp, per, co) {
   // Traitement fiscal: l'allocation de travail est un revenu de remplacement pour le travailleur
   // → Soumise au précompte professionnel (retenue par ONEM/CAPAC)
   // → NON soumise ONSS (pas de rémunération au sens ONSS)
-  // → L'employeur ne la déclare PAS en DmfA (c'est l'ONEM qui déclare)
+  // → L'employeur ne la déclare PAS en DmfA (c\'est l'ONEM qui déclare)
   //
   // Sur la fiche de paie: mention "pour mémoire" — déduit du coût employeur
   const allocType = per.allocTravailType || 'none';
@@ -987,13 +987,13 @@ function calc(emp, per, co) {
   }[allocType] || '';
 
   // ── 14. FLEXI-JOB (Art. 3 Loi 16/11/2015 — modifié 01/01/2024) ──
-  // Conditions: emploi principal min. 4/5 (T-3) OU pensionné
+  // Conditions: emploi principal min. 4/5 (T-3) OU pensionne
   // Secteurs: horeca CP302, commerce CP201/202/311, soins CP318/330/331/332,
   //   boulangerie CP118.03, agriculture CP144/145, intérim CP322, sport, culture...
   // Travailleur: 0% ONSS, 0% PP (exonéré si ≤ 12.000€/an)
   // Employeur: 28% cotisation patronale spéciale (Art.38§3ter Loi 29/06/1981)
   // Flexi-salaire min: 12,29€/h + 7,67% flexi-pécule vacances (2026)
-  // Plafond IPP: 12.000€/an (pensionnés: illimité)
+  // Plafond IPP: 12.000€/an (pensionnes: illimité)
   // Dimona: type "FLX" | DmfA: code "050"
   r.isFlexiJob = (emp.contract === 'flexi');
   if (r.isFlexiJob) {
@@ -1020,7 +1020,7 @@ function calc(emp, per, co) {
   // ── 15. ÉTUDIANT (Art. 17bis AR ONSS) ──
   // Max 650h/an (2026 — Annexe III PP + Art.17bis AR 28/11/1969): cotisation solidarité 2,71% (trav) + 5,42% (empl)
   // Au-delà: ONSS normal. Pas de PP si ≤ 7.340€/an net imposable
-  r.isStudent = (emp.contract === 'etudiant');
+  r.isStudent = (emp.contract === 'étudiant');
   if (r.isStudent) {
     r.studentOnssW = Math.round(r.gross * 0.0271 * 100) / 100; // 2,71%
     r.studentOnssE = Math.round(r.gross * 0.0542 * 100) / 100; // 5,42%
@@ -1047,7 +1047,7 @@ function calc(emp, per, co) {
   // ══════════════════════════════════════════════════════════════
   // Source: Loi 28/06/1971 + AR 30/03/1967 + ONSS Instructions 2026
   //
-  // EMPLOYÉS (payé par l'employeur):
+  // EMPLOYÉS (payé par l\'employeur):
   //   Simple: 100% du brut mensuel normal (payé pendant les vacances)
   //   Double: 92% du brut mensuel → payé avant les vacances (généralement mai/juin)
   //     - 1ère partie (85%): soumise PP normal
@@ -1058,11 +1058,11 @@ function calc(emp, per, co) {
   //   Total: 15,38% du brut annuel N-1 (à 108%)
   //   Simple: 6,80% (7,69% de 108% - cotisation solidarité)
   //   Double: 8,58% (reste)
-  //   → Versé via l'ONVA ou la Caisse sectorielle, PAS par l'employeur
+  //   → Versé via l'ONVA ou la Caisse sectorielle, PAS par l\'employeur
   //   → L'employeur paie la cotisation vacances 15,84% trimestrielle à l'ONSS
   //
   r.peculeVacCalc = {
-    type: isOuvrier ? 'ouvrier' : 'employe',
+    type: isOuvrier ? 'ouvrier' : 'employé',
     brutRef: isOuvrier ? (r.gross * 1.08 * 12) : (emp.monthlySalary || 0), // brut annuel N-1 à 108% pour ouvriers
     simple: 0,
     double: 0,
@@ -1101,7 +1101,7 @@ function calc(emp, per, co) {
   // ══════════════════════════════════════════════════════════════
   // Source: CCT sectorielles + AR rendant les CCT obligatoires
   //
-  // La prime de fin d'année n'est PAS une obligation légale mais conventionnelle.
+  // La prime de fin d'année n\'est PAS une obligation légale mais conventionnelle.
   // Son montant et ses conditions varient par commission paritaire:
   //
   // CP 200 (employés): 100% du brut mensuel (convention quasi-universelle)
@@ -1116,8 +1116,8 @@ function calc(emp, per, co) {
     onss: 0,
     ppExcep: 0,
     ppExcepRate: 0,
-    coûtEmployeur: 0,
-    methode: ''
+    coutEmployeur: 0,
+    méthode: ''
   };
   const cpNum = parseInt(emp.cp) || 200;
   if (cpNum === 124) {
@@ -1147,7 +1147,7 @@ function calc(emp, per, co) {
   else r.y13Calc.ppExcepRate = 0.3028;
   r.y13Calc.ppExcep = Math.round(r.y13Calc.montant * r.y13Calc.ppExcepRate * 100) / 100;
   r.y13Calc.netEstime = Math.round((r.y13Calc.montant - r.y13Calc.onss - r.y13Calc.ppExcep) * 100) / 100;
-  r.y13Calc.coûtEmployeur = Math.round(r.y13Calc.montant * (1 + (LEGAL.ONSS_SECTEUR[emp.cp]?.e || 0.25)) * 100) / 100;
+  r.y13Calc.coutEmployeur = Math.round(r.y13Calc.montant * (1 + (LEGAL.ONSS_SECTEUR[emp.cp]?.e || 0.25)) * 100) / 100;
 
   // ══════════════════════════════════════════════════════════════
   //  TOTALISATION
@@ -1197,7 +1197,7 @@ function calc(emp, per, co) {
     + r.ecoCheques + r.cadeaux                           // éco-chèques + cadeaux
     + r.budgetMobCotis38                                 // budget mobilité pilier 3
     + r.veloLeasingMois                                   // leasing vélo
-    + r.borneRechargeCoût                                 // borne de recharge
+    + r.borneRechargeCout                                 // borne de recharge
     + r.carteCarburantMois                                // carte carburant
     - r.dispensePPTotal                                   // dispenses PP
     - r.redGCTotal                                        // réductions groupes-cibles
@@ -1207,7 +1207,7 @@ function calc(emp, per, co) {
 
 function calcPrecompteExact(brutMensuel, options) {
   const opts = options || {};
-  const situation = opts.situation || 'isole';
+  const situation = opts.situation || 'isolé';
   const enfants = +(opts.enfants || 0);
   const enfantsHandicapes = +(opts.enfantsHandicapes || 0);
   const handicape = !!opts.handicape;
@@ -1271,7 +1271,7 @@ function calcPrecompteExact(brutMensuel, options) {
   // 8. Réduction enfants à charge (montants annuels 2026)
   const tabEnfants = LOIS_BELGES.pp.reductionsEnfants;
   const suppEnfant = LOIS_BELGES.pp.reductionEnfantSupp;
-  const enfTotal = enfants + enfantsHandicapes; // handicapés comptent double fiscalement
+  const enfTotal = enfants + enfantsHandicapes; // handicapes comptent double fiscalement
   const enfFiscaux = enfTotal + enfantsHandicapes; // double comptage
   let redEnfants = 0;
   if (enfFiscaux > 0) {
@@ -1281,13 +1281,13 @@ function calcPrecompteExact(brutMensuel, options) {
 
   // 9. Réduction parent isolé avec enfants
   let redParentIsole = 0;
-  if (parentIsole && enfTotal > 0) redParentIsole = LOIS_BELGES.pp.reductionParentIsole;
+  if (parentIsole && enfTotal > 0) redParentIsole = LOIS_BELGES.pp.reductionParentIsolé;
 
-  // 10. Réduction bénéficiaire handicapé
+  // 10. Réduction bénéficiaire handicape
   let redHandicape = 0;
   if (handicape) redHandicape = LOIS_BELGES.pp.reductionHandicape;
 
-  // 11. Réduction conjoint handicapé (barème 2)
+  // 11. Réduction conjoint handicape (barème 2)
   let redConjHandicape = 0;
   if (isBareme2 && conjointHandicape) redConjHandicape = LOIS_BELGES.pp.reductionConjointHandicape;
 
@@ -1349,8 +1349,8 @@ function calcCSSS(brutMensuel, situation) {
   const onss = Math.round(brut * TX_ONSS_W * 100) / 100;
   const imposable = brut - onss;
   const annuel = imposable * 12;
-  const isole = !situation || situation === 'isole';
-  const baremes = isole ? LOIS_BELGES.csss.isole : LOIS_BELGES.csss.menage2revenus;
+  const isolé = !situation || situation === 'isolé';
+  const baremes = isolé ? LOIS_BELGES.csss.isolé : LOIS_BELGES.csss.menage2revenus;
   // Seuils CSSS dynamiques depuis LOIS_BELGES
   const s0=baremes[0].max, s1=baremes[1].max, s2=baremes[2]?.max||60181.95;
   const t1=baremes[1].taux, t2=baremes[2]?.taux||0.011;
@@ -1358,7 +1358,7 @@ function calcCSSS(brutMensuel, situation) {
   const plafond=baremes[baremes.length-1].montantFixe||51.64;
   if (annuel <= s0) return 0;
   if (annuel <= s1) return Math.round((annuel - s0) * t1 / 12 * 100) / 100;
-  if (isole && baremes.length > 4) {
+  if (isolé && baremes.length > 4) {
     const s3=baremes[3]?.min||37344.02, t3=baremes[3]?.taux||0.013;
     if (annuel <= s3) return Math.round((base2 + (annuel - s1) * t2) / 12 * 100) / 100;
     if (annuel <= baremes[4]?.min||60181.95) return Math.round((base2 + (s3 - s1) * t2 + (annuel - s3) * t3) / 12 * 100) / 100;

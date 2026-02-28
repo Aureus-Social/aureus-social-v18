@@ -8,7 +8,7 @@ const KPI=({l,v,c,sub})=><div style={{padding:14,background:'linear-gradient(135
 const Row=({l,v,c,b})=><div style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:b?'2px solid rgba(198,163,78,.2)':'1px solid rgba(255,255,255,.03)',fontWeight:b?700:400}}><span style={{color:b?'#e8e6e0':'#e8e6e0',fontSize:11.5}}>{l}</span><span style={{color:c||'#c6a34e',fontWeight:600,fontSize:12}}>{v}</span></div>;
 const Badge=({text,color})=><span style={{padding:'2px 7px',borderRadius:5,fontSize:8,fontWeight:600,background:(color||'#888')+'15',color:color||'#888'}}>{text}</span>;
 const quickPP=br=>{const imp=br*(1-TX_ONSS_W);if(imp<=1170)return 0;if(imp<=2350)return Math.round((imp-1170)*0.25*100)/100;return Math.round((1180*0.25+(imp-2350)*0.4)*100)/100;};
-const moisN=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+const moisN=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
 // ═══════════════════════════════════════════════════════════
 // 1. VALIDATION PRE-PAIE — Vrais controles automatiques
@@ -23,20 +23,20 @@ export function ValidationPrePaieV2({s,d}){
     const r=[];
     // 1. NISS
     const noNiss=allEmps.filter(e=>!e.niss&&!e.NISS);
-    r.push({id:'niss',cat:'Identite',title:'NISS renseignes',desc:'Tous les numeros de registre national',pass:noNiss.length===0,count:n-noNiss.length,total:n,sev:noNiss.length>0?'critical':'ok',items:noNiss.map(e=>e.first+' '+e.last+' ('+e._co+')')});
+    r.push({id:'niss',cat:'Identité',title:'NISS renseignes',desc:'Tous les numéros de registre national',pass:noNiss.length===0,count:n-noNiss.length,total:n,sev:noNiss.length>0?'critical':'ok',items:noNiss.map(e=>e.first+' '+e.last+' ('+e._co+')')});
     // 2. IBAN
     const noIban=allEmps.filter(e=>!e.iban&&!e.IBAN);
     r.push({id:'iban',cat:'Bancaire',title:'IBAN renseignes',desc:'Virements SEPA possibles',pass:noIban.length===0,count:n-noIban.length,total:n,sev:noIban.length>0?'high':'ok',items:noIban.map(e=>e.first+' '+e.last)});
     // 3. Salaire > 0
     const noSal=allEmps.filter(e=>!(+(e.monthlySalary||e.gross||e.brut||0)));
-    r.push({id:'salaire',cat:'Remuneration',title:'Salaires bruts definis',desc:'Tous les bruts > 0',pass:noSal.length===0,count:n-noSal.length,total:n,sev:noSal.length>0?'critical':'ok',items:noSal.map(e=>e.first+' '+e.last)});
+    r.push({id:'salaire',cat:'Rémunération',title:'Salaires bruts definis',desc:'Tous les bruts > 0',pass:noSal.length===0,count:n-noSal.length,total:n,sev:noSal.length>0?'critical':'ok',items:noSal.map(e=>e.first+' '+e.last)});
     // 4. RMMMG check (2.070,48 EUR CP200 2026)
     const RMMMG=2070.48;
     const underRMMMG=allEmps.filter(e=>{const b=+(e.monthlySalary||e.gross||0);return b>0&&b<RMMMG&&(e.regime||100)>=100;});
-    r.push({id:'rmmmg',cat:'Remuneration',title:'RMMMG respecte ('+fmt(RMMMG)+' EUR)',desc:'Salaire minimum garanti',pass:underRMMMG.length===0,count:n-underRMMMG.length,total:n,sev:underRMMMG.length>0?'critical':'ok',items:underRMMMG.map(e=>e.first+' '+e.last+': '+fmt(+(e.monthlySalary||e.gross||0))+' EUR')});
+    r.push({id:'rmmmg',cat:'Rémunération',title:'RMMMG respecte ('+fmt(RMMMG)+' EUR)',desc:'Salaire minimum garanti',pass:underRMMMG.length===0,count:n-underRMMMG.length,total:n,sev:underRMMMG.length>0?'critical':'ok',items:underRMMMG.map(e=>e.first+' '+e.last+': '+fmt(+(e.monthlySalary||e.gross||0))+' EUR')});
     // 5. Date debut
     const noStart=allEmps.filter(e=>!e.startDate&&!e.start);
-    r.push({id:'debut',cat:'Contrat',title:'Dates debut renseignees',desc:'Anciennete calculable',pass:noStart.length===0,count:n-noStart.length,total:n,sev:noStart.length>0?'high':'ok',items:noStart.map(e=>e.first+' '+e.last)});
+    r.push({id:'debut',cat:'Contrat',title:'Dates debut renseignees',desc:'Ancienneté calculable',pass:noStart.length===0,count:n-noStart.length,total:n,sev:noStart.length>0?'high':'ok',items:noStart.map(e=>e.first+' '+e.last)});
     // 6. CDD echeance
     const cddExpiring=allEmps.filter(e=>{if((e.contractType||'').toUpperCase()!=='CDD')return false;const end=new Date(e.endDate||e.end||'2099-12-31');return Math.ceil((end-now)/86400000)<=30;});
     r.push({id:'cdd',cat:'Contrat',title:'CDD a echeance (<30j)',desc:'Renouvellement ou fin',pass:cddExpiring.length===0,count:cddExpiring.length,total:allEmps.filter(e=>(e.contractType||'').toUpperCase()==='CDD').length,sev:cddExpiring.length>0?'high':'ok',items:cddExpiring.map(e=>{const end=new Date(e.endDate||e.end);return e.first+' '+e.last+': fin '+end.toLocaleDateString('fr-BE');})});
@@ -46,10 +46,10 @@ export function ValidationPrePaieV2({s,d}){
     // 8. ONSS coherence
     r.push({id:'onss',cat:'Cotisations',title:'Taux ONSS valides',desc:'Patronal 25,07% + Personnel 13,07%',pass:true,count:n,total:n,sev:'ok',items:[]});
     // 9. PP baremes
-    r.push({id:'pp',cat:'Fiscal',title:'Baremes PP SPF 2026',desc:'4 tranches appliquees correctement',pass:true,count:n,total:n,sev:'ok',items:[]});
+    r.push({id:'pp',cat:'Fiscal',title:'Barèmes PP SPF 2026',desc:'4 tranches appliquees correctement',pass:true,count:n,total:n,sev:'ok',items:[]});
     // 10. Dimona
     const noDimona=allEmps.filter(e=>!e.dimonaDone&&(new Date(e.startDate||e.start||'2020-01-01')>new Date('2024-01-01')));
-    r.push({id:'dimona',cat:'ONSS',title:'Dimona IN effectuees',desc:'Declarations electroniques',pass:noDimona.length===0,count:n-noDimona.length,total:n,sev:noDimona.length>0?'medium':'ok',items:noDimona.map(e=>e.first+' '+e.last)});
+    r.push({id:'dimona',cat:'ONSS',title:'Dimona IN effectuees',desc:'Déclarations electroniques',pass:noDimona.length===0,count:n-noDimona.length,total:n,sev:noDimona.length>0?'medium':'ok',items:noDimona.map(e=>e.first+' '+e.last)});
     return r;
   },[allEmps]);
 
@@ -65,7 +65,7 @@ export function ValidationPrePaieV2({s,d}){
     <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
       <KPI l="Score" v={score+'%'} c={score>=80?'#4ade80':score>=60?'#eab308':'#ef4444'}/>
       <KPI l="Controles OK" v={passed+'/'+total} c="#4ade80"/>
-      <KPI l="Employes" v={n} c="#c6a34e"/>
+      <KPI l="Employés" v={n} c="#c6a34e"/>
       <KPI l="Problemes" v={checks.filter(c=>!c.pass).length} c={checks.some(c=>!c.pass)?'#ef4444':'#4ade80'}/>
     </div>
 
@@ -110,19 +110,19 @@ export function TimelinePaieV2({s}){
     for(let mi=0;mi<12;mi++){
       const my=moisN[mi]+' '+yr;
       dl.push({month:mi,day:5,title:'Provision ONSS',desc:'Paiement provisions mensuelles ONSS',cat:'ONSS',c:'#ef4444',recurring:true});
-      dl.push({month:mi,day:15,title:'Precompte professionnel',desc:'Declaration + paiement PP (formulaire 274)',cat:'Fiscal',c:'#a855f7',recurring:true});
-      dl.push({month:mi,day:25,title:'Virements salaires SEPA',desc:'Execution virements nets employes',cat:'Paie',c:'#22c55e',recurring:true});
+      dl.push({month:mi,day:15,title:'Précompte professionnel',desc:'Déclaration + paiement PP (formulaire 274)',cat:'Fiscal',c:'#a855f7',recurring:true});
+      dl.push({month:mi,day:25,title:'Virements salaires SEPA',desc:'Execution virements nets employés',cat:'Paie',c:'#22c55e',recurring:true});
       dl.push({month:mi,day:28,title:'Distribution fiches de paie',desc:'Envoi fiches par email / portail',cat:'Paie',c:'#3b82f6',recurring:true});
     }
     // Quarterly DmfA
-    [0,3,6,9].forEach(mi=>dl.push({month:mi,day:10,title:'DmfA T'+Math.ceil((mi+1)/3),desc:'Declaration trimestrielle ONSS',cat:'ONSS',c:'#ef4444'}));
+    [0,3,6,9].forEach(mi=>dl.push({month:mi,day:10,title:'DmfA T'+Math.ceil((mi+1)/3),desc:'Déclaration trimestrielle ONSS',cat:'ONSS',c:'#ef4444'}));
     // Annual
     dl.push({month:1,day:28,title:'Belcotax 281.10/281.20',desc:'Fiches fiscales annuelles au SPF',cat:'Fiscal',c:'#a855f7'});
     dl.push({month:2,day:1,title:'Deadline Belcotax',desc:'Transmission XML au SPF Finances',cat:'Fiscal',c:'#ef4444'});
-    dl.push({month:4,day:30,title:'Pecule vacances simple',desc:'Versement pecule simple employes',cat:'Paie',c:'#06b6d4'});
-    dl.push({month:5,day:30,title:'Pecule vacances double',desc:'Versement pecule double',cat:'Paie',c:'#06b6d4'});
-    dl.push({month:11,day:20,title:'13eme mois / Prime fin annee',desc:'Versement prime fin annee',cat:'Paie',c:'#c6a34e'});
-    dl.push({month:0,day:31,title:'Indexation CP 200',desc:'Verification et application index sante',cat:'RH',c:'#fb923c'});
+    dl.push({month:4,day:30,title:'Pécule vacances simple',desc:'Versement pécule simple employés',cat:'Paie',c:'#06b6d4'});
+    dl.push({month:5,day:30,title:'Pécule vacances double',desc:'Versement pécule double',cat:'Paie',c:'#06b6d4'});
+    dl.push({month:11,day:20,title:'13eme mois / Prime fin année',desc:'Versement prime fin année',cat:'Paie',c:'#c6a34e'});
+    dl.push({month:0,day:31,title:'Indexation CP 200',desc:'Vérification et application index sante',cat:'RH',c:'#fb923c'});
     dl.push({month:5,day:30,title:'Bilan social BNB',desc:'Depot si >= 20 ETP',cat:'Compliance',c:'#fb923c'});
     dl.push({month:2,day:31,title:'Plan formation',desc:'Depot plan annuel si >= 20 travailleurs',cat:'RH',c:'#3b82f6'});
     return dl;
@@ -155,7 +155,7 @@ export function TimelinePaieV2({s}){
 
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
       {/* Month deadlines */}
-      <C title={moisN[selMonth]+' '+yr+' — '+monthDeadlines.length+' echeances'}>
+      <C title={moisN[selMonth]+' '+yr+' — '+monthDeadlines.length+' échéances'}>
         {monthDeadlines.map((dl,i)=>{
           const isPast=selMonth<m||(selMonth===m&&dl.day<d);
           const isToday=selMonth===m&&dl.day===d;
@@ -173,7 +173,7 @@ export function TimelinePaieV2({s}){
       </C>
 
       {/* Upcoming */}
-      <C title="Prochaines echeances">
+      <C title="Prochaines échéances">
         {upcomingAll.map((dl,i)=>{
           const jours=Math.max(0,Math.ceil((new Date(yr,dl.month,dl.day)-now)/86400000));
           return <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
@@ -250,14 +250,14 @@ export function SoldeToutCompteV2({s,d}){
     // Totaux
     const details=[
       {label:'Prorata salaire mois en cours',brut:prorataMois,note:jourMois+'/'+totalJoursMois+' jours'},
-      {label:'Indemnite compensatoire de preavis',brut:indemPreavis,note:semPreavis+' semaines'},
-      {label:'Pecule vacances simple (prorata)',brut:peculeSimple,note:moisPrestes+'/12 mois'},
-      {label:'Pecule vacances double (prorata)',brut:peculeDouble,note:moisPrestes+'/12 mois'},
+      {label:'Indemnité compensatoire de preavis',brut:indemPreavis,note:semPreavis+' semaines'},
+      {label:'Pécule vacances simple (prorata)',brut:peculeSimple,note:moisPrestes+'/12 mois'},
+      {label:'Pécule vacances double (prorata)',brut:peculeDouble,note:moisPrestes+'/12 mois'},
       {label:'13eme mois prorata',brut:treizieme,note:moisPrestes+'/12 mois'},
     ];
     if(outplacement) details.push({label:'Provision outplacement (4 sem.)',brut:coutOutplacement,note:'Obligatoire si preavis >= 30 sem.'});
-    if(indemProtection>0) details.push({label:'Indemnite de protection',brut:indemProtection,note:'6 mois brut'});
-    if(indemAbus>0) details.push({label:'Indemnite licenciement abusif',brut:indemAbus,note:'3-17 semaines (CCT 109)'});
+    if(indemProtection>0) details.push({label:'Indemnité de protection',brut:indemProtection,note:'6 mois brut'});
+    if(indemAbus>0) details.push({label:'Indemnité licenciement abusif',brut:indemAbus,note:'3-17 semaines (CCT 109)'});
 
     const brutTotal=details.reduce((a,d2)=>a+d2.brut,0);
     const onssT=Math.round(brutTotal*TX_ONSS_W*100)/100;
@@ -270,10 +270,10 @@ export function SoldeToutCompteV2({s,d}){
 
   return <div style={{padding:24}}>
     <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>💼 Solde de Tout Compte</h2>
-    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Preavis + pecule prorata + 13eme + outplacement + indemnites speciales</p>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Preavis + pécule prorata + 13eme + outplacement + indemnités speciales</p>
 
     <div style={{display:'flex',gap:10,marginBottom:20,flexWrap:'wrap',alignItems:'flex-end'}}>
-      <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Employe</label>
+      <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Employé</label>
         <select value={selEmp} onChange={e=>setSelEmp(e.target.value)} style={{padding:'10px 12px',borderRadius:8,background:'#090c16',border:'1px solid rgba(139,115,60,.15)',color:'#e5e5e5',fontSize:12,fontFamily:'inherit',minWidth:200}}>
           <option value="">-- Selectionner --</option>
           {allEmps.map((e,i)=><option key={e.id||i} value={e.id||i}>{(e.first||'?')+' '+(e.last||'?')+' — '+e._co}</option>)}
@@ -296,7 +296,7 @@ export function SoldeToutCompteV2({s,d}){
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
         <KPI l="Brut total" v={fi(result.totaux.brutTotal)+' €'} c="#c6a34e"/>
         <KPI l="Net estime" v={fi(result.totaux.netEstime)+' €'} c="#22c55e"/>
-        <KPI l="Cout employeur" v={fi(result.totaux.coutEmployeur)+' €'} c="#ef4444"/>
+        <KPI l="Coût employeur" v={fi(result.totaux.coutEmployeur)+' €'} c="#ef4444"/>
         <KPI l="Preavis" v={result.preavis.sem+' sem.'} c="#3b82f6" sub={fi(result.preavis.indem)+' €'}/>
       </div>
 
@@ -313,17 +313,17 @@ export function SoldeToutCompteV2({s,d}){
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
         <C title="Informations">
-          <Row l="Anciennete" v={result.ancAnnees+' ans ('+result.ancMois+' mois)'}/>
+          <Row l="Ancienneté" v={result.ancAnnees+' ans ('+result.ancMois+' mois)'}/>
           <Row l="Preavis" v={result.preavis.sem+' semaines'}/>
           {result.outplacement&&<Row l="Outplacement" v="Obligatoire (>= 30 sem.)" c="#fb923c"/>}
-          {motif==='faute'&&<div style={{marginTop:8,padding:8,background:'rgba(239,68,68,.06)',borderRadius:6,fontSize:10,color:'#ef4444'}}>⚠️ Faute grave: pas d'indemnite de preavis. Verifiez la procedure (Art. 35 Loi contrats travail).</div>}
+          {motif==='faute'&&<div style={{marginTop:8,padding:8,background:'rgba(239,68,68,.06)',borderRadius:6,fontSize:10,color:'#ef4444'}}>⚠️ Faute grave: pas d'indemnité de preavis. Verifiez la procedure (Art. 35 Loi contrats travail).</div>}
         </C>
         <C title="Base legale">
           <div style={{fontSize:10,color:'#888'}}>{[
             'Loi 26/12/2013 — Statut unique (preavis)',
             'CCT 109 — Licenciement manifestement deraisonnable',
             'AR Outplacement — Si preavis >= 30 semaines',
-            'Art. 67 Lois coordonnees vacances — Pecule prorata',
+            'Art. 67 Lois coordonnees vacances — Pécule prorata',
           ].map((t,i)=><div key={i} style={{padding:'3px 0'}}>• {t}</div>)}</div>
         </C>
       </div>
@@ -345,8 +345,8 @@ export function CoutsAnnuelsV2({s}){
   const mensuel=moisN.map((mn,i)=>{
     let extra=0;let label='';
     if(i===0){extra=mb*0.02;label='Indexation';} // Jan: indexation provision
-    if(i===4){extra=mb*0.1538;label='Pecule simple';} // Mai: pecule
-    if(i===5){extra=mb*0.0769;label='Pecule double';} // Juin: pecule double
+    if(i===4){extra=mb*0.1538;label='Pécule simple';} // Mai: pécule
+    if(i===5){extra=mb*0.0769;label='Pécule double';} // Juin: pécule double
     if(i===11){extra=mb;label='13eme mois';} // Dec: 13eme
     return {mois:mn,brut:mb,cout:coutM,extra,label,total:coutM+extra*(1+TX_ONSS_E)};
   });
@@ -355,7 +355,7 @@ export function CoutsAnnuelsV2({s}){
 
   // Primes sectorielles
   const primesSectorielles=[
-    {cp:'200',prime:'Prime de fin annee',montant:'Barème CP 200',mois:'Decembre'},
+    {cp:'200',prime:'Prime de fin année',montant:'Barème CP 200',mois:'Décembre'},
     {cp:'200',prime:'Eco-cheques',montant:'Max 250 EUR/an',mois:'Juin'},
     {cp:'124',prime:'Timbre fidelite',montant:'Variable',mois:'Juin-Juillet'},
     {cp:'302',prime:'Prime horeca',montant:'Selon heures',mois:'Variable'},
@@ -363,18 +363,18 @@ export function CoutsAnnuelsV2({s}){
   ];
 
   return <div style={{padding:24}}>
-    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📊 Couts Annuels</h2>
-    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Projection avec saisonnalite, pecule, 13eme mois, primes sectorielles</p>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📊 Coûts Annuels</h2>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Projection avec saisonnalité, pécule, 13eme mois, primes sectorielles</p>
 
     <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
-      <KPI l="Cout annuel total" v={fi(totalAnnuel)+' €'} c="#c6a34e"/>
-      <KPI l="Cout mensuel moyen" v={fi(totalAnnuel/12)+' €'} c="#60a5fa"/>
+      <KPI l="Coût annuel total" v={fi(totalAnnuel)+' €'} c="#c6a34e"/>
+      <KPI l="Coût mensuel moyen" v={fi(totalAnnuel/12)+' €'} c="#60a5fa"/>
       <KPI l="Mois le + cher" v={moisN[mensuel.indexOf(mensuel.find(m2=>m2.total===maxM))]} c="#ef4444" sub={fi(maxM)+' €'}/>
-      <KPI l="Employes" v={n} c="#888"/>
+      <KPI l="Employés" v={n} c="#888"/>
     </div>
 
     {/* Bar chart */}
-    <C title="Cout mensuel avec saisonnalite">
+    <C title="Coût mensuel avec saisonnalité">
       <div style={{display:'flex',alignItems:'flex-end',gap:4,height:160,marginBottom:8}}>
         {mensuel.map((m2,i)=>{
           const pct=maxM>0?m2.total/maxM*100:0;
@@ -403,11 +403,11 @@ export function CoutsAnnuelsV2({s}){
       <C title="Provisions annuelles">
         <Row l="Salaires bruts x12" v={fi(mb*12)+' €'}/>
         <Row l="ONSS patronal" v={fi(mb*12*TX_ONSS_E)+' €'} c="#f87171"/>
-        <Row l="Pecule vacances (15,38%)" v={fi(mb*12*0.1538)+' €'} c="#06b6d4"/>
+        <Row l="Pécule vacances (15,38%)" v={fi(mb*12*0.1538)+' €'} c="#06b6d4"/>
         <Row l="13eme mois" v={fi(mb)+' €'} c="#c6a34e"/>
         <Row l="Assurance AT (~1.5%)" v={fi(mb*12*0.015)+' €'} c="#888"/>
         <Row l="Medecine travail" v={fi(n*100)+' €'} c="#888"/>
-        <Row l="Cheques-repas (est.)" v={fi(n*6.91*20*12)+' €'} c="#fb923c"/>
+        <Row l="Chèques-repas (est.)" v={fi(n*6.91*20*12)+' €'} c="#fb923c"/>
         <Row l="Formation (2%)" v={fi(totalAnnuel*0.02)+' €'} c="#a78bfa"/>
         <Row l="BUDGET COMPLET" v={fi(totalAnnuel+n*100+n*6.91*20*12)+' €'} b/>
       </C>
@@ -417,7 +417,7 @@ export function CoutsAnnuelsV2({s}){
 
 
 // ═══════════════════════════════════════════════════════════
-// 5. SIMU LICENCIEMENT V2 — Outplacement + indemnites speciales
+// 5. SIMU LICENCIEMENT V2 — Outplacement + indemnités speciales
 // ═══════════════════════════════════════════════════════════
 export function SimuLicenciementV2({s}){
   const clients=s.clients||[];
@@ -458,16 +458,16 @@ export function SimuLicenciementV2({s}){
 
   return <div style={{padding:24}}>
     <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>⚖️ Simulateur Licenciement</h2>
-    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Preavis + outplacement + indemnites speciales — Loi 26/12/2013</p>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Preavis + outplacement + indemnités speciales — Loi 26/12/2013</p>
 
     <div style={{display:'grid',gridTemplateColumns:'300px 1fr',gap:16}}>
       <div style={{padding:18,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
-        <div style={{marginBottom:10}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Employe (optionnel)</label>
+        <div style={{marginBottom:10}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Employé (optionnel)</label>
           <select value={selEmp||''} onChange={e=>setSelEmp(e.target.value||null)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>
             <option value="">Calcul libre</option>{allEmps.map((e,i)=><option key={e.id||i} value={e.id}>{e.first+' '+e.last+' — '+e._co}</option>)}
           </select></div>
         <div style={{marginBottom:10}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Brut mensuel: {fmt(brut)} €</label><input type="range" min={1800} max={10000} step={50} value={brut} onChange={e=>setManualBrut(e.target.value)} style={{width:'100%',accentColor:'#c6a34e'}}/></div>
-        <div style={{marginBottom:10}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Anciennete: {manualAnc||Math.round(ancAnnees*10)/10} ans</label><input type="range" min={0} max={40} step={0.5} value={manualAnc||ancAnnees} onChange={e=>setManualAnc(e.target.value)} style={{width:'100%',accentColor:'#c6a34e'}}/></div>
+        <div style={{marginBottom:10}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Ancienneté: {manualAnc||Math.round(ancAnnees*10)/10} ans</label><input type="range" min={0} max={40} step={0.5} value={manualAnc||ancAnnees} onChange={e=>setManualAnc(e.target.value)} style={{width:'100%',accentColor:'#c6a34e'}}/></div>
         <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Motif</label>
           <select value={motif} onChange={e=>setMotif(e.target.value)} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>
             <option value="employeur">Licenciement employeur</option><option value="travailleur">Demission</option><option value="protege">Travailleur protege</option><option value="abus">Licenciement abusif</option><option value="faute">Faute grave</option>
@@ -476,15 +476,15 @@ export function SimuLicenciementV2({s}){
       <div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:14}}>
           <KPI l="Preavis" v={semaines+' sem.'} c="#3b82f6" sub={fi(indemPreavis)+' €'}/>
-          <KPI l="Cout total employeur" v={fi(coutTotal)+' €'} c="#ef4444"/>
+          <KPI l="Coût total employeur" v={fi(coutTotal)+' €'} c="#ef4444"/>
           <KPI l={outplacement?'Outplacement obligatoire':'Outplacement'} v={outplacement?'OUI':'Non'} c={outplacement?'#fb923c':'#4ade80'}/>
         </div>
         <C title="Detail">
-          <Row l="Indemnite preavis" v={fmt(indemPreavis)+' €'} c="#3b82f6"/>
+          <Row l="Indemnité preavis" v={fmt(indemPreavis)+' €'} c="#3b82f6"/>
           {outplacement&&<Row l="Outplacement (4 sem.)" v={fmt(coutOutplacement)+' €'} c="#fb923c"/>}
-          {indemProtection>0&&<Row l="Indemnite protection (6 mois)" v={fmt(indemProtection)+' €'} c="#ef4444"/>}
-          {indemAbus>0&&<Row l="Indemnite abus (max 17 sem.)" v={fmt(indemAbus)+' €'} c="#ef4444"/>}
-          {motif==='faute'&&<div style={{padding:8,background:'rgba(239,68,68,.06)',borderRadius:6,fontSize:10,color:'#ef4444'}}>⚠️ Faute grave: pas d'indemnite. Procedure stricte Art. 35 + 3 jours ouvrables.</div>}
+          {indemProtection>0&&<Row l="Indemnité protection (6 mois)" v={fmt(indemProtection)+' €'} c="#ef4444"/>}
+          {indemAbus>0&&<Row l="Indemnité abus (max 17 sem.)" v={fmt(indemAbus)+' €'} c="#ef4444"/>}
+          {motif==='faute'&&<div style={{padding:8,background:'rgba(239,68,68,.06)',borderRadius:6,fontSize:10,color:'#ef4444'}}>⚠️ Faute grave: pas d'indemnité. Procedure stricte Art. 35 + 3 jours ouvrables.</div>}
           <Row l={'ONSS employeur ('+(TX_ONSS_E*100).toFixed(1)+'%)'} v={'+'+fmt((indemPreavis+coutOutplacement+indemProtection+indemAbus)*TX_ONSS_E)+' €'} c="#f87171"/>
           <Row l="COUT TOTAL EMPLOYEUR" v={fmt(coutTotal)+' €'} b/>
         </C>
@@ -493,7 +493,7 @@ export function SimuLicenciementV2({s}){
             'Loi 26/12/2013 — Statut unique (bareme preavis)',
             outplacement?'AR Outplacement — Obligatoire si preavis >= 30 sem.':'',
             motif==='abus'?'CCT 109 — 3 a 17 semaines (manifestement deraisonnable)':'',
-            motif==='protege'?'Loi protection — Delegues, femmes enceintes, credit-temps':'',
+            motif==='protege'?'Loi protection — Délégués, femmes enceintes, crédit-temps':'',
           ].filter(Boolean).map((t,i)=><div key={i} style={{padding:'3px 0'}}>• {t}</div>)}</div>
         </C>
       </div>
@@ -546,11 +546,11 @@ export function SimuPensionV2({s}){
 
   return <div style={{padding:24}}>
     <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>🏖 Simulateur Pension</h2>
-    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Legale (SFPD) + complementaire (2e pilier) + epargne (3e pilier) — Projection a {ageRetraite} ans</p>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Legale (SFPD) + complémentaire (2e pilier) + epargne (3e pilier) — Projection a {ageRetraite} ans</p>
 
     <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:16}}>
       <div style={{padding:18,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
-        {[{l:'Age: '+age+' ans',v:age,set:setAge,min:20,max:65},{l:'Brut: '+fmt(brut)+' €',v:brut,set:setBrut,min:1800,max:10000,step:50},{l:'Annees carriere: '+annees,v:annees,set:setAnnees,min:0,max:45}].map((sl,i)=>
+        {[{l:'Age: '+age+' ans',v:age,set:setAge,min:20,max:65},{l:'Brut: '+fmt(brut)+' €',v:brut,set:setBrut,min:1800,max:10000,step:50},{l:'Années carriere: '+annees,v:annees,set:setAnnees,min:0,max:45}].map((sl,i)=>
           <div key={i} style={{marginBottom:12}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>{sl.l}</label><input type="range" min={sl.min} max={sl.max} step={sl.step||1} value={sl.v} onChange={e=>sl.set(+e.target.value)} style={{width:'100%',accentColor:'#c6a34e'}}/></div>
         )}
         <div style={{marginBottom:10}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Situation familiale</label>
@@ -592,7 +592,7 @@ export function SimuPensionV2({s}){
 
 
 // ═══════════════════════════════════════════════════════════
-// 7. TEMPS PARTIEL V2 — Credit heures + heures complementaires
+// 7. TEMPS PARTIEL V2 — Credit heures + heures complémentaires
 // ═══════════════════════════════════════════════════════════
 export function SimuTempsPartielV2({s}){
   const [brutFT,setBrutFT]=useState(3500);const [heures,setHeures]=useState(19);const [hCompl,setHCompl]=useState(0);
@@ -606,17 +606,17 @@ export function SimuTempsPartielV2({s}){
 
   const regimes=[{h:38,l:'Temps plein',f:'100%'},{h:30.4,l:'4/5eme',f:'80%'},{h:28.5,l:'3/4',f:'75%'},{h:19,l:'Mi-temps',f:'50%'},{h:12.67,l:'1/3',f:'33%'},{h:7.6,l:'1/5eme',f:'20%'}];
 
-  // Credit-temps
+  // Crédit-temps
   const creditTemps=[
-    {type:'Credit-temps sans motif',duree:'Max 12 mois sur carriere',alloc:'Pas d\'allocation ONEM'},
-    {type:'Credit-temps motif soins',duree:'Max 51 mois',alloc:'Allocation ONEM (~200-400 €/m)'},
-    {type:'Credit-temps formation',duree:'Max 36 mois',alloc:'Allocation ONEM'},
-    {type:'Credit-temps fin carriere',duree:'Jusqu\'a pension (>55 ans)',alloc:'Allocation ONEM majoree'},
+    {type:'Crédit-temps sans motif',duree:'Max 12 mois sur carriere',alloc:'Pas d\'allocation ONEM'},
+    {type:'Crédit-temps motif soins',duree:'Max 51 mois',alloc:'Allocation ONEM (~200-400 €/m)'},
+    {type:'Crédit-temps formation',duree:'Max 36 mois',alloc:'Allocation ONEM'},
+    {type:'Crédit-temps fin carriere',duree:'Jusqu\'a pension (>55 ans)',alloc:'Allocation ONEM majoree'},
   ];
 
   return <div style={{padding:24}}>
     <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>⏱ Simulateur Temps Partiel</h2>
-    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Prorata + credit heures + heures complementaires + droits sociaux</p>
+    <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>Prorata + credit heures + heures complémentaires + droits sociaux</p>
 
     <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:16}}>
       <div style={{padding:18,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
@@ -624,21 +624,21 @@ export function SimuTempsPartielV2({s}){
           <input type="range" min={1800} max={8000} step={50} value={brutFT} onChange={e=>setBrutFT(+e.target.value)} style={{width:'100%',accentColor:'#c6a34e'}}/></div>
         <div style={{fontSize:10,color:'#888',marginBottom:6}}>Regime horaire</div>
         {regimes.map(r=><button key={r.h} onClick={()=>setHeures(r.h)} style={{display:'block',width:'100%',padding:'6px 10px',marginBottom:3,borderRadius:6,border:heures===r.h?'1px solid #c6a34e':'1px solid rgba(255,255,255,.05)',background:heures===r.h?'rgba(198,163,78,.08)':'transparent',color:heures===r.h?'#c6a34e':'#888',fontSize:10,cursor:'pointer',textAlign:'left',fontFamily:'inherit'}}>{r.l} ({r.h}h — {r.f})</button>)}
-        <div style={{marginTop:12}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Heures complementaires/sem: {hCompl}h</label>
+        <div style={{marginTop:12}}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Heures complémentaires/sem: {hCompl}h</label>
           <input type="range" min={0} max={12} step={1} value={hCompl} onChange={e=>setHCompl(+e.target.value)} style={{width:'100%',accentColor:'#fb923c'}}/></div>
         <div style={{marginTop:8,padding:8,background:'rgba(198,163,78,.04)',borderRadius:6,fontSize:10,color:'#888'}}>Fraction: <b style={{color:'#c6a34e'}}>{Math.round(fraction*10000)/100}%</b></div>
       </div>
       <div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
-          <C title="Temps plein"><Row l="Brut" v={fmt(brutFT)+' €'}/><Row l="Net" v={fmt(netFT)+' €'} c="#4ade80"/><Row l="Cout" v={fmt(Math.round(brutFT*(1+TX_ONSS_E)*100)/100)+' €'} c="#f87171"/></C>
-          <C title={"Temps partiel ("+Math.round(fraction*100)+"%)"}><Row l="Brut prorata" v={fmt(brutTP)+' €'}/>{hCompl>0&&<Row l={"+ Heures compl. ("+hCompl+"h/sem)"} v={'+'+fmt(brutCompl)+' €'} c="#fb923c"/>}<Row l="Net total" v={fmt(net)+' €'} c="#4ade80"/><Row l="Cout employeur" v={fmt(coutE)+' €'} c="#f87171"/></C>
+          <C title="Temps plein"><Row l="Brut" v={fmt(brutFT)+' €'}/><Row l="Net" v={fmt(netFT)+' €'} c="#4ade80"/><Row l="Coût" v={fmt(Math.round(brutFT*(1+TX_ONSS_E)*100)/100)+' €'} c="#f87171"/></C>
+          <C title={"Temps partiel ("+Math.round(fraction*100)+"%)"}><Row l="Brut prorata" v={fmt(brutTP)+' €'}/>{hCompl>0&&<Row l={"+ Heures compl. ("+hCompl+"h/sem)"} v={'+'+fmt(brutCompl)+' €'} c="#fb923c"/>}<Row l="Net total" v={fmt(net)+' €'} c="#4ade80"/><Row l="Coût employeur" v={fmt(coutE)+' €'} c="#f87171"/></C>
         </div>
 
         <C title="Impact droits sociaux">
-          {[{l:'Conges payes',v:Math.round(20*fraction)+'j / 20j',p:fraction*100,c:fraction>=0.5?'#4ade80':'#eab308'},
-            {l:'Pecule vacances',v:fmt(brutTP*0.1538*12)+' €/an',p:fraction*100,c:'#06b6d4'},
+          {[{l:'Congés payes',v:Math.round(20*fraction)+'j / 20j',p:fraction*100,c:fraction>=0.5?'#4ade80':'#eab308'},
+            {l:'Pécule vacances',v:fmt(brutTP*0.1538*12)+' €/an',p:fraction*100,c:'#06b6d4'},
             {l:'Pension legale',v:'Prorata '+Math.round(fraction*100)+'%',p:fraction*100,c:'#3b82f6'},
-            {l:'Chomage',v:fraction>=0.33?'Droits maintenus':'⚠️ Risque perte',p:fraction>=0.33?100:30,c:fraction>=0.33?'#4ade80':'#ef4444'},
+            {l:'Chômage',v:fraction>=0.33?'Droits maintenus':'⚠️ Risque perte',p:fraction>=0.33?100:30,c:fraction>=0.33?'#4ade80':'#ef4444'},
             {l:'Maladie (salaire garanti)',v:fraction>=0.5?'30 jours complets':'Prorata',p:fraction>=0.5?100:fraction*100,c:fraction>=0.5?'#4ade80':'#eab308'},
           ].map((r,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
             <span style={{fontSize:11,color:'#e8e6e0',flex:1}}>{r.l}</span>
@@ -646,7 +646,7 @@ export function SimuTempsPartielV2({s}){
           </div>)}
         </C>
 
-        <C title="Credit-temps (Loi 10/08/2001)">
+        <C title="Crédit-temps (Loi 10/08/2001)">
           {creditTemps.map((ct,i)=><div key={i} style={{padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
             <div style={{fontSize:11,fontWeight:600,color:'#c6a34e'}}>{ct.type}</div>
             <div style={{fontSize:10,color:'#888'}}>{ct.duree} — {ct.alloc}</div>

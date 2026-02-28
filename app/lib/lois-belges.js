@@ -66,9 +66,9 @@ var LOIS_BELGES = {
     RMMMG: { montant18ans: 2070.48, montant20ans6m: 2070.48, montant21ans12m: 2070.48, source: 'CNT - CCT 43/15' },
     indexSante: { coeff: 2.0399, pivot: 125.60, dateDerniereIndex: '2024-12-01', prochainPivotEstime: '2026-06-01' },
     peculeVacances: {
-      simple: { pct: 0.0767, base: 'brut annuel precedent' },
+      simple: { pct: 0.0767, base: 'brut annuel précédent' },
       double: { pct: 0.9200, base: 'brut mensuel' },
-      patronal: { pct: 0.1535, base: 'brut annuel precedent' },
+      patronal: { pct: 0.1535, base: 'brut annuel précédent' },
       ouvrierDouble: { pct: 0.0858, base: 'brut ouvrier x 108%' },
     },
     treizieme: { obligatoire: true, cp200: true, base: 'salaire mensuel brut', onss: true },
@@ -79,7 +79,7 @@ var LOIS_BELGES = {
     partTravailleur: { min: 1.09, max: null },
     valeurFaciale: { max: 10.00 },
     partPatronale: { max: 8.91 },
-    conditions: 'Par jour effectivement preste',
+    conditions: 'Par jour effectivement presté',
     exonerationFiscale: true,
     exonerationONSS: true,
   },
@@ -176,7 +176,7 @@ var LOIS_BELGES = {
 
   // ═══ CONTRATS ═══
   contrats: {
-    periodeEssai: { supprimee: true, exception: 'travail etudiant/interim/occupation temporaire' },
+    periodeEssai: { supprimee: true, exception: 'travail étudiant/intérim/occupation temporaire' },
     clauseNonConcurrence: { dureeMax: 12, brut_min: 44447, brut_mid: 88895, indemniteMin: 0.50 },
     ecolecholage: { dureeMax: 36, brut_min: 44447, formationMin: 80 },
   },
@@ -213,7 +213,7 @@ var LOIS_BELGES = {
     delaiIN: 'Avant debut prestations',
     delaiOUT: 'Le jour meme',
     types: ['IN','OUT','UPDATE','CANCEL'],
-    canal: 'Portail securite sociale ou batch',
+    canal: 'Portail sécurité sociale ou batch',
     sanctionNiveau: 3,
   },
 
@@ -227,7 +227,7 @@ var LOIS_BELGES = {
 
   // ═══ BELCOTAX ═══
   belcotax: {
-    delai: '1er mars annee N+1',
+    delai: '1er mars année N+1',
     format: 'XML BelcotaxOnWeb',
     fiches: ['281.10','281.13','281.14','281.20','281.30','281.50'],
   },
@@ -493,8 +493,8 @@ function checkLoisBelgesOutdated() {
     futureEntries: future.map(function(e) { return { date: e.date, source: e.source }; }),
     lastApplied: applied,
     missingYear: lastYear < currentYear,
-    warnings: pending.length > 0 ? ['Il y a ' + pending.length + ' mise(s) a jour en attente.'] :
-              lastYear < currentYear ? ['Aucune entree pour ' + currentYear + '. Verifiez les publications officielles.'] : [],
+    warnings: pending.length > 0 ? ['Il y a ' + pending.length + ' mise(s) à jour en attente.'] :
+              lastYear < currentYear ? ['Aucune entrée pour ' + currentYear + '. Vérifiez les publications officielles.'] : [],
   };
 }
 

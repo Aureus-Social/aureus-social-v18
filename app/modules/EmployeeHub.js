@@ -59,43 +59,43 @@ export function DashboardRHV2({s,d}){
     <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
       <KPI l="Effectif" v={n} c="#c6a34e" sub={cdi+' CDI / '+cdd+' CDD'}/>
       <KPI l="Turnover" v={turnover+'%'} c={turnover>15?'#ef4444':turnover>8?'#eab308':'#22c55e'} sub={sortis+' depart(s)'}/>
-      <KPI l="Absenteisme" v={absRate+'%'} c={absRate>5?'#ef4444':absRate>3?'#eab308':'#22c55e'} sub={totalAbsDays+' jours'}/>
+      <KPI l="Absentéisme" v={absRate+'%'} c={absRate>5?'#ef4444':absRate>3?'#eab308':'#22c55e'} sub={totalAbsDays+' jours'}/>
       <KPI l="Masse brute" v={fi(mb)+' €/m'} c="#60a5fa" sub={'Moy: '+fi(avgBrut)+' €'}/>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
-      <KPI l="Cout employeur" v={fi(coutTotal)+' €/m'} c="#f87171"/>
-      <KPI l="Anciennete moy." v={avgAnc+' ans'} c="#a78bfa"/>
+      <KPI l="Coût employeur" v={fi(coutTotal)+' €/m'} c="#f87171"/>
+      <KPI l="Ancienneté moy." v={avgAnc+' ans'} c="#a78bfa"/>
       <KPI l="Genre H/F" v={hommes+'/'+femmes} c="#3b82f6" sub={n-hommes-femmes>0?(n-hommes-femmes)+' non def.':''}/>
       <KPI l="Alertes" v={noNISS+noIBAN+noSalary} c={noNISS+noIBAN+noSalary>0?'#ef4444':'#4ade80'} sub={noNISS+' NISS, '+noIBAN+' IBAN'}/>
     </div>
 
-    <div style={{display:'flex',gap:4,marginBottom:16}}>{[{v:'overview',l:'Vue globale'},{v:'events',l:'Evenements'},{v:'alerts',l:'Alertes donnees'},{v:'costs',l:'Analyse couts'}].map(t=>
+    <div style={{display:'flex',gap:4,marginBottom:16}}>{[{v:'overview',l:'Vue globale'},{v:'events',l:'Événements'},{v:'alerts',l:'Alertes données'},{v:'costs',l:'Analyse coûts'}].map(t=>
       <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:11,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}</div>
 
     {tab==='overview'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
-      <C title="Repartition contrats">{[{l:'CDI',v:cdi,c:'#4ade80'},{l:'CDD',v:cdd,c:'#f87171'},{l:'Temps partiel',v:tp,c:'#60a5fa'}].map((r,i)=><Row key={i} l={r.l+' ('+( n>0?Math.round(r.v/n*100):0)+'%)'} v={r.v} c={r.c}/>)}</C>
+      <C title="Répartition contrats">{[{l:'CDI',v:cdi,c:'#4ade80'},{l:'CDD',v:cdd,c:'#f87171'},{l:'Temps partiel',v:tp,c:'#60a5fa'}].map((r,i)=><Row key={i} l={r.l+' ('+( n>0?Math.round(r.v/n*100):0)+'%)'} v={r.v} c={r.c}/>)}</C>
       <C title="Top 5 salaires">{[...allEmps].sort((a,b)=>(+(b.monthlySalary||b.gross||0))-(+(a.monthlySalary||a.gross||0))).slice(0,5).map((e,i)=><Row key={i} l={(e.first||'?')+' '+(e.last||'?')+' — '+e._co} v={fmt(+(e.monthlySalary||e.gross||0))+' €'}/>)}</C>
       <C title="Par client">{clients.map((c,i)=>{const ce=(c.emps||[]);return <Row key={i} l={(c.company?.name||'Client '+(i+1))+' ('+ce.length+' emp.)'} v={fi(ce.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0)),0)*(1+TX_ONSS_E))+' €/m'}/>;})}</C>
-      <C title="Projections annuelles"><Row l="Masse brute annuelle" v={fi(mb*12)+' €'}/><Row l="Cout employeur annuel" v={fi(coutTotal*12)+' €'} c="#f87171"/><Row l="ONSS total" v={fi(mb*12*(TX_ONSS_W+TX_ONSS_E))+' €'} c="#fb923c"/><Row l="Pecule vacances (15.38%)" v={fi(mb*12*0.1538)+' €'} c="#4ade80"/><Row l="13eme mois" v={fi(mb)+' €'} c="#60a5fa"/></C>
+      <C title="Projections annuelles"><Row l="Masse brute annuelle" v={fi(mb*12)+' €'}/><Row l="Coût employeur annuel" v={fi(coutTotal*12)+' €'} c="#f87171"/><Row l="ONSS total" v={fi(mb*12*(TX_ONSS_W+TX_ONSS_E))+' €'} c="#fb923c"/><Row l="Pécule vacances (15.38%)" v={fi(mb*12*0.1538)+' €'} c="#4ade80"/><Row l="13eme mois" v={fi(mb)+' €'} c="#60a5fa"/></C>
     </div>}
-    {tab==='events'&&<C title={"Evenements a venir ("+events.length+")"}>
+    {tab==='events'&&<C title={"Événements a venir ("+events.length+")"}>
       {events.slice(0,20).map((ev,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
         <div style={{minWidth:40,textAlign:'center',fontSize:12,fontWeight:700,color:ev.c}}>{ev.days<0?'+'+Math.abs(ev.days):'J-'+ev.days}</div>
         <div style={{flex:1}}><div style={{fontSize:11,color:'#e8e6e0'}}>{ev.name}</div><div style={{fontSize:9,color:'#888'}}>{ev.co}</div></div>
         <Badge text={ev.event} color={ev.c}/>
       </div>)}
-      {events.length===0&&<div style={{textAlign:'center',color:'#888',padding:20}}>Aucun evenement a venir</div>}
+      {events.length===0&&<div style={{textAlign:'center',color:'#888',padding:20}}>Aucun événement a venir</div>}
     </C>}
-    {tab==='alerts'&&<C title="Donnees incompletes">
-      {noNISS>0&&<Row l={'NISS manquants: '+noNISS+' employe(s)'} v="⚠️" c="#ef4444"/>}
-      {noIBAN>0&&<Row l={'IBAN manquants: '+noIBAN+' employe(s)'} v="⚠️" c="#eab308"/>}
-      {noSalary>0&&<Row l={'Salaire = 0: '+noSalary+' employe(s)'} v="❌" c="#ef4444"/>}
-      {noNISS+noIBAN+noSalary===0&&<div style={{textAlign:'center',padding:20,color:'#4ade80'}}>✅ Toutes les donnees sont completes</div>}
+    {tab==='alerts'&&<C title="Données incompletes">
+      {noNISS>0&&<Row l={'NISS manquants: '+noNISS+' employé(s)'} v="⚠️" c="#ef4444"/>}
+      {noIBAN>0&&<Row l={'IBAN manquants: '+noIBAN+' employé(s)'} v="⚠️" c="#eab308"/>}
+      {noSalary>0&&<Row l={'Salaire = 0: '+noSalary+' employé(s)'} v="❌" c="#ef4444"/>}
+      {noNISS+noIBAN+noSalary===0&&<div style={{textAlign:'center',padding:20,color:'#4ade80'}}>✅ Toutes les données sont completes</div>}
       {allEmps.filter(e=>!e.niss&&!e.NISS).slice(0,10).map((e,i)=><div key={i} style={{fontSize:10,color:'#888',padding:'3px 0'}}>🆔 {e.first||'?'} {e.last||'?'} — {e._co}</div>)}
     </C>}
     {tab==='costs'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
-      <C title="Structure cout mensuel"><Row l="Salaires bruts" v={fmt(mb)+' €'}/><Row l={'ONSS patronal ('+(TX_ONSS_E*100).toFixed(1)+'%)'} v={'+'+fmt(mb*TX_ONSS_E)+' €'} c="#f87171"/><Row l="Precompte pro estime" v={fmt(allEmps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0))+' €'} c="#fb923c"/><Row l="Net total employes" v={fmt(mb*(1-TX_ONSS_W)-allEmps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0))+' €'} c="#4ade80"/><div style={{borderTop:'2px solid rgba(198,163,78,.2)',paddingTop:8,marginTop:4}}><Row l="COUT TOTAL" v={fmt(coutTotal)+' €/mois'}/></div></C>
-      <C title="Ratio & benchmarks"><Row l="Cout moyen/employe" v={fi(n>0?coutTotal/n:0)+' €'}/><Row l="Ratio net/cout" v={(coutTotal>0?Math.round((mb*(1-TX_ONSS_W)-allEmps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0))/coutTotal*10000)/100:0)+'%'} c="#4ade80"/><Row l="Taux de charge" v={(mb>0?Math.round((coutTotal-mb)/mb*10000)/100:0)+'%'} c="#f87171"/><Row l="Benchmark CP 200" v="~30-35%" c="#888"/></C>
+      <C title="Structure cout mensuel"><Row l="Salaires bruts" v={fmt(mb)+' €'}/><Row l={'ONSS patronal ('+(TX_ONSS_E*100).toFixed(1)+'%)'} v={'+'+fmt(mb*TX_ONSS_E)+' €'} c="#f87171"/><Row l="Précompte pro estime" v={fmt(allEmps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0))+' €'} c="#fb923c"/><Row l="Net total employés" v={fmt(mb*(1-TX_ONSS_W)-allEmps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0))+' €'} c="#4ade80"/><div style={{borderTop:'2px solid rgba(198,163,78,.2)',paddingTop:8,marginTop:4}}><Row l="COUT TOTAL" v={fmt(coutTotal)+' €/mois'}/></div></C>
+      <C title="Ratio & benchmarks"><Row l="Coût moyen/employé" v={fi(n>0?coutTotal/n:0)+' €'}/><Row l="Ratio net/cout" v={(coutTotal>0?Math.round((mb*(1-TX_ONSS_W)-allEmps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0))/coutTotal*10000)/100:0)+'%'} c="#4ade80"/><Row l="Taux de charge" v={(mb>0?Math.round((coutTotal-mb)/mb*10000)/100:0)+'%'} c="#f87171"/><Row l="Benchmark CP 200" v="~30-35%" c="#888"/></C>
     </div>}
   </div>;
 }
@@ -131,7 +131,7 @@ td{padding:4px;border:1px solid #ddd;font-size:8.5px}
   <tr><td style="font-weight:bold">Date impression</td><td>${now.toLocaleDateString('fr-BE')} a ${now.toLocaleTimeString('fr-BE')}</td></tr>
 </table>
 <table>
-  <tr><th>N° ordre</th><th>Nom</th><th>Prenom</th><th>NISS</th><th>Sexe</th><th>Nationalite</th><th>Date naiss.</th><th>Domicile</th><th>Debut</th><th>Fin</th><th>Type contrat</th><th>Regime</th><th>Fonction</th><th>Brut mensuel</th></tr>`;
+  <tr><th>N° ordre</th><th>Nom</th><th>Prenom</th><th>NISS</th><th>Sexe</th><th>Nationalité</th><th>Date naiss.</th><th>Domicile</th><th>Debut</th><th>Fin</th><th>Type contrat</th><th>Regime</th><th>Fonction</th><th>Brut mensuel</th></tr>`;
     emps.forEach((e,i)=>{
       html+=`<tr>
         <td style="text-align:center;font-weight:bold">${String(i+1).padStart(3,'0')}</td>
@@ -151,7 +151,7 @@ td{padding:4px;border:1px solid #ddd;font-size:8.5px}
 <div class="footer">
   <div>Total: <strong>${emps.length}</strong> travailleur(s) inscrit(s) au registre</div>
   <div>Ce document est confidentiel et doit etre tenu a disposition de l'inspection sociale (Art. 4 AR 08/08/1980)</div>
-  <div>Document genere par Aureus Social Pro — ${now.toLocaleDateString('fr-BE')}</div>
+  <div>Document généré par Aureus Social Pro — ${now.toLocaleDateString('fr-BE')}</div>
 </div>
 <div style="text-align:center;margin:20px" class="no-print">
   <button onclick="window.print()" style="background:#c6a34e;color:#fff;border:none;padding:12px 30px;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px">🖨 Imprimer / Sauvegarder PDF</button>
@@ -165,7 +165,7 @@ td{padding:4px;border:1px solid #ddd;font-size:8.5px}
       <div><h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>📖 Registre du Personnel</h2><p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Format legal — AR du 8 aout 1980 — {emps.length} travailleurs</p></div>
       <div style={{display:'flex',gap:8}}>
         <select value={sel} onChange={e=>setSel(+e.target.value)} style={{padding:'8px 12px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}>{clients.map((c,i)=><option key={i} value={i}>{c.company?.name||'Client '+(i+1)} ({(c.emps||[]).length})</option>)}</select>
-        <button onClick={generateRegistre} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:12,cursor:'pointer'}}>📄 Generer PDF legal</button>
+        <button onClick={generateRegistre} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:12,cursor:'pointer'}}>📄 Générer PDF legal</button>
       </div>
     </div>
 
@@ -188,11 +188,11 @@ td{padding:4px;border:1px solid #ddd;font-size:8.5px}
           <span style={{fontSize:10,color:'#888'}}>{e.function||e.titre||'—'}</span>
           <span style={{textAlign:'right',fontFamily:'monospace',color:'#c6a34e'}}>{fmt(+(e.monthlySalary||e.gross||0))}</span>
         </div>)}
-        {emps.length===0&&<div style={{padding:30,textAlign:'center',color:'#888'}}>Aucun employe pour ce client</div>}
+        {emps.length===0&&<div style={{padding:30,textAlign:'center',color:'#888'}}>Aucun employé pour ce client</div>}
       </div>
     </div>
     <div style={{marginTop:12,padding:10,background:'rgba(198,163,78,.03)',borderRadius:8,fontSize:10,color:'#888'}}>
-      📋 Obligation legale: Le registre du personnel doit etre tenu a jour et mis a disposition lors de tout controle social (Art. 4 AR 08/08/1980). Le bouton "Generer PDF legal" produit un document au format officiel imprimable.
+      📋 Obligation legale: Le registre du personnel doit etre tenu a jour et mis a disposition lors de tout controle social (Art. 4 AR 08/08/1980). Le bouton "Générer PDF legal" produit un document au format officiel imprimable.
     </div>
   </div>;
 }
@@ -204,9 +204,9 @@ export function PortailEmployeV2({s,d}){
   const clients=s.clients||[];const [selC,setSelC]=useState(0);const [selE,setSelE]=useState(0);
   const [tab,setTab]=useState('accueil');const [demandes,setDemandes]=useState([]);
   const [newDem,setNewDem]=useState({type:'conge',dateDebut:'',dateFin:'',motif:''});
-  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+  const mois=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const cl=clients[selC]||{emps:[]};const emp=(cl.emps||[])[selE];
-  if(!emp)return <div style={{padding:24,textAlign:'center',color:'#888'}}>Ajoutez des clients et employes pour acceder au portail.</div>;
+  if(!emp)return <div style={{padding:24,textAlign:'center',color:'#888'}}>Ajoutez des clients et employés pour acceder au portail.</div>;
 
   const name=(emp.first||emp.fn||'')+' '+(emp.last||emp.ln||'');
   const brut=+(emp.monthlySalary||emp.gross||0);
@@ -228,25 +228,25 @@ export function PortailEmployeV2({s,d}){
 
   return <div style={{padding:24}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-      <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>👤 Portail Employe</h2>
+      <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>👤 Portail Employé</h2>
       <div style={{display:'flex',gap:6}}>
         <select value={selC} onChange={e=>{setSelC(+e.target.value);setSelE(0);}} style={{padding:'6px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:10,fontFamily:'inherit'}}>{clients.map((c,i)=><option key={i} value={i}>{c.company?.name||'Client '+(i+1)}</option>)}</select>
         <select value={selE} onChange={e=>setSelE(+e.target.value)} style={{padding:'6px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:10,fontFamily:'inherit'}}>{(cl.emps||[]).map((e,i)=><option key={i} value={i}>{(e.first||'?')+' '+(e.last||'?')}</option>)}</select>
         <Badge text="MODE PREVIEW" color="#eab308"/>
       </div>
     </div>
-    <p style={{fontSize:11,color:'#888',margin:'0 0 16px'}}>Espace personnel employe — fiches de paie, demandes, infos</p>
+    <p style={{fontSize:11,color:'#888',margin:'0 0 16px'}}>Espace personnel employé — fiches de paie, demandes, infos</p>
 
     {/* Welcome */}
     <div style={{padding:18,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14,marginBottom:16}}>
       <div style={{display:'flex',alignItems:'center',gap:14}}>
         <div style={{width:48,height:48,borderRadius:24,background:'linear-gradient(135deg,#c6a34e,#a07d3e)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,color:'#060810',fontWeight:800}}>{(emp.first||'?')[0]}{(emp.last||'?')[0]}</div>
-        <div><div style={{fontSize:16,fontWeight:700,color:'#e5e5e5'}}>Bonjour, {emp.first||name} 👋</div><div style={{fontSize:11,color:'#888'}}>{emp.function||emp.job||'Employe'} — {cl.company?.name} — {emp.contractType||'CDI'} — {anc} mois anciennete</div></div>
+        <div><div style={{fontSize:16,fontWeight:700,color:'#e5e5e5'}}>Bonjour, {emp.first||name} 👋</div><div style={{fontSize:11,color:'#888'}}>{emp.function||emp.job||'Employé'} — {cl.company?.name} — {emp.contractType||'CDI'} — {anc} mois ancienneté</div></div>
       </div>
     </div>
 
     <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:16}}>
-      <KPI l="Net mensuel" v={fmt(net)+' €'} c="#22c55e"/><KPI l="Conges restants" v={congesRestants+'/'+congesTotal} c="#c6a34e"/><KPI l="Anciennete" v={anc+' mois'} c="#3b82f6"/><KPI l="Prochain salaire" v={'25/'+String(new Date().getMonth()+1).padStart(2,'0')} c="#a855f7"/>
+      <KPI l="Net mensuel" v={fmt(net)+' €'} c="#22c55e"/><KPI l="Congés restants" v={congesRestants+'/'+congesTotal} c="#c6a34e"/><KPI l="Ancienneté" v={anc+' mois'} c="#3b82f6"/><KPI l="Prochain salaire" v={'25/'+String(new Date().getMonth()+1).padStart(2,'0')} c="#a855f7"/>
     </div>
 
     <div style={{display:'flex',gap:4,marginBottom:16}}>{[{v:'accueil',l:'📋 Mon dossier'},{v:'fiches',l:'💰 Fiches de paie'},{v:'demandes',l:'📝 Demandes'},{v:'absences',l:'📅 Absences'}].map(t=>
@@ -276,7 +276,7 @@ export function PortailEmployeV2({s,d}){
     {tab==='demandes'&&<div>
       <C title="Nouvelle demande">
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:8,marginBottom:10}}>
-          <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Type</label><select value={newDem.type} onChange={e=>setNewDem(p=>({...p,type:e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}><option value="conge">Conge</option><option value="maladie">Maladie</option><option value="formation">Formation</option><option value="teletravail">Teletravail</option><option value="attestation">Attestation</option><option value="autre">Autre</option></select></div>
+          <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Type</label><select value={newDem.type} onChange={e=>setNewDem(p=>({...p,type:e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}><option value="conge">Congé</option><option value="maladie">Maladie</option><option value="formation">Formation</option><option value="teletravail">Télétravail</option><option value="attestation">Attestation</option><option value="autre">Autre</option></select></div>
           <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Date debut</label><input type="date" value={newDem.dateDebut} onChange={e=>setNewDem(p=>({...p,dateDebut:e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}/></div>
           <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Date fin</label><input type="date" value={newDem.dateFin} onChange={e=>setNewDem(p=>({...p,dateFin:e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}/></div>
           <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Motif</label><input value={newDem.motif} onChange={e=>setNewDem(p=>({...p,motif:e.target.value}))} placeholder="Optionnel" style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit'}}/></div>
@@ -304,7 +304,7 @@ export function PortailEmployeV2({s,d}){
 }
 
 // ═══════════════════════════════════════════════════════════
-// 4. GESTION INTERIMAIRES — Contrats + DIMONA + Couts
+// 4. GESTION INTERIMAIRES — Contrats + DIMONA + Coûts
 // ═══════════════════════════════════════════════════════════
 export function GestionInterimairesV2({s,d}){
   const clients=s.clients||[];const [sel,setSel]=useState(0);
@@ -318,20 +318,20 @@ export function GestionInterimairesV2({s,d}){
 
   return <div style={{padding:24}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-      <div><h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>👷 Gestion Interimaires</h2><p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Contrats, DIMONA, suivi couts agences — {ints.length} actifs</p></div>
-      <button onClick={()=>setShowAdd(true)} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:12,cursor:'pointer'}}>+ Interimaire</button>
+      <div><h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>👷 Gestion Intérimaires</h2><p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Contrats, DIMONA, suivi coûts agences — {ints.length} actifs</p></div>
+      <button onClick={()=>setShowAdd(true)} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:12,cursor:'pointer'}}>+ Intérimaire</button>
     </div>
 
     <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:16}}>
-      <KPI l="Interimaires actifs" v={ints.length} c="#c6a34e"/><KPI l="Brut total" v={fmt(totalBrut)+' €'} c="#60a5fa"/><KPI l="Cout agences" v={fmt(totalCout)+' €'} c="#ef4444"/><KPI l="Coeff. moyen" v={ints.length>0?'x'+(ints.reduce((a,i)=>a+i.coeff,0)/ints.length).toFixed(2):'—'} c="#fb923c"/>
+      <KPI l="Intérimaires actifs" v={ints.length} c="#c6a34e"/><KPI l="Brut total" v={fmt(totalBrut)+' €'} c="#60a5fa"/><KPI l="Coût agences" v={fmt(totalCout)+' €'} c="#ef4444"/><KPI l="Coeff. moyen" v={ints.length>0?'x'+(ints.reduce((a,i)=>a+i.coeff,0)/ints.length).toFixed(2):'—'} c="#fb923c"/>
     </div>
 
-    <div style={{display:'flex',gap:4,marginBottom:16}}>{[{v:'liste',l:'📋 Liste'},{v:'contrats',l:'📝 Contrats'},{v:'couts',l:'💰 Analyse couts'}].map(t=>
+    <div style={{display:'flex',gap:4,marginBottom:16}}>{[{v:'liste',l:'📋 Liste'},{v:'contrats',l:'📝 Contrats'},{v:'coûts',l:'💰 Analyse coûts'}].map(t=>
       <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:11,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}</div>
 
     {tab==='liste'&&<div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 100px 70px 60px 80px 80px 30px',padding:'8px 12px',background:'rgba(198,163,78,.06)',fontSize:9,fontWeight:600,color:'#c6a34e'}}>
-        <div>Nom</div><div>Agence</div><div>NISS</div><div>Heures</div><div>Coeff</div><div style={{textAlign:'right'}}>Brut</div><div style={{textAlign:'right'}}>Cout</div><div/>
+        <div>Nom</div><div>Agence</div><div>NISS</div><div>Heures</div><div>Coeff</div><div style={{textAlign:'right'}}>Brut</div><div style={{textAlign:'right'}}>Coût</div><div/>
       </div>
       {ints.map((it,i)=>{const ag=agences.find(a=>a.id===it.agence);return <div key={it.id} style={{display:'grid',gridTemplateColumns:'1fr 1fr 100px 70px 60px 80px 80px 30px',padding:'6px 12px',borderBottom:'1px solid rgba(255,255,255,.02)',fontSize:11,alignItems:'center'}}>
         <span style={{color:'#e8e6e0',fontWeight:500}}>{it.first} {it.last}</span>
@@ -343,10 +343,10 @@ export function GestionInterimairesV2({s,d}){
         <span style={{textAlign:'right',fontFamily:'monospace',color:'#ef4444',fontWeight:600}}>{fmt(it.cout)}</span>
         <button onClick={()=>setInts(p=>p.filter(x=>x.id!==it.id))} style={{background:'none',border:'none',color:'#ef4444',cursor:'pointer'}}>✕</button>
       </div>;})}
-      {ints.length===0&&<div style={{padding:30,textAlign:'center',color:'#888'}}>Aucun interimaire. Cliquez + pour ajouter.</div>}
+      {ints.length===0&&<div style={{padding:30,textAlign:'center',color:'#888'}}>Aucun intérimaire. Cliquez + pour ajouter.</div>}
     </div>}
 
-    {tab==='contrats'&&<C title="Contrats & DIMONA interimaires">
+    {tab==='contrats'&&<C title="Contrats & DIMONA intérimaires">
       {ints.map((it,i)=><div key={it.id} style={{padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div><b style={{color:'#e8e6e0',fontSize:12}}>{it.first} {it.last}</b> <span style={{color:'#888',fontSize:10}}>— {agences.find(a=>a.id===it.agence)?.n} — {it.motif}</span></div>
@@ -356,13 +356,13 @@ export function GestionInterimairesV2({s,d}){
           </div>
         </div>
       </div>)}
-      {ints.length===0&&<div style={{textAlign:'center',padding:20,color:'#888'}}>Aucun contrat interimaire</div>}
+      {ints.length===0&&<div style={{textAlign:'center',padding:20,color:'#888'}}>Aucun contrat intérimaire</div>}
     </C>}
 
-    {tab==='couts'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
-      <C title="Cout par agence">{[...new Set(ints.map(i=>i.agence))].map(ag=>{const agInts=ints.filter(i=>i.agence===ag);const agInfo=agences.find(a=>a.id===ag);return <Row key={ag} l={(agInfo?.n||ag)+' ('+agInts.length+')' } v={fmt(agInts.reduce((a,i)=>a+i.cout,0))+' €'} c={agInfo?.c}/>;})}{ints.length===0&&<div style={{color:'#888',fontSize:11}}>Pas de donnees</div>}</C>
+    {tab==='coûts'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+      <C title="Coût par agence">{[...new Set(ints.map(i=>i.agence))].map(ag=>{const agInts=ints.filter(i=>i.agence===ag);const agInfo=agences.find(a=>a.id===ag);return <Row key={ag} l={(agInfo?.n||ag)+' ('+agInts.length+')' } v={fmt(agInts.reduce((a,i)=>a+i.cout,0))+' €'} c={agInfo?.c}/>;})}{ints.length===0&&<div style={{color:'#888',fontSize:11}}>Pas de données</div>}</C>
       <C title="Comparaison interim vs CDI">
-        <Row l="Cout interim/mois" v={fmt(totalCout)+' €'} c="#ef4444"/>
+        <Row l="Coût interim/mois" v={fmt(totalCout)+' €'} c="#ef4444"/>
         <Row l="Equivalent CDI (ONSS)" v={fmt(totalBrut*(1+TX_ONSS_E))+' €'} c="#4ade80"/>
         <Row l="Surcout interim" v={totalBrut>0?'+'+Math.round((totalCout-totalBrut*(1+TX_ONSS_E))/(totalBrut*(1+TX_ONSS_E))*100)+'%':'—'} c={totalCout>totalBrut*(1+TX_ONSS_E)?'#ef4444':'#4ade80'}/>
         <div style={{marginTop:8,fontSize:10,color:'#888'}}>💡 L'interim coute en moyenne 80-100% de plus qu'un CDI equivalent (coefficient agence 1.8-2.2x).</div>
@@ -371,7 +371,7 @@ export function GestionInterimairesV2({s,d}){
 
     {showAdd&&<div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.6)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setShowAdd(false)}>
       <div onClick={e=>e.stopPropagation()} style={{background:'#0d1117',border:'1px solid rgba(198,163,78,.2)',borderRadius:16,padding:24,width:500}}>
-        <h3 style={{fontSize:16,fontWeight:700,color:'#c6a34e',marginBottom:14}}>Nouvel interimaire</h3>
+        <h3 style={{fontSize:16,fontWeight:700,color:'#c6a34e',marginBottom:14}}>Nouvel intérimaire</h3>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
           {[{l:'Prenom',k:'first'},{l:'Nom',k:'last'},{l:'NISS',k:'niss'},{l:'Brut/h (€)',k:'brutH',t:'number'},{l:'Heures/mois',k:'heures',t:'number'},{l:'Coefficient',k:'coeff',t:'number'},{l:'Date debut',k:'debut',t:'date'},{l:'Date fin',k:'fin',t:'date'},{l:'Motif',k:'motif'}].map((f,i)=>
             <div key={i}><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>{f.l}</label><input type={f.t||'text'} value={ni[f.k]} onChange={e=>setNi(p=>({...p,[f.k]:f.t==='number'?+e.target.value:e.target.value}))} style={{width:'100%',padding:'8px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',boxSizing:'border-box'}}/></div>

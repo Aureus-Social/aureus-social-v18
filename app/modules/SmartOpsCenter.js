@@ -8,7 +8,7 @@ import{TX_ONSS_W,TX_ONSS_E}from'../lib/lois-belges';
 // ═══════════════════════════════════════════════════════════
 const fmt=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
 const fi=v=>new Intl.NumberFormat('fr-BE',{maximumFractionDigits:0}).format(v||0);
-const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+const mois=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
 // ═══ HELPERS ═══
 const C=({children,title:t,sub})=><div style={{background:'rgba(198,163,78,.03)',borderRadius:12,padding:16,border:'1px solid rgba(198,163,78,.08)',marginBottom:14}}>{t&&<div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:sub?2:12}}>{t}</div>}{sub&&<div style={{fontSize:10,color:'#888',marginBottom:12}}>{sub}</div>}{children}</div>;
@@ -40,29 +40,29 @@ export function SmartAlertsEngine({s,d}){
 
     // ── RULE 1: DEADLINES LEGALES ──
     if(rulesEnabled.deadlines){
-      if(day<=5) a.push({id:'DL-ONSS-'+month,sev:'critical',cat:'ONSS',rule:'deadline',title:'ONSS provisions mensuelles',desc:'Paiement provisions ONSS du avant le 5 '+mois[month]+' '+yr,deadline:5-day,icon:'🏛',action:{page:'onss'},remedy:'Acceder au module ONSS → Generer virement provision'});
-      if(day<=15) a.push({id:'DL-PP-'+month,sev:day<=5?'critical':'high',cat:'Fiscal',rule:'deadline',title:'Precompte professionnel 274',desc:'Declaration + paiement PP avant le 15 '+mois[month],deadline:15-day,icon:'💰',action:{page:'fiscal'},remedy:'Module Fiscal → Generer declaration 274'});
+      if(day<=5) a.push({id:'DL-ONSS-'+month,sev:'critical',cat:'ONSS',rule:'deadline',title:'ONSS provisions mensuelles',desc:'Paiement provisions ONSS du avant le 5 '+mois[month]+' '+yr,deadline:5-day,icon:'🏛',action:{page:'onss'},remedy:'Acceder au module ONSS → Générer virement provision'});
+      if(day<=15) a.push({id:'DL-PP-'+month,sev:day<=5?'critical':'high',cat:'Fiscal',rule:'deadline',title:'Précompte professionnel 274',desc:'Déclaration + paiement PP avant le 15 '+mois[month],deadline:15-day,icon:'💰',action:{page:'fiscal'},remedy:'Module Fiscal → Générer déclaration 274'});
       if(day<=25) a.push({id:'DL-SEPA-'+month,sev:day<=20?'medium':'high',cat:'Paie',rule:'deadline',title:'Virements SEPA salaires',desc:'Virements nets a executer avant le 25 '+mois[month],deadline:25-day,icon:'💳',action:{page:'sepa'},remedy:'Module SEPA → Lancer batch virements'});
       if(day<=28) a.push({id:'DL-FICHE-'+month,sev:'low',cat:'Paie',rule:'deadline',title:'Distribution fiches de paie',desc:'Fiches a distribuer avant fin '+mois[month],deadline:28-day,icon:'📄',action:{page:'payslip'},remedy:'Module Paie → Distribuer par email'});
       // Quarterly
-      if([0,3,6,9].includes(month)&&day<=10) a.push({id:'DL-DMFA-Q'+quarter,sev:'critical',cat:'ONSS',rule:'deadline',title:'DmfA trimestrielle T'+quarter,desc:'Declaration DmfA Q'+quarter+'/'+yr+' — Delai: 10 '+mois[month],deadline:10-day,icon:'🏛',action:{page:'onss'},remedy:'Module ONSS → Batch DmfA → Generer XML'});
+      if([0,3,6,9].includes(month)&&day<=10) a.push({id:'DL-DMFA-Q'+quarter,sev:'critical',cat:'ONSS',rule:'deadline',title:'DmfA trimestrielle T'+quarter,desc:'Déclaration DmfA Q'+quarter+'/'+yr+' — Delai: 10 '+mois[month],deadline:10-day,icon:'🏛',action:{page:'onss'},remedy:'Module ONSS → Batch DmfA → Générer XML'});
       // Annual
-      if(month===1&&day<=28) a.push({id:'DL-BELCOTAX',sev:'critical',cat:'Fiscal',rule:'deadline',title:'Belcotax 281.10 / 281.20',desc:'Fiches fiscales annuelles — Deadline 1er mars',deadline:28-day,icon:'🧾',action:{page:'fiscal'},remedy:'Module Fiscal → Generer fiches 281'});
-      if(month===11&&day<=20) a.push({id:'DL-13MOIS',sev:'critical',cat:'Paie',rule:'deadline',title:'13eme mois / Prime fin annee',desc:'Versement avant le 20 decembre',deadline:20-day,icon:'🎄',action:{page:'payslip'},remedy:'Calculer prime fin annee par CP sectorielle'});
+      if(month===1&&day<=28) a.push({id:'DL-BELCOTAX',sev:'critical',cat:'Fiscal',rule:'deadline',title:'Belcotax 281.10 / 281.20',desc:'Fiches fiscales annuelles — Deadline 1er mars',deadline:28-day,icon:'🧾',action:{page:'fiscal'},remedy:'Module Fiscal → Générer fiches 281'});
+      if(month===11&&day<=20) a.push({id:'DL-13MOIS',sev:'critical',cat:'Paie',rule:'deadline',title:'13eme mois / Prime fin année',desc:'Versement avant le 20 décembre',deadline:20-day,icon:'🎄',action:{page:'payslip'},remedy:'Calculer prime fin année par CP sectorielle'});
       // Pécule vacances
-      if((month===3||month===4)&&day<=30) a.push({id:'DL-PECULE',sev:'high',cat:'Paie',rule:'deadline',title:'Pecule vacances employes',desc:'Versement pecule entre mai et juin',deadline:(month===3?30-day:60-day),icon:'🌴',action:{page:'payslip'},remedy:'Calculer pecule simple + double vacation'});
+      if((month===3||month===4)&&day<=30) a.push({id:'DL-PECULE',sev:'high',cat:'Paie',rule:'deadline',title:'Pécule vacances employés',desc:'Versement pécule entre mai et juin',deadline:(month===3?30-day:60-day),icon:'🌴',action:{page:'payslip'},remedy:'Calculer pécule simple + double vacation'});
       // Indexation CP200 janvier
-      if(month===0&&day<=31) a.push({id:'DL-INDEX',sev:'high',cat:'RH',rule:'deadline',title:'Indexation salariale CP 200',desc:'Verifier index sante janvier '+yr,deadline:31-day,icon:'📊',action:{page:'employees'},remedy:'Appliquer nouvel index aux baremes'});
+      if(month===0&&day<=31) a.push({id:'DL-INDEX',sev:'high',cat:'RH',rule:'deadline',title:'Indexation salariale CP 200',desc:'Verifier index sante janvier '+yr,deadline:31-day,icon:'📊',action:{page:'employees'},remedy:'Appliquer nouvel index aux barèmes'});
     }
 
     // ── RULE 2: COMPLIANCE ──
     if(rulesEnabled.compliance){
       clients.forEach(cl=>{
         const co=cl.company||{};const emps=cl.emps||[];
-        if(!co.vat&&emps.length>0) a.push({id:'COMP-TVA-'+cl.id,sev:'high',cat:'Compliance',rule:'compliance',title:'TVA manquante — '+(co.name||'Client'),desc:emps.length+' employes — Declarations incompletes sans TVA',icon:'🏢',action:{page:'admin',sub:'config',client:cl.id},remedy:'Completer le numero de TVA dans la fiche client'});
-        if(!co.onss&&emps.length>0) a.push({id:'COMP-ONSS-'+cl.id,sev:'high',cat:'Compliance',rule:'compliance',title:'N° ONSS manquant — '+(co.name||'Client'),desc:'Declarations DmfA impossibles sans numero ONSS',icon:'🏛',action:{page:'admin',sub:'config',client:cl.id},remedy:'Encoder le numero ONSS employeur'});
-        if(emps.length>=1&&!co.reglementTravail) a.push({id:'COMP-RT-'+cl.id,sev:'medium',cat:'Compliance',rule:'compliance',title:'Reglement travail absent — '+(co.name||''),desc:'Obligatoire des le 1er travailleur',icon:'📋',action:{page:'gendocsjur',client:cl.id},remedy:'Generer un reglement de travail via le module Documents'});
-        if(emps.length>=50&&!co.cppt) a.push({id:'COMP-CPPT-'+cl.id,sev:'critical',cat:'Compliance',rule:'compliance',title:'CPPT obligatoire — '+(co.name||''),desc:emps.length+' travailleurs — Seuil 50 depasse',icon:'⚖️',action:{page:'rh',client:cl.id},remedy:'Mettre en place le CPPT (Comite Prevention Protection Travail)'});
+        if(!co.vat&&emps.length>0) a.push({id:'COMP-TVA-'+cl.id,sev:'high',cat:'Compliance',rule:'compliance',title:'TVA manquante — '+(co.name||'Client'),desc:emps.length+' employés — Déclarations incompletes sans TVA',icon:'🏢',action:{page:'admin',sub:'config',client:cl.id},remedy:'Completer le numéro de TVA dans la fiche client'});
+        if(!co.onss&&emps.length>0) a.push({id:'COMP-ONSS-'+cl.id,sev:'high',cat:'Compliance',rule:'compliance',title:'N° ONSS manquant — '+(co.name||'Client'),desc:'Déclarations DmfA impossibles sans numéro ONSS',icon:'🏛',action:{page:'admin',sub:'config',client:cl.id},remedy:'Encoder le numéro ONSS employeur'});
+        if(emps.length>=1&&!co.reglementTravail) a.push({id:'COMP-RT-'+cl.id,sev:'medium',cat:'Compliance',rule:'compliance',title:'Règlement travail absent — '+(co.name||''),desc:'Obligatoire des le 1er travailleur',icon:'📋',action:{page:'gendocsjur',client:cl.id},remedy:'Générer un règlement de travail via le module Documents'});
+        if(emps.length>=50&&!co.cppt) a.push({id:'COMP-CPPT-'+cl.id,sev:'critical',cat:'Compliance',rule:'compliance',title:'CPPT obligatoire — '+(co.name||''),desc:emps.length+' travailleurs — Seuil 50 depasse',icon:'⚖️',action:{page:'rh',client:cl.id},remedy:'Mettre en place le CPPT (Comite Prévention Protection Travail)'});
         if(emps.length>=100&&!co.ce) a.push({id:'COMP-CE-'+cl.id,sev:'critical',cat:'Compliance',rule:'compliance',title:'CE obligatoire — '+(co.name||''),desc:emps.length+' travailleurs — Seuil 100 depasse',icon:'🏛',action:{page:'rh',client:cl.id},remedy:'Mettre en place le Conseil d\'Entreprise'});
       });
     }
@@ -76,7 +76,7 @@ export function SmartAlertsEngine({s,d}){
           if((e.contractType||e.contrat||'').toString().toUpperCase()==='CDD'){
             const end=new Date(e.endDate||e.end||'2099-12-31');
             const daysLeft=Math.ceil((end-now)/86400000);
-            if(daysLeft<0) a.push({id:'CDD-EXP-'+e.id,sev:'critical',cat:'Contrat',rule:'contracts',title:'CDD EXPIRE — '+name,desc:(co.name||'')+' — Expire depuis '+Math.abs(daysLeft)+' jours. Risque requalification CDI!',deadline:daysLeft,icon:'🔴',action:{page:'employees',client:cl.id},remedy:'Generer C4 + Dimona OUT immediatement ou avenant CDI',emp:name});
+            if(daysLeft<0) a.push({id:'CDD-EXP-'+e.id,sev:'critical',cat:'Contrat',rule:'contracts',title:'CDD EXPIRE — '+name,desc:(co.name||'')+' — Expire depuis '+Math.abs(daysLeft)+' jours. Risque requalification CDI!',deadline:daysLeft,icon:'🔴',action:{page:'employees',client:cl.id},remedy:'Générer C4 + Dimona OUT immediatement ou avenant CDI',emp:name});
             else if(daysLeft<=7) a.push({id:'CDD-7J-'+e.id,sev:'critical',cat:'Contrat',rule:'contracts',title:'CDD expire dans '+daysLeft+'j — '+name,desc:(co.name||'')+' — Fin: '+end.toLocaleDateString('fr-BE'),deadline:daysLeft,icon:'🟠',action:{page:'employees',client:cl.id},remedy:'Decision: renouvellement, CDI ou fin de contrat',emp:name});
             else if(daysLeft<=30) a.push({id:'CDD-30J-'+e.id,sev:'high',cat:'Contrat',rule:'contracts',title:'CDD expire dans '+daysLeft+'j — '+name,desc:(co.name||'')+' — Preparer decision',deadline:daysLeft,icon:'🟡',action:{page:'employees',client:cl.id},remedy:'Planifier entretien evaluation + decision renouvellement',emp:name});
             else if(daysLeft<=90) a.push({id:'CDD-90J-'+e.id,sev:'low',cat:'Contrat',rule:'contracts',title:'CDD a surveiller — '+name,desc:(co.name||'')+' — '+daysLeft+' jours restants',deadline:daysLeft,icon:'🔵',action:{page:'employees',client:cl.id},remedy:'Planifier evaluation mi-contrat'});
@@ -84,7 +84,7 @@ export function SmartAlertsEngine({s,d}){
           // Période essai 6 mois
           const start=new Date(e.startDate||e.start||'2020-01-01');
           const monthsIn=Math.round((now-start)/2592000000);
-          if(monthsIn>=5&&monthsIn<=7) a.push({id:'EVAL-'+e.id,sev:'medium',cat:'RH',rule:'contracts',title:'Evaluation 6 mois — '+name,desc:(co.name||'')+' — '+monthsIn+' mois d\'anciennete',icon:'📋',action:{page:'employees',client:cl.id},remedy:'Planifier entretien d\'evaluation'});
+          if(monthsIn>=5&&monthsIn<=7) a.push({id:'EVAL-'+e.id,sev:'medium',cat:'RH',rule:'contracts',title:'Evaluation 6 mois — '+name,desc:(co.name||'')+' — '+monthsIn+' mois d\'ancienneté',icon:'📋',action:{page:'employees',client:cl.id},remedy:'Planifier entretien d\'evaluation'});
           // Anniversaire d'entreprise
           if(start.getMonth()===month&&start.getDate()>=day&&start.getDate()<=day+14&&(yr-start.getFullYear())>0){
             const years=yr-start.getFullYear();
@@ -100,9 +100,9 @@ export function SmartAlertsEngine({s,d}){
         const co=cl.company||{};
         (cl.emps||[]).forEach(e=>{
           const name=(e.first||e.fn||'?')+' '+(e.last||e.ln||'?');
-          if(+(e.monthlySalary||e.gross||e.brut||0)<=0) a.push({id:'PAY-0-'+e.id,sev:'critical',cat:'Paie',rule:'payroll',title:'Salaire = 0€ — '+name,desc:(co.name||'')+' — Calcul paie impossible',icon:'❌',action:{page:'employees',client:cl.id},remedy:'Encoder le salaire brut mensuel dans la fiche employe'});
-          if(!(e.iban||e.IBAN)) a.push({id:'PAY-IBAN-'+e.id,sev:'high',cat:'Paie',rule:'payroll',title:'IBAN manquant — '+name,desc:(co.name||'')+' — Virement SEPA impossible',icon:'🏦',action:{page:'employees',client:cl.id},remedy:'Encoder l\'IBAN dans la fiche employe'});
-          if(!(e.niss||e.NISS)) a.push({id:'PAY-NISS-'+e.id,sev:'high',cat:'Compliance',rule:'payroll',title:'NISS manquant — '+name,desc:(co.name||'')+' — Dimona et DmfA impossibles',icon:'🆔',action:{page:'employees',client:cl.id},remedy:'Encoder le numero de registre national (NISS)'});
+          if(+(e.monthlySalary||e.gross||e.brut||0)<=0) a.push({id:'PAY-0-'+e.id,sev:'critical',cat:'Paie',rule:'payroll',title:'Salaire = 0€ — '+name,desc:(co.name||'')+' — Calcul paie impossible',icon:'❌',action:{page:'employees',client:cl.id},remedy:'Encoder le salaire brut mensuel dans la fiche employé'});
+          if(!(e.iban||e.IBAN)) a.push({id:'PAY-IBAN-'+e.id,sev:'high',cat:'Paie',rule:'payroll',title:'IBAN manquant — '+name,desc:(co.name||'')+' — Virement SEPA impossible',icon:'🏦',action:{page:'employees',client:cl.id},remedy:'Encoder l\'IBAN dans la fiche employé'});
+          if(!(e.niss||e.NISS)) a.push({id:'PAY-NISS-'+e.id,sev:'high',cat:'Compliance',rule:'payroll',title:'NISS manquant — '+name,desc:(co.name||'')+' — Dimona et DmfA impossibles',icon:'🆔',action:{page:'employees',client:cl.id},remedy:'Encoder le numéro de registre national (NISS)'});
         });
       });
     }
@@ -116,11 +116,11 @@ export function SmartAlertsEngine({s,d}){
       else if(turnover>8) a.push({id:'TREND-TURNOVER',sev:'medium',cat:'Tendance',rule:'trends',title:'Turnover modere: '+turnover+'%',desc:totalSortis+' depart(s) en '+yr,icon:'📊',action:{page:'tableaudirection',sub:'rh'}});
       const totalAbsDays=allEmps.reduce((acc,e)=>acc+(+(e.joursMaladie||e.sickDays||0))+(+(e.joursAbsence||e.absDays||0)),0);
       const absRate=totalEmps>0?Math.round(totalAbsDays/(totalEmps*220)*10000)/100:0;
-      if(absRate>5) a.push({id:'TREND-ABS',sev:'high',cat:'Tendance',rule:'trends',title:'Absenteisme eleve: '+absRate+'%',desc:totalAbsDays+' jours — Seuil Belgique: 5.8%',icon:'📊',action:{page:'tableaudirection',sub:'bradford'},remedy:'Analyser Bradford + entretiens retour + plan bien-etre'});
+      if(absRate>5) a.push({id:'TREND-ABS',sev:'high',cat:'Tendance',rule:'trends',title:'Absentéisme eleve: '+absRate+'%',desc:totalAbsDays+' jours — Seuil Belgique: 5.8%',icon:'📊',action:{page:'tableaudirection',sub:'bradford'},remedy:'Analyser Bradford + entretiens retour + plan bien-être'});
       const masseBrute=allEmps.reduce((acc,e)=>acc+(+(e.monthlySalary||e.gross||e.brut||0)),0);
       if(masseBrute>0&&totalEmps>0){
         const coutMoyen=masseBrute*(1+TX_ONSS_E)/totalEmps;
-        if(coutMoyen>5000) a.push({id:'TREND-COUT',sev:'medium',cat:'Tendance',rule:'trends',title:'Cout moyen eleve: '+fi(coutMoyen)+' €/emp/mois',desc:'Masse brute: '+fi(masseBrute)+' €/mois pour '+totalEmps+' employes',icon:'💸',action:{page:'tableaudirection',sub:'kpi'}});
+        if(coutMoyen>5000) a.push({id:'TREND-COUT',sev:'medium',cat:'Tendance',rule:'trends',title:'Coût moyen eleve: '+fi(coutMoyen)+' €/emp/mois',desc:'Masse brute: '+fi(masseBrute)+' €/mois pour '+totalEmps+' employés',icon:'💸',action:{page:'tableaudirection',sub:'kpi'}});
       }
     }
 
@@ -199,8 +199,8 @@ export function SmartAlertsEngine({s,d}){
     </div>}
 
     {/* TAB: CALENDAR */}
-    {tab==='calendar'&&<C title="Calendrier des echeances" sub={deadlines.length+' echeances dans les 30 prochains jours'}>
-      {deadlines.length===0&&<div style={{textAlign:'center',padding:20,color:'#4ade80'}}>✅ Aucune echeance imminente</div>}
+    {tab==='calendar'&&<C title="Calendrier des échéances" sub={deadlines.length+' échéances dans les 30 prochains jours'}>
+      {deadlines.length===0&&<div style={{textAlign:'center',padding:20,color:'#4ade80'}}>✅ Aucune échéance imminente</div>}
       {deadlines.map((a,i)=>{
         const targetDate=new Date(now);targetDate.setDate(day+a.deadline);
         return <div key={a.id||i} style={{display:'flex',alignItems:'center',gap:14,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
@@ -224,11 +224,11 @@ export function SmartAlertsEngine({s,d}){
 
     {/* TAB: RULES */}
     {tab==='rules'&&<C title="Moteur de regles" sub="Activez/desactivez les categories d'alertes">
-      {[{id:'deadlines',l:'Deadlines legales',desc:'ONSS, PP, DmfA, Belcotax, 13eme mois, pecule vacances',icon:'📅',count:alerts.filter(a=>a.rule==='deadline').length},
-        {id:'compliance',l:'Conformite',desc:'TVA, ONSS, reglement travail, CPPT, CE',icon:'⚖️',count:alerts.filter(a=>a.rule==='compliance').length},
+      {[{id:'deadlines',l:'Deadlines legales',desc:'ONSS, PP, DmfA, Belcotax, 13eme mois, pécule vacances',icon:'📅',count:alerts.filter(a=>a.rule==='deadline').length},
+        {id:'compliance',l:'Conformité',desc:'TVA, ONSS, règlement travail, CPPT, CE',icon:'⚖️',count:alerts.filter(a=>a.rule==='compliance').length},
         {id:'contracts',l:'Contrats',desc:'CDD expirant, evaluations, anniversaires',icon:'📝',count:alerts.filter(a=>a.rule==='contracts').length},
         {id:'payroll',l:'Paie',desc:'Salaire=0, IBAN manquant, NISS manquant',icon:'💰',count:alerts.filter(a=>a.rule==='payroll').length},
-        {id:'trends',l:'Tendances RH',desc:'Turnover, absenteisme, couts',icon:'📊',count:alerts.filter(a=>a.rule==='trends').length},
+        {id:'trends',l:'Tendances RH',desc:'Turnover, absentéisme, coûts',icon:'📊',count:alerts.filter(a=>a.rule==='trends').length},
       ].map((r,i)=><div key={r.id} style={{display:'flex',alignItems:'center',gap:14,padding:'12px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
         <span style={{fontSize:24}}>{r.icon}</span>
         <div style={{flex:1}}>
@@ -281,9 +281,9 @@ export function NotificationCenterV2({s,d}){
     // DEADLINE NOTIFICATIONS
     if(prefs.deadlines){
       if(day<=5) addN('deadline','🏛','ONSS provisions dues le 5','Paiement ONSS du avant le 5 '+mois[month],'ONSS','critical',{page:'onss'});
-      if(day<=15) addN('deadline','💰','Precompte professionnel','Declaration PP avant le 15 '+mois[month],'Fiscal',day<=5?'critical':'high',{page:'fiscal'});
+      if(day<=15) addN('deadline','💰','Précompte professionnel','Déclaration PP avant le 15 '+mois[month],'Fiscal',day<=5?'critical':'high',{page:'fiscal'});
       if(day<=25) addN('deadline','💳','Virements SEPA salaires','SEPA a executer avant le 25','Paie','medium',{page:'sepa'});
-      if([0,3,6,9].includes(month)&&day<=10) addN('deadline','🏛','DmfA T'+Math.ceil((month+1)/3),'Declaration trimestrielle','ONSS','critical',{page:'onss'});
+      if([0,3,6,9].includes(month)&&day<=10) addN('deadline','🏛','DmfA T'+Math.ceil((month+1)/3),'Déclaration trimestrielle','ONSS','critical',{page:'onss'});
     }
 
     // EMPLOYEE NOTIFICATIONS
@@ -324,7 +324,7 @@ export function NotificationCenterV2({s,d}){
     }
 
     // SYSTEM
-    addN('system','🚀','Smart Alerts v2 actif','Moteur d\'alertes intelligentes deploye','Systeme','info',null,new Date(now-60000).toISOString());
+    addN('system','🚀','Smart Alerts v2 actif','Moteur d\'alertes intelligentes déployé','Système','info',null,new Date(now-60000).toISOString());
 
     n.sort((a,b)=>{const sev={critical:0,high:1,medium:2,low:3,info:4};return(sev[a.sev]||4)-(sev[b.sev]||4);});
     return n;
@@ -386,11 +386,11 @@ export function NotificationCenterV2({s,d}){
 
     {/* PREFERENCES */}
     {tab==='prefs'&&<C title="Preferences de declenchement" sub="Choisissez quelles notifications vous souhaitez recevoir">
-      {[{id:'deadlines',l:'Deadlines legales',desc:'ONSS, PP, DmfA, Belcotax, pecule, 13eme mois',icon:'📅'},
-        {id:'compliance',l:'Conformite',desc:'TVA, ONSS, NISS manquants, reglement travail',icon:'⚖️'},
+      {[{id:'deadlines',l:'Deadlines legales',desc:'ONSS, PP, DmfA, Belcotax, pécule, 13eme mois',icon:'📅'},
+        {id:'compliance',l:'Conformité',desc:'TVA, ONSS, NISS manquants, règlement travail',icon:'⚖️'},
         {id:'contracts',l:'Contrats',desc:'CDD expirant, evaluations, renouvellements',icon:'📝'},
         {id:'payroll',l:'Paie',desc:'Salaire=0, IBAN manquant, virements',icon:'💰'},
-        {id:'rh',l:'Tendances RH',desc:'Turnover, absenteisme, alertes tendances',icon:'📊'},
+        {id:'rh',l:'Tendances RH',desc:'Turnover, absentéisme, alertes tendances',icon:'📊'},
       ].map((r,i)=><div key={r.id} style={{display:'flex',alignItems:'center',gap:14,padding:'12px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
         <span style={{fontSize:24}}>{r.icon}</span>
         <div style={{flex:1}}>
@@ -447,15 +447,15 @@ export function JournalActiviteV2({s,d}){
       if(cl.createdAt) add('client','🏢','CREATE','Client: '+cname,'Dossier client cree'+(co.vat?' — TVA: '+co.vat:''),'admin',s.user?.email,cname,cl.createdAt,{entity:'client',entityId:cl.id,vat:co.vat});
       if(cl.updatedAt&&cl.updatedAt!==cl.createdAt) add('client','✏️','UPDATE','Client: '+cname,'Dossier client modifie','admin',s.user?.email,cname,cl.updatedAt,{entity:'client',entityId:cl.id});
 
-      // Employee entries
+      // Employée entries
       (cl.emps||[]).forEach(e=>{
         const ename=(e.first||e.fn||'?')+' '+(e.last||e.ln||'?');
         if(e.createdAt||e.startDate||e.start){
           const ts=e.createdAt||e.startDate||e.start;
-          add('employee','👤','CREATE','Employe: '+ename,'Ajout employe — Brut: '+(+(e.monthlySalary||e.gross||0)>0?fmt(+(e.monthlySalary||e.gross||0))+' €':'non defini')+' — Contrat: '+(e.contractType||e.contrat||'CDI'),'admin',s.user?.email,cname,ts,{entity:'employee',entityId:e.id,brut:+(e.monthlySalary||e.gross||0),contrat:e.contractType||'CDI',niss:e.niss||'N/A'});
+          add('employee','👤','CREATE','Employé: '+ename,'Ajout employé — Brut: '+(+(e.monthlySalary||e.gross||0)>0?fmt(+(e.monthlySalary||e.gross||0))+' €':'non defini')+' — Contrat: '+(e.contractType||e.contrat||'CDI'),'admin',s.user?.email,cname,ts,{entity:'employee',entityId:e.id,brut:+(e.monthlySalary||e.gross||0),contrat:e.contractType||'CDI',niss:e.niss||'N/A'});
         }
         if(e.updatedAt&&e.updatedAt!==(e.createdAt||e.startDate)){
-          add('employee','✏️','UPDATE','Employe: '+ename,'Modification fiche employe','admin',s.user?.email,cname,e.updatedAt,{entity:'employee',entityId:e.id});
+          add('employee','✏️','UPDATE','Employé: '+ename,'Modification fiche employé','admin',s.user?.email,cname,e.updatedAt,{entity:'employee',entityId:e.id});
         }
         // Absences
         (e.absences||[]).forEach(ab=>{
@@ -465,28 +465,28 @@ export function JournalActiviteV2({s,d}){
 
       // Payslips
       (cl.pays||[]).forEach(p=>{
-        add('payroll','🧮','CALC','Paie: '+(p.empName||'Employe'),'Calcul fiche de paie'+(p.brut?' — Brut: '+fmt(p.brut)+' €':'')+(p.net?' — Net: '+fmt(p.net)+' €':''),'admin',s.user?.email,cname,p.date||p.createdAt||now.toISOString(),{entity:'payslip',empName:p.empName,brut:p.brut,net:p.net});
+        add('payroll','🧮','CALC','Paie: '+(p.empName||'Employé'),'Calcul fiche de paie'+(p.brut?' — Brut: '+fmt(p.brut)+' €':'')+(p.net?' — Net: '+fmt(p.net)+' €':''),'admin',s.user?.email,cname,p.date||p.createdAt||now.toISOString(),{entity:'payslip',empName:p.empName,brut:p.brut,net:p.net});
       });
 
       // Dimona
       (cl.dims||[]).forEach(dm=>{
-        add('dimona','📡','SUBMIT','Dimona '+(dm.type||'IN')+': '+(dm.empName||'Employe'),'Declaration Dimona '+(dm.type||'')+' soumise'+(dm.niss?' — NISS: '+dm.niss:''),'admin',s.user?.email,cname,dm.date||dm.createdAt||now.toISOString(),{entity:'dimona',type:dm.type});
+        add('dimona','📡','SUBMIT','Dimona '+(dm.type||'IN')+': '+(dm.empName||'Employé'),'Déclaration Dimona '+(dm.type||'')+' soumise'+(dm.niss?' — NISS: '+dm.niss:''),'admin',s.user?.email,cname,dm.date||dm.createdAt||now.toISOString(),{entity:'dimona',type:dm.type});
       });
 
       // SEPA
       (cl.sepas||[]).forEach(sp=>{
-        add('sepa','💳','GENERATE','SEPA: '+(cname),'Fichier SEPA genere — '+(sp.count||'?')+' virements — '+(sp.total?fmt(sp.total)+' €':''),'admin',s.user?.email,cname,sp.date||now.toISOString(),{entity:'sepa',total:sp.total});
+        add('sepa','💳','GENERATE','SEPA: '+(cname),'Fichier SEPA généré — '+(sp.count||'?')+' virements — '+(sp.total?fmt(sp.total)+' €':''),'admin',s.user?.email,cname,sp.date||now.toISOString(),{entity:'sepa',total:sp.total});
       });
 
       // Documents
       (cl.docs||[]).forEach(doc=>{
-        add('document','📄','GENERATE','Doc: '+(doc.name||doc.type||'Document'),'Document genere pour '+(cname),'admin',s.user?.email,cname,doc.date||doc.createdAt||now.toISOString(),{entity:'document',docType:doc.type});
+        add('document','📄','GENERATE','Doc: '+(doc.name||doc.type||'Document'),'Document généré pour '+(cname),'admin',s.user?.email,cname,doc.date||doc.createdAt||now.toISOString(),{entity:'document',docType:doc.type});
       });
     });
 
     // System entries
-    add('system','🚀','DEPLOY','Systeme','Sprint 37 deploye — Smart Alerts + Journal Audit','system','system@aureussocial.be','',now.toISOString());
-    if(clients.length>0) add('system','📊','SCAN','Systeme','Scan automatique: '+clients.length+' clients — '+clients.reduce((a,c)=>a+(c.emps||[]).length,0)+' employes','system','system@aureussocial.be','',now.toISOString());
+    add('system','🚀','DEPLOY','Système','Sprint 37 déployé — Smart Alerts + Journal Audit','system','system@aureussocial.be','',now.toISOString());
+    if(clients.length>0) add('system','📊','SCAN','Système','Scan automatique: '+clients.length+' clients — '+clients.reduce((a,c)=>a+(c.emps||[]).length,0)+' employés','system','system@aureussocial.be','',now.toISOString());
 
     entries.sort((a,b)=>new Date(b.time)-new Date(a.time));
     return entries;
@@ -515,7 +515,7 @@ export function JournalActiviteV2({s,d}){
   return <div style={{padding:24}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
       <div>
-        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📋 Journal d'Activite</h2>
+        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📋 Journal d'Activité</h2>
         <p style={{fontSize:12,color:'#888',margin:0}}>Audit trail complet — Qui / Quoi / Quand / Ou — {auditTrail.length} entrees</p>
       </div>
       <div style={{display:'flex',gap:8}}>
@@ -545,7 +545,7 @@ export function JournalActiviteV2({s,d}){
 
     {/* SEARCH + TYPE FILTERS */}
     <div style={{display:'flex',gap:6,marginBottom:14,alignItems:'center',flexWrap:'wrap'}}>
-      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Rechercher action, employe, client..." style={{padding:'8px 14px',width:260,background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',outline:'none'}}/>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Rechercher action, employé, client..." style={{padding:'8px 14px',width:260,background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',outline:'none'}}/>
       <button onClick={()=>setFilter('all')} style={{padding:'5px 10px',borderRadius:6,border:'none',background:filter==='all'?'rgba(198,163,78,.15)':'transparent',color:filter==='all'?'#c6a34e':'#888',fontSize:10,cursor:'pointer',fontFamily:'inherit'}}>Tout ({auditTrail.length})</button>
       {types.map(t=><button key={t} onClick={()=>setFilter(filter===t?'all':t)} style={{padding:'5px 10px',borderRadius:6,border:'none',background:filter===t?(typeColors[t]||'#888')+'20':'transparent',color:filter===t?typeColors[t]||'#888':'#888',fontSize:10,cursor:'pointer',fontFamily:'inherit'}}>{t} ({auditTrail.filter(e=>e.type===t).length})</button>)}
     </div>
@@ -577,7 +577,7 @@ export function JournalActiviteV2({s,d}){
                 {Object.entries(e.meta).map(([k,v])=>v?<div key={k} style={{color:'#888'}}><b style={{color:'#c6a34e'}}>{k}:</b> {String(v)}</div>:null)}
               </div>}
             </div>
-            <div style={{fontSize:10,color:'#888'}}>{e.who==='system@aureussocial.be'?'⚙️ Systeme':e.who?.split('@')[0]||e.user}</div>
+            <div style={{fontSize:10,color:'#888'}}>{e.who==='system@aureussocial.be'?'⚙️ Système':e.who?.split('@')[0]||e.user}</div>
             <div style={{fontSize:10,color:typeColors[e.type]||'#888'}}>{e.client||'—'}</div>
           </div>;
         })}
@@ -606,7 +606,7 @@ export function JournalActiviteV2({s,d}){
     {tab==='byuser'&&<div>
       {[...new Set(auditTrail.map(e=>e.who))].map(user=>{
         const userEntries=dateFiltered.filter(e=>e.who===user);
-        return <C key={user} title={(user==='system@aureussocial.be'?'⚙️ Systeme':'👤 '+(user?.split('@')[0]||user))+' ('+userEntries.length+' actions)'}>
+        return <C key={user} title={(user==='system@aureussocial.be'?'⚙️ Système':'👤 '+(user?.split('@')[0]||user))+' ('+userEntries.length+' actions)'}>
           {userEntries.slice(0,8).map((e,i)=><div key={e.id} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.02)'}}>
             <span style={{fontSize:12}}>{e.icon}</span>
             <Badge text={e.action} color={actionColors[e.action]}/>

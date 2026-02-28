@@ -1,5 +1,5 @@
 // ═══ AUREUS SOCIAL PRO — Module: Moteur de calcul paie ═══
-// BAREMES, calc(), getBareme(), getCPAvantages()
+// BARÈMES, calc(), getBarème(), getCPAvantages()
 
 // Dépendances injectées via initCalcEngine()
 let LEGAL, LOIS_BELGES, fmt, calcPrecompteExact, calcCSSS, calcBonusEmploi, calcIndependant;
@@ -656,7 +656,7 @@ var BAREMES={
 
   '118':{n:'Industrie alimentaire (ouvriers)',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
     fn:{'Ouvrier Cat.1':{cls:1},'Ouvrier Cat.2':{cls:2},'Ouvrier Cat.3':{cls:3},'Ouvrier Cat.4':{cls:4},'Ouvrier Cat.5':{cls:5}},
-    note:'CP 118 Industrie alimentaire ouvriers. Barèmes nationaux. Prime de fin annee sectorielle.',
+    note:'CP 118 Industrie alimentaire ouvriers. Barèmes nationaux. Prime de fin année sectorielle.',
     grille:[
       {exp:0,c1:2580.00,c2:2696.49,c3:2896.49,c4:3077.62,c5:3258.75},
       {exp:5,c1:2660.00,c2:2780.00,c3:2985.00,c4:3170.00,c5:3355.00},
@@ -674,7 +674,7 @@ var BAREMES={
 
   '121':{n:'Nettoyage',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
     fn:{'Cat.1A Nettoyage habituel':{cls:1},'Cat.1B Nettoyage special':{cls:2},'Cat.2A Mi-lourd':{cls:3},'Cat.3A Collecte dechets':{cls:4},'Chef equipe':{cls:5}},
-    note:'CP 121 Nettoyage. Barèmes horaires x 164,67h. Prime de fin annee sectorielle. Cheques-repas obligatoires.',
+    note:'CP 121 Nettoyage. Barèmes horaires x 164,67h. Prime de fin année sectorielle. Chèques-repas obligatoires.',
     grille:[
       {exp:0,c1:2450.00,c2:2550.00,c3:2696.49,c4:2800.00,c5:2966.13},
       {exp:5,c1:2530.00,c2:2635.00,c3:2785.00,c4:2890.00,c5:3060.00},
@@ -683,7 +683,7 @@ var BAREMES={
 
   '124':{n:'Construction',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
     fn:{'Manoeuvre Cat.I':{cls:1},'Ouvrier Cat.II':{cls:2},'Ouvrier Cat.IIA':{cls:3},'Ouvrier Cat.III':{cls:3},'Ouvrier Cat.IV':{cls:4},'Chef Cat.IV+':{cls:5}},
-    note:'CP 124 Construction. Barèmes horaires x 164,67h. Timbres intemperies + fidelite. Caisse conges construction.',
+    note:'CP 124 Construction. Barèmes horaires x 164,67h. Timbres intempéries + fidélité. Caisse congés construction.',
     grille:[
       {exp:0,c1:3006.56,c2:3205.42,c3:3365.39,c4:3409.58,c5:3619.21},
       {exp:5,c1:3097.00,c2:3302.00,c3:3467.00,c4:3512.00,c5:3728.00},
@@ -699,9 +699,9 @@ var BAREMES={
       {exp:10,c1:2699.00,c2:2761.00,c3:2934.00,c4:3261.00,c5:2607.00}
     ]},
 
-  '200':{n:'CPNAE — Commission paritaire auxiliaire pour employes',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
-    fn:{'Employe Cat.1':{cls:1},'Employe Cat.2':{cls:2},'Employe Cat.3':{cls:3},'Employe Cat.4':{cls:4}},
-    note:'CP 200 CPNAE. Plus grande CP de Belgique (~450.000 travailleurs). Index pivot 2%. Bareme sectoriel minimum.',
+  '200':{n:'CPNAE — Commission paritaire auxiliaire pour employés',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
+    fn:{'Employé Cat.1':{cls:1},'Employé Cat.2':{cls:2},'Employé Cat.3':{cls:3},'Employé Cat.4':{cls:4}},
+    note:'CP 200 CPNAE. Plus grande CP de Belgique (~450.000 travailleurs). Index pivot 2%. Barème sectoriel minimum.',
     grille:[
       {exp:0,c1:2029.88,c2:2242.80,c3:2468.07,c4:2728.35},
       {exp:1,c1:2080.63,c2:2298.87,c3:2529.77,c4:2796.56},
@@ -715,26 +715,26 @@ var BAREMES={
     ]},
 
   '216':{n:'Notariat',idx:2.0,dt:'01/01/2026',regime:36,approx:false,
-    fn:{'Employe Cat.1':{cls:1},'Employe Cat.2':{cls:2},'Clerc':{cls:3},'Notaire employe':{cls:4}},
-    note:'CP 216 Notariat. Regime 36h/sem. Bareme specifique. Prime de fin annee = 13eme mois.',
+    fn:{'Employé Cat.1':{cls:1},'Employé Cat.2':{cls:2},'Clerc':{cls:3},'Notaire employé':{cls:4}},
+    note:'CP 216 Notariat. Régime 36h/sem. Barème spécifique. Prime de fin année = 13ème mois.',
     grille:[
       {exp:0,c1:2242.80,c2:2468.07,c3:2728.35,c4:3500.00},
       {exp:5,c1:2350.00,c2:2590.00,c3:2870.00,c4:3680.00},
       {exp:10,c1:2460.00,c2:2715.00,c3:3015.00,c4:3865.00}
     ]},
 
-  '218':{n:'CPNAE employes (secteur alimentaire)',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
-    fn:{'Employe Cat.1':{cls:1},'Employe Cat.2':{cls:2},'Employe Cat.3':{cls:3},'Employe Cat.4':{cls:4}},
-    note:'CP 218 Employes industrie alimentaire. Liee a CP 118. Baremes specifiques au secteur.',
+  '218':{n:'CPNAE employés (secteur alimentaire)',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
+    fn:{'Employé Cat.1':{cls:1},'Employé Cat.2':{cls:2},'Employé Cat.3':{cls:3},'Employé Cat.4':{cls:4}},
+    note:'CP 218 Employés industrie alimentaire. Liée à CP 118. Barèmes spécifiques au secteur.',
     grille:[
       {exp:0,c1:2200.00,c2:2420.00,c3:2660.00,c4:2940.00},
       {exp:5,c1:2290.00,c2:2520.00,c3:2770.00,c4:3060.00},
       {exp:10,c1:2380.00,c2:2620.00,c3:2880.00,c4:3180.00}
     ]},
 
-  '302':{n:'Industrie hoteliere (Horeca)',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
+  '302':{n:'Industrie hôtelière (Horeca)',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
     fn:{'Cat.I':{cls:1},'Cat.II':{cls:2},'Cat.III':{cls:3},'Cat.IV':{cls:4},'Cat.V (chef)':{cls:5}},
-    note:'CP 302 Horeca. Nourritures + pourboires possibles. Prime de fin annee sectorielle. Flexi-jobs autorises.',
+    note:'CP 302 Horeca. Nourritures + pourboires possibles. Prime de fin année sectorielle. Flexi-jobs autorisés.',
     grille:[
       {exp:0,c1:2504.53,c2:2519.02,c3:2629.69,c4:2742.93,c5:2862.05},
       {exp:5,c1:2555.00,c2:2570.00,c3:2683.00,c4:2798.00,c5:2920.00},
@@ -742,7 +742,7 @@ var BAREMES={
     ]},
 
   '306':{n:'Entreprises assurances',idx:2.23,dt:'01/01/2026',regime:38,approx:false,
-    fn:{'Employe Cat.A':{cls:1},'Employe Cat.B':{cls:2},'Employe Cat.C':{cls:3},'Employe Cat.D':{cls:4}},
+    fn:{'Employé Cat.A':{cls:1},'Employé Cat.B':{cls:2},'Employé Cat.C':{cls:3},'Employé Cat.D':{cls:4}},
     note:'CP 306 Entreprises assurances. AG, AXA, Ethias. Idx 2,23% au 01/01/2026.',
     grille:[
       {exp:0,c1:2400.00,c2:2650.00,c3:2950.00,c4:3400.00},
@@ -751,7 +751,7 @@ var BAREMES={
     ]},
 
   '310':{n:'Banques',idx:2.0,dt:'01/01/2026',regime:37,approx:false,
-    fn:{'Employe Cat.A':{cls:1},'Employe Cat.B':{cls:2},'Employe Cat.C':{cls:3},'Employe Cat.D':{cls:4},'Cadre':{cls:5}},
+    fn:{'Employé Cat.A':{cls:1},'Employé Cat.B':{cls:2},'Employé Cat.C':{cls:3},'Employé Cat.D':{cls:4},'Cadre':{cls:5}},
     note:'CP 310 Banques. Regime 37h/sem. BNP Paribas Fortis, ING, KBC, Belfius. Avantages extra-legaux importants.',
     grille:[
       {exp:0,c1:2600.00,c2:2900.00,c3:3248.00,c4:3700.00,c5:4200.00},
@@ -761,16 +761,16 @@ var BAREMES={
 
   '314':{n:'Coiffure et soins de beaute',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
     fn:{'Debutant':{cls:1},'Qualifie':{cls:2},'Specialise':{cls:3},'Gerant salon':{cls:4}},
-    note:'CP 314 Coiffure, esthetique, fitness. Baremes specifiques. Pourboires non declares frequents.',
+    note:'CP 314 Coiffure, esthétique, fitness. Barèmes spécifiques. Pourboires non déclarés fréquents.',
     grille:[
       {exp:0,c1:2050.00,c2:2280.00,c3:2350.00,c4:2600.00},
       {exp:5,c1:2120.00,c2:2355.00,c3:2430.00,c4:2690.00},
       {exp:10,c1:2195.00,c2:2435.00,c3:2515.00,c4:2785.00}
     ]},
 
-  '330':{n:'Etablissements et services de sante',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
-    fn:{'Cat.1 Agent entretien':{cls:1},'Cat.2 Brancardier':{cls:2},'Cat.3 Aide-soignant':{cls:3},'Cat.4 Infirmier':{cls:4},'Cat.5 Infirmier specialise':{cls:5},'Cat.6 Medecin':{cls:6}},
-    note:'CP 330 Sante. Hopitaux, cliniques, MRS. Baremes IFIC depuis 2018. Maribel social. Primes de nuit/WE.',
+  '330':{n:'Établissements et services de santé',idx:2.0,dt:'01/01/2026',regime:38,approx:false,
+    fn:{'Cat.1 Agent entretien':{cls:1},'Cat.2 Brancardier':{cls:2},'Cat.3 Aide-soignant':{cls:3},'Cat.4 Infirmier':{cls:4},'Cat.5 Infirmier spécialisé':{cls:5},'Cat.6 Médecin':{cls:6}},
+    note:'CP 330 Santé. Hôpitaux, cliniques, MRS. Barèmes IFIC depuis 2018. Maribel social. Primes de nuit/WE.',
     grille:[
       {exp:0,c1:2254.03,c2:2371.89,c3:2463.41,c4:2682.04,c5:2900.00,c6:5609.78},
       {exp:5,c1:2340.00,c2:2462.00,c3:2558.00,c4:2785.00,c5:3015.00,c6:5830.00},
@@ -885,9 +885,9 @@ function calc(emp, per, co) {
     if (r.miTempsINAMI === 0) {
       const brutJourNormal = (emp.monthlySalary || 0) / LEGAL.WD;
       const plafondINAMI = 106.16; // plafond journalier INAMI 2026 (adapté)
-      const brutJourPlafonné = Math.min(brutJourNormal, plafondINAMI);
+      const brutJourPlafonne = Math.min(brutJourNormal, plafondINAMI);
       const tauxINAMI = 0.60; // 60% (cohabitant) — peut être 65% (chef de famille) ou 55% (isolé)
-      r.miTempsINAMI = Math.round(brutJourPlafonné * tauxINAMI * LEGAL.WD * (1 - r.miTempsFraction) * 100) / 100;
+      r.miTempsINAMI = Math.round(brutJourPlafonne * tauxINAMI * LEGAL.WD * (1 - r.miTempsFraction) * 100) / 100;
     }
   }
 
@@ -974,10 +974,10 @@ function calc(emp, per, co) {
   // L'employeur déduit le coût à 100% (si borne intelligente bidirectionnelle)
   // L'électricité de recharge pour usage privé: ATN = coût réel ou forfait
   r.borneRecharge = emp.borneRecharge || false;
-  r.borneRechargeCoût = emp.borneRechargeCoût || 0;
+  r.borneRechargeCout = emp.borneRechargeCout || 0;
   // ATN borne: 0€ si voiture de société (fait partie du package)
   // ATN borne: coût réel si pas de voiture de société
-  r.atnBorne = (r.borneRecharge && !r.atnCar) ? r.borneRechargeCoût : 0;
+  r.atnBorne = (r.borneRecharge && !r.atnCar) ? r.borneRechargeCout : 0;
 
   // Ajouter aux ATN autres si applicable
   r.atnAutresTot += r.atnCarteCarburant + r.atnBorne;
@@ -1164,13 +1164,13 @@ function calc(emp, per, co) {
   // SIGEDIS / SFP: l'employeur déclare les revenus via DmfA.
   //   Le SFP (Service fédéral des Pensions) vérifie le cumul automatiquement.
 
-  r.pensionné = emp.pensionné || false;
+  r.pensionne = emp.pensionne || false;
   r.pensionType = emp.pensionType || 'none';
   r.pensionCumulIllimite = emp.pensionCumulIllimite || false;
   r.pensionPlafond = 0;
   r.pensionDepassement = false;
 
-  if (r.pensionné) {
+  if (r.pensionne) {
     const age = emp.pensionAge || 0;
     const carriere = emp.pensionCarriere || 0;
     const depEnfants = emp.depChildren > 0;
@@ -1818,7 +1818,7 @@ function calc(emp, per, co) {
     onss: 0,
     ppExcep: 0,
     ppExcepRate: 0,
-    coûtEmployeur: 0,
+    coutEmployeur: 0,
     methode: ''
   };
   const cpNum = parseInt(emp.cp) || 200;
@@ -1849,7 +1849,7 @@ function calc(emp, per, co) {
   else r.y13Calc.ppExcepRate = 0.3028;
   r.y13Calc.ppExcep = Math.round(r.y13Calc.montant * r.y13Calc.ppExcepRate * 100) / 100;
   r.y13Calc.netEstime = Math.round((r.y13Calc.montant - r.y13Calc.onss - r.y13Calc.ppExcep) * 100) / 100;
-  r.y13Calc.coûtEmployeur = Math.round(r.y13Calc.montant * (1 + (LEGAL.ONSS_SECTEUR[emp.cp]?.e || 0.25)) * 100) / 100;
+  r.y13Calc.coutEmployeur = Math.round(r.y13Calc.montant * (1 + (LEGAL.ONSS_SECTEUR[emp.cp]?.e || 0.25)) * 100) / 100;
 
   // ══════════════════════════════════════════════════════════════
   //  TOTALISATION
@@ -1899,7 +1899,7 @@ function calc(emp, per, co) {
     + r.ecoCheques + r.cadeaux                           // éco-chèques + cadeaux
     + r.budgetMobCotis38                                 // budget mobilité pilier 3
     + r.veloLeasingMois                                   // leasing vélo
-    + r.borneRechargeCoût                                 // borne de recharge
+    + r.borneRechargeCout                                 // borne de recharge
     + r.carteCarburantMois                                // carte carburant
     - r.dispensePPTotal                                   // dispenses PP
     - r.redGCTotal                                        // réductions groupes-cibles

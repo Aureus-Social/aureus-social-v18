@@ -17,14 +17,14 @@ export const BAREMES_DATA={
 // CP 200 — EMPLOYES (CPNAE)
 // ══════════════════════════════════════
 '200':{
-  nom:'CP 200 — Commission Paritaire Auxiliaire pour Employes',
-  secteur:'Employes — Secteur residuel',
+  nom:'CP 200 — Commission Paritaire Auxiliaire pour Employés',
+  secteur:'Employés — Secteur residuel',
   travailleurs:'~480.000',
   indexation:'Index sante — Janvier',
   idx:'01/01/2026',
-  info:'CP residuelle pour les employes qui ne relevent d\'aucune autre CP specifique. Couvre la majorite des PME belges.',
+  info:'CP residuelle pour les employés qui ne relevent d\'aucune autre CP spécifique. Couvre la majorite des PME belges.',
   classes:[
-    {id:'A',desc:'Personnel d\'execution',exemples:'Receptionniste, encodeur, employe administratif',
+    {id:'A',desc:'Personnel d\'execution',exemples:'Receptionniste, encodeur, employé administratif',
       grille:[{anc:0,min:2070.48},{anc:1,min:2091.18},{anc:2,min:2111.88},{anc:3,min:2132.58},{anc:4,min:2153.28},{anc:5,min:2174.00},{anc:6,min:2194.70},{anc:8,min:2236.10},{anc:10,min:2277.50},{anc:12,min:2318.90},{anc:14,min:2360.30},{anc:16,min:2401.70},{anc:18,min:2443.10},{anc:20,min:2484.50},{anc:25,min:2587.50}]},
     {id:'B',desc:'Personnel qualifie',exemples:'Comptable junior, assistant RH, technicien support',
       grille:[{anc:0,min:2174.00},{anc:1,min:2196.74},{anc:2,min:2219.48},{anc:3,min:2242.22},{anc:4,min:2264.96},{anc:5,min:2287.70},{anc:6,min:2310.44},{anc:8,min:2355.92},{anc:10,min:2401.40},{anc:12,min:2446.88},{anc:14,min:2492.36},{anc:16,min:2537.84},{anc:18,min:2583.32},{anc:20,min:2628.80},{anc:25,min:2742.00}]},
@@ -35,10 +35,10 @@ export const BAREMES_DATA={
   ],
   avantages:{prime13eme:true,cheqRepas:{patronal:6.91,max:8},ecoCheques:{max:250},
     conges:20,indexation:'Automatique index sante janvier'},
-  primes:[{nom:'Prime de fin d\'annee (13eme mois)',montant:'Salaire mensuel brut',mois:'Decembre'},
+  primes:[{nom:'Prime de fin d\'année (13eme mois)',montant:'Salaire mensuel brut',mois:'Décembre'},
     {nom:'Eco-cheques',montant:'Max 250 EUR/an',mois:'Juin'},
-    {nom:'Cheques-repas',montant:'Max 8 EUR/jour ouvre',mois:'Mensuel'}],
-  particularites:['Pas de bareme sectoriel au-dela du minimum','Negociation individuelle au-dessus du minimum','Formation: 5 jours/an (CCT)','Teletravail: indemnite max 148.73 EUR/mois'],
+    {nom:'Chèques-repas',montant:'Max 8 EUR/jour ouvre',mois:'Mensuel'}],
+  particularites:['Pas de bareme sectoriel au-dela du minimum','Negociation individuelle au-dessus du minimum','Formation: 5 jours/an (CCT)','Télétravail: indemnité max 148.73 EUR/mois'],
 },
 
 // ══════════════════════════════════════
@@ -64,7 +64,7 @@ export const BAREMES_DATA={
       grille:[{anc:0,min:2510.52},{anc:1,min:2540.63},{anc:2,min:2570.74},{anc:3,min:2600.85},{anc:5,min:2661.07},{anc:8,min:2751.40},{anc:10,min:2811.62},{anc:15,min:2962.17},{anc:20,min:3112.72}]},
   ],
   avantages:{prime13eme:true,cheqRepas:{patronal:5.50,max:7},ecoCheques:{max:250},conges:20},
-  primes:[{nom:'Prime de fin d\'annee',montant:'Selon anciennete et CCT',mois:'Decembre'},
+  primes:[{nom:'Prime de fin d\'année',montant:'Selon ancienneté et CCT',mois:'Décembre'},
     {nom:'Prime d\'equipe (2x8)',montant:'+10% du salaire horaire',mois:'Mensuel'},
     {nom:'Prime d\'equipe (3x8)',montant:'+15% du salaire horaire',mois:'Mensuel'},
     {nom:'Prime de nuit (22h-6h)',montant:'+25% du salaire horaire',mois:'Mensuel'},
@@ -94,7 +94,7 @@ export const BAREMES_DATA={
       grille:[{anc:0,min:2414.40},{anc:1,min:2440.54},{anc:2,min:2466.68},{anc:3,min:2492.82},{anc:5,min:2545.10},{anc:8,min:2623.52},{anc:10,min:2675.80},{anc:15,min:2806.50},{anc:20,min:2937.20}]},
   ],
   avantages:{prime13eme:true,cheqRepas:{patronal:5,max:7},ecoCheques:{max:250},conges:20},
-  primes:[{nom:'Prime de fin d\'annee',montant:'Salaire mensuel (apres 6 mois)',mois:'Decembre'},
+  primes:[{nom:'Prime de fin d\'année',montant:'Salaire mensuel (apres 6 mois)',mois:'Décembre'},
     {nom:'Prime du dimanche',montant:'+100%',mois:'Mensuel'},
     {nom:'Prime du samedi apres-midi',montant:'+50% apres 13h',mois:'Mensuel'},
     {nom:'Prime travail tardif (apres 20h)',montant:'+50%',mois:'Mensuel'}],
@@ -123,14 +123,14 @@ export const BAREMES_DATA={
     {id:'V',desc:'Chef de cuisine / Direction',exemples:'Chef de cuisine, directeur restaurant, directeur hotel',
       grille:[{anc:0,min:2582.76},{anc:1,min:2617.59},{anc:2,min:2687.25},{anc:3,min:2756.91},{anc:5,min:2896.23},{anc:10,min:3244.23}]},
   ],
-  avantages:{prime13eme:true,cheqRepas:{patronal:8,max:8},conges:20,repas:'Repas gratuit ou indemnite'},
-  primes:[{nom:'Prime de fin d\'annee',montant:'Equivalent salaire mensuel',mois:'Decembre'},
-    {nom:'Repas en nature',montant:'1 repas/service ou indemnite ~3 EUR',mois:'Quotidien'},
+  avantages:{prime13eme:true,cheqRepas:{patronal:8,max:8},conges:20,repas:'Repas gratuit ou indemnité'},
+  primes:[{nom:'Prime de fin d\'année',montant:'Equivalent salaire mensuel',mois:'Décembre'},
+    {nom:'Repas en nature',montant:'1 repas/service ou indemnité ~3 EUR',mois:'Quotidien'},
     {nom:'Prime dimanche/ferie',montant:'+2 EUR/heure (cat I-II) ou +100%',mois:'Mensuel'},
     {nom:'Prime de nuit (minuit-5h)',montant:'+1.25 EUR/heure',mois:'Mensuel'},
     {nom:'Pourboires',montant:'Libres en plus du salaire fixe',mois:'Variable'},
     {nom:'Prime extras/saisonniers',montant:'+20% salaire horaire minimum',mois:'Contrat'}],
-  particularites:['Flexi-jobs: salaire flexi min 11.81 EUR/h (2026) — net = brut','Extras: contrat max 2 jours consecutifs, +20%','Saisonniers: max 6 mois/an, preavis reduit','Dimanche: +100% ou repos compensatoire','Jours feries travailles: +100% + repos compensatoire','Pourboires: pas inclus dans le brut (avantage extra-legal)','Repas fourni ou indemnite compensatoire','Horaire coupure: max 14h amplitude, min 3h repos coupure','Nuitees: prime + indemnite si > 22h','Coupure: decompte temps de travail special'],
+  particularites:['Flexi-jobs: salaire flexi min 11.81 EUR/h (2026) — net = brut','Extras: contrat max 2 jours consecutifs, +20%','Saisonniers: max 6 mois/an, preavis reduit','Dimanche: +100% ou repos compensatoire','Jours feries travailles: +100% + repos compensatoire','Pourboires: pas inclus dans le brut (avantage extra-legal)','Repas fourni ou indemnité compensatoire','Horaire coupure: max 14h amplitude, min 3h repos coupure','Nuitees: prime + indemnité si > 22h','Coupure: decompte temps de travail special'],
 },
 
 // ══════════════════════════════════════
@@ -157,20 +157,20 @@ export const BAREMES_DATA={
   ],
   avantages:{prime13eme:true,cheqRepas:{patronal:6,max:7},timbFidelite:true,conges:20},
   primes:[{nom:'Timbre de fidelite',montant:'~9% du salaire annuel (OPOC)',mois:'Juin-Juillet'},
-    {nom:'Prime de fin d\'annee',montant:'Salaire mensuel brut',mois:'Decembre'},
-    {nom:'Indemnite intemperies',montant:'75% du salaire horaire normal',mois:'Variable'},
+    {nom:'Prime de fin d\'année',montant:'Salaire mensuel brut',mois:'Décembre'},
+    {nom:'Indemnité intemperies',montant:'75% du salaire horaire normal',mois:'Variable'},
     {nom:'Prime de hauteur (> 15m)',montant:'+10% du salaire horaire',mois:'Mensuel'},
     {nom:'Prime travail souterrain',montant:'+10% du salaire horaire',mois:'Mensuel'},
     {nom:'Prime insalubrite',montant:'+10% du salaire horaire',mois:'Mensuel'},
     {nom:'Eco-cheques',montant:'250 EUR/an',mois:'Juin'}],
-  particularites:['Timbres fidelite: prime annuelle OPOC (~9% brut annuel)','Intemperies: 75% du salaire si arret chantier (gel, pluie, neige)','Hauteur > 15m: prime +10%','Travail souterrain: prime +10%','Insalubrite (amiante, plomb): prime +10%','Vetements/EPI: fournis par employeur','Carte C3.2A construction obligatoire','Registre de chantier obligatoire','Checkin@work: enregistrement electronique obligatoire','Transport: indemnite selon km'],
+  particularites:['Timbres fidelite: prime annuelle OPOC (~9% brut annuel)','Intemperies: 75% du salaire si arret chantier (gel, pluie, neige)','Hauteur > 15m: prime +10%','Travail souterrain: prime +10%','Insalubrite (amiante, plomb): prime +10%','Vetements/EPI: fournis par employeur','Carte C3.2A construction obligatoire','Registre de chantier obligatoire','Checkin@work: enregistrement electronique obligatoire','Transport: indemnité selon km'],
 },
 
 // ══════════════════════════════════════
 // CP 322.01 — TITRES-SERVICES
 // ══════════════════════════════════════
 '322.01':{
-  nom:'CP 322.01 — Titres-Services (Travail Interimaire)',
+  nom:'CP 322.01 — Titres-Services (Travail Intérimaire)',
   secteur:'Aide-menagere a domicile',
   travailleurs:'~150.000',
   indexation:'Index sante — Automatique',
@@ -181,12 +181,12 @@ export const BAREMES_DATA={
       grille:[{anc:0,min:2070.48},{anc:1,min:2091.18},{anc:2,min:2111.88},{anc:3,min:2132.58},{anc:4,min:2153.28},{anc:5,min:2174.00},{anc:6,min:2194.70},{anc:8,min:2236.10},{anc:10,min:2277.50},{anc:12,min:2318.90},{anc:14,min:2360.30},{anc:16,min:2401.70},{anc:18,min:2443.10},{anc:20,min:2484.50}]},
   ],
   avantages:{prime13eme:true,cheqRepas:{patronal:3,max:4},ecoCheques:{max:250},conges:20},
-  primes:[{nom:'Prime de fin d\'annee',montant:'Equivalent 4.33 semaines',mois:'Decembre'},
+  primes:[{nom:'Prime de fin d\'année',montant:'Equivalent 4.33 semaines',mois:'Décembre'},
     {nom:'Prime annuelle juin',montant:'~1 semaine salaire',mois:'Juin'},
     {nom:'Eco-cheques',montant:'250 EUR/an',mois:'Juin'},
-    {nom:'Indemnite deplacement',montant:'Remboursement transport domicile-client',mois:'Mensuel'},
-    {nom:'Indemnite vetements',montant:'~1.64 EUR/jour',mois:'Mensuel'}],
-  particularites:['Salaire unique indexe (pas de grille multi-classe)','Anciennete: +20.70 EUR par annee','2 primes annuelles: decembre + juin','Eco-cheques: 250 EUR/an','Deplacement: rembourse entre clients (pas domicile-1er client)','Vetements de travail: indemnite ou fourniture','Formation: 16h/an minimum','Titre-service: 1h travail = 1 titre = ~10 EUR (valeur faciale)','Region: regles differentes Bruxelles / Wallonie / Flandre'],
+    {nom:'Indemnité deplacement',montant:'Remboursement transport domicile-client',mois:'Mensuel'},
+    {nom:'Indemnité vetements',montant:'~1.64 EUR/jour',mois:'Mensuel'}],
+  particularites:['Salaire unique indexe (pas de grille multi-classe)','Ancienneté: +20.70 EUR par année','2 primes annuelles: décembre + juin','Eco-cheques: 250 EUR/an','Deplacement: rembourse entre clients (pas domicile-1er client)','Vetements de travail: indemnité ou fourniture','Formation: 16h/an minimum','Titre-service: 1h travail = 1 titre = ~10 EUR (valeur faciale)','Region: regles differentes Bruxelles / Wallonie / Flandre'],
 },
 
 // ══════════════════════════════════════
@@ -218,9 +218,9 @@ export const BAREMES_DATA={
     {nom:'Prime de nuit (20h-6h)',montant:'+35% du salaire horaire',mois:'Mensuel'},
     {nom:'Prime weekend (samedi)',montant:'+26% du salaire horaire',mois:'Mensuel'},
     {nom:'Prime dimanche/ferie',montant:'+56% du salaire horaire',mois:'Mensuel'},
-    {nom:'Prime de fin d\'annee',montant:'Salaire mensuel brut',mois:'Decembre'},
+    {nom:'Prime de fin d\'année',montant:'Salaire mensuel brut',mois:'Décembre'},
     {nom:'Prime d\'attractivite',montant:'Via fonds Maribel',mois:'Variable'}],
-  particularites:['Baremes IFIC: classification fonctionnelle specifique sante','Nuit (20h-6h): +35% salaire horaire','Samedi: +26%','Dimanche/ferie: +56%','Garde a domicile: forfait + rappel remunere','Fonds Maribel: reduction charges + creation emplois','Accords du non-marchand: enveloppes supplementaires','Regime des 38h/semaine (souvent 36h effectives en 7/7)','Repos compensatoire nuit: 1 jour/trimestre si > 20 nuits'],
+  particularites:['Barèmes IFIC: classification fonctionnelle spécifique sante','Nuit (20h-6h): +35% salaire horaire','Samedi: +26%','Dimanche/ferie: +56%','Garde a domicile: forfait + rappel rémunéré','Fonds Maribel: réduction charges + creation emplois','Accords du non-marchand: enveloppes supplémentaires','Regime des 38h/semaine (souvent 36h effectives en 7/7)','Repos compensatoire nuit: 1 jour/trimestre si > 20 nuits'],
 },
 
 // ══════════════════════════════════════
@@ -244,7 +244,7 @@ export const BAREMES_DATA={
       grille:[{anc:0,min:2652.00},{anc:1,min:2684.52},{anc:2,min:2717.04},{anc:3,min:2749.56},{anc:5,min:2814.60},{anc:8,min:2912.16},{anc:10,min:2977.20},{anc:15,min:3139.80},{anc:20,min:3302.40}]},
   ],
   avantages:{prime13eme:true,cheqRepas:{patronal:5,max:7},ecoCheques:{max:250},conges:20},
-  primes:[{nom:'Prime de fin d\'annee',montant:'Salaire mensuel',mois:'Decembre'},
+  primes:[{nom:'Prime de fin d\'année',montant:'Salaire mensuel',mois:'Décembre'},
     {nom:'Prime d\'equipe matin (6h-14h)',montant:'+10%',mois:'Mensuel'},
     {nom:'Prime d\'equipe apres-midi (14h-22h)',montant:'+15%',mois:'Mensuel'},
     {nom:'Prime de nuit (22h-6h)',montant:'+25%',mois:'Mensuel'},
@@ -276,15 +276,15 @@ export const BAREMES_DATA={
       grille:[{anc:0,min:2582.76},{anc:1,min:2614.59},{anc:2,min:2646.42},{anc:3,min:2678.25},{anc:5,min:2741.91},{anc:8,min:2837.40},{anc:10,min:2901.06},{anc:15,min:3060.21},{anc:20,min:3219.36}]},
   ],
   avantages:{prime13eme:true,cheqRepas:{patronal:7,max:8},conges:20},
-  primes:[{nom:'Prime de fin d\'annee',montant:'Salaire mensuel',mois:'Decembre'},
-    {nom:'Indemnite de sejour (national)',montant:'~37 EUR/jour',mois:'Mensuel'},
-    {nom:'Indemnite international',montant:'~50-70 EUR/jour',mois:'Mensuel'},
+  primes:[{nom:'Prime de fin d\'année',montant:'Salaire mensuel',mois:'Décembre'},
+    {nom:'Indemnité de sejour (national)',montant:'~37 EUR/jour',mois:'Mensuel'},
+    {nom:'Indemnité international',montant:'~50-70 EUR/jour',mois:'Mensuel'},
     {nom:'Prime ADR',montant:'+5 a +10%',mois:'Mensuel'},
     {nom:'Heures d\'attente',montant:'100% apres 1h d\'attente',mois:'Mensuel'},
     {nom:'Repos compensatoire',montant:'Selon reglementation temps conduite',mois:'Variable'},
     {nom:'Prime de nuit (22h-6h)',montant:'+25%',mois:'Mensuel'},
     {nom:'Prime samedi',montant:'+50%',mois:'Mensuel'}],
-  particularites:['Tachygraphe: repos obligatoire 45h/semaine, 9h/jour','ADR: +5% a +10% selon classe de danger','Heures attente: comptees comme temps de travail apres 1h','International: indemnite sejour 50-70 EUR/jour (exoneree)','National: indemnite repas ~37 EUR/jour si > 4h deplacement','Carte conducteur: obligatoire, validite 5 ans','Formation continue: 35h/5 ans (Code 95)','Repos compensatoire: selon reglement CE 561/2006'],
+  particularites:['Tachygraphe: repos obligatoire 45h/semaine, 9h/jour','ADR: +5% a +10% selon classe de danger','Heures attente: comptees comme temps de travail apres 1h','International: indemnité sejour 50-70 EUR/jour (exoneree)','National: indemnité repas ~37 EUR/jour si > 4h deplacement','Carte conducteur: obligatoire, validite 5 ans','Formation continue: 35h/5 ans (Code 95)','Repos compensatoire: selon règlement CE 561/2006'],
 },
 
 // ══════════════════════════════════════
@@ -308,11 +308,11 @@ export const BAREMES_DATA={
       grille:[{anc:0,min:2365.92},{anc:1,min:2392.58},{anc:2,min:2419.24},{anc:3,min:2445.90},{anc:5,min:2499.22},{anc:8,min:2578.86},{anc:10,min:2632.18},{anc:15,min:2765.14},{anc:20,min:2898.10}]},
   ],
   avantages:{prime13eme:true,cheqRepas:{patronal:3,max:5},conges:20},
-  primes:[{nom:'Prime de fin d\'annee',montant:'Selon anciennete',mois:'Decembre'},
-    {nom:'Indemnite deplacement',montant:'0.15 EUR/km ou abonnement',mois:'Mensuel'},
-    {nom:'Vetements de travail',montant:'Fournis ou indemnite',mois:'Mensuel'},
+  primes:[{nom:'Prime de fin d\'année',montant:'Selon ancienneté',mois:'Décembre'},
+    {nom:'Indemnité deplacement',montant:'0.15 EUR/km ou abonnement',mois:'Mensuel'},
+    {nom:'Vetements de travail',montant:'Fournis ou indemnité',mois:'Mensuel'},
     {nom:'Prime insalubrite',montant:'+5% si conditions speciales',mois:'Mensuel'}],
-  particularites:['Temps partiel frequent (horaires coupes matin/soir)','Deplacement entre chantiers: temps de travail','Vetements/EPI: fournis obligatoirement','Produits: formation manipulation obligatoire','Hauteur (vitres): formations securite specifiques','Nuit (22h-6h): +25%','Dimanche: +100%'],
+  particularites:['Temps partiel frequent (horaires coupes matin/soir)','Deplacement entre chantiers: temps de travail','Vetements/EPI: fournis obligatoirement','Produits: formation manipulation obligatoire','Hauteur (vitres): formations sécurité spécifiques','Nuit (22h-6h): +25%','Dimanche: +100%'],
 },
 
 // ══════════════════════════════════════
@@ -336,9 +336,9 @@ export const BAREMES_DATA={
       grille:[{anc:0,min:2462.28},{anc:2,min:2519.52},{anc:4,min:2576.76},{anc:6,min:2634.00},{anc:8,min:2691.24},{anc:10,min:2748.48},{anc:15,min:2891.58},{anc:20,min:3034.68},{anc:25,min:3177.78}]},
   ],
   avantages:{prime13eme:true,conges:20,congesScolaires:true},
-  primes:[{nom:'Prime de fin d\'annee',montant:'Salaire mensuel',mois:'Decembre'},
+  primes:[{nom:'Prime de fin d\'année',montant:'Salaire mensuel',mois:'Décembre'},
     {nom:'Allocation de foyer/residence',montant:'Selon bareme fonction publique',mois:'Mensuel'}],
-  particularites:['Vacances scolaires: selon calendrier CF/FWB','Baremes proches de la fonction publique','Anciennete: valorisation services anterieurs','Pension: regime secteur public si nomme','Conges: calendrier scolaire (vacances Noel, Paques, ete)'],
+  particularites:['Vacances scolaires: selon calendrier CF/FWB','Barèmes proches de la fonction publique','Ancienneté: valorisation services anterieurs','Pension: regime secteur public si nomme','Congés: calendrier scolaire (vacances Noel, Paques, ete)'],
 },
 
 };
@@ -359,22 +359,22 @@ function generateGrid(min,nom){
   const mkGrille=(base)=>ancs.map(a=>({anc:a,min:r(base*(1+a*0.01))}));
   return {
     nom:'CP — '+nom,secteur:nom,idx:'01/01/2026',indexation:'Index sante',
-    info:'Grille generee sur base du minimum sectoriel. Consultez la CCT pour les echelons officiels.',
+    info:'Grille générée sur base du minimum sectoriel. Consultez la CCT pour les échelons officiels.',
     generated:true,
     classes:[
       {id:'I',desc:'Personnel non qualifie / debutant',exemples:'Manoeuvre, aide, debutant',grille:mkGrille(min)},
-      {id:'II',desc:'Personnel semi-qualifie',exemples:'Ouvrier/employe avec experience',grille:mkGrille(r(min*1.05))},
-      {id:'III',desc:'Personnel qualifie',exemples:'Ouvrier/employe qualifie, technicien',grille:mkGrille(r(min*1.12))},
+      {id:'II',desc:'Personnel semi-qualifie',exemples:'Ouvrier/employé avec experience',grille:mkGrille(r(min*1.05))},
+      {id:'III',desc:'Personnel qualifie',exemples:'Ouvrier/employé qualifie, technicien',grille:mkGrille(r(min*1.12))},
       {id:'IV',desc:'Personnel hautement qualifie / Chef',exemples:'Chef d\'equipe, responsable, cadre',grille:mkGrille(r(min*1.22))},
     ],
     avantages:{prime13eme:true,conges:20},
-    primes:[{nom:'Prime de fin d\'annee (13eme mois)',montant:'Selon CCT sectorielle',mois:'Decembre'}],
-    particularites:['Grille calculee — consultez votre CCT sectorielle pour les montants exacts','Anciennete: estimation +1% par annee','Classes: estimation basee sur les pratiques belges standard'],
+    primes:[{nom:'Prime de fin d\'année (13eme mois)',montant:'Selon CCT sectorielle',mois:'Décembre'}],
+    particularites:['Grille calculee — consultez votre CCT sectorielle pour les montants exacts','Ancienneté: estimation +1% par année','Classes: estimation basee sur les pratiques belges standard'],
   };
 }
 
 export const AUTRES_CP={
-'100':{n:'Ouvriers auxiliaires',min:2029.88},'101':{n:'Mines de houille',min:2200},'102':{n:'Industrie des carrieres',min:2173},'102.01':{n:'Carrieres petit granit/calcaire',min:2200},'102.02':{n:'Carrieres porphyre',min:2200},'102.03':{n:'Carrieres gravier/sable',min:2173},'102.04':{n:'Carrieres argile',min:2173},'102.05':{n:'Carrieres ardoise',min:2200},'102.06':{n:'Carrieres grès',min:2200},'102.07':{n:'Carrieres kaolin',min:2173},'102.08':{n:'Cimenteries',min:2300},'102.09':{n:'Industrie ceramique',min:2173},'104':{n:'Siderurgie',min:2365},'105':{n:'Metaux non-ferreux',min:2300},'106.01':{n:'Ciment',min:2300},'106.02':{n:'Beton',min:2250},'106.03':{n:'Fibrociment',min:2250},'109':{n:'Habillement/confection',min:2029},'110':{n:'Entretien textile',min:2050},'112':{n:'Garage (ouvriers)',min:2134},'113':{n:'Ceramique',min:2095},'113.01':{n:'Tuileries',min:2095},'113.02':{n:'Briqueteries',min:2095},'113.03':{n:'Poterie ornementale',min:2095},'113.04':{n:'Poteries/ceramiques sanitaires',min:2095},'114':{n:'Briqueteries',min:2095},'115':{n:'Verrerie',min:2250},'116':{n:'Chimie',min:2269},'117':{n:'Petrole',min:2400},'119.01':{n:'Commerce detail alimentation petites',min:2029},'119.02':{n:'Commerce detail alimentation moyennes',min:2050},'120':{n:'Textile',min:2095},'120.01':{n:'Textile Flandre occidentale',min:2095},'120.02':{n:'Textile Flandre orientale',min:2095},'120.03':{n:'Finissage',min:2095},'122':{n:'Exploitation forestiere',min:2050},'125':{n:'Industrie du bois',min:2134},'125.01':{n:'Scieries',min:2134},'125.02':{n:'Panneaux bois',min:2134},'125.03':{n:'Charpenterie/menuiserie',min:2173},'126':{n:'Ameublement',min:2095},'127':{n:'Commerce combustibles',min:2095},'128':{n:'Cuirs et peaux',min:2050},'129':{n:'Production papier/carton',min:2173},'130':{n:'Imprimerie (ouvriers)',min:2134},'132':{n:'Entreprises artisanales travaux',min:2095},'133':{n:'Tabac',min:2095},'136':{n:'Transformation papier',min:2134},'140.01':{n:'Transport autobus/autocars',min:2226},'140.03':{n:'Batellerie',min:2200},'140.04':{n:'Transport fluvial',min:2226},'140.05':{n:'Demenagement',min:2173},'142':{n:'Recuperation metaux',min:2134},'142.01':{n:'Recuperation metaux ferreux',min:2134},'142.02':{n:'Recuperation metaux non-ferreux',min:2134},'142.03':{n:'Recuperation chiffons',min:2029},'142.04':{n:'Recuperation dechets',min:2095},'143':{n:'Peche maritime',min:2200},'144':{n:'Agriculture',min:2029},'145':{n:'Horticulture',min:2029},'145.01':{n:'Exploitation de parcs',min:2050},'145.03':{n:'Reboisement',min:2050},'145.04':{n:'Agriculture/horticulture',min:2029},'145.05':{n:'Champignonnieres',min:2050},'146':{n:'Travaux forestiers',min:2050},'148':{n:'Fourrure et peau',min:2029},'149.01':{n:'Electrotechnique (ouvriers)',min:2173},'149.02':{n:'Carrosserie (ouvriers)',min:2134},'149.03':{n:'Entretien metal et aviation',min:2200},'149.04':{n:'Metaux precieux',min:2134},'150':{n:'Poterie ordinaire',min:2050},'152.01':{n:'Enseignement libre subventionne CF',min:2134},'201':{n:'Commerce de detail independant',min:2029},'202':{n:'Employes commerce alim.',min:2095},'202.01':{n:'Employes grands magasins',min:2095},'207':{n:'Employes chimie',min:2226},'209':{n:'Fabrications metalliques (employes)',min:2134},'210':{n:'Employes siderurgie',min:2226},'211':{n:'Employes petrole',min:2400},'214':{n:'Employes textile',min:2095},'215':{n:'Employes habillement',min:2029},'216':{n:'Employes cadres CPNAE',min:2614},'218':{n:'Employes organes controle',min:2226},'219':{n:'Employes organes controle technique',min:2226},'220':{n:'Employes industrie alimentaire',min:2134},'222':{n:'Employes papier',min:2134},'224':{n:'Employes metaux non-ferreux',min:2226},'225':{n:'Employes hôpitaux prives',min:2095},'226':{n:'Employes commerce international',min:2173},'227':{n:'Employes audiovisuel',min:2173},'301':{n:'Port d\'Anvers',min:2365},'302.01':{n:'Catering',min:2029},'303':{n:'Cinema',min:2095},'303.01':{n:'Exploitation cinema',min:2095},'303.03':{n:'Techniciens cinema',min:2173},'304':{n:'Spectacles',min:2095},'305':{n:'Sante (privee)',min:2095},'305.01':{n:'Institutions privees soins',min:2095},'305.02':{n:'Hopitaux prives',min:2226},'306':{n:'Assurances',min:2365},'307':{n:'Courtage assurances',min:2173},'308':{n:'Societes de pret hypothecaire',min:2269},'309':{n:'Bourses et agents change',min:2269},'310':{n:'Banques',min:2365},'311':{n:'Grandes entreprises detail',min:2095},'312':{n:'Grands magasins',min:2095},'313':{n:'Pharmacies',min:2134},'314':{n:'Coiffure / Soins beaute',min:2029},'315':{n:'Aviation',min:2462},'315.01':{n:'Transport aerien maintenance',min:2462},'315.02':{n:'Transport aerien ground',min:2173},'316':{n:'Commerce maritime',min:2226},'317':{n:'Gardiennage',min:2095},'318':{n:'Services aux familles/personnes',min:2029},'318.01':{n:'Aides familiales',min:2134},'318.02':{n:'Accueil enfants',min:2095},'319':{n:'Etablissements education/hebergement',min:2095},'319.01':{n:'Maisons repos (priv.)',min:2095},'319.02':{n:'Centres handicapes',min:2134},'320':{n:'Pompes funebres',min:2095},'321':{n:'Grossistes repartiteurs',min:2134},'322':{n:'Travail interimaire + titres-services',min:2029},'323':{n:'Gestion immeubles',min:2095},'324':{n:'Diamant',min:2173},'325':{n:'Institutions publiques credit',min:2365},'326':{n:'Gas et electricite',min:2365},'327':{n:'Entreprises non-marchand',min:2095},'328':{n:'Transport urbain',min:2365},'329':{n:'Societes logement social',min:2095},'330.01':{n:'Maisons de repos/soins priv.',min:2095},'330.02':{n:'Hopitaux (non-universitaires)',min:2226},'330.03':{n:'Cliniques universitaires',min:2365},'330.04':{n:'Sante mentale',min:2226},'331':{n:'Secteur flamand sante',min:2226},'332':{n:'Secteur wallon/bruxellois sante',min:2226},'333':{n:'Attractions touristiques',min:2029},'336':{n:'Professions liberales',min:2095},'337':{n:'Organismes auxiliaires/intermediaires',min:2134},'338':{n:'Societes gestion droits auteur',min:2269},'339':{n:'Societes logement social',min:2095},'340':{n:'Technologies orthopediques',min:2134},'341':{n:'Intermittents spectacle',min:2095},
+'100':{n:'Ouvriers auxiliaires',min:2029.88},'101':{n:'Mines de houille',min:2200},'102':{n:'Industrie des carrieres',min:2173},'102.01':{n:'Carrieres petit granit/calcaire',min:2200},'102.02':{n:'Carrieres porphyre',min:2200},'102.03':{n:'Carrieres gravier/sable',min:2173},'102.04':{n:'Carrieres argile',min:2173},'102.05':{n:'Carrieres ardoise',min:2200},'102.06':{n:'Carrieres grès',min:2200},'102.07':{n:'Carrieres kaolin',min:2173},'102.08':{n:'Cimenteries',min:2300},'102.09':{n:'Industrie ceramique',min:2173},'104':{n:'Siderurgie',min:2365},'105':{n:'Metaux non-ferreux',min:2300},'106.01':{n:'Ciment',min:2300},'106.02':{n:'Beton',min:2250},'106.03':{n:'Fibrociment',min:2250},'109':{n:'Habillement/confection',min:2029},'110':{n:'Entretien textile',min:2050},'112':{n:'Garage (ouvriers)',min:2134},'113':{n:'Ceramique',min:2095},'113.01':{n:'Tuileries',min:2095},'113.02':{n:'Briqueteries',min:2095},'113.03':{n:'Poterie ornementale',min:2095},'113.04':{n:'Poteries/ceramiques sanitaires',min:2095},'114':{n:'Briqueteries',min:2095},'115':{n:'Verrerie',min:2250},'116':{n:'Chimie',min:2269},'117':{n:'Petrole',min:2400},'119.01':{n:'Commerce detail alimentation petites',min:2029},'119.02':{n:'Commerce detail alimentation moyennes',min:2050},'120':{n:'Textile',min:2095},'120.01':{n:'Textile Flandre occidentale',min:2095},'120.02':{n:'Textile Flandre orientale',min:2095},'120.03':{n:'Finissage',min:2095},'122':{n:'Exploitation forestiere',min:2050},'125':{n:'Industrie du bois',min:2134},'125.01':{n:'Scieries',min:2134},'125.02':{n:'Panneaux bois',min:2134},'125.03':{n:'Charpenterie/menuiserie',min:2173},'126':{n:'Ameublement',min:2095},'127':{n:'Commerce combustibles',min:2095},'128':{n:'Cuirs et peaux',min:2050},'129':{n:'Production papier/carton',min:2173},'130':{n:'Imprimerie (ouvriers)',min:2134},'132':{n:'Entreprises artisanales travaux',min:2095},'133':{n:'Tabac',min:2095},'136':{n:'Transformation papier',min:2134},'140.01':{n:'Transport autobus/autocars',min:2226},'140.03':{n:'Batellerie',min:2200},'140.04':{n:'Transport fluvial',min:2226},'140.05':{n:'Demenagement',min:2173},'142':{n:'Récupération metaux',min:2134},'142.01':{n:'Récupération metaux ferreux',min:2134},'142.02':{n:'Récupération metaux non-ferreux',min:2134},'142.03':{n:'Récupération chiffons',min:2029},'142.04':{n:'Récupération dechets',min:2095},'143':{n:'Peche maritime',min:2200},'144':{n:'Agriculture',min:2029},'145':{n:'Horticulture',min:2029},'145.01':{n:'Exploitation de parcs',min:2050},'145.03':{n:'Reboisement',min:2050},'145.04':{n:'Agriculture/horticulture',min:2029},'145.05':{n:'Champignonnieres',min:2050},'146':{n:'Travaux forestiers',min:2050},'148':{n:'Fourrure et peau',min:2029},'149.01':{n:'Electrotechnique (ouvriers)',min:2173},'149.02':{n:'Carrosserie (ouvriers)',min:2134},'149.03':{n:'Entretien metal et aviation',min:2200},'149.04':{n:'Metaux precieux',min:2134},'150':{n:'Poterie ordinaire',min:2050},'152.01':{n:'Enseignement libre subventionne CF',min:2134},'201':{n:'Commerce de detail independant',min:2029},'202':{n:'Employés commerce alim.',min:2095},'202.01':{n:'Employés grands magasins',min:2095},'207':{n:'Employés chimie',min:2226},'209':{n:'Fabrications metalliques (employés)',min:2134},'210':{n:'Employés siderurgie',min:2226},'211':{n:'Employés petrole',min:2400},'214':{n:'Employés textile',min:2095},'215':{n:'Employés habillement',min:2029},'216':{n:'Employés cadres CPNAE',min:2614},'218':{n:'Employés organes controle',min:2226},'219':{n:'Employés organes controle technique',min:2226},'220':{n:'Employés industrie alimentaire',min:2134},'222':{n:'Employés papier',min:2134},'224':{n:'Employés metaux non-ferreux',min:2226},'225':{n:'Employés hôpitaux prives',min:2095},'226':{n:'Employés commerce international',min:2173},'227':{n:'Employés audiovisuel',min:2173},'301':{n:'Port d\'Anvers',min:2365},'302.01':{n:'Catering',min:2029},'303':{n:'Cinema',min:2095},'303.01':{n:'Exploitation cinema',min:2095},'303.03':{n:'Techniciens cinema',min:2173},'304':{n:'Spectacles',min:2095},'305':{n:'Sante (privee)',min:2095},'305.01':{n:'Institutions privees soins',min:2095},'305.02':{n:'Hopitaux prives',min:2226},'306':{n:'Assurances',min:2365},'307':{n:'Courtage assurances',min:2173},'308':{n:'Sociétés de pret hypothecaire',min:2269},'309':{n:'Bourses et agents change',min:2269},'310':{n:'Banques',min:2365},'311':{n:'Grandes entreprises detail',min:2095},'312':{n:'Grands magasins',min:2095},'313':{n:'Pharmacies',min:2134},'314':{n:'Coiffure / Soins beaute',min:2029},'315':{n:'Aviation',min:2462},'315.01':{n:'Transport aerien maintenance',min:2462},'315.02':{n:'Transport aerien ground',min:2173},'316':{n:'Commerce maritime',min:2226},'317':{n:'Gardiennage',min:2095},'318':{n:'Services aux familles/personnes',min:2029},'318.01':{n:'Aides familiales',min:2134},'318.02':{n:'Accueil enfants',min:2095},'319':{n:'Etablissements education/hebergement',min:2095},'319.01':{n:'Maisons repos (priv.)',min:2095},'319.02':{n:'Centres handicapes',min:2134},'320':{n:'Pompes funebres',min:2095},'321':{n:'Grossistes repartiteurs',min:2134},'322':{n:'Travail interimaire + titres-services',min:2029},'323':{n:'Gestion immeubles',min:2095},'324':{n:'Diamant',min:2173},'325':{n:'Institutions publiques credit',min:2365},'326':{n:'Gas et electricite',min:2365},'327':{n:'Entreprises non-marchand',min:2095},'328':{n:'Transport urbain',min:2365},'329':{n:'Sociétés logement social',min:2095},'330.01':{n:'Maisons de repos/soins priv.',min:2095},'330.02':{n:'Hopitaux (non-universitaires)',min:2226},'330.03':{n:'Cliniques universitaires',min:2365},'330.04':{n:'Sante mentale',min:2226},'331':{n:'Secteur flamand sante',min:2226},'332':{n:'Secteur wallon/bruxellois sante',min:2226},'333':{n:'Attractions touristiques',min:2029},'336':{n:'Professions liberales',min:2095},'337':{n:'Organismes auxiliaires/intermediaires',min:2134},'338':{n:'Sociétés gestion droits auteur',min:2269},'339':{n:'Sociétés logement social',min:2095},'340':{n:'Technologies orthopediques',min:2134},'341':{n:'Intermittents spectacle',min:2095},
 };
 
 // ════════════════════════════════════════════════════════════
@@ -406,7 +406,7 @@ export function BaremesCPV2({s}){
     });
   },[search]);
 
-  // Alerts: employees below minimum
+  // Alerts: employées below minimum
   const alertes=useMemo(()=>{
     return allEmps.filter(e=>{
       const cp=e._cp||'200';const brut=+(e.monthlySalary||e.gross||0);if(brut<=0)return false;
@@ -424,7 +424,7 @@ export function BaremesCPV2({s}){
   const Badge=({text,color})=><span style={{padding:'2px 7px',borderRadius:5,fontSize:8,fontWeight:600,background:(color||'#888')+'15',color:color||'#888'}}>{text}</span>;
 
   return <div style={{padding:24}}>
-    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📊 Baremes Salariaux par Commission Paritaire</h2>
+    <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:'0 0 4px'}}>📊 Barèmes Salariaux par Commission Paritaire</h2>
     <p style={{fontSize:12,color:'#888',margin:'0 0 20px'}}>{detailledCPs.length} CP avec grilles officielles + {Object.keys(AUTRES_CP).length} CP avec grilles calculees — {allCPKeys.length} CP total — Index janvier 2026</p>
 
     <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:16}}>
@@ -468,15 +468,15 @@ export function BaremesCPV2({s}){
           <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14,marginBottom:14}}>
             <div style={{fontSize:16,fontWeight:700,color:'#c6a34e'}}>{'CP '+selCP+' — '+(BAREMES_DATA[selCP]?BAREMES_DATA[selCP].nom.split('—')[1]?.trim()||bar.secteur:(AUTRES_CP[selCP]?.n||bar.secteur))}</div>
             <div style={{fontSize:11,color:'#888',marginTop:4}}>{bar.info}</div>
-            {isGenerated&&<div style={{marginTop:8,padding:8,background:'rgba(59,130,246,.06)',borderRadius:6,fontSize:10,color:'#60a5fa'}}>◆ Grille calculee: classes et anciennete estimees sur base du minimum sectoriel. Consultez la CCT officielle pour les montants exacts.</div>}
+            {isGenerated&&<div style={{marginTop:8,padding:8,background:'rgba(59,130,246,.06)',borderRadius:6,fontSize:10,color:'#60a5fa'}}>◆ Grille calculee: classes et ancienneté estimees sur base du minimum sectoriel. Consultez la CCT officielle pour les montants exacts.</div>}
             <div style={{display:'flex',gap:12,marginTop:8,flexWrap:'wrap'}}>
               {bar.travailleurs&&<Badge text={bar.travailleurs+' travailleurs'} color="#3b82f6"/>}
               <Badge text={'Index: '+bar.idx} color="#22c55e"/>
               {bar.avantages?.prime13eme&&<Badge text="13eme mois" color="#c6a34e"/>}
-              {bar.avantages?.cheqRepas&&<Badge text={'Cheques-repas max '+bar.avantages.cheqRepas.max+'€'} color="#fb923c"/>}
+              {bar.avantages?.cheqRepas&&<Badge text={'Chèques-repas max '+bar.avantages.cheqRepas.max+'€'} color="#fb923c"/>}
               {bar.avantages?.ecoCheques&&<Badge text={'Eco-cheques '+bar.avantages.ecoCheques.max+'€'} color="#22c55e"/>}
               {bar.avantages?.timbFidelite&&<Badge text="Timbres fidelite" color="#a855f7"/>}
-              {bar.avantages?.primeIFIC&&<Badge text="Baremes IFIC" color="#06b6d4"/>}
+              {bar.avantages?.primeIFIC&&<Badge text="Barèmes IFIC" color="#06b6d4"/>}
             </div>
           </div>
 
@@ -493,7 +493,7 @@ export function BaremesCPV2({s}){
               <div style={{fontSize:10,color:'#888',marginTop:2}}>{cl.exemples}</div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'80px 130px 130px 130px 1fr',padding:'6px 14px',fontSize:9,fontWeight:600,color:'#888',background:'rgba(255,255,255,.02)'}}>
-              <div>Anc.</div><div>Brut min.</div><div>Net estime</div><div>Cout empl.</div><div>Barre</div>
+              <div>Anc.</div><div>Brut min.</div><div>Net estime</div><div>Coût empl.</div><div>Barre</div>
             </div>
             {cl.grille.map((g,j)=>{
               const onss=Math.round(g.min*TX_ONSS_W*100)/100;
@@ -520,7 +520,7 @@ export function BaremesCPV2({s}){
             if(empsCP.length===0)return null;
             const minSal=bar?Math.min(...bar.classes.map(c=>c.grille[0].min)):0;
             return <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:12,overflow:'hidden',marginTop:8}}>
-              <div style={{padding:'8px 14px',background:'rgba(198,163,78,.04)',fontSize:11,fontWeight:600,color:'#c6a34e'}}>Vos employes CP {selCP} ({empsCP.length})</div>
+              <div style={{padding:'8px 14px',background:'rgba(198,163,78,.04)',fontSize:11,fontWeight:600,color:'#c6a34e'}}>Vos employés CP {selCP} ({empsCP.length})</div>
               {empsCP.map((e,i)=>{
                 const brut=+(e.monthlySalary||e.gross||0);const isBelow=brut>0&&brut<minSal;
                 return <div key={i} style={{display:'flex',gap:8,padding:'6px 14px',borderBottom:'1px solid rgba(255,255,255,.02)',fontSize:11,alignItems:'center'}}>
@@ -572,7 +572,7 @@ export function BaremesCPV2({s}){
         {/* TAB: ALERTES */}
         {tab==='alertes'&&<div>
           <div style={{fontSize:14,fontWeight:600,color:alertes.length>0?'#ef4444':'#4ade80',marginBottom:12}}>
-            {alertes.length>0?'⚠️ '+alertes.length+' employe(s) sous le minimum sectoriel':'✅ Tous les employes sont conformes'}
+            {alertes.length>0?'⚠️ '+alertes.length+' employé(s) sous le minimum sectoriel':'✅ Tous les employés sont conformes'}
           </div>
           {alertes.map((a,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',background:'rgba(239,68,68,.03)'}}>
             <span style={{fontSize:16}}>⚠️</span>
