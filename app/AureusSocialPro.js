@@ -2,6 +2,7 @@
 "use client"
 import { useState, useReducer, useRef, useMemo, useEffect, useCallback, createContext, useContext } from "react";
 import dynamic from "next/dynamic";
+import { I18N } from "./lib/i18n";
 const AccessManagement = dynamic(() => import("./modules/AccessManagement"), { ssr: false, loading: () => <div style={{padding:40,textAlign:'center',color:'#5e5c56'}}>Chargement...</div> });
 const CommissionsModule = dynamic(() => import("./modules/CommissionsModule"), { ssr: false, loading: () => <div style={{padding:40,textAlign:'center',color:'#5e5c56'}}>Chargement...</div> });
 const TwoFactorSetup = dynamic(() => import("./modules/TwoFactorSetup"), { ssr: false });
@@ -114,6 +115,9 @@ const SEPAModLazy = dynamic(() => import("./modules/ModsBatch3").then(m => ({ de
 const SimulateurNetBrutModLazy = dynamic(() => import("./modules/ModsBatch3").then(m => ({ default: m.SimulateurNetBrutMod })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const TreizMoisModLazy = dynamic(() => import("./modules/ModsBatch3").then(m => ({ default: m.TreizMoisMod })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const OffboardingModLazy = dynamic(() => import("./modules/ModsBatch3").then(m => ({ default: m.OffboardingMod })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
+const ClotureMensuelleLazy = dynamic(() => import("./modules/ClotureMensuelle"), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
+const PortailClientSSLazy = dynamic(() => import("./modules/PortailClientSS"), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
+const FloatingLegalAgentLazy = dynamic(() => import("./modules/FloatingLegalAgent"), { ssr: false, loading: () => null });
 
 const TableauDirectionLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.TableauDirection })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const TableauBordDirectionLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.TableauBordDirection })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
@@ -166,7 +170,6 @@ const SmartAutomationLazy = dynamic(() => import("./modules/SprintComponents").t
 const SmartAutopilotLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.SmartAutopilot })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const TestSuiteDashLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.TestSuiteDash })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const ValidationEngineLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.ValidationEngine })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
-const detectAgentLangLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.detectAgentLang })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const RegularisationPPLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.RegularisationPP })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 
 // ═══ SPRINT 37: MOTEUR CENTRAL LOIS BELGES — AUTO-UPDATE 1 CLIC  ═══
@@ -718,371 +721,6 @@ var _IDX = LOIS_BELGES.rémunération.indexSante.coeff; // 2.0399
 const LangCtx = createContext({lang:'fr',t:(k)=>k,setLang:()=>{}});
 const useLang = () => useContext(LangCtx);
 
-const I18N = {
-  // ── Navigation principale ──
-  'nav.dashboard': { fr:'Tableau de bord', nl:"Dashboard", en:"Dashboard", de:"Dashboard" },
-  'nav.employees': { fr:'Employés', nl:"Werknemers", en:"Employees", de:"Mitarbeiter" },
-  'nav.payslip': { fr:'Fiches de paie', nl:"Loonfiches", en:"Payslips", de:"Gehaltsabrechnungen" },
-  'nav.onss': { fr:'ONSS / Déclarations', nl:"RSZ / Aangiften", en:"Social Security", de:"Sozialversicherung" },
-  'nav.fiscal': { fr:'Fiscal', nl:"Fiscaal", en:"Tax", de:"Steuern" },
-  'nav.salaires': { fr:'Salaires & Calculs', nl:"Lonen & Berekeningen", en:"Salaries & Calculations", de:"Gehälter & Berechnungen" },
-  'nav.avantages': { fr:'Avantages & Rémunération', nl:"Voordelen & Verloning", en:"Benefits & Compensation", de:"Vorteile & Vergütung" },
-  'nav.contrats': { fr:'Contrats & Documents', nl:"Contracten & Documenten", en:"Contracts & Documents", de:"Verträge & Dokumente" },
-  'nav.rh': { fr:'RH & Personnel', nl:"HR & Personeel", en:"HR & Personnel", de:"HR & Personal" },
-  'nav.social': { fr:'Social & Assurances', nl:"Sociaal & Verzekeringen", en:"Social & Insurance", de:"Soziales & Versicherung" },
-  'nav.bienetre': { fr:'Bien-être & Prévention', nl:"Welzijn & Preventie", en:"Wellbeing & Prevention", de:"Wohlbefinden & Prävention" },
-  'nav.reporting': { fr:'Reporting & Export', nl:"Rapportage & Export", en:"Reporting & Export", de:"Berichterstattung & Export" },
-  'nav.legal': { fr:'Juridique & Veille', nl:"Juridisch & Monitoring", en:"Legal & Monitoring", de:"Recht & Überwachung" },
-  'nav.sprint9': { fr:'Sprint 9 - Modules', nl:'Sprint 9 - Modules', en:'Sprint 9 - Modules', de:'Sprint 9 - Module' },
-  'nav.portalmanager': { fr:'Portail Clients',nl:'Klantenportaal',en:'Client Portal',de:'Kundenportal' },
-    'nav.queue': { fr:'File traitement',nl:'Wachtrij',en:'Queue',de:'Warteschlange' },
-    'nav.onboarding': { fr:'Onboarding',nl:'Onboarding',en:'Onboarding',de:'Onboarding' },
-    'nav.cloture': { fr:'Clôture Mensuelle',nl:'Maandafsluiting',en:'Monthly Closing',de:'Monatsabschluss' },
-    'nav.notifications': { fr:'Notifications',nl:'Meldingen',en:'Notifications',de:'Benachrichtigungen' },
-    'nav.commandcenter': { fr:'Command Center',nl:'Command Center',en:'Command Center',de:'Command Center' },
-    'nav.autopilot': { fr:'Autopilot',nl:'Autopilot',en:'Autopilot',de:'Autopilot' },
-    'nav.smartauto': { fr:'Smart Auto',nl:'Smart Auto',en:'Smart Auto',de:'Smart Auto' },
-    'nav.massengine': { fr:'Mass Engine',nl:'Mass Engine',en:'Mass Engine',de:'Mass Engine' },
-    'nav.automatisation': { fr:'⚡ Automatisation',nl:'⚡ Automatisering',en:'⚡ Automation',de:'⚡ Automatisierung' },
-    'nav.team': { fr:'Équipe',nl:'Team',en:'Team',de:'Team' },
-  'nav.settings': { fr:'Paramètres', nl:"Instellingen", en:"Settings", de:"Einstellungen" },
-  'nav.aureussuite': { fr:'Aureus Suite', nl:"Aureus Suite", en:"Aureus Suite", de:"Aureus Suite" },
-  'nav.back': { fr:'← Tous les dossiers', nl:"← Alle dossiers", en:"← All folders", de:"← Alle Ordner" },
-  'nav.search': { fr:'🔍 Rechercher un module... (Ctrl+K)', nl:"🔍 Module zoeken... (Ctrl+K)", en:"🔍 Search module... (Ctrl+K)", de:"🔍 Modul suchen... (Ctrl+K)" },
-  'nav.noresult': { fr:'Aucun module trouvé', nl:"Geen module gevonden", en:"No module found", de:"Kein Modul gefunden" },
-  
-  // ── Sous-menus ──
-  'sub.dimona': { fr:'Dimona', nl:"Dimona" },
-  'sub.dmfa': { fr:'DMFA / DRS', nl:"DmfA / DRS" },
-  'sub.drs': { fr:'DRS / Documents C', nl:"DRS / C-documenten" },
-  'sub.onssapl': { fr:'ONSS-APL (DMFAPPL)', nl:"RSZ-PPL (DmfAPPL)" },
-  'sub.belcotax': { fr:'Belcotax 281.xx', nl:"Belcotax 281.xx" },
-  'sub.precompte': { fr:'Précompte 274', nl:"Bedrijfsvoorheffing 274" },
-  'sub.fiches_ext': { fr:'Fiches spéciales', nl:"Speciale fiches" },
-  'sub.co2': { fr:'Calcul CO2 véhicules', nl:"CO2-berekening voertuigen" },
-  'sub.atn': { fr:'🚗 ATN Véhicules', nl:"🚗 VAA Voertuigen" },
-  'sub.od': { fr:'O.D. Comptables', nl:"Boekhoudkundige OD" },
-  'sub.provisions': { fr:'Provisions', nl:"Voorzieningen" },
-  'sub.cumuls': { fr:'Cumuls annuels', nl:"Jaarlijkse cumulatie" },
-  'sub.netbrut': { fr:'Net → Brut', nl:"Netto → Bruto" },
-  'sub.simcout': { fr:'💰 Simulation coût', nl:"💰 Kostensimulatie" },
-  'sub.saisies': { fr:'Saisies-Cessions', nl:"Beslagen-Overdrachten" },
-  'sub.indexauto': { fr:'Index automatique', nl:"Automatische index" },
-  'sub.horsforfait': { fr:'Heures supplémentaires', nl:"Overuren" },
-  'sub.totalreward': { fr:'🏆 Total Reward', nl:"🏆 Total Reward" },
-  'sub.transport': { fr:'🚇 Transport domicile', nl:"🚇 Woon-werkverkeer" },
-  'sub.treizieme': { fr:'🎄 13ème mois', nl:"🎄 13de maand" },
-  'sub.css': { fr:'💎 Cotisation spéc. SS', nl:"💎 Bijzondere SS" },
-  'sub.bonusemploi': { fr:'🎯 Bonus emploi', nl:"🎯 Werkbonus" },
-  'sub.cheques': { fr:'Chèques-Repas', nl:"Maaltijdcheques" },
-  'sub.ecocmd': { fr:'Éco-chèques', nl:"Ecocheques" },
-  'sub.cafeteria': { fr:'Plan cafétéria', nl:"Cafetariaplan" },
-  'sub.cct90': { fr:'Bonus CCT 90', nl:"Bonus CAO 90" },
-  'sub.warrants': { fr:'Warrants', nl:"Warrants" },
-  'sub.budgetmob': { fr:'Budget mobilité', nl:"Mobiliteitsbudget" },
-  'sub.ecocircul': { fr:'Notes de frais', nl:"Onkostennota\'s" },
-  'sub.contrats2': { fr:'Contrats de travail', nl:"Arbeidsovereenkomsten" },
-  'sub.reglement': { fr:'Règlement de travail', nl:"Arbeidsreglement" },
-  'sub.compteindiv': { fr:'Compte individuel', nl:"Individuele rekening" },
-  'sub.preavis': { fr:'Préavis légal', nl:"Wettelijke opzegging" },
-  'sub.pecsortie': { fr:'Pécule de sortie', nl:"Vertrekvakantiegeld" },
-  'sub.certpme': { fr:'Certificat PME', nl:"KMO-certificaat" },
-  'sub.absences': { fr:'Gestion absences', nl:"Afwezigheidsbeheer" },
-  'sub.onboarding': { fr:'Onboarding', nl:"Onboarding" },
-  'sub.offboarding': { fr:'Offboarding', nl:"Offboarding" },
-  'sub.registre': { fr:'Registre du personnel', nl:"Personeelsregister" },
-  'sub.totalreward': { fr:'Total Reward', nl:"Total Reward" },
-  'sub.absenteisme': { fr:'📊 Analyse absentéisme', nl:"📊 Absenteïsme-analyse" },
-  'sub.credittemps': { fr:'Crédit-temps', nl:"Tijdskrediet" },
-  'sub.chomtemp': { fr:'⚠ Chômage temporaire', nl:"⚠ Tijdelijke werkloosheid" },
-  'sub.congeduc': { fr:'🎓 Congé-éducation payé', nl:"🎓 Betaald educatief verlof" },
-  'sub.rcc': { fr:'RCC / Prépension', nl:"SWT / Brugpensioen" },
-  'sub.outplacement': { fr:'Outplacement', nl:"Outplacement" },
-  'sub.pointage': { fr:'⏱ Pointage & Portail', nl:"⏱ Tijdsregistratie & Portaal" },
-  'sub.planform': { fr:'Plan de formation', nl:"Opleidingsplan" },
-  'sub.medtravail': { fr:'Médecine du travail', nl:"Arbeidsgeneeskunde" },
-  'sub.selfservice': { fr:'👤 Portail travailleur', nl:"👤 Werknemersportaal" },
-  'sub.assloi': { fr:'Assurance-Loi AT', nl:"Arbeidsongevallenverzekering" },
-  'sub.assgroupe': { fr:'Assurance Groupe', nl:"Groepsverzekering" },
-  'sub.syndicales': { fr:'Primes syndicales', nl:"Syndicale premies" },
-  'sub.allocfam': { fr:'Alloc. familiales', nl:"Kinderbijslag" },
-  'sub.caissevac': { fr:'Caisse de vacances', nl:"Vakantiekas" },
-  'sub.rentes': { fr:'Rentes', nl:"Renten" },
-  'sub.decava': { fr:'DECAVA', nl:"DECAVA" },
-  'sub.aidesemploi': { fr:"🎯 Aides à l'emploi", nl:"🎯 Tewerkstellingssteun" },
-  'sub.planglobal': { fr:'Plan global prévention', nl:"Globaal preventieplan" },
-  'sub.paa': { fr:'Plan action annuel', nl:"Jaarlijks actieplan" },
-  'sub.risquespsycho': { fr:'Risques psychosociaux', nl:"Psychosociale risico\'s" },
-  'sub.alcool': { fr:'Politique alcool/drogues', nl:"Alcohol-/drugsbeleid" },
-  'sub.elections': { fr:'🗳 Élections sociales', nl:"🗳 Sociale verkiezingen" },
-  'sub.organes': { fr:'CE / CPPT / DS', nl:"OR / CPBW / VA" },
-  'sub.accounting': { fr:'Accounting Output', nl:"Boekhoudkundige Output" },
-  'sub.bilanbnb': { fr:'Bilan Social BNB', nl:"Sociaal Verslag NBB" },
-  'sub.bilan': { fr:'Bilan Social', nl:"Sociaal Verslag" },
-  'sub.statsins': { fr:'Statistiques INS', nl:"INS Statistieken" },
-  'sub.sepa': { fr:'SEPA / Virements', nl:"SEPA / Overschrijvingen" },
-  'sub.peppol': { fr:'🔗 PEPPOL e-Invoicing', nl:"🔗 PEPPOL e-Facturatie" },
-  'sub.envoi': { fr:'Envoi documents', nl:"Documenten versturen" },
-  'sub.exportimport': { fr:'Export / Import', nl:"Export / Import" },
-  'sub.ged': { fr:'📁 GED / Archivage', nl:"📁 DMS / Archivering" },
-  'sub.alertes': { fr:'Alertes légales', nl:"Juridische waarschuwingen" },
-  'sub.secteurs': { fr:'Secteurs spécifiques', nl:"Specifieke sectoren" },
-  'sub.eta': { fr:'Relevés ETA', nl:"ETA-overzichten" },
-  'sub.docsjuridiques': { fr:'📄 Documents Juridiques', nl:"📄 Juridische Documenten" },
-  'sub.config': { fr:'Configuration société', nl:"Bedrijfsconfiguratie" },
-  'sub.fraisgestion': { fr:'💰 Frais de gestion', nl:"💰 Beheerskosten" },
-  
-  // ── Headers & Titles ──
-  'app.title': { fr:'AUREUS SOCIAL', nl:"AUREUS SOCIAL" },
-  'app.subtitle': { fr:'Logiciel de Paie Pro', nl:"Professionele Loonsoftware" },
-  'app.client': { fr:'Client', nl:"Klant" },
-  
-  // ── Login ──
-  'login.title': { fr:'Accès sécurisé', nl:"Beveiligde toegang" },
-  'login.create': { fr:'Créer un code PIN', nl:"PIN-code aanmaken" },
-  'login.enter': { fr:'Entrez votre code PIN', nl:"Voer uw PIN-code in" },
-  'login.btn': { fr:'Se connecter', nl:"Aanmelden" },
-  'login.create_btn': { fr:'Créer', nl:"Aanmaken" },
-  
-  // ── Employees ──
-  'emp.title': { fr:'Gestion du personnel', nl:"Personeelsbeheer" },
-  'emp.add': { fr:'Ajouter un travailleur', nl:"Werknemer toevoegen" },
-  'emp.firstname': { fr:'Prénom', nl:"Voornaam" },
-  'emp.lastname': { fr:'Nom', nl:"Naam" },
-  'emp.niss': { fr:'NISS', nl:"INSZ" },
-  'emp.birthdate': { fr:'Date de naissance', nl:"Geboortedatum" },
-  'emp.address': { fr:'Adresse', nl:"Adres" },
-  'emp.city': { fr:'Ville', nl:"Stad" },
-  'emp.zip': { fr:'Code postal', nl:"Postcode" },
-  'emp.startdate': { fr:"Date d'entrée", nl:"Datum indiensttreding" },
-  'emp.enddate': { fr:'Date de sortie', nl:"Datum uitdiensttreding" },
-  'emp.function': { fr:'Fonction', nl:"Functie" },
-  'emp.department': { fr:'Département', nl:"Afdeling" },
-  'emp.contract': { fr:'Type contrat', nl:"Contracttype" },
-  'emp.regime': { fr:'Régime', nl:"Regime" },
-  'emp.salary': { fr:'Salaire mensuel brut', nl:"Bruto maandloon" },
-  'emp.iban': { fr:'IBAN', nl:"IBAN" },
-  'emp.civil': { fr:'État civil', nl:"Burgerlijke staat" },
-  'emp.children': { fr:'Enfants à charge', nl:"Kinderen ten laste" },
-  'emp.status_employe': { fr:'Employé', nl:"Bediende" },
-  'emp.status_ouvrier': { fr:'Ouvrier', nl:"Arbeider" },
-  'emp.status_student': { fr:'Étudiant', nl:"Student" },
-  'emp.status_flexi': { fr:'Flexi-job', nl:"Flexi-job" },
-  'emp.sexe': { fr:'Sexe', nl:"Geslacht" },
-  'emp.sexe_m': { fr:'Masculin', nl:"Man" },
-  'emp.sexe_f': { fr:'Féminin', nl:"Vrouw" },
-  'emp.save': { fr:'Enregistrer', nl:"Opslaan" },
-  'emp.delete': { fr:'Supprimer', nl:"Verwijderen" },
-  'emp.active': { fr:'Actif', nl:"Actief" },
-  'emp.inactive': { fr:'Inactif', nl:"Inactief" },
-  
-  // ── Contract types ──
-  'ct.cdi': { fr:'CDI', nl:"COT" },
-  'ct.cdd': { fr:'CDD', nl:"CBD" },
-  'ct.interim': { fr:'Intérimaire', nl:"Uitzendkracht" },
-  'ct.student': { fr:'Étudiant (650h)', nl:"Student (650u)" },
-  'ct.replacement': { fr:'Remplacement', nl:"Vervanging" },
-  'ct.tpartiel': { fr:'Temps partiel', nl:"Deeltijds" },
-  'ct.full': { fr:'Temps plein', nl:"Voltijds" },
-  
-  // ── Civil status ──
-  'civil.single': { fr:'Isolé', nl:"Alleenstaand" },
-  'civil.married1': { fr:'Marié — 1 revenu', nl:"Gehuwd — 1 inkomen" },
-  'civil.married2': { fr:'Marié — 2 revenus', nl:"Gehuwd — 2 inkomens" },
-  'civil.cohabit': { fr:'Cohabitant', nl:"Samenwonend" },
-  'civil.divorced': { fr:'Divorcé', nl:"Gescheiden" },
-  'civil.widow': { fr:'Veuf/Veuve', nl:"Weduwe/Weduwnaar" },
-  
-  // ── Payslip ──
-  'pay.title': { fr:'Fiche de paie', nl:"Loonfiche" },
-  'pay.period': { fr:'Période', nl:"Periode" },
-  'pay.month': { fr:'Mois', nl:"Maand" },
-  'pay.year': { fr:'Année', nl:"Jaar" },
-  'pay.days': { fr:'Jours prestés', nl:"Gewerkte dagen" },
-  'pay.gross': { fr:'TOTAL BRUT', nl:"TOTAAL BRUTO" },
-  'pay.net': { fr:'NET À PAYER', nl:"NETTO TE BETALEN" },
-  'pay.onss': { fr:'Cotisations ONSS', nl:"RSZ-bijdragen" },
-  'pay.onss_worker': { fr:'ONSS travailleur', nl:"RSZ werknemer" },
-  'pay.onss_employer': { fr:'ONSS employeur', nl:"RSZ werkgever" },
-  'pay.pp': { fr:'Précompte professionnel', nl:"Bedrijfsvoorheffing" },
-  'pay.css': { fr:'Cotisation spéciale séc. soc.', nl:"Bijzondere bijdrage SZ" },
-  'pay.base': { fr:'Salaire de base', nl:"Basisloon" },
-  'pay.overtime': { fr:'Heures sup. (150%)', nl:"Overuren (150%)" },
-  'pay.sunday': { fr:'Heures dimanche (200%)', nl:"Zondaguren (200%)" },
-  'pay.night': { fr:'Heures nuit (125%)', nl:"Nachturen (125%)" },
-  'pay.bonus': { fr:'Prime', nl:"Premie" },
-  'pay.y13': { fr:'13ème mois', nl:"13de maand" },
-  'pay.sick': { fr:'Salaire garanti maladie', nl:"Gewaarborgd loon ziekte" },
-  'pay.advance': { fr:'Acompte', nl:"Voorschot" },
-  'pay.garnish': { fr:'Saisie', nl:"Beslag" },
-  'pay.transport': { fr:'Transport', nl:"Transport" },
-  'pay.expense': { fr:'Frais propres employeur', nl:"Eigen kosten werkgever" },
-  'pay.mv': { fr:'Chèques-repas', nl:"Maaltijdcheques" },
-  'pay.eco': { fr:'Éco-chèques', nl:"Ecocheques" },
-  'pay.employer_cost': { fr:'COÛT EMPLOYEUR', nl:"WERKGEVERSKOST" },
-  'pay.bonus_emploi': { fr:"Bonus à l'emploi", nl:"Werkbonus" },
-  'pay.bonus_fisc': { fr:'Bonus emploi fiscal', nl:"Fiscale werkbonus" },
-  'pay.red_struct': { fr:'Réduction structurelle', nl:"Structurele vermindering" },
-  'pay.print': { fr:'Imprimer', nl:"Afdrukken" },
-  'pay.pdf': { fr:'Télécharger PDF', nl:"PDF downloaden" },
-  'pay.calculate': { fr:'Calculer', nl:"Berekenen" },
-  
-  // ── Heures supplémentaires ──
-  'hs.overtime': { fr:'H. sup.', nl:"Overuren" },
-  'hs.sunday': { fr:'H. dimanche', nl:"Zondaguren" },
-  'hs.night': { fr:'H. nuit', nl:"Nachturen" },
-  'hs.fiscal': { fr:'H.sup fiscales (180h)', nl:"Overuren fiscaal (180u)" },
-  'hs.volont': { fr:'HS volont. brut=net (h)', nl:"Vrijw. overuren bruto=netto (u)" },
-  'hs.relance': { fr:'HS relance T1 (h)', nl:"Relance-overuren T1 (u)" },
-  
-  // ── Settings ──
-  'set.company': { fr:'Configuration société', nl:"Bedrijfsconfiguratie" },
-  'set.name': { fr:"Nom de l'entreprise", nl:"Bedrijfsnaam" },
-  'set.vat': { fr:'Numéro TVA', nl:"BTW-nummer" },
-  'set.bce': { fr:'Numéro BCE', nl:"KBO-nummer" },
-  'set.onss_num': { fr:'Numéro ONSS', nl:"RSZ-nummer" },
-  'set.nace': { fr:'Code NACE', nl:"NACE-code" },
-  'set.iban': { fr:'IBAN', nl:"IBAN" },
-  'set.bic': { fr:'BIC', nl:"BIC" },
-  'set.cp': { fr:'Commission paritaire', nl:"Paritair comité" },
-  'set.sec_soc': { fr:'Secrétariat social', nl:"Sociaal secretariaat" },
-  'set.address': { fr:'Adresse', nl:"Adres" },
-  
-  // ── ONSS / Dimona ──
-  'onss.dimona_in': { fr:'Dimona IN — Entrée en service', nl:"Dimona IN — Indiensttreding" },
-  'onss.dimona_out': { fr:'Dimona OUT — Sortie de service', nl:"Dimona OUT — Uitdiensttreding" },
-  'onss.worker_type': { fr:'Type de travailleur', nl:"Type werknemer" },
-  'onss.dmfa': { fr:'Déclaration DMFA', nl:"DmfA-aangifte" },
-  'onss.trimester': { fr:'Trimestre', nl:"Kwartaal" },
-  
-  // ── SEPA ──
-  'sepa.title': { fr:'SEPA / Virements bancaires', nl:"SEPA / Bankoverschrijvingen" },
-  'sepa.salaries': { fr:'Salaires', nl:"Lonen" },
-  'sepa.all': { fr:'TOUT (salaires + ONSS + PP)', nl:"ALLES (lonen + RSZ + BV)" },
-  'sepa.sal_only': { fr:'Salaires uniquement', nl:"Alleen lonen" },
-  'sepa.onss_only': { fr:'ONSS uniquement', nl:"Alleen RSZ" },
-  'sepa.pp_only': { fr:'PP + CSS uniquement', nl:"Alleen BV + BBSZ" },
-  'sepa.download': { fr:'💾 Télécharger .xml', nl:"💾 .xml downloaden" },
-  'sepa.email': { fr:'📧 Ouvrir dans Mail', nl:"📧 Openen in Mail" },
-  'sepa.copy': { fr:'📋 Copier le message', nl:"📋 Bericht kopiëren" },
-  
-  // ── Reporting ──
-  'rep.belcotax': { fr:'Belcotax 281.xx', nl:"Belcotax 281.xx" },
-  'rep.bilan': { fr:'Bilan Social', nl:"Sociaal Verslag" },
-  'rep.export': { fr:'Exporter', nl:"Exporteren" },
-  'rep.generate': { fr:'Générer', nl:"Genereren" },
-  
-  // ── Contrats ──
-  'ctr.type_cdi': { fr:'Contrat à durée indéterminée', nl:"Arbeidsovereenkomst voor onbepaalde duur" },
-  'ctr.type_cdd': { fr:'Contrat à durée déterminée', nl:"Arbeidsovereenkomst voor bepaalde duur" },
-  'ctr.type_student': { fr:"Convention d'occupation étudiant", nl:"Studentenovereenkomst" },
-  'ctr.type_flexi': { fr:'Contrat flexi-job', nl:"Flexi-job contract" },
-  'ctr.generate': { fr:'Générer le contrat', nl:"Contract genereren" },
-  'ctr.preview': { fr:'Aperçu', nl:"Voorbeeld" },
-  
-  // ── Veille légale ──
-  'legal.title': { fr:'Veille légale & Calendrier 2026', nl:"Juridische monitoring & Kalender 2026" },
-  'legal.filter': { fr:'Filtrer', nl:"Filteren" },
-  'legal.all': { fr:'Tout', nl:"Alles" },
-  'legal.deadlines': { fr:'📅 Échéances', nl:"📅 Deadlines" },
-  'legal.new2026': { fr:'⚖️ Nouveautés 2026', nl:"⚖️ Nieuw in 2026" },
-  'legal.upcoming': { fr:'🔮 Réformes à venir', nl:"🔮 Komende hervormingen" },
-  'legal.index': { fr:'📈 Indexations', nl:"📈 Indexeringen" },
-  'legal.urgent': { fr:'Urgentes', nl:"Dringend" },
-  'legal.plan': { fr:'À planifier', nl:"Te plannen" },
-  'legal.reminder': { fr:'Rappels', nl:"Herinneringen" },
-  'legal.watch': { fr:'Veille', nl:"Monitoring" },
-  'legal.institutions': { fr:'🏛 Institutions de référence', nl:"🏛 Referentie-instellingen" },
-  'legal.summary': { fr:'Résumé', nl:"Overzicht" },
-  'legal.cal_pp': { fr:'📅 Calendrier PP (FinProf)', nl:"📅 Kalender BV (FinProf)" },
-  'legal.cal_onss': { fr:'📅 Calendrier ONSS / DmfA', nl:"📅 Kalender RSZ / DmfA" },
-  
-  // ── Months ──
-  'months': {
-    fr:['Janvier',"Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"],
-    nl:['Januari',"Februari","Maart","April","Mei","Juni","Juli","Augustus","September","Oktober","November","December"],
-  },
-  
-  // ── Buttons & General ──
-  'btn.save': { fr:'Enregistrer', nl:"Opslaan" },
-  'btn.cancel': { fr:'Annuler', nl:"Annuleren" },
-  'btn.delete': { fr:'Supprimer', nl:"Verwijderen" },
-  'btn.edit': { fr:'Modifier', nl:"Bewerken" },
-  'btn.add': { fr:'Ajouter', nl:"Toevoegen" },
-  'btn.close': { fr:'Fermer', nl:"Sluiten" },
-  'btn.download': { fr:'Télécharger', nl:"Downloaden" },
-  'btn.print': { fr:'Imprimer', nl:"Afdrukken" },
-  'btn.generate': { fr:'Générer', nl:"Genereren" },
-  'btn.validate': { fr:'Valider', nl:"Bevestigen" },
-  'btn.search': { fr:'Rechercher', nl:"Zoeken" },
-  'btn.reset': { fr:'Réinitialiser', nl:"Resetten" },
-  'btn.copy': { fr:'Copier', nl:"Kopiëren" },
-  'btn.export': { fr:'Exporter', nl:"Exporteren" },
-  'btn.import': { fr:'Importer', nl:"Importeren" },
-  'btn.send': { fr:'Envoyer', nl:"Versturen" },
-  'btn.details': { fr:'Détail', nl:"Detail" },
-  'btn.yes': { fr:'Oui', nl:"Ja" },
-  'btn.no': { fr:'Non', nl:"Nee" },
-  
-  // ── Dashboard ──
-  'dash.welcome': { fr:'Bienvenue', nl:"Welkom" },
-  'dash.total_emp': { fr:'Travailleurs actifs', nl:"Actieve werknemers" },
-  'dash.mass_sal': { fr:'Masse salariale', nl:"Loonmassa" },
-  'dash.onss_due': { fr:'ONSS dû', nl:"RSZ verschuldigd" },
-  'dash.pp_due': { fr:'PP dû', nl:"BV verschuldigd" },
-  'dash.alerts': { fr:'Alertes', nl:"Waarschuwingen" },
-  'dash.next_deadline': { fr:'Prochaine échéance', nl:"Volgende deadline" },
-  
-  // ── Clients ──
-  'cli.title': { fr:'Gestion des dossiers clients', nl:"Beheer klantenbestanden" },
-  'cli.add': { fr:'Nouveau dossier', nl:"Nieuw dossier" },
-  'cli.name': { fr:'Nom du client', nl:"Klantnaam" },
-  'cli.open': { fr:'Ouvrir', nl:"Openen" },
-  'cli.emps': { fr:'travailleurs', nl:"werknemers" },
-
-  // ── English translations (Sprint 49) ──
-  'nav.back': { fr:'Retour aux clients', nl:'Terug naar klanten', en:'Back to clients' },
-  'nav.search': { fr:'Rechercher...', nl:'Zoeken...', en:'Search...' },
-  'nav.cloture': { fr:'Cloture mensuelle', nl:'Maandafsluiting', en:'Monthly closing' },
-  'nav.notifications': { fr:'Notifications', nl:'Meldingen', en:'Notifications' },
-  'nav.commandcenter': { fr:'Centre de commande', nl:'Commandocentrum', en:'Command center' },
-  'nav.autopilot': { fr:'Autopilot', nl:'Autopilot', en:'Autopilot' },
-  'nav.massengine': { fr:'Moteur de masse', nl:'Massa-engine', en:'Mass engine' },
-  'nav.queue': { fr:'File de traitement', nl:'Verwerkingswachtrij', en:'Processing queue' },
-  'nav.onboarding': { fr:'Onboarding', nl:'Onboarding', en:'Onboarding' },
-  'nav.portalmanager': { fr:'Gestion Portails', nl:'Portaalbeheer', en:'Portal management' },
-  'nav.team': { fr:'Equipe', nl:'Team', en:'Team' },
-  'emp.title': { fr:'Gestion des travailleurs', nl:'Werknemersbeheer', en:'Employee management' },
-  'emp.add': { fr:'Ajouter', nl:'Toevoegen', en:'Add' },
-  'emp.first': { fr:'Prenom', nl:'Voornaam', en:'First name' },
-  'emp.last': { fr:'Nom', nl:'Naam', en:'Last name' },
-  'emp.niss': { fr:'NISS', nl:'INSZ', en:'NISS' },
-  'emp.brut': { fr:'Brut mensuel', nl:'Bruto maandloon', en:'Gross monthly' },
-  'emp.net': { fr:'Net', nl:'Netto', en:'Net' },
-  'emp.status': { fr:'Statut', nl:'Statuut', en:'Status' },
-  'emp.employe': { fr:'Employé', nl:'Bediende', en:'Employee' },
-  'emp.ouvrier': { fr:'Ouvrier', nl:'Arbeider', en:'Worker' },
-  'pay.brut': { fr:'Salaire brut', nl:'Brutoloon', en:'Gross salary' },
-  'pay.onss': { fr:'ONSS personnelle', nl:'RSZ persoonlijk', en:'Social security' },
-  'pay.pp': { fr:'Précompte professionnel', nl:'Bedrijfsvoorheffing', en:'Withholding tax' },
-  'pay.net': { fr:'Salaire net', nl:'Nettoloon', en:'Net salary' },
-  'pay.cout': { fr:'Cout employeur', nl:'Werkgeverskost', en:'Employer cost' },
-  'pay.cheques': { fr:'Cheques-repas', nl:'Maaltijdcheques', en:'Meal vouchers' },
-  'pay.frais': { fr:'Frais propres', nl:'Eigen kosten', en:'Own expenses' },
-  'pay.bonus': { fr:'Bonus emploi', nl:'Werkbonus', en:'Employment bonus' },
-  'btn.save': { fr:'Sauvegarder', nl:'Opslaan', en:'Save' },
-  'btn.cancel': { fr:'Annuler', nl:'Annuleren', en:'Cancel' },
-  'btn.delete': { fr:'Supprimer', nl:'Verwijderen', en:'Delete' },
-  'btn.edit': { fr:'Modifier', nl:'Bewerken', en:'Edit' },
-  'btn.export': { fr:'Exporter', nl:'Exporteren', en:'Export' },
-  'btn.download': { fr:'Telecharger', nl:'Downloaden', en:'Download' },
-  'btn.print': { fr:'Imprimer', nl:'Afdrukken', en:'Print' },
-  'btn.generate': { fr:'Generer', nl:'Genereren', en:'Generate' },
-  'msg.saved': { fr:'Sauvegarde reussie', nl:'Succesvol opgeslagen', en:'Saved successfully' },
-  'msg.error': { fr:'Erreur', nl:'Fout', en:'Error' },
-  'msg.confirm': { fr:'Confirmer', nl:'Bevestigen', en:'Confirm' },
-  'msg.loading': { fr:'Chargement...', nl:'Laden...', en:'Loading...' },
-};
 
 // i18n provider wrapper
 function LangProvider({children}) {
@@ -3736,10 +3374,15 @@ async function loadData(supabase, userId){
 // ═══════════════════════════════════════════════════════
 // UTILITAIRE PDF — Impression native via navigateur
 // ═══════════════════════════════════════════════════════
+// ═══ UTILITAIRE — Échappement HTML (protection XSS) ═══
+function escapeHtml(str){
+  return String(str||'').replace(/\&/g,'\&amp;').replace(/</g,'\&lt;').replace(/>/g,'\&gt;').replace(/"/g,'\&quot;').replace(/'/g,'\&#39;');
+}
+
 function printToPDF(title, content, options){
   const w=window.open('','_blank','width=800,height=1100');
   if(!w)return alert('Autorisez les popups pour generer le PDF');
-  w.document.write('<!DOCTYPE html><html><head><title>'+title+'</title>');
+  w.document.write('<!DOCTYPE html><html><head><title>'+escapeHtml(title)+'</title>');
   w.document.write('<style>');
   w.document.write('*{margin:0;padding:0;box-sizing:border-box}');
   w.document.write('body{font-family:Helvetica,Arial,sans-serif;padding:40px;color:#1a1a1a;font-size:11pt;line-height:1.5}');
@@ -3761,7 +3404,7 @@ function printToPDF(title, content, options){
   w.document.write('<div class="header">');
   w.document.write('<div><div class="logo">AUREUS SOCIAL PRO</div>');
   w.document.write('<div class="subtitle">Aureus IA SPRL — BE 1028.230.781</div></div>');
-  w.document.write('<div style="text-align:right"><div style="font-size:10pt;font-weight:600">'+title+'</div>');
+  w.document.write('<div style="text-align:right"><div style="font-size:10pt;font-weight:600">'+escapeHtml(title)+'</div>');
   w.document.write('<div class="subtitle">'+new Date().toLocaleDateString('fr-BE')+'</div></div>');
   w.document.write('</div>');
   w.document.write(content);
@@ -5188,6 +4831,28 @@ function ClientsPage({s,d,user,userRole,onLogout,veilleNotif,setVeilleNotif}){
 
   const stats={total:visibleClients.length||0,emps:visibleClients.reduce((a,c)=>a+(c.emps?.length||0),0)};
 
+  const kpiData=useMemo(()=>{
+    const scoreMoyen=Math.round(visibleClients.reduce((a,cl)=>{
+      let sc=0,tot=13;
+      if(cl.company?.name)sc++;if(cl.company?.vat)sc++;if(cl.company?.onss)sc++;
+      if(cl.company?.iban)sc++;if(cl.company?.cp)sc++;if(cl.company?.accidentIns)sc++;
+      if(cl.emps?.length>0){sc++;
+        if(cl.emps.every(e=>e.niss))sc++;if(cl.emps.every(e=>e.iban))sc++;
+        if(cl.emps.every(e=>e.monthlySalary>0))sc++;if(cl.emps.every(e=>e.startD))sc++;
+      }
+      if(cl.dims?.length>0)sc++;if(cl.fiches?.length>0)sc++;
+      return a+(sc/tot*100);
+    },0)/visibleClients.length||0);
+    const dossiersRisque=visibleClients.filter(cl=>{
+      let sc=0;if(cl.company?.name)sc++;if(cl.company?.vat)sc++;if(cl.emps?.length>0)sc++;
+      if(cl.emps?.every(e=>e.niss))sc++;if(cl.emps?.every(e=>e.monthlySalary>0))sc++;
+      return sc<3;
+    }).length;
+    const sansTVA=visibleClients.filter(cl=>!cl.company?.vat).length;
+    const masseSalariale=(visibleClients.reduce((a,cl)=>a+(cl.emps||[]).reduce((b,e)=>b+(e.monthlySalary||0),0),0)/1000).toFixed(0);
+    return {scoreMoyen,dossiersRisque,sansTVA,masseSalariale};
+  },[visibleClients]);
+
   return(
     <div style={{minHeight:'100vh',background:"#060810",color:'#d4d0c8',fontFamily:`'Outfit','DM Sans',system-ui,sans-serif`}}>
       <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet"/>
@@ -5238,24 +4903,10 @@ function ClientsPage({s,d,user,userRole,onLogout,veilleNotif,setVeilleNotif}){
             {[
               {l:'Dossiers',v:stats.total,c:'#c6a34e'},
               {l:'Travailleurs',v:stats.emps,c:'#60a5fa'},
-              {l:'Score santé moyen',v:Math.round(visibleClients.reduce((a,cl)=>{
-                let sc=0,tot=13;
-                if(cl.company?.name)sc++;if(cl.company?.vat)sc++;if(cl.company?.onss)sc++;
-                if(cl.company?.iban)sc++;if(cl.company?.cp)sc++;if(cl.company?.accidentIns)sc++;
-                if(cl.emps?.length>0){sc++;
-                  if(cl.emps.every(e=>e.niss))sc++;if(cl.emps.every(e=>e.iban))sc++;
-                  if(cl.emps.every(e=>e.monthlySalary>0))sc++;if(cl.emps.every(e=>e.startD))sc++;
-                }
-                if(cl.dims?.length>0)sc++;if(cl.fiches?.length>0)sc++;
-                return a+(sc/tot*100);
-              },0)/visibleClients.length||0)+'%',c:'#4ade80'},
-              {l:'Dossiers à risque',v:visibleClients.filter(cl=>{
-                let sc=0;if(cl.company?.name)sc++;if(cl.company?.vat)sc++;if(cl.emps?.length>0)sc++;
-                if(cl.emps?.every(e=>e.niss))sc++;if(cl.emps?.every(e=>e.monthlySalary>0))sc++;
-                return sc<3;
-              }).length,c:'#f87171'},
-              {l:'Sans TVA',v:visibleClients.filter(cl=>!cl.company?.vat).length,c:'#fb923c'},
-              {l:'Masse salariale',v:(visibleClients.reduce((a,cl)=>a+(cl.emps||[]).reduce((b,e)=>b+(e.monthlySalary||0),0),0)/1000).toFixed(0)+'K€',c:'#a78bfa'},
+              {l:'Score santé moyen',v:kpiData.scoreMoyen+'%',c:'#4ade80'},
+              {l:'Dossiers à risque',v:kpiData.dossiersRisque,c:'#f87171'},
+              {l:'Sans TVA',v:kpiData.sansTVA,c:'#fb923c'},
+              {l:'Masse salariale',v:kpiData.masseSalariale+'K€',c:'#a78bfa'},
             ].map((k,i)=><div key={i} style={{background:'linear-gradient(145deg,#0e1220,#131829)',border:'1px solid rgba(139,115,60,.08)',borderRadius:10,padding:'12px 14px',textAlign:'center'}}>
               <div style={{fontSize:20,fontWeight:700,color:k.c}}>{k.v}</div>
               <div style={{fontSize:9,color:'#5e5c56',marginTop:2}}>{k.l}</div>
@@ -5717,7 +5368,7 @@ function AppInner({ supabase, user, onLogout }) {
     </div>)}
   </div>:null;
   // Auto-backup every 5min
-  useEffect(()=>{const iv=setInterval(()=>{try{safeLS.set("aureus_autobackup",JSON.stringify({co:s.co,emps:s.emps,pays:s.pays,clients:s.clients,activeClient:s.activeClient}));safeLS.set("aureus_autobackup_date",new Date().toISOString());cloudAutoBackup(s);}catch(e){}},300000);return()=>clearInterval(iv);},[s.co,s.emps,s.pays,s.clients]);
+  useEffect(()=>{const iv=setInterval(()=>{try{safeLS.set("aureus_autobackup",JSON.stringify({co:s.co,emps:s.emps,pays:s.pays,clients:s.clients,activeClient:s.activeClient}));safeLS.set("aureus_autobackup_date",new Date().toISOString());cloudAutoBackup(s);}catch(e){}},300000);return()=>clearInterval(iv);},[s.co,s.emps,s.pays,s.clients,s.activeClient]);
 
   const spotRef=useRef(null);
   const spotIndex=useMemo(()=>{
@@ -5822,14 +5473,14 @@ function AppInner({ supabase, user, onLogout }) {
       if((month%3===0&&day>=15)||(month%3===1&&day<=10)){
         clients.filter(c=>(c.emps?.length||0)>0).forEach(cl=>{
           q.push({id:id(),type:'dmfa',icon:'📊',priority:2,client:cl.company?.name||cl.id,clientId:cl.id,task:'DmfA Q'+Math.ceil(month/3),detail:(cl.emps?.length||0)+' travailleurs',count:1,status:'pending',
-            fn:()=>generateDmfAXML(cl.emps||[],cl.company||{})});
+            fn:()=>generateDmfAXML(cl.emps||[],Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),cl.company||{})});
         });
       }
       // Dimona for new employees (last 7 days)
       clients.forEach(cl=>{
         (cl.emps||[]).filter(e=>{const start=new Date(e.startDate||e.start||'2020-01-01');return Math.ceil((now-start)/(1000*60*60*24))>=0&&Math.ceil((now-start)/(1000*60*60*24))<=7;}).forEach(e=>{
           q.push({id:id(),type:'dimona',icon:'📡',priority:0,client:cl.company?.name||cl.id,clientId:cl.id,task:'Dimona IN — '+(e.first||e.fn)+' '+(e.last||e.ln),detail:'Nouveau travailleur',count:1,status:'pending',
-            fn:()=>generateDimonaXML(e,'IN')});
+            fn:()=>generateDimonaXML(e,'IN',cl.company)});
         });
       });
       // CDD expiring
@@ -6589,485 +6240,6 @@ function AppInner({ supabase, user, onLogout }) {
 // ═══ SPRINT 24: AUTOMATISATION TOTALE — Clôture & Workflow ═══
 // ══════════════════════════════════════════════════════════════
 
-const ClotureMensuelle=({s,d,supabase,user})=>{
-  const [step,setStep]=useState(0);
-  const [running,setRunning]=useState(false);
-  const [progress,setProgress]=useState({});
-  const [logs,setLogs]=useState([]);
-  const [emailMode,setEmailMode]=useState('simulate'); // simulate | resend
-  const [emailConfig,setEmailConfig]=useState({apiKey:'',fromEmail:'paie@aureussocial.be',fromName:'Aureus Social Pro'});
-  const [notifSettings,setNotifSettings]=useState({onssReminder:true,dimonaReminder:true,prestationReminder:true,payslipReminder:true});
-  const now=new Date();
-  const mois=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-  const currentMonth=mois[now.getMonth()];
-  const currentYear=now.getFullYear();
-  const prevMonth=now.getMonth()===0?'Décembre':mois[now.getMonth()-1];
-  const prevYear=now.getMonth()===0?currentYear-1:currentYear;
-
-  const clients=s.clients||[];
-  const allEmps=clients.reduce((a,c)=>[...a,...(c.emps||[]).map(e=>({...e,company:c.company}))],[]);
-  const allPays=clients.reduce((a,c)=>[...a,...(c.pays||[])],[]);
-
-  const addLog=(msg,type='info')=>{
-    setLogs(p=>[{msg,type,time:new Date().toLocaleTimeString('fr-BE'),id:Date.now()+Math.random()},...p]);
-  };
-
-  const delay=(ms)=>new Promise(r=>setTimeout(r,ms));
-
-  // ═══ STEP DEFINITIONS ═══
-  const steps=[
-    {id:'verify',label:'Vérifier les prestations',icon:'🔍',desc:'Contrôler que toutes les prestations sont encodées'},
-    {id:'calculate',label:'Calculer les fiches de paie',icon:'🧮',desc:'Calcul batch ONSS, précompte, net pour tous les employés'},
-    {id:'generate',label:'Générer les documents',icon:'📄',desc:'Fiches de paie, SEPA, DmfA, Dimona'},
-    {id:'validate',label:'Validation',icon:'✅',desc:'Vérifier et approuver avant envoi'},
-    {id:'send',label:'Distribuer',icon:'📧',desc:'Envoyer les fiches par email + notifications'},
-    {id:'close',label:'Clôturer le mois',icon:'🔒',desc:'Archiver et passer au mois suivant'},
-  ];
-
-  // ═══ STEP 1: VERIFY PRESTATIONS ═══
-  const runVerify=async()=>{
-    setRunning(true);
-    addLog('🔍 Vérification des prestations en cours...','info');
-    await delay(500);
-    let issues=0;
-    for(const cl of clients){
-      for(const e of (cl.emps||[])){
-        const name=(e.first||e.fn||'')+' '+(e.last||e.ln||'');
-        // Check if employee has salary data
-        if(!e.monthlySalary&&!e.gross&&!e.brut){
-          addLog('⚠️ '+name+' — Pas de salaire brut défini','warn');
-          issues++;
-        }
-      }
-      if((cl.emps||[]).length===0){
-        addLog('⚠️ '+cl.company?.name+' — Aucun employé','warn');
-        issues++;
-      }
-    }
-    if(issues===0) addLog('✅ Toutes les prestations sont OK','success');
-    else addLog('⚠️ '+issues+' point(s) d\'attention détecté(s)','warn');
-    setProgress(p=>({...p,verify:{done:true,issues}}));
-    setRunning(false);
-  };
-
-  // ═══ STEP 2: CALCULATE PAYSLIPS ═══
-  const runCalculate=async()=>{
-    setRunning(true);
-    addLog('🧮 Calcul des fiches de paie...','info');
-    let count=0;
-    const newPays=[];
-    for(const cl of clients){
-      for(const e of (cl.emps||[])){
-        await delay(100);
-        const name=(e.first||e.fn||'')+' '+(e.last||e.ln||'');
-        const brut=+(e.monthlySalary||e.gross||e.brut||0);
-        if(brut<=0){addLog('⏭ '+name+' — Pas de salaire, ignoré','warn');continue;}
-        // Belgian payroll calculation
-        const onssWorker=Math.round(brut*TX_ONSS_W*100)/100;
-        const imposable=brut-onssWorker;
-        const precompte=quickPP(brut);
-        const net=Math.round((imposable-precompte)*100)/100;
-        const onssEmployer=Math.round(brut*TX_ONSS_E*100)/100;
-        const coutTotal=brut+onssEmployer;
-        const pay={
-          id:'PAY-'+Date.now()+'-'+count,
-          ename:name,
-          period:prevMonth+' '+prevYear,
-          gross:brut,onssNet:onssWorker,imposable,precompte,net,
-          onssEmployer,coutTotal,
-          empEmail:e.email||'',empId:e.id,
-          generated:new Date().toISOString(),
-          status:'calculated'
-        };
-        newPays.push(pay);
-        count++;
-        addLog('✅ '+name+' — Brut: '+brut.toFixed(2)+'€ → Net: '+net.toFixed(2)+'€','success');
-      }
-    }
-    // Save calculated payslips to state
-    if(newPays.length>0){
-      const updatedClients=clients.map(cl=>{
-        const clPays=newPays.filter(p=>(cl.emps||[]).some(e=>p.empId===e.id));
-        return {...cl,pays:[...(cl.pays||[]),...clPays]};
-      });
-      d({type:'SET_CLIENTS',data:updatedClients});
-    }
-    addLog('🧮 '+count+' fiches calculées','success');
-    setProgress(p=>({...p,calculate:{done:true,count,pays:newPays}}));
-    setRunning(false);
-  };
-
-  // ═══ STEP 3: GENERATE DOCUMENTS ═══
-  const runGenerate=async()=>{
-    setRunning(true);
-    addLog('📄 Génération des documents...','info');
-    let docs=0;
-    await delay(300);
-
-    // Generate SEPA
-    addLog('💳 Génération fichier SEPA pain.001...','info');
-    await delay(500);
-    docs++;
-    addLog('✅ SEPA pain.001 généré ('+allEmps.length+' virements)','success');
-
-    // Generate DmfA if quarter end
-    const quarter=Math.ceil((now.getMonth()+1)/3);
-    if([3,6,9,12].includes(now.getMonth()+1)){
-      addLog('🏛 Génération DmfA T'+quarter+'...','info');
-      await delay(500);
-      docs++;
-      addLog('✅ DmfA T'+quarter+' générée','success');
-    }
-
-    // Generate payslip HTMLs
-    addLog('📄 Génération des fiches de paie HTML...','info');
-    const pays=progress.calculate?.pays||[];
-    for(const p of pays){
-      await delay(50);
-      docs++;
-    }
-    addLog('✅ '+pays.length+' fiches de paie générées','success');
-
-    addLog('📄 Total: '+docs+' documents générés','success');
-    setProgress(p=>({...p,generate:{done:true,docs}}));
-    setRunning(false);
-  };
-
-  // ═══ STEP 4: VALIDATE — Compte rendu complet ═══
-  const [validationMode,setValidationMode]=useState(false);
-  const [ficheApprovals,setFicheApprovals]=useState({});
-  const [validationNotes,setValidationNotes]=useState({});
-
-  const runValidate=async()=>{
-    setRunning(true);
-    addLog('✅ Préparation du compte rendu de validation...','info');
-    await delay(500);
-    const pays=progress.calculate?.pays||[];
-    // Auto-detect anomalies
-    const anomalies={};
-    for(const p of pays){
-      const issues=[];
-      if(p.net<=0) issues.push({type:'error',msg:'Net négatif ('+p.net.toFixed(2)+'€)'});
-      if(p.net<500) issues.push({type:'warn',msg:'Net très bas (<500€)'});
-      if(p.gross>15000) issues.push({type:'warn',msg:'Brut élevé (>15K€)'});
-      if(p.gross<1800&&p.gross>0) issues.push({type:'warn',msg:'Brut bas — temps partiel ?'});
-      if(!p.empEmail) issues.push({type:'info',msg:'Pas d\'email configuré'});
-      const onssRate=p.onssNet/p.gross;
-      if(Math.abs(onssRate-TX_ONSS_W)>0.001) issues.push({type:'warn',msg:'Taux ONSS inhabituel ('+Math.round(onssRate*10000)/100+'%)'});
-      anomalies[p.id]=issues;
-    }
-    // Pre-approve fiches without errors
-    const approvals={};
-    pays.forEach(p=>{
-      const hasError=(anomalies[p.id]||[]).some(a=>a.type==='error');
-      approvals[p.id]=hasError?'rejected':'pending';
-    });
-    setFicheApprovals(approvals);
-    addLog('📋 Compte rendu prêt — '+pays.length+' fiches à valider','info');
-    const errCount=Object.values(approvals).filter(v=>v==='rejected').length;
-    if(errCount>0) addLog('❌ '+errCount+' fiche(s) avec erreurs critiques','error');
-    setProgress(p=>({...p,validate:{done:false,anomalies,ready:true}}));
-    setValidationMode(true);
-    setRunning(false);
-  };
-
-  const approveAll=()=>{
-    const pays=progress.calculate?.pays||[];
-    const a={};
-    pays.forEach(p=>{a[p.id]='approved';});
-    setFicheApprovals(a);
-  };
-
-  const confirmValidation=()=>{
-    const approved=Object.values(ficheApprovals).filter(v=>v==='approved').length;
-    const rejected=Object.values(ficheApprovals).filter(v=>v==='rejected').length;
-    const pending=Object.values(ficheApprovals).filter(v=>v==='pending').length;
-    if(pending>0){alert('⚠️ Il reste '+pending+' fiche(s) en attente de validation. Approuvez ou rejetez chaque fiche.');return;}
-    addLog('✅ Validation terminée — '+approved+' approuvée(s), '+rejected+' rejetée(s)','success');
-    setProgress(p=>({...p,validate:{...p.validate,done:true,approved,rejected}}));
-    setValidationMode(false);
-  };
-
-  // ═══ STEP 5: SEND/DISTRIBUTE — Only approved fiches ═══
-  const runSend=async()=>{
-    setRunning(true);
-    addLog('📧 Distribution des fiches de paie APPROUVÉES...','info');
-    const pays=(progress.calculate?.pays||[]).filter(p=>ficheApprovals[p.id]==='approved');
-    const rejected=(progress.calculate?.pays||[]).filter(p=>ficheApprovals[p.id]==='rejected');
-    if(rejected.length>0) addLog('⏭ '+rejected.length+' fiche(s) rejetée(s) — non envoyées','warn');
-    let sent=0;
-    for(const p of pays){
-      await delay(200);
-      if(p.empEmail){
-        if(emailMode==='resend'&&emailConfig.apiKey){
-          // Real email via Resend API
-          try{
-            addLog('📧 Envoi à '+p.empEmail+'...','info');
-            // Note: Resend API call would go here in production
-            // For now we simulate but structure is ready
-            sent++;
-            addLog('✅ '+p.ename+' → '+p.empEmail+' — Email envoyé','success');
-          }catch(ex){
-            addLog('❌ Erreur envoi '+p.empEmail+': '+ex.message,'error');
-          }
-        }else{
-          // Simulation mode
-          sent++;
-          addLog('📧 [SIMULÉ] '+p.ename+' → '+(p.empEmail||'pas d\'email')+' — Fiche '+p.period,'success');
-        }
-      }else{
-        addLog('⚠️ '+p.ename+' — Pas d\'email configuré','warn');
-      }
-    }
-    addLog('📧 '+sent+'/'+pays.length+' fiches distribuées'+(emailMode==='simulate'?' (mode simulation)':''),'success');
-    // ═══ COMMISSIONS COMMERCIALES — €2 par fiche distribuée ═══
-    try{const COMMISSION_PER_FICHE=2;const clientId=s.activeClient;const clientData=(s.clients||[]).find(c=>c.id===clientId);if(clientData?.assignedTo){const commissionsKey='aureus_commissions';const existing=JSON.parse(localStorage.getItem(commissionsKey)||'{}');const commercialEmail=clientData.assignedTo.toLowerCase();if(!existing[commercialEmail])existing[commercialEmail]={total:0,paid:0,entries:[]};const entry={id:'COM-'+Date.now(),date:new Date().toISOString(),clientId,clientName:clientData.company?.name||clientId,period:prevMonth+' '+prevYear,fichesCount:sent,amount:sent*COMMISSION_PER_FICHE,status:'pending'};existing[commercialEmail].entries.push(entry);existing[commercialEmail].total+=entry.amount;localStorage.setItem(commissionsKey,JSON.stringify(existing));addLog('💰 Commission: '+sent+' fiches × '+COMMISSION_PER_FICHE+'€ = '+entry.amount+'€ → '+commercialEmail,'success');}}catch(e){}
-    setProgress(p=>({...p,send:{done:true,sent,total:pays.length}}));
-    setRunning(false);
-  };
-
-  // ═══ STEP 6: CLOSE MONTH ═══
-  const runClose=async()=>{
-    setRunning(true);
-    addLog('🔒 Clôture du mois '+prevMonth+' '+prevYear+'...','info');
-    await delay(500);
-    addLog('💾 Archivage des données...','info');
-    await delay(500);
-    // Save closing state
-    if(supabase&&user){
-      try{
-        await supabase.from('app_state').upsert({
-          key:'cloture_'+prevYear+'_'+(now.getMonth()===0?12:now.getMonth()),
-          val:JSON.stringify({
-            closedAt:new Date().toISOString(),
-            closedBy:user.email,
-            stats:{employees:allEmps.length,payslips:progress.calculate?.count||0,documents:progress.generate?.docs||0}
-          }),
-          updated_at:new Date().toISOString()
-        },{onConflict:'key'});
-        addLog('💾 Données sauvegardées dans le cloud','success');
-      }catch(e){addLog('⚠️ Erreur sauvegarde: '+e.message,'warn');}
-    }
-    addLog('🔒 Mois '+prevMonth+' '+prevYear+' clôturé avec succès!','success');
-    addLog('🎉 Prêt pour '+currentMonth+' '+currentYear,'success');
-    setProgress(p=>({...p,close:{done:true}}));
-    setRunning(false);
-  };
-
-  const runStep=(stepId)=>{
-    switch(stepId){
-      case'verify':return runVerify();
-      case'calculate':return runCalculate();
-      case'generate':return runGenerate();
-      case'validate':return runValidate();
-      case'send':return runSend();
-      case'close':return runClose();
-    }
-  };
-
-  // Run ALL steps — STOPS at validation for human review
-  const runAll=async()=>{
-    for(let i=0;i<steps.length;i++){
-      setStep(i);
-      if(steps[i].id==='validate'){
-        await runStep('validate');
-        // STOP HERE — wait for human validation
-        addLog('🛑 EN ATTENTE — Vérifiez le compte rendu et validez chaque fiche','warn');
-        return; // User must click "Confirmer la validation" then "Continuer"
-      }
-      await runStep(steps[i].id);
-      await delay(300);
-    }
-    setStep(6);
-  };
-
-  // Continue after validation
-  const continueAfterValidation=async()=>{
-    if(!progress.validate?.done){alert('Veuillez d\'abord valider toutes les fiches.');return;}
-    for(let i=4;i<steps.length;i++){
-      setStep(i);
-      await runStep(steps[i].id);
-      await delay(300);
-    }
-    setStep(6);
-  };
-
-  return <div style={{padding:24}}>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
-      <div>
-        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🔄 Clôture Mensuelle</h2>
-        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Workflow complet : Vérifier → Calculer → Générer → Valider → Envoyer → Clôturer</p>
-      </div>
-      <div style={{display:'flex',gap:8}}>
-        <div style={{padding:'8px 14px',background:'rgba(198,163,78,.08)',borderRadius:10,fontSize:12,color:'#c6a34e',fontWeight:600}}>
-          📅 {prevMonth} {prevYear}
-        </div>
-        <button onClick={progress.validate?.done&&step>=3?continueAfterValidation:runAll} disabled={running||step===6||validationMode} style={{padding:'10px 20px',borderRadius:10,border:'none',background:running||validationMode?'#333':progress.validate?.done&&step>=3?'linear-gradient(135deg,#22c55e,#16a34a)':'linear-gradient(135deg,#c6a34e,#a07d3e)',color:running||validationMode?'#888':progress.validate?.done?'#fff':'#060810',fontWeight:700,fontSize:13,cursor:running||validationMode?'wait':'pointer'}}>
-          {step===6?'✅ Terminé':validationMode?'🛑 Validation en cours...':progress.validate?.done&&step>=3?'▶️ Continuer (envoi + clôture)':running?'⏳ En cours...':'🚀 Lancer la clôture complète'}
-        </button>
-      </div>
-    </div>
-
-    {/* PROGRESS STEPS */}
-    <div style={{display:'flex',gap:4,marginBottom:24}}>
-      {steps.map((st,i)=>{
-        const done=progress[st.id]?.done;
-        const active=step===i&&running;
-        const current=step===i&&!running;
-        const reviewing=st.id==='validate'&&validationMode&&!done;
-        return <div key={i} style={{flex:1,padding:'14px 12px',background:done?'rgba(34,197,94,.06)':reviewing?'rgba(234,179,8,.08)':active?'rgba(198,163,78,.08)':'rgba(255,255,255,.02)',border:'1px solid '+(done?'rgba(34,197,94,.2)':reviewing?'rgba(234,179,8,.3)':active?'rgba(198,163,78,.25)':'rgba(255,255,255,.05)'),borderRadius:12,textAlign:'center',cursor:!running&&!done?'pointer':'default',transition:'all .2s'}} onClick={()=>!running&&!done&&runStep(st.id)&&setStep(i)}>
-          <div style={{fontSize:20,marginBottom:4}}>{done?'✅':reviewing?'🛑':active?'⏳':st.icon}</div>
-          <div style={{fontSize:10,fontWeight:600,color:done?'#22c55e':reviewing?'#eab308':active?'#c6a34e':'#888'}}>{st.label}</div>
-          {done&&<div style={{fontSize:9,color:'#22c55e',marginTop:2}}>Terminé</div>}
-          {reviewing&&<div style={{fontSize:9,color:'#eab308',marginTop:2}}>En révision</div>}
-        </div>;
-      })}
-    </div>
-
-    {/* ═══ VALIDATION REVIEW PANEL ═══ */}
-    {validationMode&&<div style={{marginBottom:20,border:'2px solid rgba(234,179,8,.3)',borderRadius:16,overflow:'hidden',background:'rgba(234,179,8,.02)'}}>
-      <div style={{padding:'16px 20px',background:'rgba(234,179,8,.08)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div>
-          <div style={{fontSize:16,fontWeight:700,color:'#eab308'}}>🛑 Compte Rendu de Validation</div>
-          <div style={{fontSize:11,color:'#888',marginTop:2}}>Vérifiez chaque fiche avant distribution — Rien ne sera envoyé sans votre accord</div>
-        </div>
-        <div style={{display:'flex',gap:8}}>
-          <button onClick={approveAll} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'rgba(34,197,94,.12)',color:'#22c55e',fontSize:11,fontWeight:600,cursor:'pointer'}}>✅ Tout approuver</button>
-          <button onClick={confirmValidation} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#22c55e,#16a34a)',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer'}}>🔒 Confirmer la validation</button>
-        </div>
-      </div>
-      
-      {/* Summary bar */}
-      <div style={{display:'flex',gap:0,borderBottom:'1px solid rgba(234,179,8,.15)'}}>
-        {[{l:'Total',v:(progress.calculate?.pays||[]).length,c:'#c6a34e'},
-          {l:'Approuvées',v:Object.values(ficheApprovals).filter(v=>v==='approved').length,c:'#22c55e'},
-          {l:'Rejetées',v:Object.values(ficheApprovals).filter(v=>v==='rejected').length,c:'#ef4444'},
-          {l:'En attente',v:Object.values(ficheApprovals).filter(v=>v==='pending').length,c:'#eab308'},
-        ].map((k,i)=><div key={i} style={{flex:1,padding:'10px 14px',textAlign:'center',borderRight:'1px solid rgba(234,179,8,.1)'}}>
-          <div style={{fontSize:18,fontWeight:700,color:k.c}}>{k.v}</div>
-          <div style={{fontSize:9,color:'#888'}}>{k.l}</div>
-        </div>)}
-      </div>
-
-      {/* Fiche-by-fiche review table */}
-      <div style={{maxHeight:450,overflowY:'auto'}}>
-        <div style={{display:'grid',gridTemplateColumns:'40px 160px 90px 90px 90px 90px 90px 1fr 140px',padding:'8px 12px',background:'rgba(198,163,78,.04)',fontSize:9,fontWeight:600,color:'#c6a34e',position:'sticky',top:0,zIndex:1}}>
-          <div>Statut</div><div>Employé</div><div>Brut</div><div>ONSS</div><div>Imposable</div><div>Précompte</div><div>Net</div><div>Alertes</div><div>Actions</div>
-        </div>
-        {(progress.calculate?.pays||[]).map((p,i)=>{
-          const anomalies=progress.validate?.anomalies?.[p.id]||[];
-          const status=ficheApprovals[p.id]||'pending';
-          const bgColor=status==='approved'?'rgba(34,197,94,.03)':status==='rejected'?'rgba(239,68,68,.03)':'rgba(234,179,8,.02)';
-          return <div key={i} style={{display:'grid',gridTemplateColumns:'40px 160px 90px 90px 90px 90px 90px 1fr 140px',padding:'8px 12px',borderBottom:'1px solid rgba(255,255,255,.03)',alignItems:'center',fontSize:11,background:bgColor}}>
-            <div>{status==='approved'?'✅':status==='rejected'?'❌':'⏳'}</div>
-            <div style={{color:'#e5e5e5',fontWeight:500}}>{p.ename}</div>
-            <div style={{color:'#e5e5e5'}}>{p.gross.toFixed(2)}€</div>
-            <div style={{color:'#ef4444'}}>-{p.onssNet.toFixed(2)}€</div>
-            <div style={{color:'#888'}}>{p.imposable.toFixed(2)}€</div>
-            <div style={{color:'#ef4444'}}>-{p.precompte.toFixed(2)}€</div>
-            <div style={{color:'#22c55e',fontWeight:700}}>{p.net.toFixed(2)}€</div>
-            <div>{anomalies.length===0?<span style={{color:'#22c55e',fontSize:9}}>✓ OK</span>:
-              anomalies.map((a,j)=><div key={j} style={{fontSize:9,padding:'1px 4px',marginBottom:1,borderRadius:4,background:a.type==='error'?'rgba(239,68,68,.1)':a.type==='warn'?'rgba(234,179,8,.1)':'rgba(59,130,246,.1)',color:a.type==='error'?'#ef4444':a.type==='warn'?'#eab308':'#3b82f6'}}>{a.msg}</div>)
-            }</div>
-            <div style={{display:'flex',gap:4}}>
-              <button onClick={()=>setFicheApprovals(p2=>({...p2,[p.id]:'approved'}))} style={{padding:'3px 8px',borderRadius:5,border:status==='approved'?'1px solid #22c55e':'1px solid rgba(255,255,255,.08)',background:status==='approved'?'rgba(34,197,94,.15)':'transparent',color:status==='approved'?'#22c55e':'#888',fontSize:9,cursor:'pointer',fontWeight:600}}>✅</button>
-              <button onClick={()=>setFicheApprovals(p2=>({...p2,[p.id]:'rejected'}))} style={{padding:'3px 8px',borderRadius:5,border:status==='rejected'?'1px solid #ef4444':'1px solid rgba(255,255,255,.08)',background:status==='rejected'?'rgba(239,68,68,.15)':'transparent',color:status==='rejected'?'#ef4444':'#888',fontSize:9,cursor:'pointer',fontWeight:600}}>❌</button>
-              <input value={validationNotes[p.id]||''} onChange={e=>setValidationNotes(n=>({...n,[p.id]:e.target.value}))} placeholder="Note..." style={{flex:1,padding:'3px 6px',background:'#090c16',border:'1px solid rgba(139,115,60,.1)',borderRadius:4,color:'#e5e5e5',fontSize:9,fontFamily:'inherit',outline:'none',minWidth:0}}/>
-            </div>
-          </div>;
-        })}
-      </div>
-      
-      {/* Employer cost summary */}
-      <div style={{padding:'12px 16px',background:'rgba(198,163,78,.04)',borderTop:'1px solid rgba(234,179,8,.15)'}}>
-        <div style={{display:'flex',justifyContent:'space-between',fontSize:11}}>
-          {(()=>{
-            const pays=progress.calculate?.pays||[];
-            const approved=pays.filter(p=>ficheApprovals[p.id]==='approved');
-            const totalBrut=approved.reduce((a,p)=>a+p.gross,0);
-            const totalNet=approved.reduce((a,p)=>a+p.net,0);
-            const totalONSS=approved.reduce((a,p)=>a+p.onssNet+p.onssEmployer,0);
-            const totalCout=approved.reduce((a,p)=>a+p.coutTotal,0);
-            return [
-              {l:'Brut total',v:totalBrut.toFixed(2)+'€',c:'#e5e5e5'},
-              {l:'ONSS total (w+p)',v:totalONSS.toFixed(2)+'€',c:'#a855f7'},
-              {l:'Net total',v:totalNet.toFixed(2)+'€',c:'#22c55e'},
-              {l:'Coût employeur total',v:totalCout.toFixed(2)+'€',c:'#c6a34e'},
-            ].map((r,i)=><div key={i} style={{textAlign:'center'}}>
-              <div style={{color:'#888',fontSize:9}}>{r.l}</div>
-              <div style={{color:r.c,fontWeight:700,fontSize:13}}>{r.v}</div>
-            </div>);
-          })()}
-        </div>
-      </div>
-    </div>}
-
-    <div style={{display:'grid',gridTemplateColumns:'1fr 340px',gap:16}}>
-      {/* LOGS */}
-      <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
-        <div style={{padding:'12px 16px',background:'rgba(198,163,78,.06)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span style={{fontSize:13,fontWeight:600,color:'#c6a34e'}}>📋 Journal d'exécution</span>
-          <button onClick={()=>setLogs([])} style={{padding:'4px 10px',borderRadius:6,border:'none',background:'rgba(255,255,255,.05)',color:'#888',fontSize:10,cursor:'pointer'}}>Effacer</button>
-        </div>
-        <div style={{maxHeight:400,overflowY:'auto',padding:'8px 12px'}}>
-          {logs.length===0?<div style={{textAlign:'center',padding:30,color:'#888',fontSize:11}}>Lancez la clôture pour voir les logs</div>:
-          logs.map((l,i)=><div key={l.id} style={{padding:'4px 8px',marginBottom:2,fontSize:11,color:l.type==='success'?'#22c55e':l.type==='error'?'#ef4444':l.type==='warn'?'#eab308':'#888',borderLeft:'2px solid '+(l.type==='success'?'#22c55e':l.type==='error'?'#ef4444':l.type==='warn'?'#eab308':'#333'),paddingLeft:10}}>
-            <span style={{color:'#555',marginRight:8}}>{l.time}</span>{l.msg}
-          </div>)}
-        </div>
-      </div>
-
-      {/* RIGHT PANEL */}
-      <div style={{display:'flex',flexDirection:'column',gap:14}}>
-        {/* Stats */}
-        <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14}}>
-          <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:10}}>📊 Résumé</div>
-          {[{l:'Clients',v:clients.length,c:'#c6a34e'},
-            {l:'Employés',v:allEmps.length,c:'#3b82f6'},
-            {l:'Fiches calculées',v:progress.calculate?.count||0,c:'#22c55e'},
-            {l:'Documents générés',v:progress.generate?.docs||0,c:'#a855f7'},
-            {l:'Emails envoyés',v:(progress.send?.sent||0)+'/'+(progress.send?.total||allEmps.length),c:'#eab308'},
-          ].map((r,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
-            <span style={{color:'#888'}}>{r.l}</span>
-            <span style={{color:r.c,fontWeight:600}}>{r.v}</span>
-          </div>)}
-        </div>
-
-        {/* Email Config */}
-        <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(59,130,246,.1)',borderRadius:14}}>
-          <div style={{fontSize:13,fontWeight:600,color:'#3b82f6',marginBottom:10}}>📧 Configuration Email</div>
-          <div style={{display:'flex',gap:6,marginBottom:10}}>
-            {[{id:'simulate',l:'🧪 Simulation'},{id:'resend',l:'📧 Resend API'}].map(m=>
-              <button key={m.id} onClick={()=>setEmailMode(m.id)} style={{flex:1,padding:'6px',borderRadius:6,border:'1px solid '+(emailMode===m.id?'rgba(59,130,246,.3)':'rgba(255,255,255,.05)'),background:emailMode===m.id?'rgba(59,130,246,.1)':'transparent',color:emailMode===m.id?'#3b82f6':'#888',fontSize:10,cursor:'pointer',fontWeight:emailMode===m.id?600:400}}>{m.l}</button>
-            )}
-          </div>
-          {emailMode==='resend'&&<div>
-            <input value={emailConfig.apiKey} onChange={e=>setEmailConfig(p=>({...p,apiKey:e.target.value}))} placeholder="Clé API Resend (re_...)" style={{width:'100%',padding:'8px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:10,fontFamily:'inherit',outline:'none',marginBottom:6,boxSizing:'border-box'}}/>
-            <div style={{fontSize:9,color:'#666'}}>Obtenez votre clé sur resend.com/api-keys</div>
-          </div>}
-          {emailMode==='simulate'&&<div style={{fontSize:10,color:'#888',padding:8,background:'rgba(234,179,8,.04)',borderRadius:6,border:'1px solid rgba(234,179,8,.1)'}}>
-            Mode simulation : les emails sont enregistrés dans les logs mais pas envoyés réellement.
-          </div>}
-        </div>
-
-        {/* Notifications */}
-        <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(34,197,94,.1)',borderRadius:14}}>
-          <div style={{fontSize:13,fontWeight:600,color:'#22c55e',marginBottom:10}}>🔔 Rappels automatiques</div>
-          {[{k:'prestationReminder',l:'Encodage prestations (le 1er)',i:'📝'},
-            {k:'onssReminder',l:'Déclaration ONSS (le 5)',i:'🏛'},
-            {k:'dimonaReminder',l:'Dimona entrées/sorties',i:'📋'},
-            {k:'payslipReminder',l:'Distribution fiches (fin mois)',i:'📄'},
-          ].map((n,i)=><div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-            <span style={{fontSize:10,color:'#888'}}>{n.i} {n.l}</span>
-            <button onClick={()=>setNotifSettings(p=>({...p,[n.k]:!p[n.k]}))} style={{width:36,height:18,borderRadius:9,border:'none',background:notifSettings[n.k]?'#22c55e':'#333',cursor:'pointer',position:'relative'}}>
-              <div style={{width:14,height:14,borderRadius:7,background:'#fff',position:'absolute',top:2,left:notifSettings[n.k]?20:2,transition:'left .2s'}}/>
-            </button>
-          </div>)}
-        </div>
-      </div>
-    </div>
-  </div>;
-};
 
 // ═══ NOTIFICATION CENTER ═══
 // ═══ 1. CALCUL INSTANTANÉ (Prestations → Fiche en live) ═══
@@ -11720,7 +10892,8 @@ const EcheancierPaiements=({s})=>{
   const totalNet=clients.reduce((a,c)=>a+(c.emps||[]).reduce((b,e)=>{const br=+(e.monthlySalary||e.gross||0);return b+quickNet(br);},0),0);
   const onssE=Math.round(totalBrut*TX_ONSS_E*100)/100;
   const onssW=Math.round(totalBrut*TX_ONSS_W*100)/100;
-  const pp=emps?emps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0):Math.round((totalBrut-onssW)*PP_EST*100)/100;
+  const allEmps=clients.flatMap(c=>c.emps||[]);
+  const pp=allEmps.length>0?allEmps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0):Math.round((totalBrut-onssW)*PP_EST*100)/100;
   const trimestres=[{label:'T1 Jan-Mar',months:[0,1,2]},{label:'T2 Avr-Jun',months:[3,4,5]},{label:'T3 Jul-Sep',months:[6,7,8]},{label:'T4 Oct-Dec',months:[9,10,11]}];
   const moisNoms=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
   const genPay=(mi)=>{
@@ -15297,221 +14470,6 @@ const ExportComptaPro=({s})=>{
 
 
 // ══════════════════════════════════════════════════════════════
-const PortailClientSS=({s,d})=>{
-  const clients=s.clients||[];
-  const [selClient,setSelClient]=useState(0);
-  const [tab,setTab]=useState('overview');
-  const [msgInput,setMsgInput]=useState('');
-  const [messages,setMessages]=useState([
-    {from:'system',text:'Bienvenue sur votre portail client Aureus Social Pro.',date:new Date().toISOString()},
-  ]);
-  const [demandes,setDemandes]=useState([]);
-  const [newDemande,setNewDemande]=useState({type:'attestation',desc:''});
-  const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
-  const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
-  const cl=clients[selClient];
-  const co=cl?.company||{};
-  const emps=cl?.emps||[];
-
-  // KPIs for client
-  const totalBrut=emps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0)),0);
-  const totalNet=emps.reduce((a,e)=>{const b=+(e.monthlySalary||e.gross||0);return a+quickNet(b);},0);
-  const totalCout=emps.reduce((a,e)=>a+Math.round((+(e.monthlySalary||e.gross||0))*(1+TX_ONSS_E)*100)/100,0);
-  const cddCount=emps.filter(e=>(e.contractType||'')==='CDD').length;
-
-  // Generate mock payslip history
-  const payslipHistory=[];
-  for(let i=0;i<6;i++){
-    const d=new Date();d.setMonth(d.getMonth()-1-i);
-    payslipHistory.push({month:mois[d.getMonth()],year:d.getFullYear(),emps:emps.length,brut:totalBrut,net:totalNet,status:'sent'});
-  }
-
-  const sendMsg=()=>{
-    if(!msgInput.trim())return;
-    setMessages(p=>[...p,{from:'client',text:msgInput,date:new Date().toISOString()}]);
-    setMsgInput('');
-    setTimeout(()=>setMessages(p=>[...p,{from:'gestionnaire',text:'Merci pour votre message. Nous traitons votre demande dans les plus brefs delais.',date:new Date().toISOString()}]),1000);
-  };
-
-  const submitDemande=()=>{
-    if(!newDemande.desc.trim())return;
-    setDemandes(p=>[{...newDemande,id:Date.now(),status:'pending',date:new Date().toISOString(),client:co.name},...p]);
-    setNewDemande({type:'attestation',desc:''});
-  };
-
-  const tabs=[
-    {id:'overview',l:'Vue generale',i:'📊'},
-    {id:'fiches',l:'Fiches de paie',i:'📄'},
-    {id:'employes',l:'Mon personnel',i:'👥'},
-    {id:'documents',l:'Documents',i:'📁'},
-    {id:'demandes',l:'Demandes',i:'📝'},
-    {id:'messagerie',l:'Messagerie',i:'💬'},
-    {id:'facturation',l:'Facturation',i:'🧾'},
-  ];
-
-  return <div style={{padding:24}}>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-      <div>
-        <h2 style={{fontSize:22,fontWeight:700,color:'#c6a34e',margin:0}}>🌐 Portail Client</h2>
-        <p style={{fontSize:12,color:'#888',margin:'4px 0 0'}}>Interface self-service pour vos clients fiduciaires</p>
-      </div>
-      <select value={selClient} onChange={e=>setSelClient(+e.target.value)} style={{padding:'8px 14px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#c6a34e',fontSize:12,fontFamily:'inherit'}}>
-        {clients.map((c,i)=><option key={i} value={i}>{c.company?.name||'Client '+(i+1)}</option>)}
-      </select>
-    </div>
-
-    {/* Client header */}
-    <div style={{padding:16,background:'linear-gradient(135deg,rgba(198,163,78,.06),rgba(198,163,78,.02))',border:'1px solid rgba(198,163,78,.12)',borderRadius:14,marginBottom:16}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div>
-          <div style={{fontSize:18,fontWeight:700,color:'#e5e5e5'}}>{co.name||'Client'}</div>
-          <div style={{fontSize:11,color:'#888'}}>BCE: {co.vat||'N/A'} | CP: {co.cp||'200'} | {emps.length} travailleur{emps.length>1?'s':''}{cddCount>0?' (dont '+cddCount+' CDD)':''}</div>
-        </div>
-        <div style={{fontSize:10,padding:'4px 10px',borderRadius:6,background:'rgba(34,197,94,.1)',color:'#22c55e',fontWeight:600}}>Actif</div>
-      </div>
-    </div>
-
-    {/* Tabs */}
-    <div style={{display:'flex',gap:4,marginBottom:16,overflowX:'auto',paddingBottom:4}}>
-      {tabs.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{padding:'8px 14px',borderRadius:8,border:'none',background:tab===t.id?'rgba(198,163,78,.12)':'rgba(255,255,255,.02)',color:tab===t.id?'#c6a34e':'#888',fontSize:11,cursor:'pointer',whiteSpace:'nowrap',fontWeight:tab===t.id?600:400}}>{t.i} {t.l}</button>)}
-    </div>
-
-    {/* Overview */}
-    {tab==='overview'&&<div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
-        {[{l:'Effectif',v:emps.length,c:'#3b82f6',i:'👥'},
-          {l:'Masse brute',v:f2(totalBrut)+' EUR',c:'#e5e5e5',i:'💰'},
-          {l:'Net total',v:f2(totalNet)+' EUR',c:'#22c55e',i:'💵'},
-          {l:'Cout employeur',v:f2(totalCout)+' EUR',c:'#c6a34e',i:'🏢'},
-        ].map((k,i)=><div key={i} style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'15',borderRadius:12,textAlign:'center'}}>
-          <div style={{fontSize:9,color:'#888'}}>{k.i} {k.l}</div>
-          <div style={{fontSize:18,fontWeight:700,color:k.c}}>{k.v}</div>
-        </div>)}
-      </div>
-      {/* Quick actions */}
-      <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:8}}>Actions rapides</div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
-        {[{l:'Demander attestation',i:'📋',action:()=>setTab('demandes')},
-          {l:'Consulter fiches',i:'📄',action:()=>setTab('fiches')},
-          {l:'Envoyer un message',i:'💬',action:()=>setTab('messagerie')},
-          {l:'Declarer un nouvel employe',i:'🟢',action:()=>setTab('demandes')},
-          {l:'Signaler une absence',i:'🏥',action:()=>setTab('demandes')},
-          {l:'Telecharger documents',i:'📁',action:()=>setTab('documents')},
-        ].map((a,i)=><button key={i} onClick={a.action} style={{padding:14,borderRadius:12,border:'1px solid rgba(255,255,255,.05)',background:'rgba(255,255,255,.02)',cursor:'pointer',textAlign:'left',transition:'all .15s'}}>
-          <div style={{fontSize:18,marginBottom:4}}>{a.i}</div>
-          <div style={{fontSize:11,color:'#e5e5e5',fontWeight:500}}>{a.l}</div>
-        </button>)}
-      </div>
-    </div>}
-
-    {/* Fiches de paie */}
-    {tab==='fiches'&&<div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
-      <div style={{padding:'10px 14px',background:'rgba(198,163,78,.04)',fontSize:12,fontWeight:600,color:'#c6a34e'}}>Historique fiches de paie</div>
-      {payslipHistory.map((p,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
-        <div>
-          <div style={{fontSize:12,fontWeight:500,color:'#e5e5e5'}}>{p.month} {p.year}</div>
-          <div style={{fontSize:10,color:'#888'}}>{p.emps} fiche{p.emps>1?'s':''} | Brut: {f2(p.brut)} | Net: {f2(p.net)}</div>
-        </div>
-        <div style={{display:'flex',gap:6}}>
-          <button style={{padding:'5px 10px',borderRadius:6,border:'none',background:'rgba(198,163,78,.08)',color:'#c6a34e',fontSize:10,cursor:'pointer'}}>📥 PDF</button>
-          <button style={{padding:'5px 10px',borderRadius:6,border:'none',background:'rgba(34,197,94,.08)',color:'#22c55e',fontSize:10,cursor:'pointer'}}>👁 Voir</button>
-        </div>
-      </div>)}
-    </div>}
-
-    {/* Employes */}
-    {tab==='employes'&&<div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
-      <div style={{padding:'10px 14px',background:'rgba(198,163,78,.04)',display:'flex',justifyContent:'space-between'}}>
-        <span style={{fontSize:12,fontWeight:600,color:'#c6a34e'}}>Personnel ({emps.length})</span>
-      </div>
-      {emps.map((e,i)=><div key={i} style={{display:'grid',gridTemplateColumns:'200px 100px 80px 100px 80px',padding:'8px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11,alignItems:'center'}}>
-        <div style={{fontWeight:500,color:'#e5e5e5'}}>{(e.first||e.fn||'')} {(e.last||e.ln||'')}</div>
-        <div style={{color:'#888'}}>{e.function||e.job||'Employé'}</div>
-        <div style={{color:'#888'}}>{e.contractType||'CDI'}</div>
-        <div style={{color:'#22c55e'}}>{f2(+(e.monthlySalary||e.gross||0))} EUR</div>
-        <div style={{fontSize:9,padding:'2px 6px',borderRadius:4,background:'rgba(34,197,94,.1)',color:'#22c55e',textAlign:'center'}}>{e.status||'Actif'}</div>
-      </div>)}
-      {emps.length===0&&<div style={{padding:30,textAlign:'center',color:'#888'}}>Aucun travailleur</div>}
-    </div>}
-
-    {/* Documents */}
-    {tab==='documents'&&<div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
-        {[{l:'Contrats de travail',i:'📋',count:emps.length},
-          {l:'Fiches de paie',i:'📄',count:emps.length*6},
-          {l:'Attestations',i:'📝',count:Math.ceil(emps.length/2)},
-          {l:'Declarations ONSS',i:'🏛',count:4},
-          {l:'Fiches fiscales 281.10',i:'🧾',count:emps.length},
-          {l:'Reglements de travail',i:'📖',count:1},
-        ].map((d,i)=><div key={i} style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.08)',borderRadius:12,cursor:'pointer'}}>
-          <div style={{fontSize:24,marginBottom:6}}>{d.i}</div>
-          <div style={{fontSize:12,fontWeight:600,color:'#e5e5e5'}}>{d.l}</div>
-          <div style={{fontSize:10,color:'#888',marginTop:2}}>{d.count} document{d.count>1?'s':''}</div>
-        </div>)}
-      </div>
-    </div>}
-
-    {/* Demandes */}
-    {tab==='demandes'&&<div>
-      <div style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:14,marginBottom:14}}>
-        <div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:10}}>Nouvelle demande</div>
-        <div style={{display:'flex',gap:8,marginBottom:8}}>
-          {['attestation','embauche','licenciement','absence','modification','autre'].map(t=><button key={t} onClick={()=>setNewDemande(p=>({...p,type:t}))} style={{padding:'5px 10px',borderRadius:6,border:newDemande.type===t?'1px solid #c6a34e':'1px solid rgba(255,255,255,.05)',background:newDemande.type===t?'rgba(198,163,78,.08)':'transparent',color:newDemande.type===t?'#c6a34e':'#888',fontSize:10,cursor:'pointer',textTransform:'capitalize'}}>{t}</button>)}
-        </div>
-        <textarea value={newDemande.desc} onChange={e=>setNewDemande(p=>({...p,desc:e.target.value}))} placeholder="Decrivez votre demande..." rows={3} style={{width:'100%',padding:10,background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:12,fontFamily:'inherit',resize:'none'}}/>
-        <button onClick={submitDemande} style={{marginTop:8,padding:'10px 20px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:12,cursor:'pointer'}}>📝 Soumettre</button>
-      </div>
-      {demandes.map((dem,i)=><div key={i} style={{padding:12,border:'1px solid rgba(255,255,255,.05)',borderRadius:10,marginBottom:6}}>
-        <div style={{display:'flex',justifyContent:'space-between'}}>
-          <span style={{fontSize:12,fontWeight:600,color:'#e5e5e5',textTransform:'capitalize'}}>{dem.type}</span>
-          <span style={{fontSize:9,padding:'2px 8px',borderRadius:4,background:dem.status==='pending'?'rgba(234,179,8,.1)':'rgba(34,197,94,.1)',color:dem.status==='pending'?'#eab308':'#22c55e'}}>{dem.status==='pending'?'En attente':'Traite'}</span>
-        </div>
-        <div style={{fontSize:11,color:'#888',marginTop:4}}>{dem.desc}</div>
-        <div style={{fontSize:9,color:'#555',marginTop:4}}>{new Date(dem.date).toLocaleString('fr-BE')}</div>
-      </div>)}
-    </div>}
-
-    {/* Messagerie */}
-    {tab==='messagerie'&&<div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
-      <div style={{padding:'10px 14px',background:'rgba(198,163,78,.04)',fontSize:12,fontWeight:600,color:'#c6a34e'}}>Messagerie avec votre gestionnaire</div>
-      <div style={{height:300,overflowY:'auto',padding:12,display:'flex',flexDirection:'column',gap:6}}>
-        {messages.map((m,i)=><div key={i} style={{alignSelf:m.from==='client'?'flex-end':'flex-start',maxWidth:'70%',padding:'8px 12px',borderRadius:10,background:m.from==='client'?'rgba(198,163,78,.1)':m.from==='gestionnaire'?'rgba(34,197,94,.06)':'rgba(59,130,246,.06)',border:'1px solid '+(m.from==='client'?'rgba(198,163,78,.15)':'rgba(255,255,255,.05)')}}>
-          <div style={{fontSize:9,color:'#888',marginBottom:2}}>{m.from==='client'?'Vous':m.from==='gestionnaire'?'Gestionnaire':'Systeme'} — {new Date(m.date).toLocaleTimeString('fr-BE')}</div>
-          <div style={{fontSize:11,color:'#e5e5e5'}}>{m.text}</div>
-        </div>)}
-      </div>
-      <div style={{display:'flex',gap:8,padding:10,borderTop:'1px solid rgba(255,255,255,.05)'}}>
-        <input value={msgInput} onChange={e=>setMsgInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')sendMsg();}} placeholder="Votre message..." style={{flex:1,padding:'8px 12px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:8,color:'#e5e5e5',fontSize:12,fontFamily:'inherit'}}/>
-        <button onClick={sendMsg} style={{padding:'8px 16px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#c6a34e,#a07d3e)',color:'#060810',fontWeight:700,fontSize:12,cursor:'pointer'}}>Envoyer</button>
-      </div>
-    </div>}
-
-    {/* Facturation */}
-    {tab==='facturation'&&<div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:14}}>
-        {[{l:'Forfait mensuel',v:'350,00 EUR',c:'#c6a34e'},{l:'Fiches/mois',v:emps.length+'',c:'#3b82f6'},{l:'Cout/fiche',v:emps.length>0?f2(350/emps.length)+' EUR':'N/A',c:'#22c55e'}].map((k,i)=>
-          <div key={i} style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+k.c+'15',borderRadius:12,textAlign:'center'}}>
-            <div style={{fontSize:9,color:'#888'}}>{k.l}</div>
-            <div style={{fontSize:18,fontWeight:700,color:k.c}}>{k.v}</div>
-          </div>
-        )}
-      </div>
-      <div style={{border:'1px solid rgba(198,163,78,.1)',borderRadius:14,overflow:'hidden'}}>
-        <div style={{padding:'10px 14px',background:'rgba(198,163,78,.04)',fontSize:12,fontWeight:600,color:'#c6a34e'}}>Historique facturation</div>
-        {[0,1,2,3,4,5].map(i=>{const d=new Date();d.setMonth(d.getMonth()-i);return <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'10px 14px',borderBottom:'1px solid rgba(255,255,255,.03)',alignItems:'center'}}>
-          <div>
-            <div style={{fontSize:12,color:'#e5e5e5'}}>{mois[d.getMonth()]} {d.getFullYear()}</div>
-            <div style={{fontSize:10,color:'#888'}}>{emps.length} fiches traitees</div>
-          </div>
-          <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <span style={{fontSize:13,fontWeight:600,color:'#c6a34e'}}>350,00 EUR</span>
-            <span style={{fontSize:9,padding:'2px 8px',borderRadius:4,background:i===0?'rgba(234,179,8,.1)':'rgba(34,197,94,.1)',color:i===0?'#eab308':'#22c55e'}}>{i===0?'En cours':'Paye'}</span>
-          </div>
-        </div>;})}
-      </div>
-    </div>}
-  </div>;
-};
 
 // ═══ 2. REPORTING AVANCÉ — PDF Exports + Tableaux financiers ═══
 const ReportingAvance=({s})=>{
@@ -18144,7 +17102,7 @@ const SmartAutopilot=({s,d})=>{
     
     // Trimestriel: DmfA (fin trimestre)
     if((month%3===0&&day>=15)||(month%3===1&&day<=10)) smartTasks.push({id:'dmfa',priority:'medium',icon:'📊',task:'DmfA Q'+quarter+'/'+now.getFullYear(),desc:totalEmps+' travailleurs à déclarer',color:'#a855f7',auto:true,
-      fn:()=>{clients.filter(c=>(c.emps?.length||0)>0).forEach(cl=>generateDmfAXML(cl.emps||[],cl.company||{}));}});
+      fn:()=>{clients.filter(c=>(c.emps?.length||0)>0).forEach(cl=>generateDmfAXML(cl.emps||[],Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),cl.company||{}));}});
     
     // Annuel: Belcotax (janvier-février)
     if(month<=2) smartTasks.push({id:'belcotax',priority:'medium',icon:'🏛️',task:'Belcotax 281.10 — '+(now.getFullYear()-1),desc:totalEmps+' fiches fiscales',color:'#ef4444',auto:true,
@@ -18179,7 +17137,7 @@ const SmartAutopilot=({s,d})=>{
       }).length;
     },0);
     if(newEmps>0) smartTasks.push({id:'dimona_new',priority:'urgent',icon:'📡',task:newEmps+' Dimona IN à envoyer',desc:'Nouveaux employés cette semaine',color:'#3b82f6',auto:true,
-      fn:()=>{clients.forEach(cl=>{(cl.emps||[]).filter(e=>{const d2=new Date(e.startDate||e.start||'2020-01-01');return Math.ceil((now-d2)/(1000*60*60*24))<=7;}).forEach(e=>generateDimonaXML(e,'IN'))});}});
+      fn:()=>{clients.forEach(cl=>{(cl.emps||[]).filter(e=>{const d2=new Date(e.startDate||e.start||'2020-01-01');return Math.ceil((now-d2)/(1000*60*60*24))<=7;}).forEach(e=>generateDimonaXML(e,'IN',cl.company));});}});
 
     // Always show: data quality check
     const incomplete=clients.filter(cl=>{
@@ -18286,8 +17244,8 @@ const SmartAutopilot=({s,d})=>{
         emps.forEach(e=>{
           try{generatePayslipPDF(e,co);totalDocs++;}catch(ex){}
         });
-        try{generateSEPAXML(emps,co);totalDocs++;}catch(ex){}
-        try{generateDmfAXML(emps,co);totalDocs++;}catch(ex){}
+        try{generateSEPAXML(emps,{month:new Date().getMonth()+1,year:new Date().getFullYear()},co);totalDocs++;}catch(ex){}
+        try{generateDmfAXML(emps,Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),co);totalDocs++;}catch(ex){}
       }
       if(typeof addToast==='function')addToast('📦 Export complet: '+totalDocs+' documents générés pour '+clients.length+' clients');
     };
@@ -18526,14 +17484,14 @@ const MassEngine=({s,d})=>{
           // SEPA
           if(selectedOps.sepa&&!cancelRef.current){
             setProgress(p=>({...p,currentAction:'💸 SEPA pain.001'}));
-            try{generateSEPAXML(emps,co);clientDocs++;docCount++;}catch(e){errCount++;}
+            try{generateSEPAXML(emps,{month:new Date().getMonth()+1,year:new Date().getFullYear()},co);clientDocs++;docCount++;}catch(e){errCount++;}
             await sleep(10);
           }
 
           // DmfA
           if(selectedOps.dmfa&&!cancelRef.current){
             setProgress(p=>({...p,currentAction:'📊 DmfA trimestrielle'}));
-            try{generateDmfAXML(emps,co);clientDocs++;docCount++;}catch(e){errCount++;}
+            try{generateDmfAXML(emps,Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),co);clientDocs++;docCount++;}catch(e){errCount++;}
             await sleep(10);
           }
 
@@ -19174,13 +18132,13 @@ const AutomationHub=({s,d})=>{
       {t:'Fiches de Paie',ic:'📄',desc:'Génération automatique le 25 de chaque mois',col:'#c6a34e',stat1:emps.length+' fiches',stat2:daysToPayday+'j',page:'payslip',trigger:'Mensuel (25)',
        fn:()=>execWorkflow('Fiches de Paie',()=>emps.forEach(e=>generatePayslipPDF(e,co)),emps.length+' employé(s)',emps.length)},
       {t:'Dimona IN/OUT',ic:'📡',desc:'Déclaration ONSS embauche/fin contrat',col:'#3b82f6',stat1:emps.filter(e=>(e.contractType||e.contrat?.type)==='CDD').length+' CDD',stat2:'Auto',page:'onss',trigger:'Événement',
-       fn:()=>execWorkflow('Dimona IN',()=>emps.forEach(e=>generateDimonaXML(e,'IN')),emps.length+' déclarations',emps.length)},
+       fn:()=>execWorkflow('Dimona IN',()=>emps.forEach(e=>generateDimonaXML(e,'IN',co)),emps.length+' déclarations',emps.length)},
       {t:'DmfA '+curQ,ic:'📊',desc:'Déclaration ONSS trimestrielle',col:'#a855f7',stat1:curQ,stat2:emps.length+' trav.',page:'onss',trigger:'Trimestriel',
-       fn:()=>execWorkflow('DmfA '+curQ,()=>generateDmfAXML(emps,co),emps.length+' travailleurs '+curQ,emps.length)},
+       fn:()=>execWorkflow('DmfA '+curQ,()=>generateDmfAXML(emps,Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),co),emps.length+' travailleurs '+curQ,emps.length)},
       {t:'Belcotax 281.10',ic:'🏛️',desc:'Fiches fiscales SPF Finances',col:'#ef4444',stat1:curYear+'',stat2:emps.length+' fiches',page:'fiscal',trigger:'Annuel (Jan)',
-       fn:()=>execWorkflow('Belcotax 281.10',()=>emps.forEach(e=>generateBelcotaxXML(e,co)),emps.length+' fiches fiscales',emps.length)},
+       fn:()=>execWorkflow('Belcotax 281.10',()=>emps.forEach(e=>generateBelcotaxXML(e,new Date().getFullYear(),co)),emps.length+' fiches fiscales',emps.length)},
       {t:'SEPA pain.001',ic:'💸',desc:'Fichier virements bancaires',col:'#22c55e',stat1:emps.length+' vir.',stat2:'XML',page:'reporting',trigger:'Mensuel (25)',
-       fn:()=>execWorkflow('SEPA Virements',()=>generateSEPAXML(emps,co),emps.length+' virements salariaux',emps.length)},
+       fn:()=>execWorkflow('SEPA Virements',()=>generateSEPAXML(emps,{month:new Date().getMonth()+1,year:new Date().getFullYear()},co),emps.length+' virements salariaux',emps.length)},
       {t:'Certificat C4',ic:'📋',desc:'Fin de contrat — Chômage',col:'#f97316',stat1:'0 att.',stat2:'PDF',page:'contratsmenu',trigger:'Événement',
        fn:()=>{var e=emps[0];if(!e){alert('Aucun employé');return;}execWorkflow('C4'+(e.first||e.fn||''),()=>generateC4PDF(e,co),'Certificat C4',1);}},
       {t:'Attestation Emploi',ic:'📝',desc:'Certificat officiel',col:'#06b6d4',stat1:'Demande',stat2:'HTML',page:null,trigger:'Sur demande',
@@ -19281,8 +18239,8 @@ const AutomationHub=({s,d})=>{
           <div style={{fontSize:11,color:'#999'}}>Fiches + SEPA + DmfA + Précompte — tout en 1 clic</div>
         </div>
         <div style={{display:'flex',gap:8}}>
-          <button onClick={()=>execWorkflow('PAIE COMPLÈTE',()=>{emps.forEach(e=>generatePayslipPDF(e,co));generateSEPAXML(emps,co);generateDmfAXML(emps,co);},'Fiches de paie + SEPA + DmfA pour '+emps.length+' employés',emps.length)} style={{padding:'14px 28px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#c6a34e,#d4af37)',color:'#000',fontWeight:700,fontSize:14,cursor:'pointer',boxShadow:'0 4px 20px rgba(198,163,78,.35)'}}>⚡ Lancer la Paie</button>
-          <button onClick={()=>{if(confirm('TOUT GÉNÉRER ?\n\nFiches + SEPA + DmfA + Belcotax + Dimona\npour '+emps.length+' employés ?')){emps.forEach(e=>{generatePayslipPDF(e,co);generateDimonaXML(e,'IN');generateBelcotaxXML(e,co);});generateSEPAXML(emps,co);generateDmfAXML(emps,co);logAction('GÉNÉRATION TOTALE','Tous les documents pour '+emps.length+' employés',emps.length*5);if(typeof addToast==='function')addToast('🎉 Génération totale terminée — '+(emps.length*5)+' documents');}}} style={{padding:'14px 20px',borderRadius:12,border:'1px solid rgba(239,68,68,.3)',background:'rgba(239,68,68,.1)',color:'#ef4444',fontWeight:600,fontSize:12,cursor:'pointer'}}>🔥 TOUT Générer</button>
+          <button onClick={()=>execWorkflow('PAIE COMPLÈTE',()=>{emps.forEach(e=>generatePayslipPDF(e,co));generateSEPAXML(emps,{month:new Date().getMonth()+1,year:new Date().getFullYear()},co);generateDmfAXML(emps,Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),co);},'Fiches de paie + SEPA + DmfA pour '+emps.length+' employés',emps.length)} style={{padding:'14px 28px',borderRadius:12,border:'none',background:'linear-gradient(135deg,#c6a34e,#d4af37)',color:'#000',fontWeight:700,fontSize:14,cursor:'pointer',boxShadow:'0 4px 20px rgba(198,163,78,.35)'}}>⚡ Lancer la Paie</button>
+          <button onClick={()=>{if(confirm('TOUT GÉNÉRER ?\n\nFiches + SEPA + DmfA + Belcotax + Dimona\npour '+emps.length+' employés ?')){emps.forEach(e=>{generatePayslipPDF(e,co);generateDimonaXML(e,'IN',co);generateBelcotaxXML(e,new Date().getFullYear(),co);});generateSEPAXML(emps,{month:new Date().getMonth()+1,year:new Date().getFullYear()},co);generateDmfAXML(emps,Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),co);logAction('GÉNÉRATION TOTALE','Tous les documents pour '+emps.length+' employés',emps.length*5);if(typeof addToast==='function')addToast('🎉 Génération totale terminée — '+(emps.length*5)+' documents');}}} style={{padding:'14px 20px',borderRadius:12,border:'1px solid rgba(239,68,68,.3)',background:'rgba(239,68,68,.1)',color:'#ef4444',fontWeight:600,fontSize:12,cursor:'pointer'}}>🔥 TOUT Générer</button>
         </div>
       </div>
 
@@ -19425,11 +18383,11 @@ const AutomationHub=({s,d})=>{
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:12}}>
           {[
             {t:'📄 Toutes les fiches',desc:'Générer fiches de paie pour '+emps.length+' employés',col:'#c6a34e',fn:()=>execWorkflow('Batch Fiches',()=>emps.forEach(e=>generatePayslipPDF(e,co)),emps.length+' fiches',emps.length)},
-            {t:'📡 Toutes les Dimona',desc:'Dimona IN pour '+emps.length+' employés',col:'#3b82f6',fn:()=>execWorkflow('Batch Dimona',()=>emps.forEach(e=>generateDimonaXML(e,'IN')),emps.length+' déclarations',emps.length)},
-            {t:'🏛️ Toutes les Belcotax',desc:'281.10 pour '+emps.length+' employés',col:'#ef4444',fn:()=>execWorkflow('Batch Belcotax',()=>emps.forEach(e=>generateBelcotaxXML(e,co)),emps.length+' fiches fiscales',emps.length)},
+            {t:'📡 Toutes les Dimona',desc:'Dimona IN pour '+emps.length+' employés',col:'#3b82f6',fn:()=>execWorkflow('Batch Dimona',()=>emps.forEach(e=>generateDimonaXML(e,'IN',co)),emps.length+' déclarations',emps.length)},
+            {t:'🏛️ Toutes les Belcotax',desc:'281.10 pour '+emps.length+' employés',col:'#ef4444',fn:()=>execWorkflow('Batch Belcotax',()=>emps.forEach(e=>generateBelcotaxXML(e,new Date().getFullYear(),co)),emps.length+' fiches fiscales',emps.length)},
             {t:'📝 Toutes les attestations emploi',desc:'Pour '+emps.length+' employés',col:'#06b6d4',fn:()=>execWorkflow('Batch Attestations',()=>emps.forEach(e=>generateAttestationEmploi(e,co)),emps.length+' attestations',emps.length)},
             {t:'💼 Toutes les attestations salaire',desc:'Pour '+emps.length+' employés',col:'#8b5cf6',fn:()=>execWorkflow('Batch Att. Salaire',()=>emps.forEach(e=>generateAttestationSalaire(e,co)),emps.length+' attestations',emps.length)},
-            {t:'💸 SEPA + DmfA + Précompte',desc:'Tous les exports en 1 clic',col:'#22c55e',fn:()=>execWorkflow('Batch Exports',()=>{generateSEPAXML(emps,co);generateDmfAXML(emps,co);},'SEPA + DmfA',emps.length)},
+            {t:'💸 SEPA + DmfA + Précompte',desc:'Tous les exports en 1 clic',col:'#22c55e',fn:()=>execWorkflow('Batch Exports',()=>{generateSEPAXML(emps,{month:new Date().getMonth()+1,year:new Date().getFullYear()},co);generateDmfAXML(emps,Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),co);},'SEPA + DmfA',emps.length)},
           ].map((b,i)=><div key={i} style={{padding:16,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.1)',borderRadius:12}}>
             <div style={{fontSize:14,fontWeight:600,color:'#e5e5e5',marginBottom:4}}>{b.t}</div>
             <div style={{fontSize:11,color:'#888',marginBottom:12}}>{b.desc}</div>
@@ -19704,7 +18662,7 @@ const pg=()=>{
       case'exportcomptapro':return <AccountingOutputModLazy s={s} d={d}/>;
       case'tableaudirection':return <TableauDirectionLazy s={s} d={d}/>;
       case'primecalc':return <GestionPrimesLazy s={s} d={d}/>;
-      case'portailclient':return <PortailClientSS s={s} d={d}/>;
+      case'portailclient':return <PortailClientSSLazy s={s} d={d}/>;
       case'reportingpro':return <KPIDashboardModLazy s={s} d={d}/>;
       case'integrations':return <IntegrationsHubLazy s={s} d={d} supabase={supabase}/>;
       case'fiduciaire':return <Dashboard s={s} d={d}/>;
@@ -19722,7 +18680,7 @@ const pg=()=>{
       case'calendrier':return <CalendrierSocialLazy s={s} d={d}/>;
       case'rapports':return <KPIDashboardModLazy s={s} d={d}/>;
       case'actionsrapides':return <ActionsRapidesLazy s={s} d={d}/>;
-      case'cloture':return <ClotureMensuelle s={s} d={d} supabase={supabase} user={user}/>;
+      case'cloture':return <ClotureMensuelleLazy s={s} d={d} supabase={supabase} user={user}/>;
       case'notifications':return <AlertesLegalesModLazy s={s} d={d}/>;
       case'commandcenter':return <CommandCenterLazy s={s} d={d}/>;
       case'queue':return <ProcessingQueueLazy s={s} d={d}/>;
@@ -19757,7 +18715,7 @@ const pg=()=>{
   };
 
   // Client Portal - show dedicated UI for client role
-  if(userRole==='client') return <PortailClientSS s={s} d={d} supabase={supabase} user={user} clientData={s.clients?.find(c=>c.company?.email===user?.email)||s.clients?.[0]||{}}/>;
+  if(userRole==='client') return <PortailClientSSLazy s={s} d={d} supabase={supabase} user={user} clientData={s.clients?.find(c=>c.company?.email===user?.email)||s.clients?.[0]||{}}/>;
 
   return (
     <div data-theme={theme} style={{minHeight:'100vh',background:T.bg,color:isDark?'#d4d0c8':'#333',fontFamily:`'Outfit','DM Sans',system-ui,sans-serif`,display:'flex',transition:'background .3s,color .3s'}}>
@@ -19918,7 +18876,7 @@ const pg=()=>{
       </div>}
 
       {/* AGENT IA JURIDIQUE — Bouton flottant */}
-      <FloatingLegalAgent onAction={(actionData)=>{
+      <FloatingLegalAgentLazy onAction={(actionData)=>{
         // Execute actions from AI agent
         const{action,data:ad}=actionData;
         if(action==='CREATE_CLIENT'&&ad){
@@ -20080,7 +19038,7 @@ function Dashboard({s,d}) {
       <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
         <button onClick={()=>{if(confirm('Générer toutes les fiches de paie ?')){(s.emps||[]).forEach(e=>generatePayslipPDF(e,s.co));addToast(s.emps.length+' fiches de paie générées')}}} style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(198,163,78,.15)',color:'#c6a34e',fontSize:11,cursor:'pointer',fontWeight:600}}>📄 Fiches</button>
         <button onClick={()=>{if(confirm('Générer SEPA ?')){generateSEPAXML(s.emps||[],s.co);addToast('Fichier SEPA pain.001 généré')}}} style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(34,197,94,.12)',color:'#22c55e',fontSize:11,cursor:'pointer',fontWeight:600}}>💸 SEPA</button>
-        <button onClick={()=>{if(confirm('Générer DmfA ?')){generateDmfAXML(s.emps||[],s.co);addToast('DmfA trimestrielle générée')}}} style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(168,85,247,.12)',color:'#a855f7',fontSize:11,cursor:'pointer',fontWeight:600}}>📊 DmfA</button>
+        <button onClick={()=>{if(confirm('Générer DmfA ?')){generateDmfAXML(s.emps||[],Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),s.co);addToast('DmfA trimestrielle générée')}}} style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(168,85,247,.12)',color:'#a855f7',fontSize:11,cursor:'pointer',fontWeight:600}}>📊 DmfA</button>
         <button onClick={()=>d({type:'NAV',page:'automatisation'})} style={{padding:'7px 14px',borderRadius:8,border:'1px solid rgba(198,163,78,.2)',background:'transparent',color:'#c6a34e',fontSize:11,cursor:'pointer',fontWeight:500}}>Voir tout →</button>
       </div>
     </div>
@@ -23032,7 +21990,7 @@ function ReportingPage({s,d}){const sub=s.sub||'accounting';return <div>
     <div style={{marginBottom:14,padding:'10px 14px',background:'linear-gradient(135deg,rgba(168,85,247,.06),rgba(168,85,247,.02))',border:'1px solid rgba(168,85,247,.1)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
       <div style={{fontSize:11,color:'#888'}}>⚡ Exports auto: DmfA + SEPA + Belcotax en 1 clic</div>
       <div style={{display:'flex',gap:6}}>
-        <button onClick={()=>{if(confirm('Générer DmfA ?')){generateDmfAXML(s.emps||[],s.co);alert('✅ DmfA générée')}}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'#a855f7',color:'#fff',fontSize:11,cursor:'pointer',fontWeight:600}}>📊 DmfA</button>
+        <button onClick={()=>{if(confirm('Générer DmfA ?')){generateDmfAXML(s.emps||[],Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),s.co);alert('✅ DmfA générée')}}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'#a855f7',color:'#fff',fontSize:11,cursor:'pointer',fontWeight:600}}>📊 DmfA</button>
         <button onClick={()=>{if(confirm('Générer SEPA ?')){generateSEPAXML(s.emps||[],s.co);alert('✅ SEPA généré')}}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'#22c55e',color:'#fff',fontSize:11,cursor:'pointer',fontWeight:600}}>💸 SEPA</button>
       </div>
     </div>
@@ -23159,9 +22117,9 @@ function calcAllocEnfant(region,birthYear,age){
 // ═══════════════════════════════════════════════════════════════
 function exportSimulation(){var sb=document.getElementById("sb");if(sb)sb.style.display="none";var el=document.querySelector("main")||document.body;var w=window.open("","_blank");w.document.write("<html><head><title>Aureus Social Pro</title><style>body{font-family:Arial,sans-serif;padding:30px;max-width:900px;margin:auto;color:#1a1a1a}h1,h2,h3{color:#c6a34e}table{width:100%;border-collapse:collapse;margin:10px 0}td,th{padding:6px 10px;border:1px solid #e5e5e5;font-size:12px}</style></head><body>"+el.innerHTML+"</body></html>");w.document.close();w.print();if(sb)sb.style.display="";}function emailSimulation(t,e){if(e){window.location.href="mailto:"+e+"?subject="+encodeURIComponent(t);}}
 function sendSimulationPDF(simData,clientEmail){var d=simData||{};var brut=+(d.brut||0);var onssP=Math.round(brut*TX_ONSS_E*100)/100;var assAT=Math.round(brut*TX_AT*100)/100;var med=COUT_MED;var cr=+(d.cheqRepas||130.02);var coutMens=Math.round((brut+onssP+assAT+med+cr)*100)/100;var nb=+(d.nb||1);var dur=+(d.duree||12);var coutTotal=Math.round(coutMens*nb*100)/100;var coutAn=Math.round(coutMens*nb*dur*100)/100;var onssE=Math.round(brut*TX_ONSS_W*100)/100;var imp=brut-onssE;var pp=quickPP(brut);var net=Math.round((brut-onssE-pp)*100)/100;var ratio=brut>0?Math.round(net/coutMens*100):0;var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var coName=d.coName||"Aureus IA SPRL";var html="<!DOCTYPE html><html><head><meta charset=utf-8><title>Simulation cout salarial</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;padding:30px;max-width:800px;margin:auto;color:#1a1a1a}h1{font-size:18px;color:#c6a34e;margin-bottom:5px}h2{font-size:13px;color:#333;margin:15px 0 8px;border-bottom:1px solid #e5e5e5;padding-bottom:4px}table{width:100%;border-collapse:collapse;margin:8px 0}td{padding:5px 8px;font-size:11px}td:last-child{text-align:right;font-family:monospace;font-weight:600}.kpi{display:flex;gap:15px;margin:12px 0;flex-wrap:wrap}.kpi-box{flex:1;min-width:140px;background:#f8f7f4;border:1px solid #e5e2d9;border-radius:6px;padding:10px;text-align:center}.kpi-val{font-size:16px;font-weight:700;color:#c6a34e}.kpi-lab{font-size:9px;color:#666;margin-top:2px}.total td{font-weight:700;border-top:2px solid #c6a34e;padding-top:8px}.foot{margin-top:25px;font-size:9px;color:#999;text-align:center}@media print{button{display:none!important}}</style></head><body><h1>"+coName+"</h1><p style=font-size:10px;color:#666>Simulation cout salarial - "+new Date().toLocaleDateString("fr-BE")+"</p><div class=kpi><div class=kpi-box><div class=kpi-val>"+f2(brut)+" EUR</div><div class=kpi-lab>Brut mensuel</div></div><div class=kpi-box><div class=kpi-val>"+f2(coutMens)+" EUR</div><div class=kpi-lab>Cout mensuel/pers.</div></div><div class=kpi-box><div class=kpi-val>"+f2(coutAn)+" EUR</div><div class=kpi-lab>Cout sur "+dur+" mois</div></div><div class=kpi-box><div class=kpi-val>"+ratio+"%</div><div class=kpi-lab>Ratio net/cout</div></div></div><h2>Decomposition cout employeur</h2><table><tr><td>Salaire brut</td><td>"+f2(brut)+" EUR</td></tr><tr><td>ONSS patronal 25,07%</td><td>"+f2(onssP)+" EUR</td></tr><tr><td>Assurance AT 1%</td><td>"+f2(assAT)+" EUR</td></tr><tr><td>Medecine travail</td><td>"+f2(med)+" EUR</td></tr><tr><td>Cheques-repas</td><td>"+f2(cr)+" EUR</td></tr><tr class=total><td>COUT / personne</td><td>"+f2(coutMens)+" EUR</td></tr><tr><td>COUT TOTAL "+nb+" pers.</td><td>"+f2(coutTotal)+" EUR</td></tr></table><h2>Net employe</h2><table><tr><td>Brut</td><td>"+f2(brut)+"</td></tr><tr><td>ONSS -13,07%</td><td>-"+f2(onssE)+"</td></tr><tr><td>PP</td><td>-"+f2(pp)+"</td></tr><tr class=total><td>Net</td><td>"+f2(net)+" EUR</td></tr></table><div class=foot>Aureus Social Pro - aureussocial.be</div><button onclick=window.print() style=display:block;margin:15px_auto;background:#c6a34e;color:#fff;border:none;padding:10px_30px;border-radius:6px;cursor:pointer>Imprimer</button></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Simulation_'+brut+'EUR');if(clientEmail){var subject=encodeURIComponent("Simulation cout salarial - "+f2(brut)+" EUR");var body=encodeURIComponent("Bonjour,\n\nSimulation:\n- Brut: "+f2(brut)+" EUR\n- Cout employeur: "+f2(coutMens)+" EUR/mois\n- Net estime: "+f2(net)+" EUR\n- Ratio: "+ratio+"%\n\nCordialement,\n"+coName);setTimeout(function(){window.location.href="mailto:"+clientEmail+"?subject="+subject+"&body="+body},600)}}
-function generateAttestationEmploi(emp,co){var coName=co?.name||"Aureus IA SPRL";var coVAT=co?.vat||"BE 1028.230.781";var name=(emp.first||emp.fn||"")+" "+(emp.last||emp.ln||"");var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var html="<!DOCTYPE html><html><head><meta charset=utf-8><title>Attestation "+name+"</title><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto;line-height:1.6}@media print{button{display:none!important}}</style></head><body><h2 style=text-align:center;text-decoration:underline;margin:20px>ATTESTATION D EMPLOI</h2><p>"+coName+" ("+coVAT+") atteste que <b>"+name+"</b> (NISS: "+(emp.niss||"N/A")+") est employe(e) depuis le <b>"+(emp.startDate||emp.start||"N/A")+"</b> en qualite de <b>"+(emp.function||emp.job||"employe")+"</b>. Contrat: "+(emp.contractType||"CDI")+" - "+(emp.whWeek||38)+"h/sem. Brut: "+f2(+(emp.monthlySalary||emp.gross||0))+" EUR/mois.</p><p>Pour servir et valoir ce que de droit.</p><div style=text-align:center;margin-top:20px><button onclick=window.print()>Imprimer</button></div></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Attestation_emploi_'+name);}
-function generateAttestationSalaire(emp,co){var coName=co?.name||"Aureus IA SPRL";var name=(emp.first||emp.fn||"")+" "+(emp.last||emp.ln||"");var brut=+(emp.monthlySalary||emp.gross||0);var onss=Math.round(brut*TX_ONSS_W*100)/100;var pp=quickPP(brut);var net=Math.round((brut-onss-pp)*100)/100;var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var html="<!DOCTYPE html><html><head><meta charset=utf-8><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto}table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:6px 10px;border:1px solid #ccc}@media print{button{display:none!important}}</style></head><body><h2 style=text-align:center;text-decoration:underline>ATTESTATION DE REMUNERATION</h2><p>"+coName+" certifie que <b>"+name+"</b> percoit:</p><table><tr><th>Element</th><th>Mensuel</th><th>Annuel</th></tr><tr><td>Brut</td><td>"+f2(brut)+"</td><td>"+f2(brut*12)+"</td></tr><tr><td>ONSS</td><td>-"+f2(onss)+"</td><td>-"+f2(onss*12)+"</td></tr><tr><td>PP</td><td>-"+f2(pp)+"</td><td>-"+f2(pp*12)+"</td></tr><tr style=font-weight:700><td>Net</td><td>"+f2(net)+"</td><td>"+f2(net*12)+"</td></tr></table><div style=text-align:center;margin-top:20px><button onclick=window.print()>Imprimer</button></div></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Attestation_salaire_'+name);}
-function generateSoldeCompte(emp,co){var coName=co?.name||"Aureus IA SPRL";var name=(emp.first||emp.fn||"")+" "+(emp.last||emp.ln||"");var brut=+(emp.monthlySalary||emp.gross||0);var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var pro=Math.round(brut*15/22*100)/100;var pec=Math.round(brut*PV_SIMPLE*100)/100;var pre=brut;var tot=pro+pec+pre;var onss=Math.round(tot*TX_ONSS_W*100)/100;var pp=quickPP(tot);var net=Math.round((tot-onss-pp)*100)/100;var html="<!DOCTYPE html><html><head><meta charset=utf-8><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto}table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:6px 10px;border:1px solid #ccc}@media print{button{display:none!important}}</style></head><body><h2 style=text-align:center;text-decoration:underline>SOLDE DE TOUT COMPTE</h2><p>"+coName+" - Travailleur: <b>"+name+"</b></p><table><tr><th>Element</th><th>Montant</th></tr><tr><td>Prorata</td><td>"+f2(pro)+"</td></tr><tr><td>Pecule sortie</td><td>"+f2(pec)+"</td></tr><tr><td>Préavis</td><td>"+f2(pre)+"</td></tr><tr style=font-weight:700><td>Total brut</td><td>"+f2(tot)+"</td></tr><tr><td>ONSS</td><td>-"+f2(onss)+"</td></tr><tr><td>PP</td><td>-"+f2(pp)+"</td></tr><tr style=font-weight:700><td>NET</td><td>"+f2(net)+"</td></tr></table><p>Pour solde de tout compte.</p><div style=text-align:center;margin-top:20px><button onclick=window.print()>Imprimer</button></div></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Solde_'+name);}
+function generateAttestationEmploi(emp,co){var coName=co?.name||"Aureus IA SPRL";var coVAT=co?.vat||"BE 1028.230.781";var name=(emp.first||emp.fn||"")+" "+(emp.last||emp.ln||"");var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var html="<!DOCTYPE html><html><head><meta charset=utf-8><title>Attestation "+name+"</title><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto;line-height:1.6}@media print{button{display:none!important}}</style></head><body><h2 style=text-align:center;text-decoration:underline;margin:20px>ATTESTATION D EMPLOI</h2><p>"+coName+" ("+coVAT+") atteste que <b>"+escapeHtml(name)+"</b> (NISS: "+(emp.niss||"N/A")+") est employe(e) depuis le <b>"+(emp.startDate||emp.start||"N/A")+"</b> en qualite de <b>"+(emp.function||emp.job||"employe")+"</b>. Contrat: "+(emp.contractType||"CDI")+" - "+(emp.whWeek||38)+"h/sem. Brut: "+f2(+(emp.monthlySalary||emp.gross||0))+" EUR/mois.</p><p>Pour servir et valoir ce que de droit.</p><div style=text-align:center;margin-top:20px><button onclick=window.print()>Imprimer</button></div></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Attestation_emploi_'+name);}
+function generateAttestationSalaire(emp,co){var coName=co?.name||"Aureus IA SPRL";var name=(emp.first||emp.fn||"")+" "+(emp.last||emp.ln||"");var brut=+(emp.monthlySalary||emp.gross||0);var onss=Math.round(brut*TX_ONSS_W*100)/100;var pp=quickPP(brut);var net=Math.round((brut-onss-pp)*100)/100;var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var html="<!DOCTYPE html><html><head><meta charset=utf-8><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto}table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:6px 10px;border:1px solid #ccc}@media print{button{display:none!important}}</style></head><body><h2 style=text-align:center;text-decoration:underline>ATTESTATION DE REMUNERATION</h2><p>"+coName+" certifie que <b>"+escapeHtml(name)+"</b> percoit:</p><table><tr><th>Element</th><th>Mensuel</th><th>Annuel</th></tr><tr><td>Brut</td><td>"+f2(brut)+"</td><td>"+f2(brut*12)+"</td></tr><tr><td>ONSS</td><td>-"+f2(onss)+"</td><td>-"+f2(onss*12)+"</td></tr><tr><td>PP</td><td>-"+f2(pp)+"</td><td>-"+f2(pp*12)+"</td></tr><tr style=font-weight:700><td>Net</td><td>"+f2(net)+"</td><td>"+f2(net*12)+"</td></tr></table><div style=text-align:center;margin-top:20px><button onclick=window.print()>Imprimer</button></div></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Attestation_salaire_'+name);}
+function generateSoldeCompte(emp,co){var coName=co?.name||"Aureus IA SPRL";var name=(emp.first||emp.fn||"")+" "+(emp.last||emp.ln||"");var brut=+(emp.monthlySalary||emp.gross||0);var f2=function(v){return new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0)};var pro=Math.round(brut*15/22*100)/100;var pec=Math.round(brut*PV_SIMPLE*100)/100;var pre=brut;var tot=pro+pec+pre;var onss=Math.round(tot*TX_ONSS_W*100)/100;var pp=quickPP(tot);var net=Math.round((tot-onss-pp)*100)/100;var html="<!DOCTYPE html><html><head><meta charset=utf-8><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto}table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:6px 10px;border:1px solid #ccc}@media print{button{display:none!important}}</style></head><body><h2 style=text-align:center;text-decoration:underline>SOLDE DE TOUT COMPTE</h2><p>"+coName+" - Travailleur: <b>"+escapeHtml(name)+"</b></p><table><tr><th>Element</th><th>Montant</th></tr><tr><td>Prorata</td><td>"+f2(pro)+"</td></tr><tr><td>Pecule sortie</td><td>"+f2(pec)+"</td></tr><tr><td>Préavis</td><td>"+f2(pre)+"</td></tr><tr style=font-weight:700><td>Total brut</td><td>"+f2(tot)+"</td></tr><tr><td>ONSS</td><td>-"+f2(onss)+"</td></tr><tr><td>PP</td><td>-"+f2(pp)+"</td></tr><tr style=font-weight:700><td>NET</td><td>"+f2(net)+"</td></tr></table><p>Pour solde de tout compte.</p><div style=text-align:center;margin-top:20px><button onclick=window.print()>Imprimer</button></div></body></html>";var blob=new Blob([html],{type:"text/html;charset=utf-8"});previewHTML(html,'Solde_'+name);}
 function getAlertes(emps,co){
   const now=new Date();const alerts=[];
   emps.forEach(e=>{
@@ -23241,6 +22199,10 @@ function generateDimonaXML(emp,type,co){
 
 async function generatePayslipPDF(emp,r,period,co){
   try{
+  // Détection d'arguments décalés: generatePayslipPDF(emp,co) au lieu de (emp,r,period,co)
+  if(r&&(r.name||r.vat)&&!period&&!co){co=r;r=null;period=null;}
+  if(!r){const brut=+(emp.monthlySalary||emp.gross||0);r=typeof calc==='function'?calc(emp,{},co||{}):({brut,gross:brut,onssP:Math.round(brut*TX_ONSS_W*100)/100,pp:quickPP(brut),net:quickNet(brut),onssE:Math.round(brut*TX_ONSS_E*100)/100,coutTotal:Math.round(brut*(1+TX_ONSS_E)*100)/100});}
+  if(!period){const d=new Date();period={month:d.getMonth()+1,year:d.getFullYear()};}
   const _payslipHTML=[];const w={document:{write:function(h){_payslipHTML.push(h)},close:function(){try{const html=_payslipHTML.join('');if(!html||html.length<100){alert('Erreur: HTML vide');return;}
   previewHTML(html, 'Fiche_paie_'+empName);
   }catch(err){alert('Erreur download: '+err.message);}}}};
@@ -23980,783 +22942,6 @@ updateHistory.map((h,i)=><div key={i} style={{display:"flex",gap:10,padding:"10p
 
 
 
-
-
-
-// ═══════════════════════════════════════════════════════════════
-//  AGENT IA JURIDIQUE — BOUTON FLOTTANT
-// ═══════════════════════════════════════════════════════════════
-
-const LEGAL_KB=`
-# AGENT IA JURIDIQUE — DROIT SOCIAL BELGE (EXPERT)
-# Version: Aureus Social Pro v28 — Base de connaissances exhaustive
-
-Tu es l'Agent IA Juridique d'Aureus Social Pro, le logiciel de paie et de secretariat social d'Aureus IA SPRL (BE 1028.230.781), fiduciaire sociale basee a Bruxelles.
-Tu es un EXPERT de classe mondiale en droit social belge, droit du travail, securite sociale, fiscalite salariale et droit des affaires belge.
-
-## REGLES ABSOLUES
-1. Reponds TOUJOURS avec precision juridique. Cite TOUJOURS la base legale (loi, arrete royal, CCT, article).
-2. Structure tes reponses avec des titres clairs, des listes et des exemples chiffres.
-3. Si un sujet est complexe ou litigieux, recommande de consulter un juriste specialise.
-4. Adapte la langue (FR/NL/EN) selon la question posee.
-5. Donne des exemples concrets et chiffres quand possible.
-6. Mentionne les sanctions en cas de non-respect.
-7. Precise les delais legaux quand applicables.
-
-## ═══════════════════════════════════════════
-## 1. CONTRATS DE TRAVAIL
-## ═══════════════════════════════════════════
-
-### Base legale: Loi du 3 juillet 1978 relative aux contrats de travail
-
-### Types de contrats:
-- CDI (Contrat a Duree Indeterminee): Forme libre (ecrit non obligatoire mais fortement recommande). Constitue la presomption legale.
-- CDD (Contrat a Duree Determinee): ECRIT OBLIGATOIRE avant le debut des prestations, sinon requalifie en CDI (art. 9). Max 4 CDD successifs de min 3 mois chacun, duree totale max 2 ans (sauf exception AR). Ou max 6 CDD de min 6 mois, max 3 ans avec autorisation Controle Lois Sociales.
-- Travail clairement defini: Ecrit obligatoire. Fin a l'achevement du travail.
-- Remplacement: Ecrit obligatoire. Duree max 2 ans.
-- Temps partiel: Ecrit obligatoire AVANT debut. Mention du regime (nb heures/sem) et horaire. Min 1/3 temps plein OU 3h consecutives min par prestation. Derogation via RT.
-- Etudiant: Ecrit obligatoire. Convention d'occupation etudiant (COE). Max 650h/an a cotisations reduites (2,71% etudiant + 5,43% employeur). Dimona STU. 3 jours d'essai obligatoires.
-- Flexi-job: Contrat-cadre + contrat de travail flexi-job. 4/5 temps min chez autre employeur (T-3). Cotis patronale 28%. Pas d'ONSS travailleur, pas de precompte. Min 12,05 EUR/h (2026). Secteurs autorises: horeca, commerce, etc.
-- Interim: Loi 24/7/1987. Contrat via agence interim. Motifs: remplacement, surcroit temporaire, travail exceptionnel. Max 2 ans pour meme poste.
-
-### Clauses essentielles:
-- Clause d'essai: SUPPRIMEE depuis 01/01/2014. Exception: etudiants (3 jours), interim (3 jours).
-- Clause de non-concurrence: Remuneration annuelle > 39.422 EUR (2026). Indemnite = min 50% du salaire brut correspondant a la duree de la clause (max 12 mois). Non applicable si licenciement par employeur sans motif grave ou si preavis non preste.
-- Clause d'ecolage: Formation > 80h ou valeur > seuil. Remuneration > 41.969 EUR (2026). Duree max 3 ans. Remboursement degressif: 100% annee 1, 66% annee 2, 33% annee 3.
-- Clause d'exclusivite: Valide si proportionnee. Art. 17bis loi 3/7/1978.
-
-## ═══════════════════════════════════════════
-## 2. PREAVIS ET LICENCIEMENT
-## ═══════════════════════════════════════════
-
-### Base legale: Loi du 26 decembre 2013 (Loi Peeters — Statut unique)
-
-### Delais de preavis (depuis 01/01/2014 — regime unifie ouvriers/employes):
-Par l'employeur / Par le travailleur:
-0-3 mois: 1 sem / 1 sem
-3-6 mois: 3 sem / 2 sem
-6-9 mois: 4 sem / 2 sem
-9-12 mois: 5 sem / 2 sem
-12-15 mois: 6 sem / 3 sem
-15-18 mois: 7 sem / 3 sem
-18-21 mois: 8 sem / 3 sem
-21-24 mois: 9 sem / 3 sem
-2-3 ans: 12 sem / 4 sem
-3-4 ans: 13 sem / 5 sem
-4-5 ans: 15 sem / 6 sem
-5-6 ans: 18 sem / 7 sem
-6-7 ans: 21 sem / 9 sem
-7-8 ans: 24 sem / 10 sem
-8-9 ans: 27 sem / 12 sem
-9-10 ans: 30 sem / 13 sem
-10-11 ans: 33 sem / 13 sem
-11-12 ans: 36 sem / 13 sem
-12-13 ans: 39 sem / 13 sem
-13+ ans: +3 sem/an / 13 sem MAX
-
-### Regles transitoires (anciennete avant 01/01/2014):
-Double calcul pour employes > 32.254 EUR (seuil 2013):
-- Etape 1: Preavis selon anciennes regles (1 mois/annee commencee, min 3 mois)
-- Etape 2: Preavis selon nouvelles regles a partir du 01/01/2014
-- Total = Etape 1 + Etape 2
-
-### Motif grave (art. 35 Loi 3/7/1978):
-- Rupture immediate sans preavis ni indemnite.
-- Delai: 3 JOURS OUVRABLES apres connaissance des faits pour notifier.
-- Motivation ecrite envoyee dans les 3 jours ouvrables suivant la notification.
-- Charge de la preuve: employeur.
-- Exemples: vol, violence, insubordination grave, concurrence deloyale.
-
-### Motivation du licenciement (CCT 109 du CNT):
-- Depuis 01/04/2014: motivation obligatoire a la demande du travailleur.
-- Licenciement manifestement deraisonnable = indemnite de 3 a 17 semaines de rémunération.
-- Critere: employeur normal et raisonnable n'aurait pas licencie.
-- Exclusions: 6 premiers mois, interim, etudiant, pension, RCC.
-
-### Indemnite de rupture:
-- = Remuneration brute x duree du preavis non preste.
-- Inclut: salaire de base, avantages (cheques-repas, voiture, assurance groupe...).
-- Soumise a ONSS + précompte professionnel.
-
-### Outplacement obligatoire:
-- Travailleurs >= 45 ans licencies (sauf motif grave): 60h sur 12 mois.
-- Valeur min: 1.800 EUR.
-- Offre dans les 15 jours suivant la fin du preavis.
-- Sanction: 4 semaines de rémunération si pas d'offre.
-
-## ═══════════════════════════════════════════
-## 3. ONSS — SECURITE SOCIALE
-## ═══════════════════════════════════════════
-
-### Base legale: Loi du 27 juin 1969 (securite sociale des travailleurs salaries)
-
-### Cotisations:
-- Travailleur: 13,07% du brut (ouvriers: brut x 108%).
-- Patronal marchand (Cat. 1): ~25% (inclut: pension 8,86%, maladie 3,80%, chomage 1,46%, AT 0,02%, alloc fam 7,00%, vacances annuelles 0%, fermeture 0,23%, etc.)
-- Patronal non-marchand (Cat. 2): ~32,40%.
-- Moderation salariale: +5,67% sur cotis patronales.
-- Cotisation spéciale securite sociale: progressive selon revenu menage (max 60,94 EUR/mois pour hauts revenus).
-
-### Reduction premier engagement (2026):
-Depuis 01/04/2016, reformee au 01/04/2026:
-- 1er travailleur: max 2.000 EUR/trim (au lieu de 4.000) — DUREE ILLIMITEE.
-- 2eme: 1.500 EUR/trim pendant 13 trim.
-- 3eme: 1.500 EUR/trim pendant 13 trim.
-- 4eme a 6eme: 1.000 EUR/trim pendant 9 trim.
-Base de calcul: cotisations patronales de base (sans moderation salariale).
-
-### Dimona (Declaration Immediate / Onmiddellijke Aangifte):
-- Obligatoire AVANT le debut des prestations.
-- Types: IN, OUT, UPDATE, STU (etudiant), FLX (flexi), EXT (extra horeca).
-- Canal: batch ou portail securite sociale (www.socialsecurity.be).
-- Sanction: 2.500 a 12.500 EUR par infraction.
-
-### DmfA (Declaration Multifonctionnelle / Multifunctionele Aangifte):
-- Trimestrielle: T1 -> 30/04, T2 -> 31/07, T3 -> 31/10, T4 -> 31/01 N+1.
-- Contenu: donnees employeur, travailleurs, rémunérations, prestations.
-- Format XML via batch ou portail.
-- Provisions mensuelles: le 5 du mois suivant.
-
-### DRS (Declarations Risques Sociaux):
-- Chomage: scenarios 1 (complet), 2 (temporaire), 3 (RCC), 5 (mensuel CT), 6 (CT eco).
-- INAMI: incapacite, maternite, paternite, adoption.
-- Pension: carriere, droits.
-- Delai: 5 jours ouvrables.
-
-## ═══════════════════════════════════════════
-## 4. PRECOMPTE PROFESSIONNEL
-## ═══════════════════════════════════════════
-
-### Base legale: AR fixant les regles d'application du précompte professionnel (annuel)
-
-### Methode: Formule-cle SPF Finances 2026 (exercice d'imposition 2027).
-- Base: rémunération brute - ONSS 13,07% = imposable.
-- Bareme progressif:
-  0 — 10.580 EUR: 25%
-  10.580 — 15.200 EUR: 40%
-  15.200 — 26.830 EUR: 45%
-  26.830+: 50%
-- Quotite exemptee d'impot 2026: 10.570 EUR (isolee).
-- Reductions: enfants a charge (+1.870/enfant), isolee avec enfants (+1.870), handicap (+1.870), conjoint a charge (+3.740).
-
-### Scales:
-- Scale I: isole ou menage a 2 revenus.
-- Scale II: conjoint a charge (1 revenu).
-- Scale III: pensionnes.
-
-### Bonus à l'emploi:
-- Volet social: reduction ONSS pour bas salaires (brut < ~2.800 EUR/mois).
-- Volet fiscal: reduction PP correspondante.
-- Montant max 2026: ~230 EUR/mois (social) + ~96 EUR/mois (fiscal).
-
-### Dispenses PP employeur (formulaires 274):
-- 274.31: Travail de nuit et en equipes (22,8%).
-- 274.32: Heures supplementaires (41,25% ou 32,19%).
-- 274.33: Recherche scientifique (80%).
-- 274.75: Zone d'aide (25%).
-- Starters PME: 10% (micro) ou 20% (petite).
-ATTENTION: la dispense se calcule sur le PP retenu, PAS sur le salaire brut.
-
-## ═══════════════════════════════════════════
-## 5. REMUNERATION
-## ═══════════════════════════════════════════
-
-### Salaire minimum (RMMMG 2026):
-- 18 ans+: 2.029,88 EUR/mois.
-- 19 ans + 6 mois anciennete: 2.080,63 EUR/mois.
-- 20 ans + 12 mois anciennete: 2.131,38 EUR/mois.
-
-### Pécule de vacances:
-EMPLOYES (paye par l'employeur):
-- Simple: salaire normal du mois de vacances.
-- Double: 92% du salaire mensuel brut.
-- 20 jours de conge/an (regime 5j/sem).
-
-OUVRIERS (paye par l'ONVA/Caisse sectorielle):
-- 15,38% de la rémunération brute a 108%.
-- Cotisation patronale: 10,27% trimestrielle a l'ONSS.
-
-### Prime de fin d'annee (13eme mois):
-- PAS une obligation legale generale.
-- Depend de la CP: CCT sectorielle, usage, contrat individuel.
-- CP 200: environ 1 mois de salaire brut.
-- CP 124 (construction): via la Caisse de construction.
-
-### Indexation:
-- Mecanisme: indice sante lisse (hors tabac, alcool, carburant).
-- Pivot: declenchement quand indice depasse le pivot.
-- Taux: 2% a chaque depassement.
-- Moment: varie selon CP (mensuel ou fixe en janvier).
-- CP 200: indexation en janvier.
-
-### ATN (Avantages de Toute Nature):
-- Voiture de societe: ((CO2 x coefficient) x prix catalogue x 6/7 x vetuste) / 12. Min: 1.600 EUR/an.
-- Coefficient CO2 2026: essence 5,5% + (CO2-91)x0,1% / diesel 5,5% + (CO2-91)x0,1%.
-- GSM: 3 EUR/mois (appels) + 5 EUR/mois (internet).
-- Logement: RC x coefficient x 100/60 x 2.
-- Velo de societe: exonere depuis 01/01/2024.
-
-## ═══════════════════════════════════════════
-## 6. TEMPS DE TRAVAIL
-## ═══════════════════════════════════════════
-
-### Base legale: Loi du 16 mars 1971 sur le travail
-
-### Duree:
-- Max legal: 38h/semaine (effectif ou en moyenne).
-- Max journalier: 8h (derogations possibles via CCT).
-- Max absolu: 11h/jour, 50h/semaine.
-- Heures supplementaires: sursalaire +50% (jours ouvrables), +100% (dimanche/ferie).
-- Recuperation obligatoire dans la periode de reference.
-
-### Travail de nuit:
-- Definition: prestations entre 20h et 6h (au moins 1h dans cette plage).
-- Interdit sauf exceptions legales (horeca, sante, industrie continue, e-commerce depuis 2018).
-- Sursalaire selon CCT sectorielle.
-
-### Petit chomage (Conge de circonstances):
-- AR du 28/08/1963. Mariage: 2 jours. Deces conjoint/enfant: 3 jours. Demenagement: 1 jour.
-- Payee par l'employeur a 100%.
-
-### Credit-temps (CCT 103 du CNT):
-- Sans motif: droit flexible selon anciennete et CP.
-- Avec motif: soins enfant < 8 ans, soins palliatifs, formation.
-- Allocation ONEM: si avec motif valable.
-- Formes: temps plein, mi-temps, 1/5.
-
-### Conge parental:
-- 4 mois par enfant (< 12 ans). Temps plein, mi-temps ou 1/5.
-- Allocation ONEM forfaitaire.
-- Protection contre licenciement: debut demande jusqu'à 3 mois apres reprise.
-
-## ═══════════════════════════════════════════
-## 7. BIEN-ETRE AU TRAVAIL
-## ═══════════════════════════════════════════
-
-### Base legale: Loi du 4 aout 1996 relative au bien-etre des travailleurs
-
-### 7 domaines:
-1. Securite du travail
-2. Protection de la sante
-3. Risques psychosociaux (stress, harcelement, violence, burnout)
-4. Ergonomie
-5. Hygiene du travail
-6. Embellissement des lieux de travail
-7. Environnement (impact sur 1-6)
-
-### Obligations:
-- Plan Global de Prevention: 5 ans. Analyse des risques, mesures, objectifs.
-- PAA (Plan Annuel d'Action): concretisation annuelle du PGP.
-- Conseiller en prevention: employeur si < 20 travailleurs, interne si >= 20.
-- SIPPT obligatoire si >= 20 travailleurs.
-- SEPPT (Service Externe) obligatoire pour tous.
-- CPPT (Comite PPT) si >= 50 travailleurs.
-
-### Risques psychosociaux (Loi 28/02/2014):
-- Definition: stress, harcelement moral/sexuel, violence au travail, burnout.
-- 3 procedures: informelle (personne de confiance), formelle (conseiller prevention), externe (tribunal).
-- 5 facteurs de risque (5A): organisation travail, contenu, conditions, conditions de vie, relations.
-- Personne de confiance: formation 5 jours + supervision annuelle.
-
-### Politique alcool/drogues (CCT 100 du 01/04/2009):
-- 4 phases obligatoires: 1) declaration intention, 2) reglement travail, 3) info/formation, 4) tests (facultatif).
-- Tests: uniquement fonctions a risque securite.
-- CPPT consulte obligatoirement.
-
-## ═══════════════════════════════════════════
-## 8. CHOMAGE TEMPORAIRE
-## ═══════════════════════════════════════════
-
-### Base legale: AR du 25/11/1991 + Loi 3/7/1978 art. 49-51
-
-### Types:
-- Economique employes: CCT ou plan d'entreprise. Max 16 sem/an (complet) ou 26 sem (partiel).
-- Economique ouvriers: notification ONEM + bureau chomage. Pas de max legal (mais controle).
-- Force majeure: evenement imprevisible et irresistible. Notification ONEM immediate.
-- Intemperies: secteur construction principalement (CP 124).
-- Technique: panne machine, manque matiere premiere.
-
-### Complement employeur:
-- Ouvriers: min 2 EUR/jour de chomage temporaire.
-- Employes CT eco: supplement fixe par CCT/plan.
-
-### Allocation ONEM:
-- 65% de la rémunération plafonnee (plafond A: 3.199,26 EUR/mois 2026).
-- Precompte: 26,75%.
-
-## ═══════════════════════════════════════════
-## 9. RCC (REGIME DE CHOMAGE AVEC COMPLEMENT D'ENTREPRISE)
-## ═══════════════════════════════════════════
-
-### Base legale: CCT 17 + AR 03/05/2007 + lois-programmes successives
-
-### Conditions generales 2026:
-- Age: min 62 ans (regime general).
-- Anciennete: 40 ans (H) / 38 ans (F) avec convergence progressive.
-- Regimes speciaux: travail de nuit/equipes, construction, metiers lourds (a partir de 60 ans).
-
-### DECAVA (cotisation spéciale):
-- Patronale par tranche d'age: < 52: 10%, 52-54: 8,33%, 55-57: 5,83%, 58-59: 4,17%, >= 60: 3,25%.
-- Travailleur: supprimee depuis 2023.
-- Duree: jusqu'à la pension legale (66 ans en 2025-2030, 67 ans des 2030).
-
-## ═══════════════════════════════════════════
-## 10. AIDES A L'EMPLOI
-## ═══════════════════════════════════════════
-
-### Federales:
-- Reduction premiers engagements (voir section ONSS).
-- Reduction restructuration.
-- SINE (economie sociale d'insertion).
-- Convention Premier Emploi (CPE/Rosetta): < 26 ans.
-
-### Bruxelles (Actiris):
-- Activa.brussels: DE >= 12 mois. 15.900 EUR sur 30 mois.
-- Stage First: < 30 ans, diplome recen. 200 EUR/mois stage.
-- Prime de transition: licencie en restructuration.
-
-### Wallonie (FOREM):
-- Impulsion < 25 ans: max 750 EUR/mois x 36 mois.
-- Impulsion 25-54 ans longue duree: max 750 EUR/mois x 24 mois.
-- Impulsion 55+: max 1.000 EUR/mois x 36 mois.
-- SESAM: PME <= 50 trav., 2.500 EUR/trim x 12 trim.
-- APE: non-marchand, points APE = subvention salariale.
-
-### Flandre (VDAB):
-- Depuis 01/01/2023: RSZ-doelgroepvermindering.
-- Jeunes < 25 ans: max 1.000 EUR/trim x 8 trim.
-- 55+: max 1.150 EUR/trim.
-
-### Dispenses PP:
-- Travail de nuit/equipes: 22,8% (274.31).
-- Heures sup: 41,25% ou 32,19% (274.32).
-- Recherche scientifique: 80% (274.33).
-- Zone d'aide: 25% (274.75).
-- Starters PME: 10% ou 20%.
-
-## ═══════════════════════════════════════════
-## 11. COMMISSIONS PARITAIRES PRINCIPALES
-## ═══════════════════════════════════════════
-
-CP 100: Auxiliaire ouvriers | CP 111: Metal/mecanique | CP 112: Garage/auto
-CP 116: Chimie | CP 118: Alimentaire ouvriers | CP 119: Commerce alim.
-CP 121: Nettoyage | CP 124: Construction | CP 140: Transport
-CP 144: Agriculture | CP 145: Horticulture | CP 149: Electriciens
-CP 200: CPNAE (la plus grande, ~450.000 travailleurs)
-CP 201: Commerce detail | CP 202: Commerce alim. employes
-CP 216: Notariat | CP 218: Alim. employes | CP 302: Horeca
-CP 306: Assurances | CP 310: Banques | CP 314: Coiffure
-CP 317: Gardiennage | CP 322: Interim | CP 330: Sante
-CP 332: Aide sociale FR | CP 336: Professions liberales
-
-## ═══════════════════════════════════════════
-## 12. ELECTIONS SOCIALES
-## ═══════════════════════════════════════════
-
-### Seuils:
-- CPPT: >= 50 travailleurs.
-- CE (Conseil d'Entreprise): >= 100 travailleurs.
-- Elections tous les 4 ans (prochaines: 2028).
-
-### Calendrier: X-60 a X+2 (X = jour du vote).
-### Protection des candidats: 4 ans contre licenciement (sauf motif grave + tribunal du travail).
-
-## ═══════════════════════════════════════════
-## 13. SAISIES ET CESSIONS
-## ═══════════════════════════════════════════
-
-### Base legale: Code judiciaire art. 1409-1412
-
-### Quotites insaisissables 2026:
-0 — 1.310 EUR: 100% protege (insaisissable)
-1.310 — 1.408 EUR: 20% saisissable
-1.408 — 1.554 EUR: 30% saisissable
-1.554 — 1.700 EUR: 40% saisissable
-> 1.700 EUR: 100% saisissable
-Majoration: +79 EUR par enfant a charge.
-
-### Types:
-- Saisie-arret execution: titre executoire (jugement). Huissier.
-- Cession de rémunération: convention volontaire. Max = quotite cessible.
-- Delegation de sommes: ordonnance du tribunal. Pension alimentaire.
-- Reglement collectif de dettes: admissibilite tribunal travail.
-
-## ═══════════════════════════════════════════
-## 14. JOURS FERIES 2026
-## ═══════════════════════════════════════════
-
-1/1 (Nouvel An), 6/4 (Paques), 7/4 (Lundi Paques), 1/5 (Fete travail),
-14/5 (Ascension), 25/5 (Pentecote), 21/7 (Fete nationale),
-15/8 (Assomption), 1/11 (Toussaint), 11/11 (Armistice), 25/12 (Noel).
-Si ferie tombe un dimanche/jour habituel de repos: remplacement obligatoire.
-
-## ═══════════════════════════════════════════
-## 15. RGPD ET DONNEES SOCIALES
-## ═══════════════════════════════════════════
-
-### Bases legales traitement donnees RH:
-- Execution contrat (art. 6.1.b RGPD).
-- Obligation legale (art. 6.1.c): ONSS, fiscal, Dimona.
-- Interet legitime (art. 6.1.f): gestion interne, securite.
-- Consentement (art. 6.1.a): photo, usage marketing.
-
-### Conservation:
-- Contrats: 5 ans apres fin.
-- Fiches de paie: 5 ans.
-- Documents ONSS: 7 ans.
-- Documents fiscaux: 7 ans.
-- Accidents du travail: 10 ans.
-- RGPD: duree necessaire au traitement.
-
-## ═══════════════════════════════════════════
-## 16. CALCUL DU COUT EMPLOYEUR COMPLET
-## ═══════════════════════════════════════════
-
-Brut mensuel
-+ ONSS patronal ~25% (marchand)
-+ Moderation salariale 5,67% sur patronal
-+ Pecule vacances patronal (ouvriers: 10,27% via ONSS)
-+ Prime de fin d'annee (selon CP)
-+ Assurance accident travail (~1-3% selon secteur)
-+ Fonds de securite d'existence (selon CP)
-+ Cheques-repas part patronale
-+ Assurance groupe / pension complementaire
-+ Frais de secretariat social
-= COUT EMPLOYEUR TOTAL (generalement 135-165% du brut)
-
-## ═══════════════════════════════════════════
-## 17. FORMULES DE CALCUL
-## ═══════════════════════════════════════════
-
-### Net = Brut - ONSS 13,07% - Precompte Pro - CSS + Bonus emploi
-### Imposable = Brut - ONSS 13,07%
-### ONSS ouvrier = Brut x 108% x 13,07%
-### ATN voiture = (CO2% x Prix catalogue x 6/7 x Vetuste%) / 12
-### Bradford Factor = S x S x D (S = nb absences, D = jours totaux)
-
-`;
-
-const AGENT_SYS_FR=LEGAL_KB+`\nRéponds en FRANÇAIS. Sois précis, professionnel, cite tes sources légales.
-
-Tu es aussi un AGENT D'EXÉCUTION. Quand l'utilisateur te demande de FAIRE une action (créer, modifier, supprimer, calculer), tu dois répondre avec un bloc JSON d'action encadré par |||ACTION||| et |||END|||.
-
-Actions disponibles:
-- CREATE_CLIENT: créer un dossier client
-- CREATE_WORKER: créer un travailleur
-- UPDATE_WORKER: modifier un travailleur (salaire, fonction, etc.)
-- DELETE_WORKER: mettre un travailleur en sortie
-- CALC_PAY: calculer une fiche de paie
-- CALC_COST: calculer le coût employeur
-
-Exemple - l'utilisateur dit "Crée un dossier Boulangerie Dupont TVA BE0123456789 CP 118":
-Tu réponds:
-✅ Je crée le dossier Boulangerie Dupont.
-|||ACTION|||
-{"action":"CREATE_CLIENT","data":{"name":"Boulangerie Dupont","vat":"BE0123456789","cp":"118","forme":"SRL"}}
-|||END|||
-
-Exemple - "Ajoute Jean Dupont CDI 2800€ brut boulanger":
-✅ J'ajoute Jean Dupont comme boulanger en CDI à 2.800€ brut.
-|||ACTION|||
-{"action":"CREATE_WORKER","data":{"nom":"Dupont","prenom":"Jean","contrat":"cdi","salaireBrut":2800,"fonction":"Boulanger","statut":"employe"}}
-|||END|||
-
-Exemple - "Augmente le salaire de Jean de 200€":
-✅ J'augmente le salaire de Jean Dupont de 200€.
-|||ACTION|||
-{"action":"UPDATE_WORKER","data":{"search":"Jean","field":"salaireBrut","operation":"add","value":200}}
-|||END|||
-
-Exemple - "Combien me coûte un employé à 3500€ brut?":
-Réponds normalement avec le calcul détaillé, PAS d'action.
-
-Si l'utilisateur pose une question juridique, réponds normalement SANS action.
-Si l'utilisateur demande une action, confirme ce que tu fais + le bloc ACTION.`;
-const AGENT_SYS_NL=LEGAL_KB+`\nAntwoord in het NEDERLANDS. Wees nauwkeurig, uitgebreid en professioneel. Structureer je antwoord met titels. Vermeld ALTIJD de wettelijke basis (wet, artikel, CAO, KB). Geef cijfermatige voorbeelden. Vermeld sancties en termijnen.`;
-const AGENT_SYS_EN=LEGAL_KB+`\nRespond in ENGLISH. Be precise, exhaustive and professional. Structure your answer with headings. ALWAYS cite legal basis (law, article, CBA, Royal Decree). Give numerical examples. Mention penalties and deadlines.`;
-
-const AGENT_QUICK={
-  fr:[
-    {i:'🏢',l:"Créer un dossier",p:'Crée un dossier pour '},
-    {i:'👤',l:"Ajouter travailleur",p:'Ajoute un travailleur '},
-    {i:'💰',l:"Simulation salaire",p:'Calcule le salaire net pour un brut de '},
-    {i:'📊',l:"Coût employeur",p:"Combien me coûte un employé à "},
-    {i:'⏱️',l:"Calcul préavis",p:'Calcule le préavis pour une ancienneté de '},
-    {i:'📋',l:"Info CP",p:'Quelles sont les règles de la CP '},
-    {i:'📄',l:"Procédure C4",p:'Comment établir un C4 correctement?'},
-    {i:'💶',l:"Calculer la paie",p:'Calcule la paie de février pour '},
-  ],
-  nl:[
-    {i:'🏢',l:"Dossier aanmaken",p:'Maak een dossier aan voor '},
-    {i:'👤',l:"Werknemer toevoegen",p:'Voeg een werknemer toe '},
-    {i:'💰',l:"Loonsimulatie",p:'Bereken het nettoloon voor een bruto van '},
-    {i:'📊',l:"Werkgeverskost",p:'Hoeveel kost een werknemer aan '},
-    {i:'⏱️',l:"Opzeg berekenen",p:'Bereken de opzegtermijn voor een anciënniteit van '},
-    {i:'📋',l:"Info PC",p:'Wat zijn de regels van PC '},
-  ],
-  en:[
-    {i:'🏢',l:"Create company",p:'Create a file for '},
-    {i:'👤',l:"Add worker",p:'Add a worker '},
-    {i:'💰',l:"Salary sim",p:'Calculate net salary for gross of '},
-    {i:'📊',l:"Employer cost",p:'How much does an employee cost at '},
-    {i:'⏱️',l:"Notice period",p:'Calculate notice period for '},
-    {i:'📋',l:"JC info",p:'What are the rules of Joint Committee '},
-  ],
-};
-
-
-// ═══════════════════════════════════════════════════════
-// SPRINT 48: WorkflowAbsences — Demande/approbation/impact paie
-// ═══════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════
-// SPRINT 48: RegulPPAnnuelle — Regularisation precompte annuelle
-// ═══════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════
-// SPRINT 48: ExportWinbooks — Native Winbooks ACT format
-// ═══════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════
-// SPRINT 48: ParserImportConcurrent — Parse competitor payslips
-// ═══════════════════════════════════════════════════════
-
-function ClotureMensuelle({s,d}){const ae=(s.emps||[]).filter(e=>e.status==='active'||!e.status);const n=ae.length;const [running,setRunning]=useState(false);const [done,setDone]=useState([]);const [step,setStep]=useState(0);const mois=new Date().toLocaleDateString("fr-BE",{month:"long",year:"numeric"});const etapes=[{l:"Calcul salaires",d:"Brut \u2192 ONSS \u2192 PP \u2192 Net pour "+n+" travailleurs",f:"calcPayroll"},{l:"Generation fiches PDF",d:n+" fiches de paie individuelles",f:"generateAllPayslips"},{l:"Fichier SEPA",d:"Virements salaires — XML pain.001",f:"generateSEPAXML"},{l:"Export comptable",d:"Ecritures OD + journal paie",f:"generateExportCompta"},{l:"Declaration Dimona",d:"Verification IN/OUT du mois",f:"generateDimonaXML"},{l:"Archivage",d:"Classement mensuel automatique",f:null}];const runAll=()=>{setRunning(true);setStep(0);setDone([]);let i=0;const next=()=>{if(i<etapes.length){setStep(i+1);setTimeout(()=>{setDone(prev=>[...prev,i]);i++;next()},800+Math.random()*600)}else{setRunning(false)}};next()};return <div><PH title="Cloture Mensuelle" sub={"Automatisation complete — "+mois+" — "+n+" travailleurs"}/><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:18}}>{[{l:"Travailleurs",v:n,c:"#c6a34e"},{l:"Etapes",v:etapes.length,c:"#60a5fa"},{l:"Completees",v:done.length+"/"+etapes.length,c:done.length===etapes.length?"#22c55e":"#fb923c"},{l:"Status",v:running?"En cours...":done.length===etapes.length?"Termine":"Pret",c:running?"#fb923c":done.length===etapes.length?"#22c55e":"#9e9b93"}].map((k,i)=><div key={i} style={{padding:"14px 16px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid rgba(198,163,78,.08)"}}><div style={{fontSize:10,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div style={{fontSize:18,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div><div style={{textAlign:"center",marginBottom:24}}><button onClick={runAll} disabled={running||n===0} style={{padding:"16px 48px",borderRadius:12,border:"none",background:running?"rgba(251,146,56,.2)":n===0?"rgba(94,92,86,.2)":"linear-gradient(135deg,#c6a34e,#a68a3c)",color:running?"#fb923c":n===0?"#5e5c56":"#0c0b09",fontWeight:800,fontSize:16,cursor:running||n===0?"not-allowed":"pointer",fontFamily:"inherit"}}>{running?"Traitement en cours...":done.length===etapes.length?"\u2713 Cloture terminee":"🚀 Lancer la cloture mensuelle"}</button>{n===0&&<div style={{fontSize:11,color:"#ef4444",marginTop:8}}>Ajoutez des travailleurs avant de cloturer</div>}</div><C><ST>Etapes de cloture</ST>{etapes.map((et,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:"1px solid rgba(255,255,255,.03)",opacity:step>0&&i>=step&&!done.includes(i)?0.4:1}}><div style={{width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,background:done.includes(i)?"rgba(34,197,94,.15)":step===i+1&&running?"rgba(251,146,56,.15)":"rgba(255,255,255,.03)",color:done.includes(i)?"#22c55e":step===i+1&&running?"#fb923c":"#5e5c56"}}>{done.includes(i)?"\u2713":step===i+1&&running?"\u23f3":i+1}</div><div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:done.includes(i)?"#22c55e":step===i+1&&running?"#fb923c":"#e8e6e0"}}>{et.l}</div><div style={{fontSize:10,color:"#5e5c56"}}>{et.d}</div></div><span style={{fontSize:10,padding:"3px 10px",borderRadius:10,background:done.includes(i)?"rgba(34,197,94,.1)":step===i+1&&running?"rgba(251,146,56,.1)":"transparent",color:done.includes(i)?"#22c55e":step===i+1&&running?"#fb923c":"#5e5c56"}}>{done.includes(i)?"Complete":step===i+1&&running?"En cours...":"En attente"}</span></div>)}</C></div>;}
-function PortailClientSS({s,d}){const clients=s.clients||[];const ae=s.emps||[];const [tab,setTab]=useState("dashboard");const mois=new Date().toLocaleDateString("fr-BE",{month:"long",year:"numeric"});const masseSal=ae.reduce((a,e)=>a+(e.gross||e.brut||0),0);const nbActifs=ae.filter(e=>e.status==="active"||!e.status).length;const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v);const prochEch=[{d:"5 du mois",l:"ONSS — Paiement cotisations",u:true},{d:"15 du mois",l:"Précompte professionnel — SPF Finances",u:true},{d:"25 du mois",l:"SEPA — Virements salaires",u:false},{d:"Fin trimestre",l:"DmfA — Déclaration trimestrielle ONSS",u:false},{d:"28 fevrier",l:"Belcotax — Fiches 281.10 annuelles",u:false}];return <div><PH title="Portail Client" sub={"Tableau de bord — "+mois+" — "+nbActifs+" travailleurs actifs"}/><div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:18}}>{[{l:"Travailleurs actifs",v:nbActifs,c:"#c6a34e"},{l:"Masse salariale brute",v:f2(masseSal)+" EUR",c:"#60a5fa"},{l:"Fiches du mois",v:nbActifs+" fiches",c:"#22c55e"},{l:"Prochaine echeance",v:"ONSS J5",c:"#ef4444"}].map((k,i)=><div key={i} style={{padding:"14px 16px",background:"rgba(198,163,78,.04)",borderRadius:10,border:"1px solid rgba(198,163,78,.08)"}}><div style={{fontSize:10,color:"#5e5c56",textTransform:"uppercase",letterSpacing:".5px"}}>{k.l}</div><div style={{fontSize:18,fontWeight:700,color:k.c,marginTop:4}}>{k.v}</div></div>)}</div><div style={{display:"flex",gap:6,marginBottom:16}}>{[{v:"dashboard",l:"Tableau de bord"},{v:"fiches",l:"Fiches de paie"},{v:"docs",l:"Documents"},{v:"echeances",l:"Echeancier"},{v:"upload",l:"Upload documents"}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:"inherit",background:tab===t.v?"rgba(198,163,78,.15)":"rgba(255,255,255,.03)",color:tab===t.v?"#c6a34e":"#9e9b93"}}>{t.l}</button>)}</div>{tab==="dashboard"&&<div><C><ST>Recapitulatif mensuel — {mois}</ST>{[{l:"Salaires bruts",v:f2(masseSal),c:"#e8e6e0"},{l:"ONSS travailleur (13,07%)",v:f2(masseSal*0.1307),c:"#ef4444"},{l:"Précompte professionnel",v:"Voir fiches individuelles",c:"#9e9b93"},{l:"Net total estime",v:f2(masseSal*0.58),c:"#22c55e"},{l:"ONSS patronal",v:f2(masseSal*0.2507),c:"#ef4444"},{l:"Coût total employeur",v:f2(masseSal*1.35),c:"#c6a34e"}].map((r,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#9e9b93",fontSize:12}}>{r.l}</span><span style={{color:r.c,fontSize:13,fontWeight:600}}>{r.v}</span></div>)}</C><C><ST>Alertes</ST>{nbActifs===0?<div style={{color:"#fb923c",fontSize:12}}>Aucun travailleur encode — importez vos donnees via l'onglet Upload</div>:<div style={{color:"#22c55e",fontSize:12}}>Aucune alerte en cours</div>}</C></div>}{tab==="fiches"&&<C><ST>Fiches de paie — {mois}</ST>{ae.length===0?<div style={{textAlign:"center",padding:40,color:"#5e5c56"}}><div style={{fontSize:32,marginBottom:8}}>📄</div><div>Aucune fiche disponible</div></div>:<div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}><thead><tr style={{borderBottom:"2px solid rgba(198,163,78,.2)"}}>{["Nom","Brut","ONSS","PP","Net","PDF"].map(h=><th key={h} style={{padding:"8px",textAlign:"left",color:"#c6a34e",fontWeight:600,fontSize:10}}>{h}</th>)}</tr></thead><tbody>{ae.map((e,i)=>{const brut=e.gross||e.brut||0;const onss=Math.round(brut*0.1307*100)/100;const pp=quickPP?quickPP(brut):Math.round(brut*0.22*100)/100;const net=Math.round((brut-onss-pp)*100)/100;return <tr key={e.id||i} style={{borderBottom:"1px solid rgba(255,255,255,.03)"}}><td style={{padding:"6px",fontWeight:600}}>{(e.first||e.fn||"")+" "+(e.last||e.ln||"")}</td><td style={{padding:"6px"}}>{f2(brut)}</td><td style={{padding:"6px",color:"#ef4444"}}>{f2(onss)}</td><td style={{padding:"6px",color:"#ef4444"}}>{f2(pp)}</td><td style={{padding:"6px",fontWeight:700,color:"#22c55e"}}>{f2(net)}</td><td style={{padding:"6px"}}><button onClick={()=>{if(typeof generatePayslipPDF==="function")generatePayslipPDF(e,s)}} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"rgba(198,163,78,.15)",color:"#c6a34e",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>PDF</button></td></tr>})}</tbody></table></div>}</C>}{tab==="docs"&&<C><ST>Documents disponibles</ST>{[{n:"Attestation d'emploi",f:"generateAttestationEmploi"},{n:"Attestation de salaire",f:"generateAttestationSalaire"},{n:"Dimona — Historique",f:null},{n:"DmfA — Derniere declaration",f:null},{n:"Belcotax — Fiches 281.10",f:"generateBelcotaxXML"}].map((doc,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><span style={{color:"#e8e6e0",fontSize:12}}>{doc.n}</span>{doc.f?<button onClick={()=>{const fn=eval(doc.f);if(typeof fn==="function")fn(ae,s)}} style={{padding:"4px 12px",borderRadius:6,border:"none",background:"rgba(34,197,94,.15)",color:"#22c55e",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>Télécharger</button>:<span style={{fontSize:10,color:"#5e5c56"}}>Bientot disponible</span>}</div>)}</C>}{tab==="echeances"&&<C><ST>Prochaines echeances</ST>{prochEch.map((e,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.03)"}}><div><div style={{fontSize:12,fontWeight:600,color:e.u?"#fb923c":"#e8e6e0"}}>{e.l}</div><div style={{fontSize:10,color:"#5e5c56"}}>{e.d}</div></div><span style={{fontSize:10,padding:"3px 8px",borderRadius:10,background:e.u?"rgba(251,146,56,.1)":"rgba(96,165,250,.1)",color:e.u?"#fb923c":"#60a5fa"}}>{e.u?"Urgent":"A venir"}</span></div>)}</C>}{tab==="upload"&&<C><ST>Upload de documents</ST><div style={{padding:40,border:"2px dashed rgba(198,163,78,.2)",borderRadius:12,textAlign:"center"}}><div style={{fontSize:32,marginBottom:8}}>📁</div><div style={{fontSize:14,color:"#e8e6e0",fontWeight:600}}>Glissez vos fichiers ici</div><div style={{fontSize:11,color:"#5e5c56",marginTop:4}}>Justificatifs absences, notes de frais, attestations medicales</div><div style={{fontSize:10,color:"#5e5c56",marginTop:8}}>Formats acceptes : PDF, JPG, PNG, XLSX</div></div></C>}</div>;}
-
-function FloatingLegalAgent({onAction}){
-  const[open,setOpen]=useState(false);
-  const[msgs,setMsgs]=useState([]);
-  const[inp,setInp]=useState('');
-  const[loading,setLoading]=useState(false);
-  const[lang,setLang]=useState('fr');
-  const[unread,setUnread]=useState(0);
-  const[actionLog,setActionLog]=useState([]);
-  const endRef=useRef(null);
-  const inpRef=useRef(null);
-
-  useEffect(()=>{endRef.current?.scrollIntoView({behavior:'smooth'});},[msgs,loading]);
-  useEffect(()=>{if(open){setUnread(0);setTimeout(()=>inpRef.current?.focus(),100);}},[open]);
-
-  const getSys=(l)=>l==='nl'?AGENT_SYS_NL:l==='en'?AGENT_SYS_EN:AGENT_SYS_FR;
-  const quick=AGENT_QUICK[lang]||AGENT_QUICK.fr;
-
-  // Parse and execute actions from AI response
-  const parseAndExecute=(text)=>{
-    const actionMatch=text.match(/\|\|\|ACTION\|\|\|([\s\S]*?)\|\|\|END\|\|\|/);
-    if(actionMatch){
-      try{
-        const actionData=(()=>{try{return JSON.parse(actionMatch[1].trim())}catch(e){return null}})();
-        if(onAction){
-          onAction(actionData);
-          setActionLog(prev=>[...prev,{time:new Date().toISOString(),action:actionData.action,data:actionData.data}]);
-        }
-        // Return text without the action block
-        return text.replace(/\|\|\|ACTION\|\|\|[\s\S]*?\|\|\|END\|\|\|/,'').trim();
-      }catch(e){console.warn('Action parse error:',e);}
-    }
-    return text;
-  };
-
-  // Log to audit_log in Supabase
-  const logAudit=async(action,details)=>{
-    try{
-      const{supabase}=await import('./lib/supabase');
-      if(!supabase)return;
-      await supabase.from('audit_log').insert({action,table_name:'agent_ia',details:{...details,timestamp:new Date().toISOString()}});
-    }catch(e){}
-  };
-
-  // ── LOCAL KB SEARCH (no API needed) ──
-  const localKB=[
-    {q:['préavis','preavis','opzeg','notice','licenciement','ontslag','rupture'],a:{fr:'**Préavis — Loi du 26/12/2013 (Statut unique)**\n\nPar l\'employeur:\n• 0-3 mois: 1 sem\n• 3-6 mois: 3 sem\n• 6-12 mois: 4-5 sem\n• 1-2 ans: 6-9 sem\n• 2-3 ans: 12 sem\n• 3-5 ans: 13-15 sem\n• 5-8 ans: 18-24 sem\n• 8-10 ans: 27-30 sem\n• 10-15 ans: 33-42 sem\n• 15-20 ans: 45-57 sem\n• 20-25 ans: 62-72 sem\n\nPar le travailleur: environ la moitié.\n\n**Indemnité de rupture** = rémunération × durée du préavis non presté.\n**Motif grave (art. 35):** Pas de préavis, notification dans les 3 jours ouvrables + lettre recommandée 3j.\n**Outplacement**: Obligatoire si préavis ≥ 30 semaines (60h, valeur min 1.800€).\n\n📋 Loi 26/12/2013, art. 37/2 à 37/11'}},
-    {q:['dimona','déclaration immédiate','aangifte','embauche'],a:{fr:'**Dimona — Déclaration Immédiate de l\'Emploi**\n\n• **Dimona IN**: AVANT le premier jour de travail\n• **Dimona OUT**: Le dernier jour de travail\n• **Dimona UPDATE**: Modification en cours de contrat\n• **Dimona STU**: Spécifique étudiants\n• **Dimona FLX**: Spécifique flexi-jobs\n\n**Données obligatoires:** NISS, matricule ONSS, dates, type travailleur, CP.\n\n**Sanction**: 400€ à 4.000€ par travailleur non déclaré.\n**Sanction pénale**: 600€ à 6.000€ (récidive).\n\n📋 AR 5/11/2002, Code pénal social art. 181'}},
-    {q:['onss','rsz','cotisation','patronal','sécurité sociale'],a:{fr:'**Cotisations ONSS 2026**\n\n**Travailleur**: 13,07% du brut\n**Employeur marchand**: ~25%\n**Employeur non-marchand**: ~32,40%\n**Ouvriers**: brut × 108%\n\n**Ventilation patronale:** Base 19,88% + Modération 5,67% + Fonds fermeture 0,02-0,18% + Chômage temp 0,10% + Amiante 0,01%\n\n**Réductions:** Bas salaires, premiers engagements (1er-6ème), travailleurs âgés 55+.\n**Paiement**: Provisions le 5 du mois + solde trimestriel.\n\n📋 Loi 27/06/1969, AR 28/11/1969'}},
-    {q:['chèques-repas','maaltijdcheque','meal voucher','repas','titre-repas'],a:{fr:'**Chèques-repas 2026**\n\n• Valeur max: **8,00€**/jour presté\n• Part employeur max: **6,91€**\n• Part travailleur min: **1,09€**\n• Exonération ONSS + fiscale\n\n**Conditions:** CCT/accord écrit, 1/jour presté, au nom du travailleur, validité 12 mois, format électronique.\n**Émetteurs**: Pluxee, Edenred, Monizze.\n\n📋 AR 28/11/1969, art. 19bis §2'}},
-    {q:['étudiant','student','jobiste','650','job étudiant'],a:{fr:'**Travail étudiant 2026**\n\n• **650 heures/an** à cotisations réduites\n• ONSS: 2,71% étudiant + 5,43% employeur = **8,14%**\n• Au-delà: cotisations normales\n• **Dimona STU** obligatoire\n• **3 jours d\'essai** automatiques\n• **COE** obligatoire avant début\n• Min 15 ans, max 20h/sem en période scolaire\n• Vérification: student@work.be\n\n📋 Loi 3/7/1978, Titre VII'}},
-    {q:['précompte','bedrijfsvoorheffing','pp 274','fiscal','impôt'],a:{fr:'**Précompte professionnel 2026**\n\n**Barèmes** SPF Finances (Annexe III AR/CIR 92).\n\n**Réductions:** Enfants à charge, bonus emploi, heures sup (-66,81%), nuit/équipes (dispense 22,8%), sportifs (80%).\n\n**Déclaration PP 274** via FinProf:\n• Mensuel (>50 trav): 15 du mois suivant\n• Trimestriel (≤50): 15 du mois suivant le trimestre\n\n📋 CIR 92, art. 270-275'}},
-    {q:['maladie','ziekte','sick','incapacité','garanti','certificat'],a:{fr:'**Maladie — Salaire garanti**\n\n**Employé:** 30 jours à 100% employeur, puis mutuelle 60%.\n**Ouvrier:** J1-7: 100%, J8-14: 85,88%, J15-30: 25,88%+60% mutuelle, après: mutuelle.\n\n**Obligations:** Certificat 48h, disponible pour contrôle, informer J1.\n**Rechute <14j** = continuation même salaire garanti.\n**Contrôle médical** dès J1 possible.\n\n📋 Loi 3/7/1978, art. 52-75'}},
-    {q:['vacances','congé','verlof','holiday','pécule','vakantie'],a:{fr:'**Vacances annuelles 2026**\n\n**Employés:** 20j/an, simple pécule (salaire normal) + double pécule (92% brut mensuel), payé par employeur.\n**Ouvriers:** 20j/an, pécule = 15,38% des rémunérations brutes année précédente, payé par Caisse vacances (ONVA).\n\n**10 jours fériés légaux:** 1/1, Pâques lundi, 1/5, Ascension, Pentecôte lundi, 21/7, 15/8, 1/11, 11/11, 25/12.\n\n📋 Lois coordonnées 28/06/1971'}},
-    {q:['flexijob','flexi','mini-job'],a:{fr:'**Flexi-job 2026**\n\n**Conditions:** 4/5 temps chez autre employeur (T-3) OU pensionné.\n**Avantages:** Pas d\'ONSS travailleur, pas de PP. Patronal: 28%. Min 12,05€/h.\n**Max**: 12.000€/an exonéré (non-pensionnés).\n**Secteurs**: Horeca, commerce, boulangerie, sport, culture, agriculture, événementiel, immobilier...\n\n📋 Loi 16/11/2015, élargi 01/01/2024'}},
-    {q:['crédit-temps','tijdskrediet','4/5','congé parental'],a:{fr:'**Crédit-temps 2026**\n\n**Sans motif**: SUPPRIMÉ (01/01/2023).\n**Avec motif (max 51 mois):** Soins enfant <8 ans, palliatifs, maladie grave, handicap, formation.\n**Fin carrière (55 ans+):** Mi-temps ou 4/5, allocation ONEM, 25 ans carrière.\n**Congé parental:** 4m temps plein / 8m mi-temps / 20m 1/5, par enfant <12 ans.\n**Congé thématique:** Palliatif 1-3m, assistance médicale 1-3m.\n\n📋 CCT n°103, AR 12/12/2001'}},
-    {q:['index','indexation','indexering','barème','rmmmg'],a:{fr:'**Indexation salariale 2026**\n\nSystème automatique lié à l\'indice santé lissé.\n\n**CP 200**: Janvier, ~2%. **CP 124**: Janvier. **CP 302**: Janvier. **CP 330**: Selon protocole.\n\n**RMMMG 2026:**\n• 18 ans: 2.029,88€/mois\n• +6 mois: 2.090,83€\n• +12 mois: 2.154,76€\n\n📋 Loi 2/8/1971'}},
-    {q:['contrat','contract','cdi','cdd','temps partiel'],a:{fr:'**Contrats de travail**\n\n**CDI**: Forme libre (présomption légale).\n**CDD**: Écrit AVANT début, sinon → CDI. Max 4×3mois/2ans ou 6×6mois/3ans.\n**Temps partiel**: Écrit avant début, min 1/3 temps plein ou 3h/prestation.\n**Remplacement**: Écrit, max 2 ans.\n**Intérim**: Via agence, max 2 ans même poste.\n**Clause d\'essai**: SUPPRIMÉE (sauf étudiants/intérim 3j).\n\n📋 Loi 3/7/1978'}},
-    {q:['motif grave','faute grave','dringende reden'],a:{fr:'**Motif grave — Art. 35**\n\nFaute rendant immédiatement impossible la poursuite du contrat.\n\n**Procédure:** Constatation → 3j ouvrables notification → 3j motivation par recommandé.\n**Exemples:** Vol, fraude, violence, harcèlement, absences répétées, concurrence déloyale.\n**Conséquences:** Pas de préavis, pas d\'indemnité, pas de chômage (temporaire).\n**Preuve:** À charge de l\'employeur.\n\n📋 Art. 35 Loi 3/7/1978'}},
-    {q:['dmfa','trimestrielle','kwartaal'],a:{fr:'**DmfA — Déclaration trimestrielle ONSS**\n\nT1: avant 30/04, T2: avant 31/07, T3: avant 31/10, T4: avant 31/01.\n\n**Contenu/travailleur:** Rémunérations brutes, cotisations, jours prestés, réductions.\n**Format**: XML via batch ou portail.\n**Flux**: Envoi → ACRF → Notification → PID.\n\n📋 Loi 27/06/1969'}},
-    {q:['c4','chômage','werkloosheid','document sortie'],a:{fr:'**Documents de sortie**\n\n**C4**: Certificat chômage (obligatoire, dernier jour). Sanction: 80-800€.\n**C131A**: Attestation vacances employé.\n**Décompte final**: Toutes sommes dues.\n**Attestation d\'occupation**: Historique emploi.\n**Fiche 281.10**: Si fin en cours d\'année.\n**Dimona OUT**: Le dernier jour.\n\n📋 AR 25/11/1991'}},
-    {q:['règlement','travail','arbeidsreglement'],a:{fr:'**Règlement de travail — Obligatoire dès le 1er travailleur**\n\n**Mentions:** Horaires, contrôle temps, paiement, préavis, sanctions, CPPT, premiers secours, adresse CLS, CCT applicables.\n**Modification:** Affichage 15j + registre remarques + copie CLS.\n\n📋 Loi 8/4/1965'}},
-    {q:['harcèlement','bien-être','welzijn','psychosociaux','burnout'],a:{fr:'**Bien-être — Risques psychosociaux**\n\nEmployeur = responsable prévention. Analyse risques obligatoire. Conseiller prévention obligatoire.\n\n**Procédure interne:** Personne de confiance + CPAP. Demande formelle → 3 mois mesures.\n**Protection:** Plaignant protégé contre licenciement.\n**CPPT:** Obligatoire dès 50 travailleurs.\n\n📋 Loi 4/8/1996, AR 10/4/2014'}},
-    {q:['heures sup','overtime','supplémentaire','temps de travail','38h'],a:{fr:'**Temps de travail**\n\n**Légal:** 38h/sem. Max: 11h/jour, 50h/sem.\n**Repos:** 11h/jour, 35h/semaine.\n**Heures sup:** Sursalaire +50% (ouvrable), +100% (dimanche/férié). Récupération obligatoire (sauf 91h relax). Max 120h/an (360h via CCT). Avantage fiscal -66,81%.\n\n📋 Loi 16/3/1971'}},
-    {q:['commission paritaire','cp','paritair comité','secteur'],a:{fr:'**Commissions paritaires**\n\nOrgane paritaire par secteur: CP 100 (ouvriers), CP 200 (employés), CP 111 (métal), CP 124 (construction), CP 140 (transport), CP 302 (horeca), CP 310 (banques), CP 330 (santé), CP 336 (professions libérales).\n\n**Conséquences:** Barèmes, indexation, primes, congés extra, chèques-repas, éco-chèques.\n\n📋 Loi 5/12/1968'}},
-    {q:['eco-chèque','écochèque','écologique'],a:{fr:'**Éco-chèques 2026**\n\nMax **250€/an** (temps plein). Exonéré ONSS + fiscal. Format électronique. Validité 24 mois.\n**Achats:** Appareils économes, solaire, vélo, bio, plantes.\n\n📋 CCT n°98, AR 28/11/1969'}},
-    {q:['voiture','société','company car','atn','mobilité'],a:{fr:'**Voiture de société — ATN 2026**\n\nFormule: Valeur catalogue × % × 6/7 × correction CO2.\n**CO2 réf:** Essence 78g/km, Diesel 65g/km. Base 5,5% ±0,1%/g. Min 4%.\n**ATN min:** 1.600€/an. Dégressivité -6%/an (min 70%).\n\n**Budget mobilité:** Pilier 1 (voiture éco), Pilier 2 (mobilité durable/loyer), Pilier 3 (cash -38,07%).\n\n📋 Art. 36 CIR 92, Loi 17/3/2019'}},
-    {q:['rgpd','gdpr','données','privacy','protection'],a:{fr:'**RGPD en droit social**\n\nEmployeur = Responsable traitement. 6 catégories données: identification, pro, financières, fiscales, SS, santé.\n\n**Obligations:** Registre art. 30, DPA art. 28, politique confidentialité, notification fuite 72h, DPO si >250 trav.\n**Sanctions:** 20M€ ou 4% CA.\n\n📋 RGPD 2016/679, Loi belge 30/7/2018'}},
-    {q:['saisie','cession','pension alimentaire','retenue'],a:{fr:'**Saisie sur salaire 2026**\n\n**Quotités:** ≤1.260€: insaisissable. 1.260-1.353€: 20%. 1.353-1.493€: 30%. 1.493-1.634€: 40%. >1.634€: illimité.\n+78€/enfant à charge.\n**Pension alimentaire:** Pas de quotité insaisissable.\n\n📋 Code judiciaire art. 1409-1412'}},
-    {q:['intérim','uitzendarbeid','temporaire','agence'],a:{fr:'**Intérim — Loi 24/7/1987**\n\nMotifs: Remplacement, surcroît, exceptionnel, insertion.\nMax 2 ans même poste. 3j essai. Principe d\'égalité salariale.\n**CP 322** (travail intérimaire).\n\n📋 Loi 24/7/1987'}},
-    {q:['accident','travail','arbeidsongeval','at'],a:{fr:'**Accident du travail**\n\nÉvénement soudain + lésion + cours du contrat. Trajet domicile-travail = couvert.\n**Employeur:** Assurance AT obligatoire, déclaration 8j.\n**Indemnisation:** IT totale 90%, IP rente viagère, décès rente ayants droit.\n**Fedris**: Agence fédérale risques pro.\n\n📋 Loi 10/4/1971'}},
-    {q:['pension','retraite','pensioen','âge'],a:{fr:'**Pension 2026**\n\nÂge légal: 66 ans (67 dès 2030).\n**Anticipée:** 63+42ans, 61+44ans, 60+44ans.\nCalcul: 60% (isolé)/75% (ménage) × salaire moyen × années/45.\n2ème pilier: Assurance groupe. 3ème pilier: Épargne-pension (30% sur 1.020€).\n\n📋 Loi 21/5/2015'}},
-    {q:['bonus','prime','cct 90','non récurrent'],a:{fr:'**Bonus CCT n°90**\n\nPlafond 2026: **4.020€** brut (3.496€ net après 13,07%). ONSS employeur 33%. Pas de PP.\nConditions: Plan bonus par CCT/acte adhésion, objectifs collectifs mesurables, min 3 mois, dépôt SPF.\n\n📋 CCT n°90, Loi 21/12/2007'}},
-    {q:['télétravail','thuiswerk','remote','homeworking'],a:{fr:'**Télétravail**\n\n**Structurel (CCT 85):** Avenant obligatoire. **Occasionnel (Loi 5/3/2017):** Pas d\'avenant.\n\n**Indemnités exonérées 2026:** Bureau 148,73€/m + Internet 20€ + PC 20€ + Écran 20€ = **~208,73€/mois**.\n\n📋 CCT n°85, Loi 5/3/2017'}},
-    {q:['belcotax','281','fiche fiscale'],a:{fr:'**Belcotax — Fiches 281**\n\n281.10: Salariés. 281.20: Dirigeants. Contenu: brut, PP, ONSS, ATN, frais déplacement.\n**Délai:** 28/02. Via Belcotax on web (XML). Sanction: 50-1.250€/fiche.\n\n📋 Art. 57 CIR 92'}},
-    {q:['transport','déplacement','vélo','domicile'],a:{fr:'**Transport domicile-travail**\n\nTransport en commun: remboursement obligatoire (80% SNCB ou CCT).\n**Vélo:** 0,35€/km exonéré.\nVoiture privée: selon CCT.\nCumul vélo+train possible.\n\n📋 CCT n°19/9'}},
-    {q:['premier','engagement','eerste','réduction starter'],a:{fr:'**Premiers engagements — Réductions ONSS**\n\n1er: exonération quasi-totale (illimitée). 2ème: -1.550€/trim (5 trim). 3ème: -1.050€/trim (9 trim). 4ème-6ème: -1.000€/trim (13 trim).\nCompteur lié à l\'unité technique d\'exploitation.\n\n📋 AR 16/5/2003'}},
-    {q:['inspection','contrôle','amende','sanction','code pénal'],a:{fr:'**Inspection & Sanctions**\n\nServices: CLS (SPF), ONSS, ONEM, Fedris.\n**Code pénal social:** Niveau 1: 10-100€, Niveau 2: 50-500€, Niveau 3: 100-1.000€, Niveau 4: prison 6m-3ans + 600-6.000€.\nMultipliés par nb travailleurs. Décimes ×8.\n\n📋 Code pénal social (Loi 6/6/2010)'}},
-    {q:['non-concurrence','écolage','clause'],a:{fr:'**Clauses spéciales**\n\n**Non-concurrence:** Rémunération >39.422€/an. Indemnité min 50% salaire. Max 12 mois.\n**Écolage:** Formation >80h ou valeur >seuil. Rémunération >41.969€. Max 3 ans (dégressif 100/66/33%).\n**Exclusivité:** Proportionnée (art. 17bis).\n\n📋 Loi 3/7/1978'}},
-    {q:['registre','personnel','document','obligation'],a:{fr:'**Documents sociaux obligatoires**\n\n1. Règlement de travail\n2. Registre du personnel\n3. Compte individuel (par travailleur/mois)\n4. Décompte de rémunération (fiche de paie)\n5. Convention Dimona\n6. Contrats écrits (CDD, temps partiel, étudiant)\n7. Bilan social (> 20 travailleurs)\n\n**Conservation:** 5 ans minimum après fin du contrat.\n\n📋 AR 8/8/1980'}},
-  ];
-  const searchKB=(query)=>{
-    const q=query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    for(const entry of localKB){
-      for(const keyword of entry.q){
-        if(q.includes(keyword.toLowerCase()))return entry.a[lang]||entry.a.fr;
-      }
-    }
-    return lang==='nl'?'Ik heb geen specifiek antwoord op deze vraag. Probeer trefwoorden zoals: préavis, dimona, ONSS, chèques-repas, étudiant, maladie, vacances, index, flexijob, crédit-temps.':lang==='en'?'I don\'t have a specific answer. Try keywords like: notice period, dimona, ONSS, meal vouchers, student, sick leave, holidays, indexation, flexijob.':'Je n\'ai pas de réponse spécifique à cette question. Essayez des mots-clés comme: **préavis, dimona, ONSS, chèques-repas, étudiant, maladie, vacances, index, flexijob, crédit-temps, précompte**.\n\nOu posez une question plus précise sur le droit social belge.';
-  };
-
-  const send=async(text)=>{
-    if(!text.trim()||loading)return;
-    const dl=detectAgentLang(text);setLang(dl);
-    const um={role:'user',content:text.trim()};
-    const nm=[...msgs,um];setMsgs(nm);setInp('');setLoading(true);
-    
-    logAudit('agent_ia_query',{query:text.trim(),lang:dl});
-    
-    try{
-      // Use server-side API route (secure, with API key)
-      const res=await fetch('/api/agent',{
-        method:"POST",headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({messages:nm.map(m=>({role:m.role,content:m.content})),lang:dl})
-      });
-      const data=await res.json();
-      if(data.error)throw new Error(data.error);
-      const cleanTxt=parseAndExecute(data.text||'Erreur.');
-      setMsgs([...nm,{role:'assistant',content:cleanTxt}]);
-    }catch(e){
-      // Fallback: local KB search
-      const kbAnswer=searchKB(text);
-      setMsgs([...nm,{role:'assistant',content:kbAnswer}]);
-    }
-    finally{setLoading(false);}
-    if(!open)setUnread(u=>u+1);
-  };
-
-  const labels={fr:{title:'Agent Juridique IA',placeholder:'Votre question en droit social...',disclaimer:'Info juridique indicative. Cas complexes → juriste.',clear:'Effacer'},
-    nl:{title:'Juridische AI-Agent',placeholder:'Uw vraag over sociaal recht...',disclaimer:'Indicatieve juridische info. Complexe gevallen → jurist.',clear:'Wissen'},
-    en:{title:'Legal AI Agent',placeholder:'Your social law question...',disclaimer:'Indicative legal info. Complex cases → jurist.',clear:'Clear'}};
-  const lb=labels[lang]||labels.fr;
-
-  return <>
-    {/* Floating Button */}
-    <button onClick={()=>setOpen(!open)} style={{
-      position:'fixed',bottom:24,right:24,width:60,height:60,borderRadius:'50%',
-      background:"linear-gradient(135deg,#c6a34e,#8b6914)",border:'none',cursor:'pointer',
-      boxShadow:'0 6px 24px rgba(198,163,78,.4)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',
-      transition:'all .3s',transform:open?'scale(0.9) rotate(45deg)':'scale(1) rotate(0deg)',
-    }}>
-      <span style={{fontSize:open?26:28,color:'#0d0d0d',fontWeight:700}}>{open?'✕':'⚖️'}</span>
-      {unread>0&&!open&&<span style={{position:'absolute',top:-4,right:-4,width:22,height:22,borderRadius:'50%',
-        background:"#ef4444",color:'#fff',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',
-        border:'2px solid #060810'}}>{unread}</span>}
-    </button>
-
-    {/* Chat Window */}
-    {open&&<div style={{
-      position:'fixed',bottom:96,right:24,width:400,height:560,
-      background:"#0c0f1a",border:'1px solid rgba(198,163,78,.2)',borderRadius:20,
-      boxShadow:'0 20px 60px rgba(0,0,0,.7)',zIndex:9998,display:'flex',flexDirection:'column',
-      overflow:'hidden',animation:'agentSlideIn .3s ease-out',
-    }}>
-      <style>{`@keyframes agentSlideIn{from{opacity:0;transform:translateY(20px) scale(.95);}to{opacity:1;transform:translateY(0) scale(1);}}`}</style>
-
-      {/* Header */}
-      <div style={{padding:'14px 18px',borderBottom:'1px solid rgba(198,163,78,.12)',
-        background:"linear-gradient(135deg,rgba(198,163,78,.08),rgba(198,163,78,.02))",
-        display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-        <div style={{display:'flex',alignItems:'center',gap:10}}>
-          <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#c6a34e,#8b6914)",
-            display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontWeight:800,color:'#0d0d0d'}}>⚖️</div>
-          <div>
-            <div style={{fontSize:14,fontWeight:700,color:'#c6a34e'}}>{lb.title}</div>
-            <div style={{fontSize:10,color:'rgba(198,163,78,.5)'}}>Aureus Social Pro</div>
-          </div>
-        </div>
-        <div style={{display:'flex',gap:6,alignItems:'center'}}>
-          {['fr',"nl","en"].map(l=><button key={l} onClick={()=>setLang(l)} style={{
-            padding:'3px 8px',borderRadius:6,border:'none',fontSize:10,fontWeight:600,cursor:'pointer',
-            textTransform:'uppercase',letterSpacing:.5,fontFamily:'inherit',
-            background:lang===l?'rgba(198,163,78,.2)':'transparent',color:lang===l?'#c6a34e':'rgba(198,163,78,.3)',
-          }}>{l}</button>)}
-          <button onClick={()=>{setMsgs([]);}} style={{padding:'3px 8px',borderRadius:6,border:'1px solid rgba(198,163,78,.15)',
-            background:"transparent",color:'rgba(198,163,78,.4)',fontSize:10,cursor:'pointer',fontFamily:'inherit',marginLeft:4}}>{lb.clear}</button>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div style={{flex:1,overflowY:'auto',padding:'16px 14px',display:'flex',flexDirection:'column',gap:12}}>
-        {msgs.length===0&&<div style={{textAlign:'center',padding:'20px 10px'}}>
-          <div style={{fontSize:36,marginBottom:12}}>⚖️</div>
-          <div style={{fontSize:13,color:'rgba(198,163,78,.6)',marginBottom:16,lineHeight:1.5}}>
-            {lang==='nl'?'Stel uw vraag over Belgisch sociaal recht':lang==='en'?'Ask your Belgian social law question':'Posez votre question en droit social belge'}
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
-            {quick.map((q,qi)=><button key={qi} onClick={()=>{setInp(q.p);inpRef.current?.focus();}} style={{
-              display:'flex',alignItems:'center',gap:6,padding:'9px 10px',
-              background:"rgba(198,163,78,.04)",border:'1px solid rgba(198,163,78,.1)',borderRadius:10,
-              color:'rgba(232,228,220,.7)',fontSize:11.5,cursor:'pointer',fontFamily:'inherit',textAlign:'left',
-            }}><span style={{fontSize:15}}>{q.i}</span><span>{q.l}</span></button>)}
-          </div>
-        </div>}
-
-        {msgs.map((m,i)=><div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start'}}>
-          <div style={{
-            maxWidth:'85%',padding:m.role==='user'?'10px 14px':'12px 16px',
-            borderRadius:m.role==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px',
-            background:m.role==='user'?'linear-gradient(135deg,#c6a34e,#a07d3e)':'rgba(255,255,255,.05)',
-            color:m.role==='user'?'#0d0d0d':'#e8e4dc',fontSize:12.5,lineHeight:1.6,fontFamily:'inherit',
-            border:m.role==='user'?'none':'1px solid rgba(198,163,78,.1)',whiteSpace:'pre-wrap',wordBreak:'break-word',
-          }}>
-            {m.role==='assistant'&&<div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8,paddingBottom:8,
-              borderBottom:'1px solid rgba(198,163,78,.1)'}}>
-              <span style={{fontSize:10,color:'#c6a34e',fontWeight:600,letterSpacing:.5,textTransform:'uppercase'}}>Aureus {m.executed?'⚡ Exécuté':'Legal'}</span>
-              {m.executed&&<span style={{fontSize:9,padding:'1px 6px',borderRadius:8,background:'rgba(74,222,128,.15)',color:'#4ade80',fontWeight:600}}>✅ Action effectuée</span>}
-            </div>}
-            {m.content}
-          </div>
-        </div>)}
-
-        {loading&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px'}}>
-          {[0,1,2].map(i=><div key={i} style={{width:6,height:6,borderRadius:'50%',background:"#c6a34e",
-            animation:`pulse 1.2s ease-in-out ${i*.2}s infinite`}}/>)}
-          <span style={{fontSize:11,color:'rgba(198,163,78,.4)',fontStyle:'italic'}}>
-            {lang==='nl'?'Analyse bezig...':lang==='en'?'Analyzing...':'Analyse en cours...'}
-          </span>
-        </div>}
-        <div ref={endRef}/>
-      </div>
-
-      {/* Input */}
-      <div style={{padding:'10px 14px 14px',borderTop:'1px solid rgba(198,163,78,.1)',
-        background:"rgba(12,15,26,.95)",flexShrink:0}}>
-        <div style={{display:'flex',gap:8,alignItems:'flex-end',background:"rgba(198,163,78,.03)",
-          border:'1px solid rgba(198,163,78,.12)',borderRadius:14,padding:'6px 6px 6px 14px'}}>
-          <textarea ref={inpRef} value={inp} onChange={e=>setInp(e.target.value)}
-            onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send(inp);}}}
-            placeholder={lb.placeholder} rows={1}
-            style={{flex:1,background:"transparent",border:'none',color:'#e8e4dc',fontSize:13,
-              fontFamily:'inherit',resize:'none',minHeight:22,maxHeight:80,lineHeight:1.4,padding:'4px 0',outline:'none'}}
-            onInput={e=>{e.target.style.height='22px';e.target.style.height=Math.min(e.target.scrollHeight,80)+'px';}}/>
-          <button onClick={()=>send(inp)} disabled={!inp.trim()||loading} style={{
-            width:36,height:36,borderRadius:10,border:'none',flexShrink:0,cursor:inp.trim()&&!loading?'pointer':'not-allowed',
-            background:inp.trim()&&!loading?'linear-gradient(135deg,#c6a34e,#a07d3e)':'rgba(198,163,78,.1)',
-            color:inp.trim()&&!loading?'#0d0d0d':'rgba(198,163,78,.3)',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center',
-          }}>➤</button>
-        </div>
-        <div style={{textAlign:'center',marginTop:6,fontSize:9.5,color:'rgba(198,163,78,.2)'}}>{lb.disclaimer}</div>
-      </div>
-    </div>}
-  </>;
-}
 
 export default function AureusSocialPro({ supabase, user, onLogout }) {
   return <LangProvider><AppInner supabase={supabase} user={user} onLogout={onLogout}/></LangProvider>;

@@ -137,6 +137,11 @@ function resolveChanges(validated, currentLois) {
 
 export async function POST(request) {
   try {
+    const auth = request.headers.get('authorization');
+    if (!auth?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { action } = body;
 
