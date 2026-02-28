@@ -77,7 +77,7 @@ export function DashboardRHV2({s,d}){
       <C title="Repartition contrats">{[{l:'CDI',v:cdi,c:'#4ade80'},{l:'CDD',v:cdd,c:'#f87171'},{l:'Temps partiel',v:tp,c:'#60a5fa'}].map((r,i)=><Row key={i} l={r.l+' ('+( n>0?Math.round(r.v/n*100):0)+'%)'} v={r.v} c={r.c}/>)}</C>
       <C title="Top 5 salaires">{[...allEmps].sort((a,b)=>(+(b.monthlySalary||b.gross||0))-(+(a.monthlySalary||a.gross||0))).slice(0,5).map((e,i)=><Row key={i} l={(e.first||'?')+' '+(e.last||'?')+' — '+e._co} v={fmt(+(e.monthlySalary||e.gross||0))+' €'}/>)}</C>
       <C title="Par client">{clients.map((c,i)=>{const ce=(c.emps||[]);return <Row key={i} l={(c.company?.name||'Client '+(i+1))+' ('+ce.length+' emp.)'} v={fi(ce.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||0)),0)*(1+TX_ONSS_E))+' €/m'}/>;})}</C>
-      <C title="Projections annuelles"><Row l="Masse brute annuelle" v={fi(mb*12)+' €'}/><Row l="Cout employeur annuel" v={fi(coutTotal*12)+' €'} c="#f87171"/><Row l="ONSS total" v={fi(mb*12*(TX_ONSS_W+TX_ONSS_E))+' €'} c="#fb923c"/><Row l="Pecule vacances (15.38%)" v={fi(mb*12*0.1538)+' €'} c="#4ade80"/><Row l="13eme mois" v={fi(mb)+' €'} c="#60a5fa"/></C>
+      <C title="Projections annuelles"><Row l="Masse brute annuelle" v={fi(mb*12)+' €'}/><Row l="Cout employeur annuel" v={fi(coutTotal*12)+' €'} c="#f87171"/><Row l="ONSS total" v={fi(mb*12*(TX_ONSS_W+TX_ONSS_E))+' €'} c="#fb923c"/><Row l="Pécule vacances (15.38%)" v={fi(mb*12*0.1538)+' €'} c="#4ade80"/><Row l="13eme mois" v={fi(mb)+' €'} c="#60a5fa"/></C>
     </div>}
     {tab==='events'&&<C title={"Evenements a venir ("+events.length+")"}>
       {events.slice(0,20).map((ev,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}>
@@ -152,7 +152,7 @@ td{padding:4px;border:1px solid #ddd;font-size:8.5px}
 <div class="footer">
   <div>Total: <strong>${emps.length}</strong> travailleur(s) inscrit(s) au registre</div>
   <div>Ce document est confidentiel et doit etre tenu a disposition de l'inspection sociale (Art. 4 AR 08/08/1980)</div>
-  <div>Document genere par Aureus Social Pro — ${now.toLocaleDateString('fr-BE')}</div>
+  <div>Document généré par Aureus Social Pro — ${now.toLocaleDateString('fr-BE')}</div>
 </div>
 <div style="text-align:center;margin:20px" class="no-print">
   <button onclick="window.print()" style="background:#c6a34e;color:#fff;border:none;padding:12px 30px;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px">🖨 Imprimer / Sauvegarder PDF</button>
@@ -189,7 +189,7 @@ td{padding:4px;border:1px solid #ddd;font-size:8.5px}
           <span style={{fontSize:10,color:'#888'}}>{e.function||e.titre||'—'}</span>
           <span style={{textAlign:'right',fontFamily:'monospace',color:'#c6a34e'}}>{fmt(+(e.monthlySalary||e.gross||0))}</span>
         </div>)}
-        {emps.length===0&&<div style={{padding:30,textAlign:'center',color:'#888'}}>Aucun employe pour ce client</div>}
+        {emps.length===0&&<div style={{padding:30,textAlign:'center',color:'#888'}}>Aucun employé pour ce client</div>}
       </div>
     </div>
     <div style={{marginTop:12,padding:10,background:'rgba(198,163,78,.03)',borderRadius:8,fontSize:10,color:'#888'}}>
@@ -207,7 +207,7 @@ export function PortailEmployeV2({s,d}){
   const [newDem,setNewDem]=useState({type:'conge',dateDebut:'',dateFin:'',motif:''});
   const mois=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
   const cl=clients[selC]||{emps:[]};const emp=(cl.emps||[])[selE];
-  if(!emp)return <div style={{padding:24,textAlign:'center',color:'#888'}}>Ajoutez des clients et employes pour acceder au portail.</div>;
+  if(!emp)return <div style={{padding:24,textAlign:'center',color:'#888'}}>Ajoutez des clients et employés pour accéder au portail.</div>;
 
   const name=(emp.first||emp.fn||'')+' '+(emp.last||emp.ln||'');
   const brut=+(emp.monthlySalary||emp.gross||0);
@@ -236,7 +236,7 @@ export function PortailEmployeV2({s,d}){
         <Badge text="MODE PREVIEW" color="#eab308"/>
       </div>
     </div>
-    <p style={{fontSize:11,color:'#888',margin:'0 0 16px'}}>Espace personnel employe — fiches de paie, demandes, infos</p>
+    <p style={{fontSize:11,color:'#888',margin:'0 0 16px'}}>Espace personnel employé — fiches de paie, demandes, infos</p>
 
     {/* Welcome */}
     <div style={{padding:18,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid rgba(198,163,78,.15)',borderRadius:14,marginBottom:16}}>
