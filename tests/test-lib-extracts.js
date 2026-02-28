@@ -455,6 +455,85 @@ test('API lois-update requiert auth', () => {
   assert(src.includes("Unauthorized"), 'retourne 401');
 });
 
+// ═══ 6. NOUVELLES FONCTIONNALITÉS ═══
+console.log('\n═══ 6. NOUVELLES FONCTIONNALITÉS ═══');
+
+test('SEPA pain.001.003 XML generator existe', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'app/lib/xml-generators.js'), 'utf-8');
+  assert(src.includes('genSEPAXML'), 'fonction genSEPAXML exportée');
+  assert(src.includes('pain.001.001.03'), 'format pain.001.001.03');
+  assert(src.includes('CstmrCdtTrfInitn'), 'element racine ISO 20022');
+  assert(src.includes('CdtTrfTxInf'), 'transactions individuelles');
+  assert(src.includes('IBAN'), 'support IBAN');
+  assert(src.includes('SEPA'), 'service level SEPA');
+});
+
+test('SEPA XML structure ISO 20022 complète', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'app/lib/xml-generators.js'), 'utf-8');
+  assert(src.includes('GrpHdr'), 'GroupHeader');
+  assert(src.includes('PmtInf'), 'PaymentInformation');
+  assert(src.includes('NbOfTxs'), 'nombre de transactions');
+  assert(src.includes('CtrlSum'), 'somme de contrôle');
+  assert(src.includes('DbtrAcct'), 'compte débiteur');
+  assert(src.includes('CdtrAcct'), 'compte créditeur');
+  assert(src.includes('InstdAmt'), 'montant instruit');
+  assert(src.includes('RmtInf'), 'information remise');
+});
+
+test('API facturation existe et requiert auth', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'app/api/facturation/route.js'), 'utf-8');
+  assert(src.includes('getAuthToken'), 'fonction auth');
+  assert(src.includes("Unauthorized"), 'retourne 401');
+  assert(src.includes('generate'), 'action generate');
+  assert(src.includes('list'), 'action list');
+  assert(src.includes('update_status'), 'action update_status');
+});
+
+test('API facturation grille tarifaire correcte', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'app/api/facturation/route.js'), 'utf-8');
+  assert(src.includes('forfait_base'), 'forfait base');
+  assert(src.includes('cout_par_fiche'), 'coût par fiche');
+  assert(src.includes('cout_dimona'), 'coût Dimona');
+  assert(src.includes('cout_dmfa'), 'coût DmfA');
+  assert(src.includes('cout_belcotax'), 'coût Belcotax');
+  assert(src.includes('remise_volume'), 'remise volume');
+  assert(src.includes('21'), 'TVA 21%');
+});
+
+test('API facturation calcul facture complet', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'app/api/facturation/route.js'), 'utf-8');
+  assert(src.includes('calculerFacture'), 'fonction calculerFacture');
+  assert(src.includes('genererNumeroFacture'), 'fonction genererNumeroFacture');
+  assert(src.includes('sous_total'), 'sous-total');
+  assert(src.includes('tva_montant'), 'montant TVA');
+  assert(src.includes('total_ttc'), 'total TTC');
+  assert(src.includes('communication'), 'communication structurée');
+});
+
+test('IP Whitelist UI dans SecuriteData', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'app/AureusSocialPro.js'), 'utf-8');
+  assert(src.includes('IP Whitelist'), 'section IP Whitelist');
+  assert(src.includes('ip_whitelist'), 'table ip_whitelist');
+  assert(src.includes('addIp'), 'fonction ajout IP');
+  assert(src.includes('deleteIp'), 'fonction suppression IP');
+  assert(src.includes('toggleIp'), 'fonction toggle IP');
+  assert(src.includes('cidrRegex'), 'validation CIDR');
+});
+
+test('Checklist sécurité mise à jour (16/16)', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'app/AureusSocialPro.js'), 'utf-8');
+  // Vérifier que les anciens "todo" sont maintenant "ok"
+  const startIdx = src.indexOf('const securityChecks=[');
+  const scoreIdx = src.indexOf('const score=', startIdx);
+  const securiteSection = src.substring(startIdx, scoreIdx);
+  assert(securiteSection.length > 100, 'section trouvée');
+  assert(!securiteSection.includes("status:'todo'"), 'plus aucun check en todo');
+  assert(securiteSection.includes('TOTP'), '2FA/TOTP présent');
+  assert(securiteSection.includes('Middleware CIDR'), 'IP whitelist marqué comme actif');
+  assert(securiteSection.includes('SSRF'), 'SSRF marqué comme actif');
+  assert(securiteSection.includes('OWASP'), 'OWASP marqué comme actif');
+});
+
 // ═══ RÉSUMÉ ═══
 console.log('\n══════════════════════════════════════════');
 console.log(`  RÉSULTATS: ${passed}/${total} tests passés`);

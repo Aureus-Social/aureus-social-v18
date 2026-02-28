@@ -329,4 +329,124 @@ const CAR_MODELS={
 'XPeng':['G6',"G9","P7"],
 };
 
-export { genDimonaXML, genDMFAXML, genDMFATicket, genDMFANotification, genBelcotax };
+// ═══ SEPA pain.001.003 — ISO 20022 Credit Transfer ═══
+// Ref: ISO 20022 pain.001.001.03 — Virements SEPA zone EUR
+// Conforme: Reglement UE 260/2012 (Single Euro Payments Area)
+function genSEPAXML(co, emps, period) {
+  const msgId = 'AUREUS-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
+  const pmtInfId = 'SAL-' + (period?.month || new Date().getMonth() + 1).toString().padStart(2, '0') + '-' + (period?.year || new Date().getFullYear());
+  const creationDate = new Date().toISOString().replace(/\.\d{3}Z$/, '');
+  const reqDate = period?.execDate || new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0];
+
+  // Calculer les montants nets par employe
+  const payments = emps.filter(e => {
+    const net = +(e.net || e.netSalary || 0);
+    const iban = (e.iban || '').replace(/\s/g, '');
+    return net > 0 && iban.length >= 16;
+  }).map(e => {
+    const net = +(e.net || e.netSalary || 0);
+    const iban = (e.iban || '').replace(/\s/g, '');
+    const bic = e.bic || '';
+    const name = ((e.first || '') + ' ' + (e.last || '')).trim() || 'Employe';
+    const ref = 'SAL/' + pmtInfId + '/' + (e.id || '').slice(0, 8);
+    return { net, iban, bic, name, ref };
+  });
+
+  if (payments.length === 0) return null;
+
+  const totalAmount = payments.reduce((s, p) => s + p.net, 0);
+  const debtorIBAN = (co.bank || co.iban || '').replace(/\s/g, '');
+  const debtorBIC = co.bic || '';
+  const debtorName = co.name || 'Employeur';
+
+  const txs = payments.map(p => `      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>${p.ref}</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="EUR">${p.net.toFixed(2)}</InstdAmt>
+        </Amt>${p.bic ? `
+        <CdtrAgt>
+          <FinInstnId>
+            <BIC>${p.bic}</BIC>
+          </FinInstnId>
+        </CdtrAgt>` : ''}
+        <Cdtr>
+          <Nm>${p.name}</Nm>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>${p.iban}</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>Salaire ${(period?.month || new Date().getMonth() + 1).toString().padStart(2, '0')}/${period?.year || new Date().getFullYear()} - ${p.name}</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>`).join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!-- SEPA Credit Transfer — pain.001.001.03 -->
+<!-- ISO 20022 — Reglement UE 260/2012 -->
+<!-- Genere par: Aureus Social Pro — Aureus IA SPRL (${AUREUS_INFO.vat}) -->
+<!-- Periode: ${pmtInfId} | Nb virements: ${payments.length} | Total: ${totalAmount.toFixed(2)} EUR -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.03"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>${msgId}</MsgId>
+      <CreDtTm>${creationDate}</CreDtTm>
+      <NbOfTxs>${payments.length}</NbOfTxs>
+      <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
+      <InitgPty>
+        <Nm>${debtorName}</Nm>
+        <Id>
+          <OrgId>
+            <Othr>
+              <Id>${(co.vat || '').replace(/[^0-9]/g, '')}</Id>
+              <SchmeNm><Cd>BANK</Cd></SchmeNm>
+            </Othr>
+          </OrgId>
+        </Id>
+      </InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>${pmtInfId}</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <BtchBookg>true</BtchBookg>
+      <NbOfTxs>${payments.length}</NbOfTxs>
+      <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
+      <PmtTpInf>
+        <SvcLvl>
+          <Cd>SEPA</Cd>
+        </SvcLvl>
+      </PmtTpInf>
+      <ReqdExctnDt>${reqDate}</ReqdExctnDt>
+      <Dbtr>
+        <Nm>${debtorName}</Nm>
+        <PstlAdr>
+          <Ctry>BE</Ctry>
+        </PstlAdr>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>${debtorIBAN}</IBAN>
+        </Id>
+      </DbtrAcct>${debtorBIC ? `
+      <DbtrAgt>
+        <FinInstnId>
+          <BIC>${debtorBIC}</BIC>
+        </FinInstnId>
+      </DbtrAgt>` : `
+      <DbtrAgt>
+        <FinInstnId>
+          <Othr><Id>NOTPROVIDED</Id></Othr>
+        </FinInstnId>
+      </DbtrAgt>`}
+      <ChrgBr>SLEV</ChrgBr>
+${txs}
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>`;
+}
+
+export { genDimonaXML, genDMFAXML, genDMFATicket, genDMFANotification, genBelcotax, genSEPAXML };
