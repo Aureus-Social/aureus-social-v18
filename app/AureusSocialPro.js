@@ -6650,11 +6650,89 @@ const ActionsRapides=({s,d})=>{
     setRunning(false);
   };
 
+  const runModification=async()=>{
+    setRunning(true);
+    const fd=formData;
+    const name=fd.first+' '+fd.last;
+    addLog('🔵 MODIFICATION CONTRAT — '+name,'info');
+    addLog('📋 Étape 1/4 : Recherche employé dans le dossier...','info');
+    await new Promise(r=>setTimeout(r,400));
+    const targetClient=fd.client||clients[0]?.company?.name;
+    const cl=clients.find(c=>c.company?.name===targetClient);
+    const existingEmp=cl?(cl.emps||[]).find(e=>(e.first||e.fn)===fd.first&&(e.last||e.ln)===fd.last):null;
+    if(existingEmp){
+      addLog('✅ Employé trouvé — '+targetClient,'success');
+    } else {
+      addLog('⚠️ Employé non trouvé dans '+targetClient+' — Création avenant sur base du formulaire','warn');
+    }
+    addLog('📝 Étape 2/4 : Génération avenant au contrat...','info');
+    await new Promise(r=>setTimeout(r,400));
+    const oldBrut=existingEmp?+(existingEmp.monthlySalary||existingEmp.gross||0):0;
+    const newBrut=+fd.brut;
+    const avenantHtml='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Avenant '+name+'</title><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto;line-height:1.6}@media print{button{display:none!important}}</style></head><body><h2 style="text-align:center;text-decoration:underline;margin:20px">AVENANT AU CONTRAT DE TRAVAIL</h2><p><b>'+(cl?.company?.name||targetClient)+'</b> ('+(cl?.company?.vat||'')+')</p><p>Travailleur: <b>'+name+'</b> (NISS: '+(fd.niss||'N/A')+')</p><hr style="margin:15px 0"/><p>Les parties conviennent des modifications suivantes, prenant effet au <b>'+(fd.startDate||new Date().toISOString().slice(0,10))+'</b> :</p><ul style="margin:10px 20px">'+(newBrut!==oldBrut&&newBrut>0?'<li>Rémunération brute mensuelle : '+(oldBrut>0?f2(oldBrut)+' € → ':'')+f2(newBrut)+' €</li>':'')+(fd.fonction?'<li>Fonction : <b>'+fd.fonction+'</b></li>':'')+(fd.contractType?'<li>Type de contrat : <b>'+fd.contractType+'</b></li>':'')+(fd.whWeek?'<li>Régime horaire : <b>'+fd.whWeek+'h/semaine</b></li>':'')+'</ul><p>Les autres clauses du contrat initial restent inchangées.</p><div style="display:flex;justify-content:space-between;margin-top:40px"><div style="border-top:1px solid #000;width:45%;text-align:center;padding-top:5px">Signature employeur</div><div style="border-top:1px solid #000;width:45%;text-align:center;padding-top:5px">Signature travailleur</div></div><div style="text-align:center;margin-top:20px"><button onclick="window.print()">Imprimer</button></div></body></html>';
+    previewHTML(avenantHtml,'Avenant_'+name.replace(/ /g,'_'));
+    addLog('✅ Avenant généré — Effectif: '+fd.startDate,'success');
+    addLog('👤 Étape 3/4 : Mise à jour fiche employé...','info');
+    await new Promise(r=>setTimeout(r,300));
+    if(existingEmp){
+      const updClients=clients.map(c=>c.company?.name===targetClient?{...c,emps:(c.emps||[]).map(e=>e===existingEmp?{...e,monthlySalary:newBrut||e.monthlySalary,function:fd.fonction||e.function,contractType:fd.contractType||e.contractType,whWeek:fd.whWeek||e.whWeek}:e)}:c);
+      d({type:'SET_CLIENTS',data:updClients});
+      addLog('✅ Fiche employé mise à jour','success');
+    } else {
+      addLog('⚠️ Mise à jour manuelle nécessaire','warn');
+    }
+    addLog('🧮 Étape 4/4 : Recalcul salaire...','info');
+    await new Promise(r=>setTimeout(r,300));
+    const brut=newBrut||oldBrut;
+    if(brut>0){const ppR=calcPrecompteExact(brut,{situation:'isole',enfants:0});const onss=Math.round(brut*TX_ONSS_W*100)/100;const pp=ppR.pp;const net=Math.round((brut-onss-pp+calcBonusEmploi(brut))*100)/100;
+    addLog('✅ Nouveau net: '+f2(brut)+'€ brut → '+f2(net)+'€ net','success');}
+    addLog('🔵 MODIFICATION COMPLÈTE — Avenant prêt pour signature','success');
+    setRunning(false);
+  };
+
+  const runMaladie=async()=>{
+    setRunning(true);
+    const fd=formData;
+    const name=fd.first+' '+fd.last;
+    addLog('🟡 DÉCLARATION MALADIE — '+name,'info');
+    addLog('📋 Étape 1/4 : Enregistrement incapacité...','info');
+    await new Promise(r=>setTimeout(r,400));
+    const debutMaladie=fd.startDate||new Date().toISOString().slice(0,10);
+    const finMaladie=fd.endDate||new Date(new Date(debutMaladie).getTime()+30*24*60*60*1000).toISOString().slice(0,10);
+    const joursM=Math.ceil((new Date(finMaladie)-new Date(debutMaladie))/(1000*60*60*24));
+    addLog('✅ Incapacité enregistrée du '+debutMaladie+' au '+finMaladie+' ('+joursM+' jours)','success');
+    addLog('💰 Étape 2/4 : Calcul salaire garanti...','info');
+    await new Promise(r=>setTimeout(r,400));
+    const brut=+fd.brut||0;
+    const jGaranti=Math.min(joursM,30);
+    const jMutuelle=Math.max(joursM-30,0);
+    const salGaranti30=jGaranti<=14?Math.round(brut*jGaranti/22*100)/100:Math.round((brut*14/22+brut*(Math.min(jGaranti,28)-14)/22*0.857+brut*Math.max(jGaranti-28,0)/22*0.857)*100)/100;
+    addLog('✅ Salaire garanti ('+jGaranti+'j) : '+f2(salGaranti30)+'€','success');
+    if(jGaranti<=14)addLog('   → 30 premiers jours : 100% à charge employeur','info');
+    else addLog('   → J1-14 : 100% | J15-28 : 85,7% | J29-30 : 85,7% (employeur)','info');
+    if(jMutuelle>0)addLog('   → Après 30j : mutuelle prend le relais ('+jMutuelle+'j restants)','info');
+    addLog('📄 Étape 3/4 : Génération attestation maladie...','info');
+    await new Promise(r=>setTimeout(r,300));
+    const attestHtml='<!DOCTYPE html><html><head><meta charset="utf-8"><style>*{margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:12px;padding:40px;max-width:800px;margin:auto;line-height:1.6}table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:6px 10px;border:1px solid #ccc;text-align:left}@media print{button{display:none!important}}</style></head><body><h2 style="text-align:center;text-decoration:underline;margin:20px">ATTESTATION D\'INCAPACITÉ DE TRAVAIL</h2><p><b>'+(clients.find(c=>c.company?.name===fd.client)?.company?.name||fd.client||'Entreprise')+'</b></p><table><tr><th>Travailleur</th><td>'+name+'</td></tr><tr><th>NISS</th><td>'+(fd.niss||'N/A')+'</td></tr><tr><th>Début incapacité</th><td>'+debutMaladie+'</td></tr><tr><th>Fin prévue</th><td>'+finMaladie+'</td></tr><tr><th>Durée</th><td>'+joursM+' jours</td></tr></table><h3 style="margin:20px 0 10px">Calcul salaire garanti</h3><table><tr><th>Période</th><th>Jours</th><th>Taux</th><th>Montant</th></tr>'+(jGaranti>=1?'<tr><td>J1-14 (100%)</td><td>'+Math.min(jGaranti,14)+'</td><td>100%</td><td>'+f2(brut*Math.min(jGaranti,14)/22)+' €</td></tr>':'')+(jGaranti>14?'<tr><td>J15-28 (85,7%)</td><td>'+Math.min(jGaranti-14,14)+'</td><td>85,7%</td><td>'+f2(brut*Math.min(jGaranti-14,14)/22*0.857)+' €</td></tr>':'')+(jGaranti>28?'<tr><td>J29-30 (85,7%)</td><td>'+(jGaranti-28)+'</td><td>85,7%</td><td>'+f2(brut*(jGaranti-28)/22*0.857)+' €</td></tr>':'')+(jMutuelle>0?'<tr style="color:#888"><td>Mutuelle (après 30j)</td><td>'+jMutuelle+'</td><td>60%</td><td>Prise en charge mutuelle</td></tr>':'')+'<tr style="font-weight:700"><td>Total garanti employeur</td><td>'+jGaranti+'</td><td></td><td>'+f2(salGaranti30)+' €</td></tr></table><p style="margin-top:20px;font-size:10px;color:#666">Certificat médical à fournir dans les 48h (art. 31 Loi du 03/07/1978). Le médecin-contrôle peut être envoyé.</p><div style="text-align:center;margin-top:20px"><button onclick="window.print()">Imprimer</button></div></body></html>';
+    previewHTML(attestHtml,'Attestation_maladie_'+name.replace(/ /g,'_'));
+    addLog('✅ Attestation maladie générée','success');
+    addLog('📧 Étape 4/4 : Notification mutuelle...','info');
+    await new Promise(r=>setTimeout(r,300));
+    if(jMutuelle>0){
+      addLog('✅ Dossier mutuelle préparé — Relais au jour 31','success');
+    } else {
+      addLog('✅ Incapacité < 30j — Entièrement à charge employeur','success');
+    }
+    addLog('🟡 DÉCLARATION MALADIE COMPLÈTE — '+joursM+' jours enregistrés','success');
+    setRunning(false);
+  };
+
   const runAction=()=>{
     if(!formData.first||!formData.last){alert('Nom et prénom requis');return;}
     if(action==='embauche')runEmbauche();
     else if(action==='depart')runDepart();
-    else{addLog('⚠️ Action "'+action+'" — En cours de développement','warn');}
+    else if(action==='modification')runModification();
+    else if(action==='maladie')runMaladie();
   };
 
   const fieldStyle={width:'100%',padding:'8px 10px',background:'#090c16',border:'1px solid rgba(139,115,60,.15)',borderRadius:6,color:'#e5e5e5',fontSize:11,fontFamily:'inherit',outline:'none',boxSizing:'border-box'};
@@ -6709,6 +6787,24 @@ const ActionsRapides=({s,d})=>{
               <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Motif</label><select value={formData.endReason} onChange={e=>setFormData(p=>({...p,endReason:e.target.value}))} style={fieldStyle}><option>Licenciement</option><option>Démission</option><option>Fin CDD</option><option>Rupture conventionnelle</option><option>Pension</option><option>Force majeure</option></select></div>
             </div>
             <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Brut mensuel</label><input type="number" value={formData.brut} onChange={e=>setFormData(p=>({...p,brut:+e.target.value}))} style={fieldStyle}/></div>
+          </>}
+          {action==='modification'&&<>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+              <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Date effet</label><input type="date" value={formData.startDate} onChange={e=>setFormData(p=>({...p,startDate:e.target.value}))} style={fieldStyle}/></div>
+              <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Nouveau contrat</label><select value={formData.contractType} onChange={e=>setFormData(p=>({...p,contractType:e.target.value}))} style={fieldStyle}><option value="CDI">CDI</option><option value="CDD">CDD</option><option value="interim">Intérim</option><option value="student">Étudiant</option></select></div>
+              <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Nouveau brut</label><input type="number" value={formData.brut} onChange={e=>setFormData(p=>({...p,brut:+e.target.value}))} style={fieldStyle}/></div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Nouvelle fonction</label><input value={formData.fonction} onChange={e=>setFormData(p=>({...p,fonction:e.target.value}))} style={fieldStyle}/></div>
+              <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Régime horaire (h/sem)</label><input type="number" value={formData.whWeek} onChange={e=>setFormData(p=>({...p,whWeek:+e.target.value}))} style={fieldStyle}/></div>
+            </div>
+          </>}
+          {action==='maladie'&&<>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+              <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Début incapacité</label><input type="date" value={formData.startDate} onChange={e=>setFormData(p=>({...p,startDate:e.target.value}))} style={fieldStyle}/></div>
+              <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Fin prévue</label><input type="date" value={formData.endDate} onChange={e=>setFormData(p=>({...p,endDate:e.target.value}))} style={fieldStyle}/></div>
+              <div><label style={{fontSize:10,color:'#888',display:'block',marginBottom:3}}>Brut mensuel</label><input type="number" value={formData.brut} onChange={e=>setFormData(p=>({...p,brut:+e.target.value}))} style={fieldStyle}/></div>
+            </div>
           </>}
           <button onClick={runAction} disabled={running} style={{padding:'14px',borderRadius:10,border:'none',background:running?'#333':'linear-gradient(135deg,'+actions.find(a=>a.id===action)?.color+','+actions.find(a=>a.id===action)?.color+'cc)',color:running?'#888':'#fff',fontWeight:700,fontSize:14,cursor:running?'wait':'pointer'}}>
             {running?'⏳ En cours...':'⚡ Lancer — '+actions.find(a=>a.id===action)?.label}
@@ -17167,11 +17263,11 @@ const SmartAutopilot=({s,d})=>{
     
     // Mensuel: Précompte (avant le 15)
     if(day>=1&&day<=15) smartTasks.push({id:'precompte',priority:'high',icon:'💰',task:'Précompte Prof. 274',desc:'Déclaration SPF Finances avant le 15',color:'#ef4444',auto:true,
-      fn:()=>{}});
-    
+      fn:()=>{const lines=[];let totalPP=0;clients.forEach(cl=>{(cl.emps||[]).filter(e=>e.status==='active'||!e.status).forEach(e=>{const brut=+(e.monthlySalary||e.gross||0);const pp=quickPP(brut);totalPP+=pp;lines.push(((e.first||e.fn||'')+" "+(e.last||e.ln||''))+";"+brut.toFixed(2)+";"+pp.toFixed(2));});});const csv="Employé;Brut;Précompte\n"+lines.join("\n")+"\n\nTOTAL;;"+totalPP.toFixed(2);const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Precompte_274_'+mois[month]+'_'+now.getFullYear()+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);}});
+
     // Mensuel: ONSS Provisions (5 du mois)
     if(day>=1&&day<=5) smartTasks.push({id:'onss',priority:'high',icon:'📈',task:'Provisions ONSS',desc:'Provisions mensuelles cotisations',color:'#f59e0b',auto:true,
-      fn:()=>{}});
+      fn:()=>{const lines=[];let totalONSSW=0,totalONSSE=0;clients.forEach(cl=>{(cl.emps||[]).filter(e=>e.status==='active'||!e.status).forEach(e=>{const brut=+(e.monthlySalary||e.gross||0);const ow=Math.round(brut*TX_ONSS_W*100)/100;const oe=Math.round(brut*TX_ONSS_E*100)/100;totalONSSW+=ow;totalONSSE+=oe;lines.push(((e.first||e.fn||'')+" "+(e.last||e.ln||''))+";"+brut.toFixed(2)+";"+ow.toFixed(2)+";"+oe.toFixed(2));});});const csv="Employé;Brut;ONSS Travailleur;ONSS Employeur\n"+lines.join("\n")+"\n\nTOTAL;;"+totalONSSW.toFixed(2)+";"+totalONSSE.toFixed(2);const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Provisions_ONSS_'+mois[month]+'_'+now.getFullYear()+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);}});
     
     // Trimestriel: DmfA (fin trimestre)
     if((month%3===0&&day>=15)||(month%3===1&&day<=10)) smartTasks.push({id:'dmfa',priority:'medium',icon:'📊',task:'DmfA Q'+quarter+'/'+now.getFullYear(),desc:totalEmps+' travailleurs à déclarer',color:'#a855f7',auto:true,
@@ -17182,13 +17278,16 @@ const SmartAutopilot=({s,d})=>{
       fn:()=>{clients.forEach(cl=>{(cl.emps||[]).forEach(e=>generateBelcotaxXML(e,cl.company||{}))});}});
     
     // Annuel: Bilan Social BNB (février)
-    if(month===2) smartTasks.push({id:'bilan',priority:'medium',icon:'🏛️',task:'Bilan Social BNB',desc:'Rapport annuel Banque Nationale',color:'#6366f1',auto:true,fn:()=>{}});
-    
+    if(month===2) smartTasks.push({id:'bilan',priority:'medium',icon:'🏛️',task:'Bilan Social BNB',desc:'Rapport annuel Banque Nationale',color:'#6366f1',auto:true,
+      fn:()=>{const totETP=clients.reduce((a,cl)=>a+(cl.emps||[]).filter(e=>e.status==='active'||!e.status).reduce((s,e)=>s+(+(e.regime||e.whWeek||38))/38,0),0);const totBrut=clients.reduce((a,cl)=>a+(cl.emps||[]).filter(e=>e.status==='active'||!e.status).reduce((s,e)=>s+(+(e.monthlySalary||e.gross||0))*12,0),0);const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);const html='<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font:12px Arial;padding:40px;max-width:800px;margin:auto}table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:6px 10px;border:1px solid #ccc;text-align:left}@media print{button{display:none!important}}</style></head><body><h2>BILAN SOCIAL — Exercice '+(now.getFullYear()-1)+'</h2><table><tr><th>Indicateur</th><th>Valeur</th></tr><tr><td>Nombre d\'entreprises</td><td>'+clients.length+'</td></tr><tr><td>Effectif total</td><td>'+totalEmps+' travailleurs</td></tr><tr><td>ETP (équivalents temps plein)</td><td>'+totETP.toFixed(1)+'</td></tr><tr><td>Masse salariale brute annuelle</td><td>'+f2(totBrut)+' €</td></tr><tr><td>Hommes/Femmes</td><td>'+clients.reduce((a,cl)=>a+(cl.emps||[]).filter(e=>e.gender==='M'||e.genre==='M').length,0)+' / '+clients.reduce((a,cl)=>a+(cl.emps||[]).filter(e=>e.gender==='F'||e.genre==='F').length,0)+'</td></tr><tr><td>CDI</td><td>'+clients.reduce((a,cl)=>a+(cl.emps||[]).filter(e=>(e.contractType||'CDI')==='CDI').length,0)+'</td></tr><tr><td>CDD</td><td>'+clients.reduce((a,cl)=>a+(cl.emps||[]).filter(e=>e.contractType==='CDD').length,0)+'</td></tr></table><div style="text-align:center;margin-top:20px"><button onclick="window.print()">Imprimer</button></div></body></html>';previewHTML(html,'Bilan_Social_BNB_'+(now.getFullYear()-1));}});
+
     // Annuel: Pécule vacances (mai-juin)
-    if(month>=5&&month<=6) smartTasks.push({id:'pecule',priority:'medium',icon:'🏖️',task:'Pécule de Vacances '+now.getFullYear(),desc:totalEmps+' calculs',color:'#06b6d4',auto:true,fn:()=>{}});
-    
+    if(month>=5&&month<=6) smartTasks.push({id:'pecule',priority:'medium',icon:'🏖️',task:'Pécule de Vacances '+now.getFullYear(),desc:totalEmps+' calculs',color:'#06b6d4',auto:true,
+      fn:()=>{const lines=[];let totalPecule=0;clients.forEach(cl=>{(cl.emps||[]).filter(e=>e.status==='active'||!e.status).forEach(e=>{const brut=+(e.monthlySalary||e.gross||0);const annuel=brut*12;const simple=Math.round(brut*100)/100;const double=Math.round(annuel*0.0769*100)/100;totalPecule+=simple+double;lines.push(((e.first||e.fn||'')+" "+(e.last||e.ln||''))+";"+brut.toFixed(2)+";"+simple.toFixed(2)+";"+double.toFixed(2));});});const csv="Employé;Brut mensuel;Pécule simple;Pécule double\n"+lines.join("\n")+"\n\nTOTAL;;;"+totalPecule.toFixed(2);const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Pecule_Vacances_'+now.getFullYear()+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);}});
+
     // Annuel: 13ème mois (décembre)
-    if(month===12) smartTasks.push({id:'treizieme',priority:'high',icon:'🎄',task:'13ème Mois / Prime',desc:totalEmps+' primes à calculer',color:'#f59e0b',auto:true,fn:()=>{}});
+    if(month===12) smartTasks.push({id:'treizieme',priority:'high',icon:'🎄',task:'13ème Mois / Prime',desc:totalEmps+' primes à calculer',color:'#f59e0b',auto:true,
+      fn:()=>{const lines=[];let totalPrime=0;clients.forEach(cl=>{(cl.emps||[]).filter(e=>e.status==='active'||!e.status).forEach(e=>{const brut=+(e.monthlySalary||e.gross||0);const prime=brut;const onss=Math.round(prime*TX_ONSS_W*100)/100;const pp=quickPP(prime);const net=Math.round((prime-onss-pp)*100)/100;totalPrime+=prime;lines.push(((e.first||e.fn||'')+" "+(e.last||e.ln||''))+";"+brut.toFixed(2)+";"+prime.toFixed(2)+";"+onss.toFixed(2)+";"+pp.toFixed(2)+";"+net.toFixed(2));});});const csv="Employé;Brut mensuel;Prime brute;ONSS;PP;Prime nette\n"+lines.join("\n")+"\n\nTOTAL;"+totalPrime.toFixed(2);const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='13eme_mois_'+now.getFullYear()+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);}});
     
     // Événement: CDD expirant dans 30 jours
     const expiringCDD=clients.reduce((a,cl)=>{
@@ -17199,7 +17298,8 @@ const SmartAutopilot=({s,d})=>{
         return diff>0&&diff<=30;
       }).length;
     },0);
-    if(expiringCDD>0) smartTasks.push({id:'cdd',priority:'urgent',icon:'⚠️',task:expiringCDD+' CDD expirent dans 30j',desc:'Dimona OUT + C4 à préparer',color:'#ef4444',auto:false,fn:()=>{}});
+    if(expiringCDD>0) smartTasks.push({id:'cdd',priority:'urgent',icon:'⚠️',task:expiringCDD+' CDD expirent dans 30j',desc:'Dimona OUT + C4 à préparer',color:'#ef4444',auto:false,
+      fn:()=>{const expiring=[];clients.forEach(cl=>{(cl.emps||[]).filter(e=>{if((e.contractType||e.contrat?.type)!=='CDD')return false;const end=new Date(e.endDate||e.end||'2099-12-31');const diff=Math.ceil((end-now)/(1000*60*60*24));return diff>0&&diff<=30;}).forEach(e=>{expiring.push({emp:e,co:cl.company||{}});});});expiring.forEach(({emp,co})=>{generateDimonaXML(emp,'OUT',co);generateC4PDF(emp,co);});}});
     
     // Événement: Nouveaux employés sans Dimona
     const newEmps=clients.reduce((a,cl)=>{

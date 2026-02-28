@@ -719,8 +719,8 @@ export function PortailEmployeurMod({s,d,per}){const loisRef=LOIS_BELGES;const n
           </div>}
 
           <div style={{display:'flex',gap:10,marginTop:14}}>
-            <B onClick={()=>alert(`Prestations ${MN[selectedMonth-1]} ${selectedYear} envoyées à votre bureau social ! Vous recevrez une confirmation.`)}>✅ Envoyer au bureau social</B>
-            <B v="outline" onClick={()=>alert('Brouillon sauvegardé !')}>💾 Sauvegarder brouillon</B>
+            <B onClick={()=>{const rows=ae.map(emp=>{const k=`${emp.id}_${selectedMonth}`;const data=encodData[k]||{jrs:21,hN:159.6,hS:0,hNu:0,hD:0,mal:0,cng:0,autr:0,note:""};return`${emp.first||''} ${emp.last||''};${data.jrs||0};${data.hN||0};${data.hS||0};${data.hNu||0};${data.hD||0};${data.mal||0};${data.cng||0};${data.autr||0};${data.note||''}`;});const csv="Travailleur;Jours;H.Norm;H.Sup;H.Nuit;H.Dim;Maladie;Congé;Autre;Note\n"+rows.join("\n");const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`Prestations_${MN[selectedMonth-1]}_${selectedYear}.csv`;document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);submitDemande(s.co.name||'Client','Prestations '+MN[selectedMonth-1]+' '+selectedYear,new Date().toISOString().split('T')[0],new Date().toISOString().split('T')[0],'Encodage mensuel envoyé');}}>✅ Envoyer au bureau social</B>
+            <B v="outline" onClick={()=>{try{localStorage.setItem('aureus_prestations_'+selectedMonth+'_'+selectedYear,JSON.stringify(encodData));if(typeof addToast==='function')addToast('💾 Brouillon sauvegardé');else alert('💾 Brouillon sauvegardé pour '+MN[selectedMonth-1]+' '+selectedYear);}catch(e){alert('Erreur: '+e.message);}}}>💾 Sauvegarder brouillon</B>
           </div>
         </div>}
 
@@ -1533,6 +1533,10 @@ export function APIDocMod({s,d}){const loisRef=LOIS_BELGES;
 
 export function MarketplaceMod({s,d}){const loisRef=LOIS_BELGES;
   const [cat,setCat]=useState('all');
+  const [activatedMods,setActivatedMods]=useState(()=>{try{return JSON.parse(localStorage.getItem('aureus_marketplace_active')||'[]');}catch(e){return[];}});
+  const [notifiedMods,setNotifiedMods]=useState(()=>{try{return JSON.parse(localStorage.getItem('aureus_marketplace_notify')||'[]');}catch(e){return[];}});
+  const toggleMod=(modId,modName,price)=>{if(activatedMods.includes(modId)){const next=activatedMods.filter(m=>m!==modId);setActivatedMods(next);try{localStorage.setItem('aureus_marketplace_active',JSON.stringify(next));}catch(e){}if(typeof addToast==='function')addToast('Module "'+modName+'" désactivé');}else{const next=[...activatedMods,modId];setActivatedMods(next);try{localStorage.setItem('aureus_marketplace_active',JSON.stringify(next));}catch(e){}if(typeof addToast==='function')addToast('✅ Module "'+modName+'" activé ! ('+price+'€/mois)');else alert('✅ Module "'+modName+'" activé ! ('+price+'€/mois)');}};
+  const toggleNotify=(modId,modName)=>{if(notifiedMods.includes(modId)){const next=notifiedMods.filter(m=>m!==modId);setNotifiedMods(next);try{localStorage.setItem('aureus_marketplace_notify',JSON.stringify(next));}catch(e){}}else{const next=[...notifiedMods,modId];setNotifiedMods(next);try{localStorage.setItem('aureus_marketplace_notify',JSON.stringify(next));}catch(e){}if(typeof addToast==='function')addToast('🔔 Notification activée pour "'+modName+'"');else alert('🔔 Vous serez notifié quand "'+modName+'" sera disponible !');}};
   const modules=[
     {id:'mod_fleet',name:'Fleet Management',desc:'Gestion de flotte véhicules de société. Budget mobilité, cartes carburant, TCO, avantage de toute nature auto.',icon:'🚗',price:49,cat:'mobilite',status:'available',rating:4.8,installs:342},
     {id:'mod_expense',name:'Expense Management',desc:'Notes de frais automatisées avec OCR. Scan ticket → remboursement. Politique de dépenses configurable.',icon:'🧾',price:29,cat:'finance',status:'available',rating:4.6,installs:567},
@@ -1571,8 +1575,8 @@ export function MarketplaceMod({s,d}){const loisRef=LOIS_BELGES;
         <div style={{fontSize:11,color:'#9e9b93',lineHeight:1.5,marginBottom:12,minHeight:45}}>{m.desc}</div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div style={{fontSize:16,fontWeight:700,color:'#c6a34e'}}>{m.price}€<span style={{fontSize:10,fontWeight:400,color:'#5e5c56'}}>/mois</span></div>
-          <B v={m.status==='coming'?'outline':'gold'} style={{fontSize:11,padding:'6px 16px'}} onClick={()=>{if(m.status==='available')alert(`✅ Module "${m.name}" activé ! (${m.price}€/mois)`)}}>
-            {m.status==='coming'?'Notifier':'Activer'}
+          <B v={m.status==='coming'?'outline':activatedMods.includes(m.id)?'outline':'gold'} style={{fontSize:11,padding:'6px 16px'}} onClick={()=>{if(m.status==='coming')toggleNotify(m.id,m.name);else toggleMod(m.id,m.name,m.price);}}>
+            {m.status==='coming'?(notifiedMods.includes(m.id)?'🔔 Notifié':'Notifier'):(activatedMods.includes(m.id)?'✓ Actif':'Activer')}
           </B>
         </div>
       </C>)}
