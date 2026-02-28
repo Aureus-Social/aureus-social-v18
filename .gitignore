@@ -3,7 +3,7 @@ node_modules
 .env.local
 .env
 .env.*
-.github/
+# .github/ — now tracked (CI/CD workflows)
 
 # ONSS private keys and certificates — NEVER commit
 .onss-credentials/
@@ -19,5 +19,5 @@ patch-*.js
 .DS_Store
 Thumbs.db
 
-# ZAP security scans
-.zap/
+# ZAP security scan results (not rules)
+.zap/results/

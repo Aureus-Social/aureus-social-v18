@@ -15,9 +15,41 @@ function checkRateLimit(ip) {
   return entry.count <= RATE_LIMIT;
 }
 
+// ── IP Whitelist (Item 19) ──
+// Set IP_WHITELIST env var as comma-separated CIDR: "83.134.25.12/32,10.0.0.0/8"
+// If not set or empty → no restriction (all IPs allowed)
+function ipMatchesCIDR(ip, cidr) {
+  const [range, bits = '32'] = cidr.split('/');
+  const mask = ~(2 ** (32 - parseInt(bits)) - 1) >>> 0;
+  const ipParts = ip.split('.');
+  const rangeParts = range.split('.');
+  if (ipParts.length !== 4 || rangeParts.length !== 4) return false;
+  const ipNum = ipParts.reduce((a, o) => (a * 256) + parseInt(o), 0) >>> 0;
+  const rangeNum = rangeParts.reduce((a, o) => (a * 256) + parseInt(o), 0) >>> 0;
+  return (ipNum & mask) === (rangeNum & mask);
+}
+
+function checkIpWhitelist(ip) {
+  const whitelist = process.env.IP_WHITELIST;
+  if (!whitelist || whitelist.trim() === '') return true; // No restriction
+  const cidrs = whitelist.split(',').map(s => s.trim()).filter(Boolean);
+  if (cidrs.length === 0) return true;
+  return cidrs.some(cidr => ipMatchesCIDR(ip, cidr));
+}
+
 export function middleware(request) {
   const { pathname } = request.nextUrl;
   const ip = request.ip || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+
+  // IP Whitelist enforcement for admin/API routes
+  if (pathname.startsWith('/api/v1/') || pathname.startsWith('/api/cron')) {
+    if (!checkIpWhitelist(ip)) {
+      return NextResponse.json(
+        { error: 'IP non autorisée', code: 'IP_BLOCKED' },
+        { status: 403, headers: { 'X-Blocked-IP': ip } }
+      );
+    }
+  }
 
   // API ROUTES
   if (pathname.startsWith('/api/')) {

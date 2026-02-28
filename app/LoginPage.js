@@ -52,9 +52,25 @@ export default function LoginPage({ onLogin }) {
     }
 
     if (data?.user) {
+      // GeoIP check (non-blocking)
+      checkGeoIP(data.user.id, email);
       onLogin(data.user);
     }
     setLoading(false);
+  };
+
+  const checkGeoIP = async (userId, userEmail) => {
+    try {
+      const res = await fetch('/api/geocheck', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, email: userEmail }),
+      });
+      const data = await res.json();
+      if (data?.alert) {
+        setTimeout(() => alert(data.alert.message), 500);
+      }
+    } catch { /* GeoIP is best-effort */ }
   };
 
   const startMfaChallenge = async () => {
