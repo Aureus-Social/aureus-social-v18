@@ -22283,19 +22283,28 @@ function calcQuotiteSaisissable(netMensuel,nbEnfantsCharge=0,isRemplacement=fals
   return{saisissable,protege,tranches,enfantImmun,totalAvantImmun:+totalSaisissable.toFixed(2),note:null};
 }
 
-function calcAllocEnfant(region,birthYear,age){
-  const reg=AF_REGIONS[region];if(!reg)return 0;
-  const isNew=birthYear>=reg.cutoff;
-  if(isNew){
-    const tranche=reg.base.find(t=>age>=t.age&&age<=t.to);
-    return tranche?tranche.amt:0;
-  } else {
-    if(region==='BXL'){
-      const tranche=reg.base.find(t=>age>=t.age&&age<=t.to);
-      return tranche?Math.max(tranche.amt-(reg.ancienReduction||0),0):0;
+const AF_REGIONS={
+  bruxelles:{base:168.97,suppAge:[{from:0,to:5,amt:0},{from:6,to:11,amt:31.36},{from:12,to:17,amt:48.24},{from:18,to:24,amt:60.96}]},
+  flandre:{base:173.20,suppRang3:57.42,participation:77.22,suppAge:[{from:0,to:5,amt:0},{from:6,to:11,amt:0},{from:12,to:17,amt:0},{from:18,to:24,amt:0}]},
+  wallonie:{bases:[181.61,216.61,247.61],suppAge:[{from:0,to:5,amt:0},{from:6,to:11,amt:21.45},{from:12,to:17,amt:32.18},{from:18,to:24,amt:41.86}]}
+};
+function calcAllocEnfant(nbEnf,ages,region){
+  const reg=AF_REGIONS[region];if(!reg)return{total:0,detail:[]};
+  const detail=[];
+  for(let i=0;i<nbEnf;i++){
+    const age=ages[i]||0;let amt=0;
+    if(region==='wallonie'){
+      const baseIdx=Math.min(i,reg.bases.length-1);
+      amt=reg.bases[baseIdx];
+    }else{
+      amt=reg.base;
+      if(region==='flandre'&&i>=2)amt+=reg.suppRang3;
     }
-    return reg.ancien?reg.ancien.rang1:0;
+    const supp=reg.suppAge.find(t=>age>=t.from&&age<=t.to);
+    if(supp)amt+=supp.amt;
+    detail.push(Math.round(amt*100)/100);
   }
+  return{total:detail.reduce((a,v)=>a+v,0),detail};
 }
 
 

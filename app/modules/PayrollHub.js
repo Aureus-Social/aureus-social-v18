@@ -9,7 +9,7 @@ const KPI=({l,v,c,sub})=><div style={{padding:14,background:'linear-gradient(135
 const Row=({l,v,c,b})=><div style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:b?'2px solid rgba(198,163,78,.2)':'1px solid rgba(255,255,255,.03)',fontWeight:b?700:400}}><span style={{color:b?'#e8e6e0':'#e8e6e0',fontSize:11.5}}>{l}</span><span style={{color:c||'#c6a34e',fontWeight:600,fontSize:12}}>{v}</span></div>;
 const Badge=({text,color})=><span style={{padding:'2px 7px',borderRadius:5,fontSize:8,fontWeight:600,background:(color||'#888')+'15',color:color||'#888'}}>{text}</span>;
 const quickPP=br=>{const imp=br*(1-TX_ONSS_W);if(imp<=1170)return 0;if(imp<=2350)return Math.round((imp-1170)*0.25*100)/100;return Math.round((1180*0.25+(imp-2350)*0.4)*100)/100;};
-const moisN=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+const moisN=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
 // ═══════════════════════════════════════════════════════════
 // 1. VALIDATION PRE-PAIE — Vrais controles automatiques
@@ -356,7 +356,7 @@ export function CoutsAnnuelsV2({s}){
 
   // Primes sectorielles
   const primesSectorielles=[
-    {cp:'200',prime:'Prime de fin annee',montant:'Barème CP 200',mois:'Decembre'},
+    {cp:'200',prime:'Prime de fin année',montant:'Barème CP 200',mois:'Décembre'},
     {cp:'200',prime:'Eco-cheques',montant:'Max 250 EUR/an',mois:'Juin'},
     {cp:'124',prime:'Timbre fidelite',montant:'Variable',mois:'Juin-Juillet'},
     {cp:'302',prime:'Prime horeca',montant:'Selon heures',mois:'Variable'},
