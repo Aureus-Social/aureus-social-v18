@@ -4,8 +4,17 @@ const SYS = 'Tu es un expert en paie belge. Analyse cette fiche de paie et retou
 
 export async function POST(req) {
   try {
+    // ═══ SÉCURITÉ : Authentification requise ═══
+    const authHeader = req.headers.get('authorization') || '';
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) {
+      return Response.json({ error: 'Authentification requise' }, { status: 401 });
+    }
+
     const { documents } = await req.json();
     if (!documents || !documents.length) return Response.json({ error: 'No docs' }, { status: 400 });
+    // Limiter le nombre de documents par requête (prévention d'abus)
+    if (documents.length > 10) return Response.json({ error: 'Maximum 10 documents par requête' }, { status: 400 });
     const key = process.env.ANTHROPIC_API_KEY;
     if (!key) return Response.json({ error: 'No API key' }, { status: 500 });
     const results = [];

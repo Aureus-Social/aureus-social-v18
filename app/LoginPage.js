@@ -1,6 +1,29 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { supabase } from './lib/supabase';
+
+// ═══ BRUTE FORCE PROTECTION ═══
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+const PROGRESSIVE_DELAYS = [0, 1000, 2000, 4000, 8000]; // Délai progressif en ms
+
+// ═══ POLITIQUE MOT DE PASSE FORTE (alignée avec lib/security/auth.js) ═══
+const PASSWORD_MIN_LENGTH = 12;
+const COMMON_PASSWORDS = [
+  'password1234', 'motdepasse12', 'azerty123456', 'qwerty123456',
+  'admin1234567', '123456789012', 'changeme1234', 'welcome12345',
+];
+
+function validatePasswordStrength(pwd) {
+  const errors = [];
+  if (pwd.length < PASSWORD_MIN_LENGTH) errors.push(`Au moins ${PASSWORD_MIN_LENGTH} caractères`);
+  if (!/[A-Z]/.test(pwd)) errors.push('Au moins une majuscule');
+  if (!/[a-z]/.test(pwd)) errors.push('Au moins une minuscule');
+  if (!/[0-9]/.test(pwd)) errors.push('Au moins un chiffre');
+  if (!/[^A-Za-z0-9]/.test(pwd)) errors.push('Au moins un caractère spécial (!@#$%...)');
+  if (COMMON_PASSWORDS.includes(pwd.toLowerCase())) errors.push('Ce mot de passe est trop courant');
+  return errors;
+}
 
 export default function LoginPage({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -13,13 +36,41 @@ export default function LoginPage({ onLogin }) {
   const [mfaCode, setMfaCode] = useState('');
   const [mfaFactorId, setMfaFactorId] = useState(null);
   const [mfaChallengeId, setMfaChallengeId] = useState(null);
+  const [passwordErrors, setPasswordErrors] = useState([]);
+
+  // Brute force protection state
+  const loginAttemptsRef = useRef(0);
+  const lockoutUntilRef = useRef(0);
+  const resetAttemptsRef = useRef(0);
+  const resetLockoutRef = useRef(0);
+
+  const checkBruteForce = useCallback(() => {
+    const now = Date.now();
+    if (now < lockoutUntilRef.current) {
+      const remaining = Math.ceil((lockoutUntilRef.current - now) / 1000);
+      setError(`Trop de tentatives. Réessayez dans ${remaining} secondes.`);
+      return false;
+    }
+    if (loginAttemptsRef.current >= MAX_LOGIN_ATTEMPTS) {
+      lockoutUntilRef.current = now + LOCKOUT_DURATION_MS;
+      loginAttemptsRef.current = 0;
+      setError('Compte temporairement verrouillé (5 min). Trop de tentatives échouées.');
+      return false;
+    }
+    return true;
+  }, []);
 
   if (!supabase) return <div style={{minHeight:"100vh",background:"#060810",display:"flex",alignItems:"center",justifyContent:"center",color:"#ef4444",fontFamily:"Inter,sans-serif",padding:40,textAlign:"center"}}><div><div style={{fontSize:48,marginBottom:16}}>⚠️</div><div style={{fontSize:18,fontWeight:600,color:"#e5e5e5",marginBottom:8}}>Configuration requise</div><div style={{fontSize:13,color:"#999",lineHeight:1.6}}>Les variables d'environnement Supabase ne sont pas configurées.<br/>Ajoutez NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY dans Vercel.</div></div></div>;
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (!checkBruteForce()) return;
     setLoading(true);
     setError('');
+
+    // Délai progressif selon le nombre de tentatives
+    const delay = PROGRESSIVE_DELAYS[Math.min(loginAttemptsRef.current, PROGRESSIVE_DELAYS.length - 1)];
+    if (delay > 0) await new Promise(r => setTimeout(r, delay));
 
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -27,12 +78,20 @@ export default function LoginPage({ onLogin }) {
     });
 
     if (authError) {
-      setError(authError.message === 'Invalid login credentials'
+      loginAttemptsRef.current++;
+      const attemptsLeft = MAX_LOGIN_ATTEMPTS - loginAttemptsRef.current;
+      const msg = authError.message === 'Invalid login credentials'
         ? 'Email ou mot de passe incorrect'
-        : authError.message);
+        : authError.message;
+      setError(attemptsLeft > 0 && attemptsLeft <= 3
+        ? `${msg} (${attemptsLeft} tentative${attemptsLeft > 1 ? 's' : ''} restante${attemptsLeft > 1 ? 's' : ''})`
+        : msg);
       setLoading(false);
       return;
     }
+
+    // Réinitialiser le compteur en cas de succès
+    loginAttemptsRef.current = 0;
 
     // Check if MFA is required
     if (data?.session && !data.session.access_token && data.user?.factors?.length > 0) {
@@ -130,8 +189,10 @@ export default function LoginPage({ onLogin }) {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères');
+    // Politique de mot de passe forte
+    const pwdErrors = validatePasswordStrength(password);
+    if (pwdErrors.length > 0) {
+      setError('Mot de passe trop faible : ' + pwdErrors.join(', '));
       setLoading(false);
       return;
     }
@@ -142,17 +203,22 @@ export default function LoginPage({ onLogin }) {
     });
 
     if (signUpError) {
+      // Message générique pour éviter l'énumération d'emails
       setError(signUpError.message === 'User already registered'
-        ? 'Cet email est déjà enregistré. Connectez-vous.'
+        ? 'Si ce compte existe, un email de confirmation a été envoyé.'
         : signUpError.message);
       setLoading(false);
       return;
     }
 
     if (data?.user) {
-      // Check if email confirmation is required
+      // Message générique pour ne pas révéler si l'email existe déjà
       if (data.user.identities && data.user.identities.length === 0) {
-        setError('Cet email est déjà enregistré.');
+        // L'email existe déjà — message identique au succès pour éviter l'énumération
+        setSuccess('Si ce compte n\'existe pas encore, un email de confirmation a été envoyé. Vérifiez votre boîte mail.');
+        setMode('login');
+        setPassword('');
+        setPassword2('');
       } else if (data.session) {
         // Auto-confirmed (no email verification needed)
         onLogin(data.user);
@@ -168,6 +234,20 @@ export default function LoginPage({ onLogin }) {
 
   const handleReset = async (e) => {
     e.preventDefault();
+
+    // Rate limiting sur la réinitialisation (max 3 demandes par période de 5 min)
+    const now = Date.now();
+    if (now < resetLockoutRef.current) {
+      const remaining = Math.ceil((resetLockoutRef.current - now) / 1000);
+      setError(`Veuillez patienter ${remaining} secondes avant de réessayer.`);
+      return;
+    }
+    resetAttemptsRef.current++;
+    if (resetAttemptsRef.current >= 3) {
+      resetLockoutRef.current = now + LOCKOUT_DURATION_MS;
+      resetAttemptsRef.current = 0;
+    }
+
     setLoading(true);
     setError('');
 
@@ -175,13 +255,15 @@ export default function LoginPage({ onLogin }) {
       redirectTo: window.location.origin,
     });
 
-    if (resetError) {
-      setError(resetError.message);
+    // Message générique pour ne pas révéler si l'email existe
+    if (resetError && !resetError.message.includes('rate')) {
+      setError('');
+      setSuccess('Si un compte est associé à cette adresse, un email de réinitialisation a été envoyé.');
     } else {
       setError('');
-      setSuccess('📧 Email de réinitialisation envoyé à ' + email);
-      setMode('login');
+      setSuccess('Si un compte est associé à cette adresse, un email de réinitialisation a été envoyé.');
     }
+    setMode('login');
     setLoading(false);
   };
 
@@ -305,8 +387,17 @@ export default function LoginPage({ onLogin }) {
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} placeholder="contact@votre-entreprise.be" />
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 12, color: '#9e9b93', marginBottom: 6 }}>Mot de passe (min. 6 caractères)</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={inputStyle} placeholder="••••••••" />
+              <label style={{ display: 'block', fontSize: 12, color: '#9e9b93', marginBottom: 6 }}>Mot de passe (min. {PASSWORD_MIN_LENGTH} car., majuscule, chiffre, spécial)</label>
+              <input type="password" value={password} onChange={(e) => {
+                setPassword(e.target.value);
+                if (e.target.value.length > 0) setPasswordErrors(validatePasswordStrength(e.target.value));
+                else setPasswordErrors([]);
+              }} required style={inputStyle} placeholder="••••••••" />
+              {passwordErrors.length > 0 && password.length > 0 && (
+                <div style={{ marginTop: 6, fontSize: 11, color: '#fb923c', lineHeight: 1.5 }}>
+                  {passwordErrors.map((err, i) => <div key={i}>• {err}</div>)}
+                </div>
+              )}
             </div>
             <div style={{ marginBottom: 24 }}>
               <label style={{ display: 'block', fontSize: 12, color: '#9e9b93', marginBottom: 6 }}>Confirmer le mot de passe</label>

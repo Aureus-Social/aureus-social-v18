@@ -13,6 +13,13 @@ function getSupabaseAdmin() {
 
 export async function POST(request) {
   try {
+    // ═══ SÉCURITÉ : Seuls les utilisateurs authentifiés peuvent inviter ═══
+    const authHeader = request.headers.get('authorization') || '';
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) {
+      return Response.json({ error: 'Authentification requise' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { email, role, tenant_id, invited_by, portal_type } = body;
 

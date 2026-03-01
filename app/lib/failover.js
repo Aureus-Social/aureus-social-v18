@@ -104,11 +104,12 @@ export async function withRetry(fn, maxRetries = 3, baseDelay = 500) {
   }
 }
 
-// Connection pool status
+// Connection pool status (ne PAS exposer les clés d'API)
 export function getConnectionInfo() {
   return {
-    primary: { ...PRIMARY, healthy: _primaryHealthy },
-    secondary: { ...SECONDARY, healthy: !_primaryHealthy },
+    primary: { region: PRIMARY.region, label: PRIMARY.label, healthy: _primaryHealthy },
+    secondary: { region: SECONDARY.region, label: SECONDARY.label, healthy: !_primaryHealthy },
+    activeRegion: _primaryHealthy ? PRIMARY.region : SECONDARY.region,
     lastCheck: _lastCheck ? new Date(_lastCheck).toISOString() : null,
   };
 }

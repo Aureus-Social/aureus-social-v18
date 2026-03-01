@@ -5,14 +5,14 @@ const rateMap = new Map();
 const RATE_LIMIT = 60;
 const WINDOW_MS = 60000;
 
-function checkRateLimit(ip) {
+function checkRateLimit(ip, limit = RATE_LIMIT) {
   const now = Date.now();
   const entry = rateMap.get(ip) || { count: 0, resetAt: now + WINDOW_MS };
   if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + WINDOW_MS; }
   entry.count++;
   rateMap.set(ip, entry);
   if (rateMap.size > 10000) { for (const [k, v] of rateMap) { if (now > v.resetAt) rateMap.delete(k); } }
-  return entry.count <= RATE_LIMIT;
+  return entry.count <= limit;
 }
 
 // ── IP Whitelist (Item 19) ──
@@ -51,6 +51,14 @@ export function middleware(request) {
     }
   }
 
+  // ═══ RATE LIMITING RENFORCÉ — endpoints sensibles ═══
+  const AUTH_RATE_LIMIT = 10; // 10 req/min pour login/reset (anti brute-force)
+  if (pathname === '/api/auth' || pathname.startsWith('/api/auth/')) {
+    if (!checkRateLimit('auth:' + ip, AUTH_RATE_LIMIT)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '120' } });
+    }
+  }
+
   // API ROUTES
   if (pathname.startsWith('/api/')) {
     if (!checkRateLimit(ip)) {
@@ -77,6 +85,7 @@ export function middleware(request) {
     const response = NextResponse.next();
     if (isAllowed) response.headers.set('Access-Control-Allow-Origin', origin);
     response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
     return response;
   }
 
@@ -89,24 +98,28 @@ export function middleware(request) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
 
-  // CSP — Content Security Policy
+  // CSP — Content Security Policy (renforcée : suppression de unsafe-eval)
   const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
     ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).host
     : '*.supabase.co';
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdnjs.cloudflare.com`,
+    `script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `font-src 'self' https://fonts.gstatic.com data:`,
-    `img-src 'self' data: blob: https:`,
+    `img-src 'self' data: blob: https://${supabaseHost}`,
     `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://api.anthropic.com https://api.resend.com`,
     `worker-src 'self' blob:`,
     `child-src 'self' blob:`,
     `frame-ancestors 'none'`,
     `form-action 'self'`,
     `base-uri 'self'`,
+    `upgrade-insecure-requests`,
+    `object-src 'none'`,
   ].join('; ');
   response.headers.set('Content-Security-Policy', csp);
+  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 
   return response;
 }

@@ -100,3 +100,54 @@ export async function auditLog(supabase, action, details = {}) {
     console.warn('[AuditLog]', e.message);
   }
 }
+
+// ═══ AUTHENTIFICATION API — Helper réutilisable ═══
+// Vérifie le Bearer token via Supabase Auth et retourne l'utilisateur
+import { createClient } from '@supabase/supabase-js';
+
+export async function requireAuth(request) {
+  const authHeader = request.headers.get('authorization') || '';
+  const token = authHeader.replace('Bearer ', '').trim();
+  if (!token) {
+    return { user: null, error: Response.json({ error: 'Authentification requise' }, { status: 401 }) };
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    return { user: null, error: Response.json({ error: 'Configuration serveur manquante' }, { status: 500 }) };
+  }
+
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data?.user) {
+      return { user: null, error: Response.json({ error: 'Token invalide ou expiré' }, { status: 401 }) };
+    }
+    return { user: data.user, error: null, supabase };
+  } catch (e) {
+    return { user: null, error: Response.json({ error: 'Erreur d\'authentification' }, { status: 401 }) };
+  }
+}
+
+// ═══ SANITISATION XML — Empêcher l'injection XML ═══
+export function escapeXml(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+// ═══ VALIDATION — Liste blanche de champs pour les mises à jour ═══
+export function sanitizeFields(body, allowedFields) {
+  const sanitized = {};
+  for (const field of allowedFields) {
+    if (body[field] !== undefined) {
+      sanitized[field] = body[field];
+    }
+  }
+  return sanitized;
+}
