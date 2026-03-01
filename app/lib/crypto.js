@@ -1,30 +1,51 @@
 // ═══ AUREUS SOCIAL PRO — Module: Chiffrement AES-256-GCM (RGPD Art. 32) ═══
 const CRYPTO_SALT = 'AureusSocialPro-2026-RGPD';
-const SENSITIVE_FIELDS = ['niss', 'NISS', 'iban', 'IBAN'];
+const SENSITIVE_FIELDS = ['niss', 'NISS', 'iban', 'IBAN', 'bankAccount', 'compteBancaire'];
 let _cryptoKey = null;
+let _encryptionWarned = false;
 
 export function getCryptoKey() { return _cryptoKey; }
 
 export async function deriveKey(userId) {
-  if (!userId || typeof crypto === 'undefined' || !crypto.subtle) return null;
+  if (!userId || typeof crypto === 'undefined' || !crypto.subtle) {
+    console.warn('[Crypto] Web Crypto API non disponible — les données sensibles ne seront PAS chiffrées');
+    return null;
+  }
   try {
     const enc = new TextEncoder();
+    // Générer un sel dérivé de l'userId pour plus de variabilité
+    const userSalt = enc.encode(CRYPTO_SALT + ':' + userId.slice(0, 8));
     const km = await crypto.subtle.importKey('raw', enc.encode(userId + CRYPTO_SALT), 'PBKDF2', false, ['deriveKey']);
     return crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt: enc.encode(CRYPTO_SALT), iterations: 100000, hash: 'SHA-256' },
+      { name: 'PBKDF2', salt: userSalt, iterations: 310000, hash: 'SHA-256' },
       km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
     );
-  } catch (e) { return null; }
+  } catch (e) {
+    console.error('[Crypto] Échec dérivation de clé:', e.message);
+    return null;
+  }
 }
 
 export async function encryptField(plaintext, key) {
-  if (!plaintext || !key) return plaintext;
+  if (!plaintext || !key) {
+    if (!key && !_encryptionWarned) {
+      console.warn('[Crypto] ALERTE: Tentative de chiffrement sans clé — donnée sensible stockée en clair');
+      _encryptionWarned = true;
+    }
+    return plaintext;
+  }
   try {
     const enc = new TextEncoder();
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext));
-    return 'ENC:' + btoa(String.fromCharCode(...iv)) + ':' + btoa(String.fromCharCode(...new Uint8Array(ct)));
-  } catch (e) { return plaintext; }
+    // Encodage base64 sécurisé pour grandes tailles
+    const ivB64 = btoa(Array.from(iv, b => String.fromCharCode(b)).join(''));
+    const ctB64 = btoa(Array.from(new Uint8Array(ct), b => String.fromCharCode(b)).join(''));
+    return 'ENC:' + ivB64 + ':' + ctB64;
+  } catch (e) {
+    console.error('[Crypto] ERREUR chiffrement:', e.message);
+    return plaintext;
+  }
 }
 
 export async function decryptField(ciphertext, key) {
@@ -35,7 +56,10 @@ export async function decryptField(ciphertext, key) {
     const iv = Uint8Array.from(atob(p[1]), c => c.charCodeAt(0));
     const ct = Uint8Array.from(atob(p[2]), c => c.charCodeAt(0));
     return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct));
-  } catch (e) { return ciphertext; }
+  } catch (e) {
+    console.error('[Crypto] ERREUR déchiffrement — possible altération des données');
+    return ciphertext;
+  }
 }
 
 async function processEmps(emp, key, encrypt) {
