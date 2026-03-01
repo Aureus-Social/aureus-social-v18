@@ -2,16 +2,30 @@ import { apiRateLimit, auditLog } from "../../../lib/api-security";
 // Aureus Social Pro — API v1 Declarations
 // Generate DmfA, Dimona, Belcotax, SEPA XML via REST API
 
-function cors() {
+// ═══ SÉCURITÉ : Échappement XML pour prévenir l'injection ═══
+function escXml(str) {
+  if (typeof str !== 'string') return String(str || '');
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+function cors(request) {
+  const origin = request?.headers?.get('origin') || '';
+  const allowed = [
+    process.env.ALLOWED_ORIGIN,
+    'https://aureussocial.be', 'https://www.aureussocial.be',
+    'https://app.aureussocial.be', 'http://localhost:3000',
+  ].filter(Boolean);
+  const isAllowed = allowed.some(o => origin === o);
   return {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': isAllowed ? origin : allowed[0] || '',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Vary': 'Origin',
   };
 }
 
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: cors() });
+export async function OPTIONS(request) {
+  return new Response(null, { status: 204, headers: cors(request) });
 }
 
 export async function GET(request) {
@@ -23,15 +37,22 @@ export async function GET(request) {
       sepa: { method: 'POST', description: 'Generate SEPA pain.001 XML', body: '{ company: {}, payments: [{ name, iban, bic, amount }] }' },
     },
     note: 'All XML responses include Content-Type: application/xml with Content-Disposition for download',
-  }, { headers: cors() });
+  }, { headers: cors(request) });
 }
 
 export async function POST(request) {
   try {
+    // ═══ SÉCURITÉ : Authentification requise ═══
+    const authHeader = request.headers.get('authorization') || '';
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) {
+      return Response.json({ error: 'Authentification requise' }, { status: 401, headers: cors(request) });
+    }
+
     const body = await request.json();
     const { type } = body;
 
-    if (!type) return Response.json({ error: 'Missing declaration type (dmfa, dimona, belcotax, sepa)' }, { status: 400, headers: cors() });
+    if (!type) return Response.json({ error: 'Missing declaration type (dmfa, dimona, belcotax, sepa)' }, { status: 400, headers: cors(request) });
 
     switch (type) {
       case 'dmfa':
@@ -43,16 +64,16 @@ export async function POST(request) {
       case 'sepa':
         return generateSEPAResponse(body);
       default:
-        return Response.json({ error: `Unknown declaration type: ${type}. Use dmfa, dimona, belcotax, or sepa.` }, { status: 400, headers: cors() });
+        return Response.json({ error: `Unknown declaration type: ${escXml(type)}. Use dmfa, dimona, belcotax, or sepa.` }, { status: 400, headers: cors(request) });
     }
   } catch (e) {
-    return Response.json({ error: e.message }, { status: 500, headers: cors() });
+    return Response.json({ error: 'Erreur interne' }, { status: 500, headers: cors(request) });
   }
 }
 
 function generateDmfAResponse(body) {
   const { quarter, year, company = {}, employees = [] } = body;
-  if (!quarter || !year) return Response.json({ error: 'Missing quarter or year' }, { status: 400, headers: cors() });
+  if (!quarter || !year) return Response.json({ error: 'Missing quarter or year' }, { status: 400 });
 
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const onssNr = (company.onss || '000-0000000-00').replace(/[^0-9]/g, '');
@@ -69,9 +90,9 @@ function generateDmfAResponse(body) {
     workersXml += `
     <WorkerRecord>
       <WorkerIdentification>
-        <INSS>${emp.niss || '00000000000'}</INSS>
-        <Name>${emp.last || emp.nom || ''}</Name>
-        <FirstName>${emp.first || emp.prenom || ''}</FirstName>
+        <INSS>${escXml(emp.niss || '00000000000')}</INSS>
+        <Name>${escXml(emp.last || emp.nom || '')}</Name>
+        <FirstName>${escXml(emp.first || emp.prenom || '')}</FirstName>
       </WorkerIdentification>
       <OccupationRecord seq="1">
         <JointCommission>${emp.cp || '200'}</JointCommission>
@@ -108,26 +129,26 @@ function generateDmfAResponse(body) {
 </FormCreation>`;
 
   return new Response(xml, {
-    headers: { ...cors(), 'Content-Type': 'application/xml', 'Content-Disposition': `attachment; filename="${filename}"` },
+    headers: { 'Content-Type': 'application/xml', 'Content-Disposition': `attachment; filename="${filename}"` },
   });
 }
 
 function generateDimonaResponse(body) {
   const { employee = {}, type: dimonaType = 'IN', company = {} } = body;
-  if (!dimonaType) return Response.json({ error: 'Missing type (IN or OUT)' }, { status: 400, headers: cors() });
+  if (!dimonaType) return Response.json({ error: 'Missing type (IN or OUT)' }, { status: 400 });
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <DimonaDeclaration xmlns="http://www.smals-mvm.be/xml/ns/systemFlux">
-  <DeclarationType>${dimonaType}</DeclarationType>
+  <DeclarationType>${escXml(dimonaType)}</DeclarationType>
   <CreationDate>${new Date().toISOString()}</CreationDate>
   <Employer>
     <ONSSNumber>${(company.onss || '').replace(/[^0-9]/g, '')}</ONSSNumber>
-    <CompanyName>${company.name || ''}</CompanyName>
+    <CompanyName>${escXml(company.name || '')}</CompanyName>
   </Employer>
   <Worker>
-    <INSS>${employee.niss || ''}</INSS>
-    <LastName>${employee.last || employee.nom || ''}</LastName>
-    <FirstName>${employee.first || employee.prenom || ''}</FirstName>
+    <INSS>${escXml(employee.niss || '')}</INSS>
+    <LastName>${escXml(employee.last || employee.nom || '')}</LastName>
+    <FirstName>${escXml(employee.first || employee.prenom || '')}</FirstName>
     <StartDate>${employee.startDate || new Date().toISOString().slice(0, 10)}</StartDate>
     ${dimonaType === 'OUT' ? `<EndDate>${employee.endDate || new Date().toISOString().slice(0, 10)}</EndDate>` : ''}
     <JointCommission>${employee.cp || '200'}</JointCommission>
@@ -136,13 +157,13 @@ function generateDimonaResponse(body) {
 </DimonaDeclaration>`;
 
   return new Response(xml, {
-    headers: { ...cors(), 'Content-Type': 'application/xml', 'Content-Disposition': `attachment; filename="DIMONA-${dimonaType}-${Date.now()}.xml"` },
+    headers: { 'Content-Type': 'application/xml', 'Content-Disposition': `attachment; filename="DIMONA-${dimonaType}-${Date.now()}.xml"` },
   });
 }
 
 function generateBelcotaxResponse(body) {
   const { year, company = {}, employees = [] } = body;
-  if (!year) return Response.json({ error: 'Missing year' }, { status: 400, headers: cors() });
+  if (!year) return Response.json({ error: 'Missing year' }, { status: 400 });
 
   let opgaven = '';
   employees.forEach((emp, i) => {
@@ -151,9 +172,9 @@ function generateBelcotaxResponse(body) {
     opgaven += `
     <Opgave nr="${i + 1}">
       <Verkrijger>
-        <INSZ>${emp.niss || ''}</INSZ>
-        <Naam>${emp.last || ''}</Naam>
-        <Voornaam>${emp.first || ''}</Voornaam>
+        <INSZ>${escXml(emp.niss || '')}</INSZ>
+        <Naam>${escXml(emp.last || '')}</Naam>
+        <Voornaam>${escXml(emp.first || '')}</Voornaam>
       </Verkrijger>
       <Bezoldiging>
         <Lonen>${brut.toFixed(2)}</Lonen>
@@ -167,7 +188,7 @@ function generateBelcotaxResponse(body) {
   <Aangifte>
     <Schuldenaar>
       <KBO>${(company.vat || '').replace(/[^0-9]/g, '')}</KBO>
-      <Naam>${company.name || ''}</Naam>
+      <Naam>${escXml(company.name || '')}</Naam>
     </Schuldenaar>
     <Aangiftetype>28110</Aangiftetype>
     <AangifteJaar>${year}</AangifteJaar>
@@ -177,7 +198,7 @@ function generateBelcotaxResponse(body) {
 </Verzending>`;
 
   return new Response(xml, {
-    headers: { ...cors(), 'Content-Type': 'application/xml', 'Content-Disposition': `attachment; filename="BELCOTAX-281.10-${year}.xml"` },
+    headers: { 'Content-Type': 'application/xml', 'Content-Disposition': `attachment; filename="BELCOTAX-281.10-${year}.xml"` },
   });
 }
 
@@ -193,9 +214,9 @@ function generateSEPAResponse(body) {
         <PmtId><EndToEndId>${p.ref || 'SAL-' + Date.now()}</EndToEndId></PmtId>
         <Amt><InstdAmt Ccy="EUR">${(p.amount || 0).toFixed(2)}</InstdAmt></Amt>
         <CdtrAgt><FinInstnId><BIC>${p.bic || 'GEBABEBB'}</BIC></FinInstnId></CdtrAgt>
-        <Cdtr><Nm>${p.name || ''}</Nm></Cdtr>
+        <Cdtr><Nm>${escXml(p.name || '')}</Nm></Cdtr>
         <CdtrAcct><Id><IBAN>${(p.iban || '').replace(/\s/g, '')}</IBAN></Id></CdtrAcct>
-        <RmtInf><Ustrd>${p.communication || 'Salaire'}</Ustrd></RmtInf>
+        <RmtInf><Ustrd>${escXml(p.communication || 'Salaire')}</Ustrd></RmtInf>
       </CdtTrfTxInf>`;
   });
 
@@ -207,7 +228,7 @@ function generateSEPAResponse(body) {
       <CreDtTm>${new Date().toISOString()}</CreDtTm>
       <NbOfTxs>${payments.length}</NbOfTxs>
       <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
-      <InitgPty><Nm>${company.name || 'Aureus Social Pro'}</Nm></InitgPty>
+      <InitgPty><Nm>${escXml(company.name || 'Aureus Social Pro')}</Nm></InitgPty>
     </GrpHdr>
     <PmtInf>
       <PmtInfId>${msgId}-001</PmtInfId>
@@ -216,7 +237,7 @@ function generateSEPAResponse(body) {
       <CtrlSum>${totalAmount.toFixed(2)}</CtrlSum>
       <PmtTpInf><SvcLvl><Cd>SEPA</Cd></SvcLvl></PmtTpInf>
       <ReqdExctnDt>${new Date().toISOString().slice(0, 10)}</ReqdExctnDt>
-      <Dbtr><Nm>${company.name || ''}</Nm></Dbtr>
+      <Dbtr><Nm>${escXml(company.name || '')}</Nm></Dbtr>
       <DbtrAcct><Id><IBAN>${(company.iban || '').replace(/\s/g, '')}</IBAN></Id></DbtrAcct>
       <DbtrAgt><FinInstnId><BIC>${company.bic || 'GEBABEBB'}</BIC></FinInstnId></DbtrAgt>
       ${txs}
@@ -225,6 +246,6 @@ function generateSEPAResponse(body) {
 </Document>`;
 
   return new Response(xml, {
-    headers: { ...cors(), 'Content-Type': 'application/xml', 'Content-Disposition': `attachment; filename="SEPA-pain.001-${Date.now()}.xml"` },
+    headers: { 'Content-Type': 'application/xml', 'Content-Disposition': `attachment; filename="SEPA-pain.001-${Date.now()}.xml"` },
   });
 }

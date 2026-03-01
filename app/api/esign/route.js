@@ -20,6 +20,13 @@ function getHeaders() {
 
 // POST /api/esign — Create signature request or check status
 export async function POST(request) {
+  // ═══ SÉCURITÉ : Authentification requise ═══
+  const authHeader = request.headers.get('authorization') || '';
+  const token = authHeader.replace('Bearer ', '').trim();
+  if (!token) {
+    return Response.json({ error: 'Authentification requise' }, { status: 401 });
+  }
+
   const apiKey = process.env.YOUSIGN_API_KEY;
 
   try {

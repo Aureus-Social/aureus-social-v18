@@ -24,7 +24,7 @@ export function ValidationPrePaieV2({s,d}){
     const r=[];
     // 1. NISS
     const noNiss=allEmps.filter(e=>!e.niss&&!e.NISS);
-    r.push({id:'niss',cat:'Identite',title:'NISS renseignes',desc:'Tous les numeros de registre national',pass:noNiss.length===0,count:n-noNiss.length,total:n,sev:noNiss.length>0?'critical':'ok',items:noNiss.map(e=>e.first+' '+e.last+' ('+e._co+')')});
+    r.push({id:'niss',cat:'Identite',title:'NISS renseignes',desc:'Tous les numéros de registre national',pass:noNiss.length===0,count:n-noNiss.length,total:n,sev:noNiss.length>0?'critical':'ok',items:noNiss.map(e=>e.first+' '+e.last+' ('+e._co+')')});
     // 2. IBAN
     const noIban=allEmps.filter(e=>!e.iban&&!e.IBAN);
     r.push({id:'iban',cat:'Bancaire',title:'IBAN renseignes',desc:'Virements SEPA possibles',pass:noIban.length===0,count:n-noIban.length,total:n,sev:noIban.length>0?'high':'ok',items:noIban.map(e=>e.first+' '+e.last)});
@@ -111,8 +111,8 @@ export function TimelinePaieV2({s}){
     for(let mi=0;mi<12;mi++){
       const my=moisN[mi]+' '+yr;
       dl.push({month:mi,day:5,title:'Provision ONSS',desc:'Paiement provisions mensuelles ONSS',cat:'ONSS',c:'#ef4444',recurring:true});
-      dl.push({month:mi,day:15,title:'Precompte professionnel',desc:'Declaration + paiement PP (formulaire 274)',cat:'Fiscal',c:'#a855f7',recurring:true});
-      dl.push({month:mi,day:25,title:'Virements salaires SEPA',desc:'Execution virements nets employes',cat:'Paie',c:'#22c55e',recurring:true});
+      dl.push({month:mi,day:15,title:'Précompte professionnel',desc:'Declaration + paiement PP (formulaire 274)',cat:'Fiscal',c:'#a855f7',recurring:true});
+      dl.push({month:mi,day:25,title:'Virements salaires SEPA',desc:'Exécution virements nets employés',cat:'Paie',c:'#22c55e',recurring:true});
       dl.push({month:mi,day:28,title:'Distribution fiches de paie',desc:'Envoi fiches par email / portail',cat:'Paie',c:'#3b82f6',recurring:true});
     }
     // Quarterly DmfA
@@ -120,8 +120,8 @@ export function TimelinePaieV2({s}){
     // Annual
     dl.push({month:1,day:28,title:'Belcotax 281.10/281.20',desc:'Fiches fiscales annuelles au SPF',cat:'Fiscal',c:'#a855f7'});
     dl.push({month:2,day:1,title:'Deadline Belcotax',desc:'Transmission XML au SPF Finances',cat:'Fiscal',c:'#ef4444'});
-    dl.push({month:4,day:30,title:'Pecule vacances simple',desc:'Versement pecule simple employes',cat:'Paie',c:'#06b6d4'});
-    dl.push({month:5,day:30,title:'Pecule vacances double',desc:'Versement pecule double',cat:'Paie',c:'#06b6d4'});
+    dl.push({month:4,day:30,title:'Pécule vacances simple',desc:'Versement pécule simple employés',cat:'Paie',c:'#06b6d4'});
+    dl.push({month:5,day:30,title:'Pécule vacances double',desc:'Versement pécule double',cat:'Paie',c:'#06b6d4'});
     dl.push({month:11,day:20,title:'13eme mois / Prime fin annee',desc:'Versement prime fin annee',cat:'Paie',c:'#c6a34e'});
     dl.push({month:0,day:31,title:'Indexation CP 200',desc:'Verification et application index sante',cat:'RH',c:'#fb923c'});
     dl.push({month:5,day:30,title:'Bilan social BNB',desc:'Depot si >= 20 ETP',cat:'Compliance',c:'#fb923c'});
@@ -252,8 +252,8 @@ export function SoldeToutCompteV2({s,d}){
     const details=[
       {label:'Prorata salaire mois en cours',brut:prorataMois,note:jourMois+'/'+totalJoursMois+' jours'},
       {label:'Indemnite compensatoire de preavis',brut:indemPreavis,note:semPreavis+' semaines'},
-      {label:'Pecule vacances simple (prorata)',brut:peculeSimple,note:moisPrestes+'/12 mois'},
-      {label:'Pecule vacances double (prorata)',brut:peculeDouble,note:moisPrestes+'/12 mois'},
+      {label:'Pécule vacances simple (prorata)',brut:peculeSimple,note:moisPrestes+'/12 mois'},
+      {label:'Pécule vacances double (prorata)',brut:peculeDouble,note:moisPrestes+'/12 mois'},
       {label:'13eme mois prorata',brut:treizieme,note:moisPrestes+'/12 mois'},
     ];
     if(outplacement) details.push({label:'Provision outplacement (4 sem.)',brut:coutOutplacement,note:'Obligatoire si preavis >= 30 sem.'});

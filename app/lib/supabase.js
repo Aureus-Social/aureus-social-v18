@@ -11,6 +11,8 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        flowType: 'pkce',
+        storageKey: 'aureus-social-auth',
       },
       realtime: {
         params: { eventsPerSecond: 10 },

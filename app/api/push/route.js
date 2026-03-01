@@ -20,10 +20,21 @@ function getSupabase() {
   return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 }
 
+function getAuthToken(request) {
+  const auth = request.headers.get('authorization');
+  if (!auth?.startsWith('Bearer ')) return null;
+  return auth.slice(7);
+}
+
 export async function POST(request) {
   try {
     if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
       return Response.json({ error: 'Push notifications not configured — VAPID keys missing' }, { status: 503 });
+    }
+
+    const token = getAuthToken(request);
+    if (!token) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const url = new URL(request.url);

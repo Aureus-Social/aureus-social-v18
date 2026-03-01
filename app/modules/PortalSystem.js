@@ -256,25 +256,47 @@ export function EmployeeLeave({s, d, employee}) {
   const [tab, setTab] = useState('solde');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({type:'annuel',debut:'',fin:'',motif:''});
+  const [calMonth, setCalMonth] = useState(new Date().getMonth());
+  const [calYear, setCalYear] = useState(new Date().getFullYear());
   const emp = employee || s.emps?.[0] || {};
-  
+
   const cs = {padding:'20px',borderRadius:'14px',border:'1px solid rgba(59,130,246,.06)',background:'rgba(255,255,255,.01)'};
   const ts = (a) => ({padding:'8px 18px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:a?600:400,fontFamily:'inherit',
     background:a?'rgba(59,130,246,.15)':'rgba(255,255,255,.03)',color:a?BLUE:'#9e9b93',transition:'all .3s'});
-  
+
   const soldes = [
     {l:'Congés annuels',total:20,pris:8,c:BLUE,i:'🏖'},
     {l:'Récupération',total:6,pris:2,c:GREEN,i:'🔄'},
     {l:'Maladie',total:'-',pris:3,c:RED,i:'🏥'},
     {l:'Formation',total:5,pris:1,c:PURPLE,i:'🎓'},
   ];
-  
-  const demandes = [
+
+  const typeLabels={annuel:'Congé annuel',recup:'Récupération',formation:'Formation',sans_solde:'Sans solde'};
+
+  const [demandes, setDemandes] = useState([
     {id:1,type:'Congé annuel',debut:'2026-03-15',fin:'2026-03-19',jours:5,status:'approuvé',by:'Marie D.'},
     {id:2,type:'Récupération',debut:'2026-02-14',fin:'2026-02-14',jours:1,status:'approuvé',by:'Marie D.'},
     {id:3,type:'Congé annuel',debut:'2026-04-21',fin:'2026-04-25',jours:5,status:'en_attente',by:null},
-  ];
-  
+  ]);
+
+  const submitLeave=()=>{
+    if(!form.debut||!form.fin){alert('Veuillez sélectionner les dates de début et fin.');return;}
+    const start=new Date(form.debut);const end=new Date(form.fin);
+    if(end<start){alert('La date de fin doit être après la date de début.');return;}
+    const diffDays=Math.ceil((end-start)/(1000*60*60*24))+1;
+    const workDays=Array.from({length:diffDays},(_, i)=>{const d2=new Date(start);d2.setDate(d2.getDate()+i);return d2.getDay();}).filter(d2=>d2!==0&&d2!==6).length;
+    setDemandes(prev=>[{id:Date.now(),type:typeLabels[form.type]||form.type,debut:form.debut,fin:form.fin,jours:workDays,status:'en_attente',by:null},...prev]);
+    setShowForm(false);setForm({type:'annuel',debut:'',fin:'',motif:''});
+  };
+
+  // Calendar helpers
+  const MOIS_CAL=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const JOURS_SEM=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const daysInCalMonth=new Date(calYear,calMonth+1,0).getDate();
+  const firstDow=(new Date(calYear,calMonth,1).getDay()+6)%7;
+  const calCells=Array.from({length:42},(_, i)=>{const day=i-firstDow+1;return day>=1&&day<=daysInCalMonth?day:null;});
+  const getLeaveColor=(day)=>{const d2=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;const match=demandes.find(r=>d2>=r.debut&&d2<=r.fin);if(!match)return null;return match.status==='approuvé'?GREEN:match.status==='en_attente'?'#eab308':RED;};
+
   return React.createElement('div',{style:{maxWidth:960,margin:'0 auto'}},
     React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}},
       React.createElement('div',{style:{fontSize:22,fontWeight:300,color:'#e5e5e5'}},'Congés & Absences'),
@@ -282,7 +304,7 @@ export function EmployeeLeave({s, d, employee}) {
         style:{padding:'10px 20px',borderRadius:10,border:'none',background:'linear-gradient(135deg,#3b82f6,#2563eb)',color:'#fff',fontWeight:600,fontSize:12,cursor:'pointer',fontFamily:'inherit'}},
         showForm ? '✕ Annuler' : '+ Nouvelle demande')
     ),
-    
+
     // New request form
     showForm && React.createElement('div',{style:{...cs,marginBottom:20,border:'1px solid rgba(59,130,246,.2)',background:'rgba(59,130,246,.04)'}},
       React.createElement('div',{style:{fontSize:14,fontWeight:600,color:BLUE,marginBottom:16}},'📝 Nouvelle demande de congé'),
@@ -308,18 +330,18 @@ export function EmployeeLeave({s, d, employee}) {
             style:{width:'100%',padding:'8px',borderRadius:8,border:'1px solid rgba(59,130,246,.15)',background:'rgba(0,0,0,.2)',color:'#e5e5e5',fontSize:12,fontFamily:'inherit',boxSizing:'border-box'}})
         ),
         React.createElement('div',{style:{display:'flex',alignItems:'flex-end'}},
-          React.createElement('button',{onClick:()=>{alert('✅ Demande envoyée !');setShowForm(false);setForm({type:'annuel',debut:'',fin:'',motif:''});},
+          React.createElement('button',{onClick:submitLeave,
             style:{width:'100%',padding:'8px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#3b82f6,#2563eb)',color:'#fff',fontWeight:600,fontSize:12,cursor:'pointer',fontFamily:'inherit'}},'Envoyer')
         )
       )
     ),
-    
+
     // Tabs
     React.createElement('div',{style:{display:'flex',gap:6,marginBottom:20}},
       [{id:'solde',l:'📊 Soldes'},{id:'demandes',l:'📋 Mes demandes'},{id:'calendrier',l:'📅 Calendrier'}].map(t =>
         React.createElement('button',{key:t.id,onClick:()=>setTab(t.id),style:ts(tab===t.id)},t.l))
     ),
-    
+
     tab==='solde' && React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}},
       soldes.map((s,i) => React.createElement('div',{key:i,style:cs},
         React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:12}},
@@ -337,7 +359,7 @@ export function EmployeeLeave({s, d, employee}) {
         )
       ))
     ),
-    
+
     tab==='demandes' && React.createElement('div',{style:cs},
       React.createElement('table',{style:{width:'100%',borderCollapse:'collapse'}},
         React.createElement('thead',null,React.createElement('tr',{style:{borderBottom:'1px solid rgba(59,130,246,.08)'}},
@@ -360,11 +382,31 @@ export function EmployeeLeave({s, d, employee}) {
           )))
       )
     ),
-    
-    tab==='calendrier' && React.createElement('div',{style:{...cs,textAlign:'center',padding:40}},
-      React.createElement('div',{style:{fontSize:48,marginBottom:12}},'📅'),
-      React.createElement('div',{style:{fontSize:14,color:'#888'}},'Vue calendrier bientôt disponible'),
-      React.createElement('div',{style:{fontSize:11,color:'#555',marginTop:8}},'Planifiez vos congés dans l\'onglet "Mes demandes"')
+
+    tab==='calendrier' && React.createElement('div',{style:cs},
+      React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}},
+        React.createElement('button',{onClick:()=>{if(calMonth===0){setCalMonth(11);setCalYear(calYear-1);}else setCalMonth(calMonth-1);},style:{padding:'6px 12px',borderRadius:6,border:'1px solid rgba(59,130,246,.15)',background:'transparent',color:BLUE,cursor:'pointer',fontFamily:'inherit'}},'←'),
+        React.createElement('div',{style:{fontSize:16,fontWeight:600,color:'#e5e5e5'}},MOIS_CAL[calMonth]+' '+calYear),
+        React.createElement('button',{onClick:()=>{if(calMonth===11){setCalMonth(0);setCalYear(calYear+1);}else setCalMonth(calMonth+1);},style:{padding:'6px 12px',borderRadius:6,border:'1px solid rgba(59,130,246,.15)',background:'transparent',color:BLUE,cursor:'pointer',fontFamily:'inherit'}},'→')
+      ),
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2}},
+        JOURS_SEM.map(j=>React.createElement('div',{key:j,style:{padding:'8px',textAlign:'center',fontSize:10,fontWeight:600,color:BLUE}},j)),
+        ...calCells.map((day,i)=>{
+          if(!day) return React.createElement('div',{key:'e'+i,style:{padding:'8px'}});
+          const leaveC=getLeaveColor(day);
+          const isToday=day===new Date().getDate()&&calMonth===new Date().getMonth()&&calYear===new Date().getFullYear();
+          return React.createElement('div',{key:i,style:{padding:'8px',textAlign:'center',borderRadius:6,fontSize:12,fontWeight:isToday?700:400,
+            color:isToday?'#000':leaveC||'#e5e5e5',background:isToday?BLUE:leaveC?leaveC+'18':'rgba(255,255,255,.02)',
+            border:leaveC?'1px solid '+leaveC+'40':'1px solid transparent',cursor:'default'}},day);
+        })
+      ),
+      React.createElement('div',{style:{display:'flex',gap:16,marginTop:16,justifyContent:'center'}},
+        [{c:GREEN,l:'Approuvé'},{c:'#eab308',l:'En attente'},{c:RED,l:'Refusé'}].map(x=>
+          React.createElement('div',{key:x.l,style:{display:'flex',alignItems:'center',gap:4,fontSize:10}},
+            React.createElement('div',{style:{width:10,height:10,borderRadius:3,background:x.c}}),
+            React.createElement('span',{style:{color:'#888'}},x.l)
+          ))
+      )
     )
   );
 }

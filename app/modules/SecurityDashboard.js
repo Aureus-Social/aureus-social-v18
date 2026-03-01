@@ -87,7 +87,7 @@ export function SecurityDashboard({s,supabase,user}){
       {[{l:'Score sécurité',v:secScore+'%',c:secScore>=80?'#22c55e':secScore>=60?'#eab308':'#f87171'},{l:'Contrôles actifs',v:doneChecks+'/'+totalChecks,c:'#22c55e'},{l:'À configurer',v:configChecks+'',c:'#eab308'},{l:'Planifiés',v:plannedChecks+'',c:'#3b82f6'},{l:'Chiffrement',v:'AES-256-GCM',c:'#a855f7'},{l:'Niveau RGPD',v:'Conforme',c:'#22c55e'}].map((k,i)=><div key={i} style={{padding:'10px 12px',background:'rgba(198,163,78,.04)',borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}><div style={{fontSize:8,color:'#5e5c56',textTransform:'uppercase'}}>{k.l}</div><div style={{fontSize:14,fontWeight:700,color:k.c,marginTop:3}}>{k.v}</div></div>)}
     </div>
 
-    <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>{[{v:'overview',l:'🛡 Vue d\'ensemble'},{v:'niveau1',l:'🔴 N1: Urgent ('+checks.filter(c=>c.level===1).length+')'},{v:'niveau2',l:'🟠 N2: Chiffrement ('+checks.filter(c=>c.level===2).length+')'},{v:'niveau3',l:'🟡 N3: Blindage ('+checks.filter(c=>c.level===3).length+')'},{v:'rgpd',l:'🔵 N4: RGPD ('+checks.filter(c=>c.level===4).length+')'},{v:'password',l:'🔑 Test mot de passe'},{v:'headers',l:'📋 Headers HTTP'},{v:'encryption',l:'🔒 Chiffrement'},{v:'rgpddocs',l:'📜 Documents RGPD'},{v:'ipwhitelist',l:'🌐 IP Whitelist'}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'7px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:11,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}</div>
+    <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>{[{v:'overview',l:'🛡 Vue d\'ensemble'},{v:'niveau1',l:'🔴 N1: Urgent ('+checks.filter(c=>c.level===1).length+')'},{v:'niveau2',l:'🟠 N2: Chiffrement ('+checks.filter(c=>c.level===2).length+')'},{v:'niveau3',l:'🟡 N3: Blindage ('+checks.filter(c=>c.level===3).length+')'},{v:'rgpd',l:'🔵 N4: RGPD ('+checks.filter(c=>c.level===4).length+')'},{v:'password',l:'🔑 Test mot de passe'},{v:'headers',l:'📋 Headers HTTP'},{v:'encryption',l:'🔒 Chiffrement'},{v:'rgpddocs',l:'📜 Documents RGPD'},{v:'ipwhitelist',l:'🌐 IP Whitelist'},{v:'backup',l:'💾 Backup données'}].map(t=><button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'7px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:11,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}</div>
 
     {tab==='overview'&&<div>
       {[1,2,3,4].map(level=>{const lvlChecks=checks.filter(c=>c.level===level);const done=lvlChecks.filter(c=>c.status===true).length;const pct=Math.round(done/lvlChecks.length*100);
@@ -390,6 +390,80 @@ CREATE POLICY "Tenant isolation"
 
 CREATE INDEX idx_ip_whitelist_tenant ON ip_whitelist(tenant_id, active);`}
         </div>
+      </C>
+    </div>}
+
+    {tab==='backup'&&<div>
+      <C title="💾 Sauvegarde manuelle des données" sub="Exportez vos données en JSON ou CSV à tout moment">
+        <div style={{marginBottom:16,padding:14,background:'rgba(34,197,94,.05)',borderRadius:10,border:'1px solid rgba(34,197,94,.15)'}}>
+          <div style={{fontSize:11,color:'#22c55e',fontWeight:600,marginBottom:4}}>Backup automatique Supabase</div>
+          <div style={{fontSize:10,color:'#888'}}>Vos données sont sauvegardées automatiquement chaque jour par Supabase (rétention 7 jours).</div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+          <button onClick={async()=>{
+            try{
+              const{createFullBackup}=await import('@/app/lib/backup');
+              const res=await createFullBackup(supabase,user?.id);
+              alert('Backup JSON téléchargé ('+Math.round(res.size/1024)+' KB, '+res.tables+' tables)');
+            }catch(e){alert('Erreur: '+e.message)}
+          }} style={{padding:'16px 14px',borderRadius:12,border:'1px solid rgba(198,163,78,.2)',background:'rgba(198,163,78,.06)',cursor:'pointer',textAlign:'center'}}>
+            <div style={{fontSize:24,marginBottom:6}}>📦</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#c6a34e'}}>Export complet JSON</div>
+            <div style={{fontSize:9,color:'#888',marginTop:4}}>Toutes les tables (restaurable)</div>
+          </button>
+          <button onClick={()=>{
+            try{
+              const emps=s?.employees||s?.emps||[];
+              if(!emps.length){alert('Aucun employé trouvé');return;}
+              import('@/app/lib/backup').then(m=>{
+                const res=m.exportEmployeesCSV(emps);
+                alert('Export CSV employés: '+res.count+' lignes');
+              });
+            }catch(e){alert('Erreur: '+e.message)}
+          }} style={{padding:'16px 14px',borderRadius:12,border:'1px solid rgba(59,130,246,.2)',background:'rgba(59,130,246,.06)',cursor:'pointer',textAlign:'center'}}>
+            <div style={{fontSize:24,marginBottom:6}}>👥</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#3b82f6'}}>Export employés CSV</div>
+            <div style={{fontSize:9,color:'#888',marginTop:4}}>Données employés (Excel)</div>
+          </button>
+          <button onClick={()=>{
+            try{
+              const hist=s?.payrollHistory||s?.history||[];
+              if(!hist.length){alert('Aucune fiche de paie trouvée');return;}
+              import('@/app/lib/backup').then(m=>{
+                const res=m.exportPayrollCSV(hist);
+                alert('Export CSV paie: '+res.count+' fiches');
+              });
+            }catch(e){alert('Erreur: '+e.message)}
+          }} style={{padding:'16px 14px',borderRadius:12,border:'1px solid rgba(168,85,247,.2)',background:'rgba(168,85,247,.06)',cursor:'pointer',textAlign:'center'}}>
+            <div style={{fontSize:24,marginBottom:6}}>💰</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#a855f7'}}>Export fiches de paie CSV</div>
+            <div style={{fontSize:9,color:'#888',marginTop:4}}>Historique paie (Excel)</div>
+          </button>
+          <button onClick={async()=>{
+            try{
+              const{exportAllData}=await import('@/app/lib/backup');
+              const emps=s?.employees||s?.emps||[];
+              const hist=s?.payrollHistory||s?.history||[];
+              const res=await exportAllData(supabase,user?.id,emps,hist);
+              alert('Backup complet terminé — JSON + CSV employés + CSV paie');
+            }catch(e){alert('Erreur: '+e.message)}
+          }} style={{padding:'16px 14px',borderRadius:12,border:'1px solid rgba(34,197,94,.2)',background:'rgba(34,197,94,.06)',cursor:'pointer',textAlign:'center'}}>
+            <div style={{fontSize:24,marginBottom:6}}>🔄</div>
+            <div style={{fontSize:12,fontWeight:600,color:'#22c55e'}}>Tout exporter</div>
+            <div style={{fontSize:9,color:'#888',marginTop:4}}>JSON + CSV (3 fichiers)</div>
+          </button>
+        </div>
+        <C title="🔄 Restaurer un backup" sub="Importer un fichier JSON précédemment exporté">
+          <input type="file" accept=".json" onChange={async(e)=>{
+            const file=e.target.files?.[0];
+            if(!file)return;
+            try{
+              const{restoreBackup}=await import('@/app/lib/backup');
+              const res=await restoreBackup(supabase,user?.id,file);
+              alert('Restauration réussie: '+res.restored+' enregistrements dans '+res.tables+' tables');
+            }catch(err){alert('Erreur restauration: '+err.message)}
+          }} style={{fontSize:11,color:'#888'}}/>
+        </C>
       </C>
     </div>}
   </div>;

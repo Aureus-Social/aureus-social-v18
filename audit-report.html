@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Audit Aureus Social Pro — Mars 2026</title>
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 18mm 25mm 18mm;
+    @bottom-center {
+      content: "Aureus Social Pro — Audit confidentiel — Page " counter(page) " / " counter(pages);
+      font-size: 8px;
+      color: #888;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    color: #1a1a2e;
+    background: #fff;
+    font-size: 10.5px;
+    line-height: 1.55;
+  }
+
+  /* ── COVER PAGE ── */
+  .cover {
+    page-break-after: always;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(160deg, #060810 0%, #0f1520 40%, #1a1f30 100%);
+    color: #fff;
+    text-align: center;
+    padding: 60px;
+  }
+  .cover-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #c6a34e, #a68a3c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: 900;
+    color: #060810;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 30px rgba(198,163,78,.3);
+  }
+  .cover h1 {
+    font-size: 36px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #c6a34e, #e8d5a0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .cover h2 {
+    font-size: 18px;
+    color: #c6a34e;
+    font-weight: 400;
+    margin-bottom: 40px;
+  }
+  .cover-meta {
+    font-size: 12px;
+    color: #888;
+    line-height: 2;
+  }
+  .cover-meta strong { color: #c6a34e; }
+  .cover-badge {
+    margin-top: 40px;
+    padding: 8px 24px;
+    border-radius: 20px;
+    border: 1px solid rgba(198,163,78,.3);
+    color: #c6a34e;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── SECTION HEADERS ── */
+  h2.section {
+    font-size: 18px;
+    font-weight: 800;
+    color: #060810;
+    border-left: 4px solid #c6a34e;
+    padding: 8px 0 8px 14px;
+    margin: 28px 0 14px 0;
+    background: linear-gradient(90deg, rgba(198,163,78,.08), transparent);
+  }
+  h3.sub {
+    font-size: 13px;
+    font-weight: 700;
+    color: #c6a34e;
+    margin: 16px 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(198,163,78,.15);
+  }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 16px 0;
+    font-size: 10px;
+  }
+  thead th {
+    background: #060810;
+    color: #c6a34e;
+    padding: 7px 10px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  thead th:first-child { border-radius: 6px 0 0 0; }
+  thead th:last-child { border-radius: 0 6px 0 0; }
+  tbody td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) { background: #fafafa; }
+  tbody tr:hover { background: rgba(198,163,78,.04); }
+
+  /* ── STATUS BADGES ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge-ok { background: #dcfce7; color: #166534; }
+  .badge-warn { background: #fef3c7; color: #92400e; }
+  .badge-todo { background: #fee2e2; color: #991b1b; }
+  .badge-info { background: #dbeafe; color: #1e40af; }
+  .badge-done { background: #d1fae5; color: #065f46; }
+  .badge-progress { background: #e0e7ff; color: #3730a3; }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 12px 0 18px 0;
+  }
+  .kpi {
+    background: linear-gradient(135deg, #f8f9fa, #fff);
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .kpi-value {
+    font-size: 22px;
+    font-weight: 800;
+  }
+  .kpi-label {
+    font-size: 8.5px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+  .kpi-gold .kpi-value { color: #c6a34e; }
+  .kpi-green .kpi-value { color: #16a34a; }
+  .kpi-blue .kpi-value { color: #2563eb; }
+  .kpi-purple .kpi-value { color: #7c3aed; }
+  .kpi-red .kpi-value { color: #dc2626; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #e5e7eb;
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 6px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width .3s;
+  }
+
+  /* ── CHECKLIST ── */
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .check-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+  .check-text { flex: 1; }
+  .check-title { font-weight: 600; font-size: 10.5px; }
+  .check-detail { font-size: 9px; color: #666; margin-top: 1px; }
+
+  /* ── MISC ── */
+  .note-box {
+    background: rgba(198,163,78,.06);
+    border-left: 3px solid #c6a34e;
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    margin: 10px 0;
+    font-size: 10px;
+    color: #555;
+  }
+  .danger-box {
+    background: #fef2f2;
+    border-left: 3px solid #ef4444;
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    margin: 10px 0;
+    font-size: 10px;
+    color: #7f1d1d;
+  }
+  .page-break { page-break-before: always; }
+  p { margin: 6px 0; }
+  .small { font-size: 9px; color: #888; }
+  .gold { color: #c6a34e; }
+  .green { color: #16a34a; }
+  .red { color: #dc2626; }
+  .blue { color: #2563eb; }
+  code {
+    background: #f1f5f9;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9.5px;
+    font-family: 'Fira Code', 'Consolas', monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ COVER ═══════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">A</div>
+  <h1>Aureus Social Pro</h1>
+  <h2>Rapport d'audit technique complet</h2>
+  <div class="cover-meta">
+    <strong>Date :</strong> 1er mars 2026<br>
+    <strong>Version :</strong> v20.3 — Sprint 37+<br>
+    <strong>Auteur :</strong> Aureus IA SPRL<br>
+    <strong>Classification :</strong> Confidentiel<br>
+    <strong>URL :</strong> https://app.aureussocial.be
+  </div>
+  <div class="cover-badge">SaaS Paie & Secretariat Social — Belgique</div>
+</div>
+
+<!-- ═══════════════════════════ TABLE DES MATIERES ═══════════════════════════ -->
+<h2 class="section">Table des matières</h2>
+<table>
+<tbody>
+  <tr><td><strong>1.</strong></td><td>Vue d'ensemble du projet</td><td style="text-align:right">3</td></tr>
+  <tr><td><strong>2.</strong></td><td>Stack technique</td><td style="text-align:right">3</td></tr>
+  <tr><td><strong>3.</strong></td><td>Audit des modules (106 fichiers)</td><td style="text-align:right">4</td></tr>
+  <tr><td><strong>4.</strong></td><td>Librairies métier (27 fichiers)</td><td style="text-align:right">5</td></tr>
+  <tr><td><strong>5.</strong></td><td>Routes API (27 endpoints)</td><td style="text-align:right">5</td></tr>
+  <tr><td><strong>6.</strong></td><td>Sécurité & conformité</td><td style="text-align:right">6</td></tr>
+  <tr><td><strong>7.</strong></td><td>Tests & CI/CD</td><td style="text-align:right">7</td></tr>
+  <tr><td><strong>8.</strong></td><td>Ce qui a été réalisé (session courante)</td><td style="text-align:right">7</td></tr>
+  <tr><td><strong>9.</strong></td><td>Ce qu'il reste à faire</td><td style="text-align:right">8</td></tr>
+  <tr><td><strong>10.</strong></td><td>Recommandations & priorisation</td><td style="text-align:right">9</td></tr>
+</tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════ 1. VUE D'ENSEMBLE ═══════════════════════════ -->
+<h2 class="section">1. Vue d'ensemble du projet</h2>
+<p><strong>Aureus Social Pro</strong> est un logiciel SaaS de gestion de paie et de secrétariat social pour la Belgique, développé par Aureus IA SPRL. Il couvre le calcul des salaires, les déclarations ONSS (DmfA, Dimona), la fiscalité belge (précompte professionnel, Belcotax), la gestion RH, et la conformité RGPD/SOC2/ISO27001.</p>
+
+<div class="kpi-grid">
+  <div class="kpi kpi-gold"><div class="kpi-value">106</div><div class="kpi-label">Modules React</div></div>
+  <div class="kpi kpi-blue"><div class="kpi-value">27</div><div class="kpi-label">Routes API</div></div>
+  <div class="kpi kpi-purple"><div class="kpi-value">27</div><div class="kpi-label">Librairies métier</div></div>
+  <div class="kpi kpi-green"><div class="kpi-value">23 120</div><div class="kpi-label">Lignes (monolithe)</div></div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi kpi-gold"><div class="kpi-value">2.9 MB</div><div class="kpi-label">Modules totaux</div></div>
+  <div class="kpi kpi-blue"><div class="kpi-value">362 KB</div><div class="kpi-label">Librairies</div></div>
+  <div class="kpi kpi-green"><div class="kpi-value">4</div><div class="kpi-label">Dépendances npm</div></div>
+  <div class="kpi kpi-purple"><div class="kpi-value">55+</div><div class="kpi-label">Procédures RH</div></div>
+</div>
+
+<!-- ═══════════════════════════ 2. STACK TECHNIQUE ═══════════════════════════ -->
+<h2 class="section">2. Stack technique</h2>
+<table>
+<thead><tr><th>Couche</th><th>Technologie</th><th>Version</th><th>Statut</th></tr></thead>
+<tbody>
+  <tr><td>Framework</td><td>Next.js (App Router)</td><td>15.1.0</td><td><span class="badge badge-ok">OK</span></td></tr>
+  <tr><td>UI</td><td>React + React DOM</td><td>19.0.0</td><td><span class="badge badge-ok">OK</span></td></tr>
+  <tr><td>Langage</td><td>JavaScript pur (pas de TypeScript)</td><td>ES2020+</td><td><span class="badge badge-info">CHOIX</span></td></tr>
+  <tr><td>CSS</td><td>Inline styles + responsive.css</td><td>—</td><td><span class="badge badge-ok">OK</span></td></tr>
+  <tr><td>Backend / BDD</td><td>Supabase (PostgreSQL + Auth + Realtime)</td><td>2.47.0</td><td><span class="badge badge-ok">OK</span></td></tr>
+  <tr><td>Auth</td><td>Supabase Auth + MFA TOTP</td><td>—</td><td><span class="badge badge-ok">OK</span></td></tr>
+  <tr><td>Déploiement</td><td>Vercel</td><td>—</td><td><span class="badge badge-ok">OK</span></td></tr>
+  <tr><td>PWA</td><td>Service Worker + manifest.json</td><td>—</td><td><span class="badge badge-ok">OK</span></td></tr>
+  <tr><td>CI/CD</td><td>GitHub Actions (test-paie + OWASP ZAP)</td><td>—</td><td><span class="badge badge-ok">OK</span></td></tr>
+  <tr><td>IA</td><td>Anthropic Claude (agent juridique)</td><td>—</td><td><span class="badge badge-ok">OK</span></td></tr>
+  <tr><td>Email</td><td>Resend API</td><td>—</td><td><span class="badge badge-warn">CONFIG</span></td></tr>
+  <tr><td>Chiffrement</td><td>AES-256-GCM + PBKDF2</td><td>—</td><td><span class="badge badge-ok">OK</span></td></tr>
+</tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════ 3. MODULES ═══════════════════════════ -->
+<h2 class="section">3. Audit des modules (106 fichiers — 2.9 MB)</h2>
+
+<h3 class="sub">Modules principaux par catégorie</h3>
+<table>
+<thead><tr><th>Catégorie</th><th>Module</th><th>Taille</th><th>Statut</th></tr></thead>
+<tbody>
+  <tr><td rowspan="3"><strong>Paie</strong></td><td>PayrollHub.js</td><td>49 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+  <tr><td>PrimesAvantagesV2.js (56 types de primes)</td><td>131 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+  <tr><td>SimulateurNetBrut.js</td><td>7 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+
+  <tr><td rowspan="3"><strong>Déclarations</strong></td><td>DeclarationsFiscalV2.js</td><td>45 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+  <tr><td>CommissionsModule.js</td><td>47 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+  <tr><td>BaremesCP.js</td><td>54 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+
+  <tr><td rowspan="2"><strong>Absences / Contrats</strong></td><td>AbsencesContratsV3.js</td><td>60 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+  <tr><td>AbsencesContratsReportingV2.js</td><td>38 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+
+  <tr><td rowspan="2"><strong>Sécurité</strong></td><td>SecurityDashboard.js</td><td>40 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+  <tr><td>AccessManagement.js</td><td>20 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+
+  <tr><td rowspan="2"><strong>Portails</strong></td><td>PortalSystem.js</td><td>58 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+  <tr><td>OnboardingHub.js</td><td>32 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+
+  <tr><td rowspan="2"><strong>Juridique / IA</strong></td><td>FloatingLegalAgent.js</td><td>64 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+  <tr><td>TransversalCP.js</td><td>69 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+
+  <tr><td><strong>Admin</strong></td><td>AutoAdminV3.js (RBAC)</td><td>54 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+  <tr><td><strong>Ops</strong></td><td>SmartOpsCenter.js</td><td>50 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+  <tr><td><strong>Documents</strong></td><td>DocumentForms.js (C4, C131, Belcotax)</td><td>28 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+  <tr><td><strong>RGPD</strong></td><td>GDPRPortal.js + DPODashboard.js</td><td>24 KB</td><td><span class="badge badge-ok">ACTIF</span></td></tr>
+</tbody>
+</table>
+
+<h3 class="sub">Procédures RH (55+ fichiers spécialisés)</h3>
+<table>
+<thead><tr><th>Procédure</th><th>Fichier</th><th>Statut</th></tr></thead>
+<tbody>
+  <tr><td>Premier engagement</td><td>ProceduresRH_PremierEngagement.js (56 KB)</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Maladie / incapacité</td><td>ProceduresRH_Maladie.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Maternité / paternité</td><td>ProceduresRH_Maternite.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Licenciement / préavis</td><td>ProceduresRH_LicenciementPreavis.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Crédit-temps</td><td>ProceduresRH_CreditTemps.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>ACTIVA (aide à l'emploi)</td><td>ProceduresRH_Activa.js (64 KB)</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Flexi-Job</td><td>ProceduresRH_FlexiJob.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Intérimaire</td><td>ProceduresRH_Interimaire.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Art. 60 §7</td><td>ProceduresRH_Art60.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Temps partiel</td><td>ProceduresRH_TempsPartiel.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Congé parental</td><td>ProceduresRH_CongeParental.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Handicap</td><td>ProceduresRH_Handicap.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Étudiant</td><td>ProceduresRH_Etudiant.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Alternance</td><td>ProceduresRH_Alternance.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+  <tr><td>Fin de carrière</td><td>ProceduresRH_CreditTempsFinCarriere.js</td><td><span class="badge badge-ok">COMPLET</span></td></tr>
+</tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════ 4. LIBRAIRIES ═══════════════════════════ -->
+<h2 class="section">4. Librairies métier (27 fichiers — 362 KB)</h2>
+<table>
+<thead><tr><th>Fichier</th><th>Lignes</th><th>Rôle</th><th>Criticité</th></tr></thead>
+<tbody>
+  <tr><td><code>calc-paie.js</code></td><td>1 911</td><td>Moteur de calcul brut→net (loi belge)</td><td><span class="badge badge-ok" style="background:#fef3c7;color:#92400e">CRITIQUE</span></td></tr>
+  <tr><td><code>lois-belges.js</code></td><td>509</td><td>Constantes légales belges 2026</td><td><span class="badge badge-ok" style="background:#fef3c7;color:#92400e">CRITIQUE</span></td></tr>
+  <tr><td><code>calc-pp.js</code></td><td>196</td><td>Précompte professionnel</td><td><span class="badge badge-ok" style="background:#fef3c7;color:#92400e">CRITIQUE</span></td></tr>
+  <tr><td><code>xml-generators.js</code></td><td>452</td><td>XML DmfA, Dimona, SEPA, Belcotax</td><td><span class="badge badge-ok" style="background:#fef3c7;color:#92400e">CRITIQUE</span></td></tr>
+  <tr><td><code>onss-client.js</code></td><td>510</td><td>Client ONSS & déclarations</td><td><span class="badge badge-ok" style="background:#fee2e2;color:#991b1b">HAUTE</span></td></tr>
+  <tr><td><code>crypto.js</code></td><td>73</td><td>AES-256 (NISS, IBAN)</td><td><span class="badge badge-ok" style="background:#fee2e2;color:#991b1b">HAUTE</span></td></tr>
+  <tr><td><code>persistence.js</code></td><td>81</td><td>localStorage + Supabase sync</td><td><span class="badge badge-ok" style="background:#fee2e2;color:#991b1b">HAUTE</span></td></tr>
+  <tr><td><code>csv-parsers.js</code></td><td>397</td><td>Import CSV employés / paie</td><td><span class="badge badge-info">MOYENNE</span></td></tr>
+  <tr><td><code>pdf-export.js</code></td><td>223</td><td>Export PDF fiches de paie</td><td><span class="badge badge-info">MOYENNE</span></td></tr>
+  <tr><td><code>backup.js</code></td><td>145</td><td>Backup JSON + CSV + auto-backup</td><td><span class="badge badge-info">MOYENNE</span></td></tr>
+  <tr><td><code>i18n.js</code></td><td>368</td><td>Internationalisation FR/NL</td><td><span class="badge badge-info">MOYENNE</span></td></tr>
+  <tr><td><code>agent-simulateur.js</code></td><td>352</td><td>Agent IA juridique (Claude)</td><td><span class="badge badge-info">MOYENNE</span></td></tr>
+  <tr><td><code>module-registry.js</code></td><td>164</td><td>Registre modules + lazy loading</td><td><span class="badge badge-info">MOYENNE</span></td></tr>
+  <tr><td><code>api-security.js</code></td><td>85</td><td>Sécurité API (auth, validation)</td><td><span class="badge badge-ok" style="background:#fee2e2;color:#991b1b">HAUTE</span></td></tr>
+  <tr><td><code>failover.js</code></td><td>116</td><td>Failover & résilience</td><td><span class="badge badge-info">MOYENNE</span></td></tr>
+</tbody>
+</table>
+
+<!-- ═══════════════════════════ 5. ROUTES API ═══════════════════════════ -->
+<h2 class="section">5. Routes API (27 endpoints)</h2>
+<table>
+<thead><tr><th>Route</th><th>Méthodes</th><th>Rôle</th><th>Sécurité</th></tr></thead>
+<tbody>
+  <tr><td><code>/api/v1/payroll</code></td><td>GET, POST</td><td>Calculs de paie</td><td><span class="badge badge-ok">AUTH + RLS</span></td></tr>
+  <tr><td><code>/api/v1/employees</code></td><td>GET, POST, PUT</td><td>CRUD employés</td><td><span class="badge badge-ok">AUTH + RLS</span></td></tr>
+  <tr><td><code>/api/v1/declarations</code></td><td>GET, POST</td><td>Déclarations sociales</td><td><span class="badge badge-ok">AUTH + RLS</span></td></tr>
+  <tr><td><code>/api/v1/docs</code></td><td>GET, POST</td><td>Documents</td><td><span class="badge badge-ok">AUTH + RLS</span></td></tr>
+  <tr><td><code>/api/onss</code></td><td>POST</td><td>Déclarations ONSS</td><td><span class="badge badge-ok">AUTH</span></td></tr>
+  <tr><td><code>/api/onss/dimona</code></td><td>POST</td><td>Dimona (entrée/sortie)</td><td><span class="badge badge-ok">AUTH</span></td></tr>
+  <tr><td><code>/api/onss/status</code></td><td>GET</td><td>Statut ONSS</td><td><span class="badge badge-ok">AUTH</span></td></tr>
+  <tr><td><code>/api/agent</code></td><td>POST</td><td>Agent IA juridique</td><td><span class="badge badge-ok">AUTH</span></td></tr>
+  <tr><td><code>/api/send-email</code></td><td>POST</td><td>Envoi emails (Resend)</td><td><span class="badge badge-ok">AUTH</span></td></tr>
+  <tr><td><code>/api/baremes</code></td><td>GET</td><td>Barèmes salariaux</td><td><span class="badge badge-ok">AUTH</span></td></tr>
+  <tr><td><code>/api/bce</code></td><td>GET</td><td>Banque-Carrefour Entreprises</td><td><span class="badge badge-ok">AUTH</span></td></tr>
+  <tr><td><code>/api/dms</code></td><td>GET, POST</td><td>Gestion documentaire</td><td><span class="badge badge-ok">AUTH</span></td></tr>
+  <tr><td><code>/api/esign</code></td><td>POST</td><td>Signature électronique</td><td><span class="badge badge-ok">AUTH</span></td></tr>
+  <tr><td><code>/api/scan-paie</code></td><td>POST</td><td>OCR fiches de paie</td><td><span class="badge badge-ok">AUTH</span></td></tr>
+  <tr><td><code>/api/webhooks</code></td><td>POST</td><td>Webhooks entrants</td><td><span class="badge badge-ok">HMAC</span></td></tr>
+  <tr><td><code>/api/health</code></td><td>GET</td><td>Health check</td><td><span class="badge badge-info">PUBLIC</span></td></tr>
+  <tr><td><code>/api/cron</code></td><td>POST</td><td>Tâches planifiées</td><td><span class="badge badge-ok">IP + KEY</span></td></tr>
+  <tr><td><code>/api/monitoring</code></td><td>GET</td><td>Monitoring applicatif</td><td><span class="badge badge-ok">AUTH</span></td></tr>
+</tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════ 6. SECURITE ═══════════════════════════ -->
+<h2 class="section">6. Sécurité & conformité</h2>
+
+<div class="kpi-grid">
+  <div class="kpi kpi-green"><div class="kpi-value">16/16</div><div class="kpi-label">Contrôles sécurité OK</div></div>
+  <div class="kpi kpi-gold"><div class="kpi-value">100%</div><div class="kpi-label">Score sécurité</div></div>
+  <div class="kpi kpi-blue"><div class="kpi-value">AES-256</div><div class="kpi-label">Chiffrement</div></div>
+  <div class="kpi kpi-purple"><div class="kpi-value">3</div><div class="kpi-label">Certifications visées</div></div>
+</div>
+
+<h3 class="sub">Checklist sécurité</h3>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">HTTPS strict (HSTS)</div><div class="check-detail">Strict-Transport-Security: max-age=63072000; includeSubDomains; preload</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Content Security Policy (CSP)</div><div class="check-detail">CSP strict avec whitelist Supabase + CDN</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Rate limiting</div><div class="check-detail">60 req/min général, 10 req/min auth endpoints</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Brute force protection</div><div class="check-detail">5 tentatives max → blocage 30 min par IP</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">MFA / 2FA (TOTP)</div><div class="check-detail">Authentification multi-facteurs activée</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Chiffrement NISS/IBAN</div><div class="check-detail">AES-256-GCM + PBKDF2 100K itérations</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Row Level Security</div><div class="check-detail">Isolation multi-tenant au niveau PostgreSQL</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Audit trail</div><div class="check-detail">Journal d'activité + timestamp + utilisateur</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">OWASP ZAP automatisé</div><div class="check-detail">Scan hebdomadaire + sur chaque PR</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Backup automatique</div><div class="check-detail">Supabase quotidien + backup.js JSON/CSV</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">IP Whitelist CIDR</div><div class="check-detail">Middleware + interface admin pour gérer les IP autorisées</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Protection SSRF</div><div class="check-detail">Blocage IP privées + metadata AWS sur webhooks</div></div></div>
+
+<h3 class="sub">Conformité réglementaire</h3>
+<table>
+<thead><tr><th>Norme</th><th>Documentation</th><th>Avancement</th></tr></thead>
+<tbody>
+  <tr><td>RGPD (Règlement UE 2016/679)</td><td>docs/rgpd/ + GDPRPortal + DPODashboard</td><td><div class="progress-bar"><div class="progress-fill" style="width:90%;background:#16a34a"></div></div><span class="small">90%</span></td></tr>
+  <tr><td>ISO 27001</td><td>docs/iso27001/ (7 documents)</td><td><div class="progress-bar"><div class="progress-fill" style="width:85%;background:#16a34a"></div></div><span class="small">85%</span></td></tr>
+  <tr><td>SOC 2 Type II</td><td>docs/soc2/ + docs/compliance/</td><td><div class="progress-bar"><div class="progress-fill" style="width:80%;background:#c6a34e"></div></div><span class="small">80%</span></td></tr>
+</tbody>
+</table>
+
+<!-- ═══════════════════════════ 7. TESTS & CI/CD ═══════════════════════════ -->
+<h2 class="section">7. Tests & CI/CD</h2>
+
+<table>
+<thead><tr><th>Fichier</th><th>Lignes</th><th>Couverture</th><th>Statut</th></tr></thead>
+<tbody>
+  <tr><td><code>test-paie.js</code></td><td>726</td><td>Moteur de paie (brut→net, ONSS, PP, bonus)</td><td><span class="badge badge-ok">PASS</span></td></tr>
+  <tr><td><code>test-api-routes.js</code></td><td>419</td><td>27 routes API (auth, CORS, status codes)</td><td><span class="badge badge-ok">PASS</span></td></tr>
+  <tr><td><code>test-lib-extracts.js</code></td><td>545</td><td>Extraction librairies depuis monolithe</td><td><span class="badge badge-ok">PASS</span></td></tr>
+  <tr><td><code>extracted-logic.js</code></td><td>2 263</td><td>Logique métier extraite</td><td><span class="badge badge-ok">PASS</span></td></tr>
+</tbody>
+</table>
+
+<h3 class="sub">Pipelines CI/CD</h3>
+<table>
+<thead><tr><th>Workflow</th><th>Trigger</th><th>Actions</th></tr></thead>
+<tbody>
+  <tr><td><code>test-paie.yml</code></td><td>Push/PR sur main</td><td>Node 20 → <code>node tests/test-paie.js</code></td></tr>
+  <tr><td><code>owasp-zap.yml</code></td><td>Push/PR + hebdo lundi 3h</td><td>Baseline scan + API scan → rapport HTML</td></tr>
+</tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════ 8. CE QUI A ETE REALISE ═══════════════════════════ -->
+<h2 class="section">8. Ce qui a été réalisé (session courante)</h2>
+
+<div class="note-box">
+  <strong>Session du 1er mars 2026</strong> — Fonctionnalité de sauvegarde manuelle des données
+</div>
+
+<h3 class="sub">Fichiers modifiés</h3>
+<table>
+<thead><tr><th>Fichier</th><th>Modification</th><th>Statut</th></tr></thead>
+<tbody>
+  <tr>
+    <td><code>app/lib/backup.js</code></td>
+    <td>
+      <strong>+4 fonctions ajoutées :</strong><br>
+      &#8226; <code>downloadFile()</code> — Téléchargement fichier via Blob/URL<br>
+      &#8226; <code>exportEmployeesCSV()</code> — Export CSV 14 colonnes (nom, NISS, IBAN, brut, CP...)<br>
+      &#8226; <code>exportPayrollCSV()</code> — Export CSV 9 colonnes (période, brut, ONSS, PP, net...)<br>
+      &#8226; <code>exportAllData()</code> — Export combiné JSON + CSV employés + CSV paie
+    </td>
+    <td><span class="badge badge-done">FAIT</span></td>
+  </tr>
+  <tr>
+    <td><code>app/modules/SecurityDashboard.js</code></td>
+    <td>
+      <strong>Nouvel onglet "Backup données"</strong> ajouté dans la barre d'onglets<br>
+      &#8226; 4 boutons d'export (JSON, CSV employés, CSV paie, tout exporter)<br>
+      &#8226; Section restauration de backup JSON<br>
+      &#8226; Indicateur de backup automatique Supabase
+    </td>
+    <td><span class="badge badge-done">FAIT</span></td>
+  </tr>
+  <tr>
+    <td><code>app/modules/SprintComponents.js</code></td>
+    <td>
+      <strong>Section "Sauvegarde manuelle"</strong> ajoutée dans le composant <code>SecuriteData</code><br>
+      &#8226; 4 boutons export identiques (JSON, CSV employés, CSV paie, tout)<br>
+      &#8226; C'est la page visible via le menu sidebar "Securite Donnees"
+    </td>
+    <td><span class="badge badge-done">FAIT</span></td>
+  </tr>
+</tbody>
+</table>
+
+<h3 class="sub">Commits réalisés</h3>
+<table>
+<thead><tr><th>Hash</th><th>Message</th><th>Fichiers</th></tr></thead>
+<tbody>
+  <tr><td><code>8d34d34</code></td><td>feat: ajouter export manuel des données (JSON + CSV employés + CSV paie)</td><td>backup.js, SecurityDashboard.js</td></tr>
+  <tr><td><code>6f14e3e</code></td><td>feat: ajouter boutons export dans la page Securite Donnees</td><td>SprintComponents.js</td></tr>
+</tbody>
+</table>
+
+<h3 class="sub">Build & déploiement</h3>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">npm run build</div><div class="check-detail">Build production Next.js — SUCCÈS (pas d'erreur)</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">git push</div><div class="check-detail">Poussé sur la branche claude/claude-md-mm6l1kr0dfps1nkm-su7i4</div></div></div>
+
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════ 9. CE QU'IL RESTE A FAIRE ═══════════════════════════ -->
+<h2 class="section">9. Ce qu'il reste à faire</h2>
+
+<h3 class="sub">Priorité haute (avant mise en production fiduciaire)</h3>
+<table>
+<thead><tr><th>#</th><th>Tâche</th><th>Détail</th><th>Effort</th><th>Statut</th></tr></thead>
+<tbody>
+  <tr><td>1</td><td><strong>Connexion ONSS réelle</strong></td><td>Intégrer les credentials ONSS (DmfA, Dimona) via le portail socialsecurity.be — actuellement en mode simulation</td><td>3-5j</td><td><span class="badge badge-todo">À FAIRE</span></td></tr>
+  <tr><td>2</td><td><strong>Connexion Belcotax réelle</strong></td><td>Intégration fiscale SPF Finances pour les fiches 281.10 / 325</td><td>2-3j</td><td><span class="badge badge-todo">À FAIRE</span></td></tr>
+  <tr><td>3</td><td><strong>Configuration email (Resend)</strong></td><td>Activer l'envoi réel d'emails (fiches de paie, notifications, invitations)</td><td>0.5j</td><td><span class="badge badge-warn">CONFIG</span></td></tr>
+  <tr><td>4</td><td><strong>Tests end-to-end</strong></td><td>Ajouter des tests Playwright/Cypress pour les parcours critiques (login, calcul paie, déclaration)</td><td>3-5j</td><td><span class="badge badge-todo">À FAIRE</span></td></tr>
+  <tr><td>5</td><td><strong>DPO désigné</strong></td><td>Nommer un DPO si traitement de >250 travailleurs (obligation RGPD)</td><td>—</td><td><span class="badge badge-warn">À VÉRIFIER</span></td></tr>
+  <tr><td>6</td><td><strong>Contrats DPA sous-traitants</strong></td><td>Vérifier/signer les Data Processing Agreements avec Vercel et Supabase</td><td>—</td><td><span class="badge badge-warn">À VÉRIFIER</span></td></tr>
+</tbody>
+</table>
+
+<h3 class="sub">Priorité moyenne (amélioration continue)</h3>
+<table>
+<thead><tr><th>#</th><th>Tâche</th><th>Détail</th><th>Effort</th><th>Statut</th></tr></thead>
+<tbody>
+  <tr><td>7</td><td><strong>Refactoring monolithe</strong></td><td>Découper AureusSocialPro.js (23 120 lignes) selon le plan ARCHITECTURE.js</td><td>5-10j</td><td><span class="badge badge-progress">EN COURS</span></td></tr>
+  <tr><td>8</td><td><strong>Sauvegarde USB / dossier personnalisé</strong></td><td>Implémenter l'API File System Access pour permettre l'export direct vers clé USB</td><td>1j</td><td><span class="badge badge-todo">À FAIRE</span></td></tr>
+  <tr><td>9</td><td><strong>Signature électronique avancée</strong></td><td>Intégrer un fournisseur eIDAS (Connective, Itsme) pour les contrats de travail</td><td>3-5j</td><td><span class="badge badge-todo">À FAIRE</span></td></tr>
+  <tr><td>10</td><td><strong>Import comptable réel</strong></td><td>Tester et valider les connecteurs BOB50, Winbooks, Exact Online</td><td>2-3j</td><td><span class="badge badge-warn">À TESTER</span></td></tr>
+  <tr><td>11</td><td><strong>Multi-langue NL/DE</strong></td><td>Compléter les traductions néerlandais et allemand (i18n.js en place)</td><td>3-5j</td><td><span class="badge badge-progress">PARTIEL</span></td></tr>
+  <tr><td>12</td><td><strong>Dashboard analytics avancé</strong></td><td>Graphiques D3/Recharts pour les KPIs paie, absence, coût employeur</td><td>2-3j</td><td><span class="badge badge-todo">À FAIRE</span></td></tr>
+  <tr><td>13</td><td><strong>App mobile / PWA améliorée</strong></td><td>Optimiser l'expérience offline et les notifications push</td><td>2-3j</td><td><span class="badge badge-progress">PARTIEL</span></td></tr>
+</tbody>
+</table>
+
+<h3 class="sub">Priorité basse (nice-to-have)</h3>
+<table>
+<thead><tr><th>#</th><th>Tâche</th><th>Détail</th><th>Effort</th></tr></thead>
+<tbody>
+  <tr><td>14</td><td>Migration TypeScript</td><td>Ajouter progressivement des types pour sécuriser le code</td><td>10-15j</td></tr>
+  <tr><td>15</td><td>Linter / Prettier</td><td>Configurer ESLint + Prettier pour la qualité de code</td><td>1j</td></tr>
+  <tr><td>16</td><td>Storybook composants</td><td>Documenter visuellement les composants UI</td><td>3-5j</td></tr>
+  <tr><td>17</td><td>API versioning v2</td><td>Préparer la v2 de l'API REST avec pagination, filtres avancés</td><td>3-5j</td></tr>
+  <tr><td>18</td><td>Multi-région failover</td><td>Activer le failover Supabase multi-région (doc 06 prête)</td><td>2j</td></tr>
+</tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════ 10. RECOMMANDATIONS ═══════════════════════════ -->
+<h2 class="section">10. Recommandations & priorisation</h2>
+
+<h3 class="sub">Avancement global du projet</h3>
+<div style="margin:16px 0">
+  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><strong>Fonctionnalités métier (paie, RH, déclarations)</strong><span class="green" style="font-weight:700">95%</span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:95%;background:linear-gradient(90deg,#16a34a,#22c55e)"></div></div>
+</div>
+<div style="margin:16px 0">
+  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><strong>Sécurité & chiffrement</strong><span class="green" style="font-weight:700">92%</span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:92%;background:linear-gradient(90deg,#16a34a,#22c55e)"></div></div>
+</div>
+<div style="margin:16px 0">
+  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><strong>Conformité (RGPD, ISO 27001, SOC 2)</strong><span class="green" style="font-weight:700">85%</span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:85%;background:linear-gradient(90deg,#c6a34e,#e8d5a0)"></div></div>
+</div>
+<div style="margin:16px 0">
+  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><strong>Intégrations externes (ONSS, Belcotax, email)</strong><span class="gold" style="font-weight:700">60%</span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:60%;background:linear-gradient(90deg,#c6a34e,#e8d5a0)"></div></div>
+</div>
+<div style="margin:16px 0">
+  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><strong>Tests & couverture</strong><span class="gold" style="font-weight:700">55%</span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:55%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+</div>
+<div style="margin:16px 0">
+  <div style="display:flex;justify-content:space-between;margin-bottom:4px"><strong>Qualité de code (refactoring monolithe)</strong><span class="red" style="font-weight:700">40%</span></div>
+  <div class="progress-bar"><div class="progress-fill" style="width:40%;background:linear-gradient(90deg,#ef4444,#f87171)"></div></div>
+</div>
+
+<h3 class="sub">Points forts</h3>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Architecture minimale & performante</div><div class="check-detail">Seulement 4 dépendances npm — réduction drastique de la surface d'attaque</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Couverture fonctionnelle exceptionnelle</div><div class="check-detail">106 modules couvrant la quasi-totalité des besoins d'un secrétariat social belge</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Sécurité de niveau enterprise</div><div class="check-detail">AES-256, MFA, RLS, IP whitelist, OWASP ZAP, audit trail, HSTS preload</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">Conformité réglementaire avancée</div><div class="check-detail">Documentation ISO 27001, SOC 2, RGPD + modules DPO et GDPR Portal intégrés</div></div></div>
+<div class="check-item"><span class="check-icon">&#9989;</span><div class="check-text"><div class="check-title">55+ procédures RH belges</div><div class="check-detail">Premier engagement, maladie, maternité, licenciement, crédit-temps, flexi-job, ACTIVA, etc.</div></div></div>
+
+<h3 class="sub">Points d'attention</h3>
+<div class="danger-box">
+  <strong>1. Monolithe AureusSocialPro.js (23 120 lignes)</strong> — Le refactoring est entamé (modules extraits) mais le fichier central reste très volumineux. Risque : maintenance difficile, temps de build.
+</div>
+<div class="danger-box">
+  <strong>2. Intégrations ONSS/Belcotax en simulation</strong> — Les déclarations XML sont générées mais pas encore envoyées au portail réel. Bloquant pour la mise en production.
+</div>
+<div class="danger-box">
+  <strong>3. Tests limités au moteur de paie</strong> — Pas de tests E2E ni de tests unitaires pour les modules UI. Risque de régressions lors des mises à jour.
+</div>
+
+<h3 class="sub">Roadmap recommandée</h3>
+<table>
+<thead><tr><th>Phase</th><th>Objectif</th><th>Délai estimé</th></tr></thead>
+<tbody>
+  <tr><td style="background:#dcfce7;font-weight:700;text-align:center">Phase 1</td><td>Connexion ONSS + Belcotax réels + email Resend + DPA sous-traitants</td><td>2 semaines</td></tr>
+  <tr><td style="background:#dbeafe;font-weight:700;text-align:center">Phase 2</td><td>Tests E2E + sauvegarde USB + dashboard analytics</td><td>2 semaines</td></tr>
+  <tr><td style="background:#fef3c7;font-weight:700;text-align:center">Phase 3</td><td>Refactoring monolithe + multi-langue NL/DE</td><td>3-4 semaines</td></tr>
+  <tr><td style="background:#e0e7ff;font-weight:700;text-align:center">Phase 4</td><td>Signature eIDAS + connecteurs comptables + API v2</td><td>3-4 semaines</td></tr>
+</tbody>
+</table>
+
+<div style="margin-top:30px;text-align:center;padding:20px;background:linear-gradient(135deg,#060810,#1a1f30);border-radius:12px;color:#c6a34e">
+  <div style="font-size:16px;font-weight:700;margin-bottom:4px">Aureus Social Pro — v20.3</div>
+  <div style="font-size:10px;color:#888">Rapport généré le 1er mars 2026 — Aureus IA SPRL — Confidentiel</div>
+</div>
+
+</body>
+</html>

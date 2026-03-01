@@ -1,7 +1,8 @@
-// ═══ AUREUS SOCIAL PRO — Module: Lois Belges 2026 ═══
-// Constantes légales centralisées + timeline auto-update
+// ═══ AUREUS SOCIAL PRO — Constantes legales belges ═══
+// Extrait du monolithe pour reutilisation dans les modules
+"use client";
 
-var LOIS_BELGES = {
+export const LOIS_BELGES = {
   _meta: { version: '2026.1.0', dateMAJ: '2026-01-01', source: 'SPF Finances / ONSS / CNT / Moniteur Belge', annee: 2026 },
 
   // ═══ ONSS ═══
@@ -17,12 +18,12 @@ var LOIS_BELGES = {
   // ═══ PRÉCOMPTE PROFESSIONNEL ═══
   pp: {
     tranches: [
-      { min: 0, max: 16310, taux: 0.2675 },
-      { min: 16310, max: 28790, taux: 0.4280 },
-      { min: 28790, max: 49820, taux: 0.4815 },
-      { min: 49820, max: Infinity, taux: 0.5350 },
+      { min: 0, max: 16710, taux: 0.2675 },
+      { min: 16710, max: 29500, taux: 0.4280 },
+      { min: 29500, max: 51050, taux: 0.4815 },
+      { min: 51050, max: Infinity, taux: 0.5350 },
     ],
-    fraisPro: { salarie: { pct: 0.30, max: 5930 }, dirigeant: { pct: 0.03, max: 3120 }},
+    fraisPro: { salarie: { pct: 0.30, max: 6070 }, dirigeant: { pct: 0.03, max: 3120 }},
     quotiteExemptee: { bareme1: 2987.98, bareme2: 5975.96 },
     quotientConjugal: { pct: 0.30, max: 12520 },
     reductionsEnfants: [0, 624, 1656, 4404, 7620, 11100, 14592, 18120, 21996],
@@ -63,12 +64,13 @@ var LOIS_BELGES = {
 
   // ═══ RÉMUNÉRATION ═══
   remuneration: {
-    RMMMG: { montant18ans: RMMMG, montant20ans6m: RMMMG, montant21ans12m: RMMMG, source: 'CNT - CCT 43/15' },
+    RMMMG: { montant18ans: 2070.48, montant20ans6m: 2070.48, montant21ans12m: 2070.48, source: 'CNT - CCT 43/15' },
     indexSante: { coeff: 2.0399, pivot: 125.60, dateDerniereIndex: '2024-12-01', prochainPivotEstime: '2026-06-01' },
     peculeVacances: {
-      simple: { pct: PV_SIMPLE, base: 'brut annuel precedent' },
+      simple: { pct: 0.0767, base: 'brut annuel precedent' },
       double: { pct: 0.9200, base: 'brut mensuel' },
-      patronal: { pct: (PV_SIMPLE*2+0.001), base: 'brut annuel precedent' },
+      patronal: { pct: 0.1535, base: 'brut annuel precedent' },
+      ouvrierDouble: { pct: 0.0858, base: 'brut ouvrier x 108%' },
     },
     treizieme: { obligatoire: true, cp200: true, base: 'salaire mensuel brut', onss: true },
   },
@@ -76,8 +78,8 @@ var LOIS_BELGES = {
   // ═══ CHÈQUES-REPAS ═══
   chequesRepas: {
     partTravailleur: { min: 1.09, max: null },
-    valeurFaciale: { max: 10.00 },
-    partPatronale: { max: 8.91 },
+    valeurFaciale: { max: 8.00 },
+    partPatronale: { max: 6.91 },
     conditions: 'Par jour effectivement preste',
     exonerationFiscale: true,
     exonerationONSS: true,
@@ -85,10 +87,33 @@ var LOIS_BELGES = {
 
   // ═══ FRAIS PROPRES EMPLOYEUR ═══
   fraisPropres: {
-    forfaitBureau: { max: 157.83, base: 'mensuel' },
-    forfaitDeplacement: { voiture: FORF_KM, velo: 0.35, transportCommun: 1.00 },
+    forfaitBureau: { max: 154.74, base: 'mensuel' },
+    forfaitDeplacement: { voiture: 0.4415, velo: 0.35, transportCommun: 1.00 },
     forfaitRepresentation: { max: 40, base: 'mensuel sans justificatif' },
-    teletravail: { max: 157.83, base: 'mensuel structurel' },
+    teletravail: { max: 154.74, base: 'mensuel structurel' },
+  },
+
+
+  // ═══ AVANTAGES — ALIAS POUR MODULES ═══
+  avantages: {
+    fraisPropres: {
+      bureau: 154.74,
+      km: 0.4415,
+      repas: 19.22,
+      teletravail: 154.74,
+    },
+    atnGSM: 3,
+    atnPC: 6,
+    atnInternet: 5,
+    ecoMax: 250,
+  },
+
+
+  // ═══ COTISATIONS SPÉCIALES ═══
+  cotisations: {
+    cotCO2Min: 31.34,
+    plafondONSS: 75038.09,
+    flexiJob: { plafond: 12000, taux: 0.2807 },
   },
 
   // ═══ ATN — AVANTAGES EN NATURE ═══
@@ -155,8 +180,8 @@ var LOIS_BELGES = {
   // ═══ CONTRATS ═══
   contrats: {
     periodeEssai: { supprimee: true, exception: 'travail etudiant/interim/occupation temporaire' },
-    clauseNonConcurrence: { dureeMax: 12, brut_min: 44447, brut_mid: 88895, indemniteMin: 0.50 },
-    ecolecholage: { dureeMax: 36, brut_min: 44447, formationMin: 80 },
+    clauseNonConcurrence: { dureeMax: 12, brut_min: 42441, indemniteMin: 0.50 },
+    ecolecholage: { dureeMax: 36, brut_min: 39422, formationMin: 80 },
   },
 
   // ═══ SEUILS SOCIAUX ═══
@@ -173,7 +198,7 @@ var LOIS_BELGES = {
   // ═══ ASSURANCES ═══
   assurances: {
     accidentTravail: { taux: 0.01, obligatoire: true },
-    medecineTravail: { cout: COUT_MED, parTravailleur: true, annuel: false },
+    medecineTravail: { cout: 91.50, parTravailleur: true, annuel: false },
     assuranceLoi: { obligatoire: true },
     assuranceGroupe: { deductible: true, plafond80pct: true },
   },
@@ -220,379 +245,265 @@ var LOIS_BELGES = {
     { id: 'statbel', nom: 'Statbel', url: 'https://statbel.fgov.be/fr/themes/prix-la-consommation/indice-sante', type: 'Index/Prix' },
     { id: 'bnb', nom: 'Banque Nationale', url: 'https://www.nbb.be', type: 'Bilan social' },
     { id: 'refli', nom: 'Refli.be', url: 'https://refli.be/fr/documentation/computation/tax', type: 'Reference technique' },
-    { id: 'inasti', nom: 'INASTI/NISSE', url: 'https://www.nisse.be', type: 'Cotisations indépendants' },
   ],
-
-  // ═══ RÉGIME INDÉPENDANTS — INASTI/NISSE 2026 ═══
-  // Source: AR 19/12/1967 + Loi 05/08/2022 + Index 01/01/2026
-  // Caisse sociale: perception trimestrielle (pas ONSS)
-  inasti: {
-    // ── Cotisations sociales trimestrielles (sur revenu net imposable annuel) ──
-    cotisations: {
-      // Taux principal: 20,50% jusqu'au plafond 1, puis 14,16% jusqu'au plafond 2
-      tranche1: { taux: 0.2050, plafond: 73907.41 },  // indexé 2026
-      tranche2: { taux: 0.1416, plafond: 108942.74 },  // indexé 2026
-      // Au-delà du plafond 2: 0%
-      plafondAbsolu: 108942.74,
-    },
-    // ── Frais de gestion caisse sociale (en sus des cotisations) ──
-    fraisGestion: 0.0305, // 3,05% — variable selon caisse d'assurances sociales
-    
-    // ── Minimums trimestriels par catégorie (indexés 2026) ──
-    minimums: {
-      principal: {
-        provisoire: 876.42,      // cotisation provisoire minimum/trimestre
-        definitif: 876.42,       // cotisation définitive minimum/trimestre
-        annuel: 3505.68,         // = 4 × 876.42
-      },
-      complementaire: {
-        provisoire: 87.64,       // minimum beaucoup plus bas
-        definitif: 87.64,
-        annuel: 350.56,
-      },
-      pensionActif: {            // indépendant pensionné < 65 ans
-        provisoire: 876.42,      // même que principal si activité principale
-        definitif: 876.42,
-      },
-      pensionRetraite: {         // pensionné ≥ 65 ans (activité autorisée)
-        provisoire: 87.64,       // minimum réduit
-        definitif: 87.64,
-      },
-      conjointAidant: {
-        maxiStatut: 876.42,      // maxi-statut = même que principal
-        miniStatut: 292.14,      // mini-statut (uniquement maladie/invalidité)
-      },
-      etudiant: {
-        provisoire: 87.64,       // étudiant-entrepreneur (< 25 ans)
-        definitif: 87.64,
-        seuilExoneration: 8429.88, // si revenu net < ce seuil → pas de cotisation
-      },
-    },
-
-    // ── Primo-starters (4 premiers trimestres d'activité) ──
-    primoStarter: {
-      reductionPct: 0,           // pas de réduction automatique
-      cotisProvisoire: 876.42,   // cotisation provisoire minimum (peut demander réduction)
-      cotisReduite: 438.21,      // si réduction accordée par caisse sociale
-    },
-
-    // ── Dispense de cotisations (Art. 22 AR 19/12/1967) ──
-    // Possible si difficultés financières — demande à la caisse sociale
-    // Couverture maintenue mais droits pension réduits
-
-    // ── Couverture sociale incluse dans les cotisations ──
-    couverture: {
-      pension: true,             // pension de retraite + survie
-      maladieInvalidite: true,   // soins de santé + incapacité de travail
-      allocationsFamiliales: true, // via Famiwal/Fons/Kind&Gezin
-      maternite: true,           // repos maternité (12 sem employée, 12 sem indépendante)
-      aidantProche: true,        // droit passerelle (faillite, cessation forcée)
-      droitPasserelle: true,     // max 12 mois d'allocation en cas de cessation
-      // PAS inclus: chômage (pas de droit), accident du travail (assurance privée)
-    },
-
-    // ── IPP (Impôt des Personnes Physiques) — même barème que salariés ──
-    // Mais pas de précompte professionnel retenu à la source
-    // → Versements anticipés obligatoires (VA1-VA4) sinon majoration 4,5%
-    versementsAnticipes: {
-      VA1: { trimestre: 'Q1', echeance: '10 avril', avantage: 3.0 },    // % de bonification
-      VA2: { trimestre: 'Q2', echeance: '10 juillet', avantage: 2.5 },
-      VA3: { trimestre: 'Q3', echeance: '10 octobre', avantage: 2.0 },
-      VA4: { trimestre: 'Q4', echeance: '20 décembre', avantage: 1.5 },
-      majoration: 0.045,         // 4,5% majoration si pas de VA suffisants
-    },
-
-    // ── Frais professionnels (forfait ou réels) ──
-    fraisPro: {
-      forfait: { pct: 0.30, max: 5930 }, // 30% plafonné (même barème que salariés)
-      reel: true,                // l'indépendant peut déduire les frais réels (comptabilité)
-    },
-
-    // ── Statut social du conjoint aidant ──
-    // Obligatoire depuis 01/07/2005 pour conjoint non divorcé d'un indépendant
-    // qui aide régulièrement dans l'activité
-    conjointAidant: {
-      miniStatut: { couverture: ['maladie', 'invalidite', 'maternite'], pension: false },
-      maxiStatut: { couverture: ['pension', 'maladie', 'invalidite', 'maternite', 'droitPasserelle'], pension: true },
-    },
-
-    // ── Société de management / Dirigeant d'entreprise (Art. 32 CIR 92) ──
-    // Le dirigeant peut percevoir une rémunération (soumise ONSS comme salarié)
-    // ET/OU des dividendes (précompte mobilier 30% ou VVPRbis 15%/20%)
-    // Règle des 80%: pension complémentaire limitée à 80% de la dernière rémunération
-    // Rémunération minimale recommandée: 45.000€ pour taux réduit ISOC
-    dirigeant: {
-      remunerationMinISO: 45000, // pour bénéficier du taux réduit ISOC 20%
-      dividendeSeuil: 0.30,      // PM 30% (standard)
-      vvprbisTaux1: 0.15,        // VVPRbis: 15% à partir de 3ème exercice
-      vvprbisTaux2: 0.20,        // VVPRbis: 20% au 2ème exercice
-      regle80pct: 0.80,          // pension complémentaire max 80% dernière rémunération
-    },
-  },
 };
 
-// ═══════════════════════════════════════════════════════════════════
-// MOTEUR DE VEILLE LÉGALE AUTOMATIQUE — Timeline par date effective
-// Chaque entrée = une date effective + les constantes qui changent CE JOUR-LÀ
-// Le moteur applique toutes les entrées <= date du jour, dans l'ordre chronologique
-// ═══════════════════════════════════════════════════════════════════
+export const LB=LOIS_BELGES;
+export const TX_ONSS_W=LB.onss.travailleur; // 0.1307
+export const TX_ONSS_E=LB.onss.employeur.total; // 0.2507
+export const TX_OUV108=LB.onss.ouvrier108; // 1.08
+export const TX_AT=LB.assurances.accidentTravail.taux; // 0.01
+export const COUT_MED=LB.assurances.medecineTravail.cout; // COUT_MED
+export const CR_TRAV=LB.chequesRepas.partTravailleur.min; // CR_TRAV
+export const PP_EST=0.22; // PP estimation moyenne (~22% de l'imposable)
+export const NET_FACTOR=(1-TX_ONSS_W)*(1-PP_EST); // facteur net approx = ~0.5645
+export const quickNetEst=(b)=>Math.round(b*NET_FACTOR*100)/100; // estimation rapide net
 
-var LOIS_BELGES_TIMELINE = [
-  // ─── 2024 ────────────────────────────────────────────────────────
-  { date: '2024-01-01', source: 'MB — Index salaires conv. / SPF Finances',
-    cct90: { plafondONSS: 4020, plafondFiscal: 3496, cotisationPatronale: 0.33, cotisationTravailleur: 0.1307 },
-    chequesRepas: { valeurMax: 8.00, partPatronaleMax: 6.91, partTravailleurMin: 1.09, deductibilite: 2.00 },
-    seuils: { ecolage: 39353, nonConcurrenceBas: 39353, nonConcurrenceHaut: 78606, arbitrage: 78606, supplementChomTemp: 3946 },
-    teletravail: { forfaitBureau: 148.73, internet: 20, pc: 20, ecran: 5 },
-    rmmmg: { montant18: 1994.18 },
-    indemKm: { voiture: 0.4269, velo: 0.35 },
-    pp: { fraisProMax: 5520, quotiteExemptee1: 2887.55 },
-  },
-  { date: '2024-06-01', source: 'ONSS Instructions 2024/2',
-    teletravail: { forfaitBureau: 151.70 },
-  },
-  { date: '2024-07-01', source: 'AR indem. km 2024-2025',
-    indemKm: { voiture: 0.4269, velo: 0.35 },
-  },
+// ═══ SPRINT 41: EXPORTS COMPTABLES RÉELS ═══
+export function generateExportCompta(format,ops,periode,company){
+  const co=company||{};const coName=co.name||'Aureus IA SPRL';const coVAT=(co.vat||'BE1028230781').replace(/[^A-Z0-9]/g,'');
+  const f2=v=>(Math.round(v*100)/100).toFixed(2);
+  const fBE=v=>f2(v).replace('.',',');
+  const now=new Date();const dateStr=now.toISOString().slice(0,10);const periodeStr=periode||dateStr.slice(0,7);
+  const journal='OD';const piece='SAL'+periodeStr.replace(/-/g,'');
+  let output='';let filename='';let mime='text/plain';
+  // ——— BOB50 ———
+  if(format==='bob50'||format==='bob'){
+    // BOB50 format: journal|date|piece|compte|libelle|montant_debit|montant_credit
+    output=ops.map(o=>[journal,dateStr.replace(/-/g,''),piece,o.compte,'"'+o.desc.replace(/"/g,"'")+'"',o.sens==='D'?fBE(o.montant):'0,00',o.sens==='C'?fBE(o.montant):'0,00'].join('\t')).join('\n');
+    output='Journal\tDate\tPiece\tCompte\tLibelle\tDebit\tCredit\n'+output;
+    filename='BOB50_OD_'+periodeStr+'.txt';
+  }
+  // ——— WINBOOKS ———
+  else if(format==='winbooks'){
+    // Winbooks TXT: DBK|BOOKYEAR|PERIOD|DOCNUMBER|ACCOUNTGL|AMOUNTEUR|DTEFROM|COMMENT
+    const year=now.getFullYear();const month=now.getMonth()+1;
+    output=ops.map((o,i)=>['OD',year,month.toString().padStart(2,'0'),piece,(o.compte||'').padEnd(10,' '),o.sens==='D'?f2(o.montant):'-'+f2(o.montant),dateStr.replace(/-/g,''),o.desc.slice(0,40)].join('\t')).join('\n');
+    output='DBK\tBOOKYEAR\tPERIOD\tDOCNUMBER\tACCOUNTGL\tAMOUNTEUR\tDTEFROM\tCOMMENT\n'+output;
+    filename='Winbooks_OD_'+periodeStr+'.txt';
+  }
+  // ——— EXACT ONLINE ———
+  else if(format==='exact'){
+    // Exact CSV: Journal;Boekjaar;Periode;Dagboek;Rekeningnr;Omschrijving;Debet;Credit;Datum
+    output=ops.map(o=>['OD',now.getFullYear(),now.getMonth()+1,'OD',o.compte,'"'+o.desc+'"',o.sens==='D'?fBE(o.montant):'',o.sens==='C'?fBE(o.montant):'',dateStr.split('-').reverse().join('/')].join(';')).join('\n');
+    output='Journal;Boekjaar;Periode;Dagboek;Rekeningnr;Omschrijving;Debet;Credit;Datum\n'+output;
+    filename='Exact_OD_'+periodeStr+'.csv';mime='text/csv';
+  }
+  // ——— HORUS ———
+  else if(format==='horus'){
+    // Horus XML format
+    const entries=ops.map((o,i)=>'<Entry seq="'+(i+1)+'"><Account>'+o.compte+'</Account><Description>'+o.desc.replace(/&/g,'&amp;')+'</Description><Debit>'+(o.sens==='D'?f2(o.montant):'0.00')+'</Debit><Credit>'+(o.sens==='C'?f2(o.montant):'0.00')+'</Credit><Date>'+dateStr+'</Date></Entry>').join('');
+    output='<?xml version="1.0" encoding="UTF-8"?>\n<HorusExport><Journal>OD</Journal><Period>'+periodeStr+'</Period><Company>'+coName+'</Company><VAT>'+coVAT+'</VAT><Entries>'+entries+'</Entries></HorusExport>';
+    filename='Horus_OD_'+periodeStr+'.xml';mime='application/xml';
+  }
+  // ——— OCTOPUS ———
+  else if(format==='octopus'){
+    // Octopus CSV: Dagboek,Datum,Stuk,Rekening,Omschrijving,Debet,Credit
+    output=ops.map(o=>['OD',dateStr.split('-').reverse().join('/'),piece,o.compte,'"'+o.desc+'"',o.sens==='D'?fBE(o.montant):'',o.sens==='C'?fBE(o.montant):''].join(',')).join('\n');
+    output='Dagboek,Datum,Stuk,Rekening,Omschrijving,Debet,Credit\n'+output;
+    filename='Octopus_OD_'+periodeStr+'.csv';mime='text/csv';
+  }
+  // ——— YUKI ———
+  else if(format==='yuki'){
+    // Yuki XML
+    const lines=ops.map((o,i)=>'<Line><LineNumber>'+(i+1)+'</LineNumber><GLAccountCode>'+o.compte+'</GLAccountCode><Description>'+o.desc.replace(/&/g,'&amp;')+'</Description><DebitAmount>'+(o.sens==='D'?f2(o.montant):'0.00')+'</DebitAmount><CreditAmount>'+(o.sens==='C'?f2(o.montant):'0.00')+'</CreditAmount></Line>').join('');
+    output='<?xml version="1.0" encoding="UTF-8"?>\n<YukiImport><Administration>'+coVAT+'</Administration><Journal><Code>OD</Code><Description>OD Salaires '+periodeStr+'</Description><Date>'+dateStr+'</Date><Lines>'+lines+'</Lines></Journal></YukiImport>';
+    filename='Yuki_OD_'+periodeStr+'.xml';mime='application/xml';
+  }
+  // ——— KLUWER ———
+  else if(format==='kluwer'){
+    output=ops.map(o=>['OD',dateStr.replace(/-/g,''),piece,o.compte,o.desc.slice(0,40).padEnd(40,' '),o.sens==='D'?fBE(o.montant).padStart(15,' '):''.padStart(15,' '),o.sens==='C'?fBE(o.montant).padStart(15,' '):''.padStart(15,' ')].join('|')).join('\n');
+    filename='Kluwer_OD_'+periodeStr+'.txt';
+  }
+  // ——— POPSY ———
+  else if(format==='popsy'){
+    output=ops.map((o,i)=>[piece,dateStr.replace(/-/g,''),o.compte,o.desc.slice(0,30),o.sens==='D'?fBE(o.montant):'0,00',o.sens==='C'?fBE(o.montant):'0,00'].join(';')).join('\n');
+    output='Piece;Date;Compte;Libelle;Debit;Credit\n'+output;
+    filename='Popsy_OD_'+periodeStr+'.txt';
+  }
+  // Download
+  var blob=new Blob([output],{type:mime+';charset=utf-8'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);
+  return {filename,size:output.length,lines:output.split('\n').length};
+}
 
-  // ─── 2025 ────────────────────────────────────────────────────────
-  { date: '2025-01-01', source: 'MB 13/11/2024 — Index salaires conv.',
-    cct90: { plafondONSS: 4164, plafondFiscal: 3622 },
-    seuils: { ecolage: 43106, nonConcurrenceBas: 43106, nonConcurrenceHaut: 86212, arbitrage: 86212, supplementChomTemp: 4149 },
-    pp: { fraisProMax: 5750, quotiteExemptee1: 2920.86 },
-    rmmmg: { montant18: 2029.88 },
-  },
-  { date: '2025-03-01', source: 'ONSS Instructions 2025/1',
-    teletravail: { forfaitBureau: 157.83 },
-  },
-  { date: '2025-07-01', source: 'AR indem. km 2025-2026',
-    indemKm: { voiture: 0.4415, velo: 0.35 },
-  },
+// ═══ SPRINT 41: CSV EXPORT TRAVAILLEURS ═══
+export function exportTravailleurs(emps,company){
+  const co=company||{};const coName=co.name||'';
+  const headers=['NISS','Nom','Prenom','DateNaissance','Genre','Email','Telephone','Adresse','CodePostal','Ville','IBAN','BIC','Statut','TypeContrat','DateEntree','DateSortie','Fonction','Regime','BrutMensuel','CP','Matricule'];
+  const rows=emps.map(e=>[
+    (e.niss||''),
+    (e.last||e.ln||'').replace(/;/g,','),
+    (e.first||e.fn||'').replace(/;/g,','),
+    (e.birthDate||''),
+    (e.gender||''),
+    (e.email||''),
+    (e.phone||''),
+    (e.address||''),
+    (e.zip||''),
+    (e.city||''),
+    (e.iban||''),
+    (e.bic||''),
+    (e.statut||'Employe'),
+    (e.contractType||'CDI'),
+    (e.startDate||''),
+    (e.endDate||''),
+    (e.fonction||e.jobTitle||''),
+    (+e.regime||100)+'%',
+    (+(e.monthlySalary||e.gross||0)).toFixed(2),
+    (e.cp||''),
+    (e.matricule||e.id||'')
+  ].join(';'));
+  const csv='\uFEFF'+headers.join(';')+'\n'+rows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='Travailleurs_'+coName.replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);
+  return rows.length;
+}
 
-  // ─── 2026 ────────────────────────────────────────────────────────
-  { date: '2026-01-01', source: 'MB 13/11/2025 + AR 10/11/2025 + Loi 30/12/2025',
-    cct90: { plafondONSS: 4255, plafondFiscal: 3701 },
-    chequesRepas: { valeurMax: 10.00, partPatronaleMax: 8.91, partTravailleurMin: 1.09, deductibilite: 4.00 },
-    seuils: { ecolage: 44447, nonConcurrenceBas: 44447, nonConcurrenceHaut: 88895, arbitrage: 88895, supplementChomTemp: 4284 },
-    pp: { fraisProMax: 5930, quotiteExemptee1: 2987.98 },
-    rmmmg: { montant18: 2070.48 },
-  },
-  // Le forfait télétravail n'a PAS changé en mars 2026 (reste 157,83 depuis mars 2025)
-  // Dès publication: ajouter { date: '2026-03-01', teletravail: { forfaitBureau: XXX.XX } }
-  // Idem pour indem. km: { date: '2026-07-01', indemKm: { voiture: X.XXXX } }
+// ═══ SPRINT 41: CSV IMPORT TRAVAILLEURS ═══
+export function importTravailleurs(csvText){
+  const lines=csvText.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2)return {error:'Fichier vide ou sans données',imported:[]};
+  const headers=lines[0].split(';').map(h=>h.trim().toLowerCase());
+  const fieldMap={
+    'niss':'niss','nom':'last','prenom':'first','datenaissance':'birthDate',
+    'genre':'gender','email':'email','telephone':'phone','adresse':'address',
+    'codepostal':'zip','ville':'city','iban':'iban','bic':'bic',
+    'statut':'statut','typecontrat':'contractType','dateentree':'startDate',
+    'datesortie':'endDate','fonction':'fonction','regime':'regime',
+    'brutmensuel':'gross','cp':'cp','matricule':'matricule',
+    'last':'last','first':'first','fn':'first','ln':'last',
+    'name':'last','firstname':'first','lastname':'last',
+    'salary':'gross','brut':'gross','gross':'gross',
+    'contract':'contractType','type':'contractType',
+    'start':'startDate','end':'endDate','birth':'birthDate'
+  };
+  const colMap=headers.map(h=>{
+    const clean=h.replace(/[^a-z]/g,'');
+    return fieldMap[clean]||null;
+  });
+  const imported=[];
+  for(let i=1;i<lines.length;i++){
+    const vals=lines[i].split(';');
+    if(vals.length<3)continue;
+    const emp={id:'imp_'+Date.now()+'_'+i,status:'active'};
+    colMap.forEach((field,j)=>{
+      if(field&&vals[j]!==undefined){
+        let v=vals[j].trim().replace(/^"|"$/g,'');
+        if(field==='gross')v=parseFloat(v.replace(',','.'))||0;
+        else if(field==='regime')v=parseInt(v)||100;
+        emp[field]=v;
+      }
+    });
+    if(emp.first||emp.last||emp.niss)imported.push(emp);
+  }
+  return {imported,count:imported.length,headers:headers};
+}
+
+// ═══ SPRINT 41: TEST SUITE CALCULS PAIE ═══
+function runPayrollTests(){
+  const tests=[];
+  const assert=(name,actual,expected,tolerance)=>{
+    const tol=tolerance||0.01;
+    const pass=Math.abs(actual-expected)<=tol;
+    tests.push({name,actual:Math.round(actual*100)/100,expected,pass,diff:Math.round((actual-expected)*100)/100});
+  };
+  // ══ ONSS TRAVAILLEUR ══
+  assert('ONSS 3500 brut',3500*TX_ONSS_W,457.45);
+  assert('ONSS 2000 brut',2000*TX_ONSS_W,261.40);
+  assert('ONSS 5000 brut',5000*TX_ONSS_W,653.50);
+  // ══ PRECOMPTE PROFESSIONNEL (formule-clé SPF) ══
+  const pp1=calcPrecompteExact(3500,{situation:'isole',enfants:0});
+  assert('PP 3500 isolé 0enf',pp1.pp,660.63,1.0);
+  const pp2=calcPrecompteExact(3500,{situation:'marie_1r',enfants:0});
+  assert('PP 3500 marié1r 0enf',pp2.pp,470,15);
+  const pp3=calcPrecompteExact(2000,{situation:'isole',enfants:0});
+  assert('PP 2000 isolé 0enf',pp3.pp,218,10);
+  const pp4=calcPrecompteExact(5000,{situation:'isole',enfants:0});
+  assert('PP 5000 isolé 0enf',pp4.pp,1230,20);
+  const pp5=calcPrecompteExact(3500,{situation:'isole',enfants:2});
+  assert('PP 3500 isolé 2enf < PP sans enf',pp5.pp<pp1.pp?1:0,1);
+  // ══ CSSS ══
+  const csss1=calcCSSS(3500,'isole');
+  assert('CSSS 3500 isolé',csss1,14.93,2);
+  // ══ BONUS EMPLOI ══
+  const be1=calcBonusEmploi(2000);
+  assert('Bonus emploi 2000 > 0',be1>0?1:0,1);
+  const be2=calcBonusEmploi(5000);
+  assert('Bonus emploi 5000 = 0',be2,0);
+  // ══ NET COMPLET ══
+  const net1=quickNet(3500);
+  assert('Net 3500 > 2200',net1>2200?1:0,1);
+  assert('Net 3500 < 2800',net1<2800?1:0,1);
+  // ══ PECULE VACANCES ══
+  assert('PV simple 7.67%',PV_SIMPLE,0.0767);
+  assert('PV double 92%',PV_DOUBLE,0.92);
+  assert('PV ouvrier 8.58%',LOIS_BELGES.remuneration.peculeVacances.ouvrierDouble.pct,0.0858);
+  // ══ RMMMG ══
+  assert('RMMMG 2026',RMMMG,2070.48,5);
+  // ══ CONSTANTES CENTRALISEES ══
+  assert('TX_ONSS_W',TX_ONSS_W,0.1307);
+  assert('TX_ONSS_E',TX_ONSS_E,0.2507,0.001);
+  assert('CR_PAT',CR_PAT,6.91);
+  // ══ RATIOS ══
+  const brut=3500;const onss=brut*TX_ONSS_W;const pp=quickPP(brut);const net=brut-onss-pp;
+  assert('Ratio net/brut 3500',net/brut*100,67,3);
+  assert('Cout employeur',brut*(1+TX_ONSS_E),4377.45,5);
+  // RESULTS
+  const passed=tests.filter(t=>t.pass).length;
+  const failed=tests.filter(t=>!t.pass).length;
+  return {tests,passed,failed,total:tests.length,score:Math.round(passed/tests.length*100)};
+}
+
+
+
+// ═══ SPRINT 43: OBFUSCATION NISS/IBAN ═══
+export const obf={
+  encode:(v)=>{if(!v)return '';try{return btoa(unescape(encodeURIComponent(String(v).split('').reverse().join(''))));}catch(e){return v;}},
+  decode:(v)=>{if(!v)return '';try{return decodeURIComponent(escape(atob(v))).split('').reverse().join('');}catch(e){return v;}},
+  maskNISS:(n)=>{if(!n||n.length<6)return n;return n.slice(0,2)+'.***.***'+n.slice(-2);},
+  maskIBAN:(i)=>{if(!i||i.length<8)return i;return i.slice(0,4)+' **** **** '+i.slice(-4);}
+};
+export const safeLS={get:(k)=>{try{if(typeof window==='undefined')return null;return window.localStorage.getItem(k);}catch(e){return null;}},set:(k,v)=>{try{if(typeof window==='undefined')return;window.localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}},remove:(k)=>{try{if(typeof window==='undefined')return;window.localStorage.removeItem(k);}catch(e){}}};
+export const CR_MAX=LB.chequesRepas.valeurFaciale.max; // 8.00
+export const CR_PAT=LB.chequesRepas.partPatronale.max; // 6.91
+export const FORF_BUREAU=LB.fraisPropres.forfaitBureau.max; // FORF_BUREAU
+export const FORF_KM=LB.fraisPropres.forfaitDeplacement.voiture; // 0.4415
+export const PV_SIMPLE=LB.remuneration.peculeVacances.simple.pct; // PV_SIMPLE
+export const PV_DOUBLE=LB.remuneration.peculeVacances.double.pct; // 0.92
+export const RMMMG=LB.remuneration.RMMMG.montant18ans; // RMMMG
+export const BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 194.03
+export const SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
+export const SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
+export const HEURES_HEBDO=LB.tempsTravail.dureeHebdoLegale; // 38
+export const JOURS_FERIES=LB.tempsTravail.jourFerie.nombre; // 10
+
+
+// ═══ SAISIES SUR SALAIRE — Barèmes 2026 (Art. 1409-1412 Code judiciaire) ═══
+export const SAISIE_2026_TRAVAIL = [
+  { min: 0, max: 1278, pct: 0, label: "Insaisissable" },
+  { min: 1278, max: 1372, pct: 20, label: "20%" },
+  { min: 1372, max: 1513, pct: 30, label: "30%" },
+  { min: 1513, max: 1654, pct: 40, label: "40%" },
+  { min: 1654, max: Infinity, pct: 100, label: "Saisissable en totalité" },
 ];
 
-// ═══ État courant — Résultat de l'application de la timeline ═══
-var LOIS_BELGES_CURRENT = {
-  cct90: { plafondONSS: 4255, plafondFiscal: 3701, cotisationPatronale: 0.33, cotisationTravailleur: 0.1307 },
-  chequesRepas: { valeurMax: 10.00, partPatronaleMax: 8.91, partTravailleurMin: 1.09, deductibilite: 4.00 },
-  seuils: { ecolage: 44447, nonConcurrenceBas: 44447, nonConcurrenceHaut: 88895, arbitrage: 88895, supplementChomTemp: 4284 },
-  teletravail: { forfaitBureau: 157.83, internet: 20, pc: 20, ecran: 5 },
-  rmmmg: { montant18: 2070.48 },
-  indemKm: { voiture: 0.4415, velo: 0.35 },
-  pp: { fraisProMax: 5930, quotiteExemptee1: 2987.98 },
-  _lastApplied: '2026-01-01',
+export const SAISIE_2026_REMPLACEMENT = [
+  { min: 0, max: 1278, pct: 0, label: "Insaisissable" },
+  { min: 1278, max: 1372, pct: 20, label: "20%" },
+  { min: 1372, max: 1513, pct: 30, label: "30%" },
+  { min: 1513, max: 1654, pct: 40, label: "40%" },
+  { min: 1654, max: Infinity, pct: 100, label: "Saisissable en totalité" },
+];
+
+export const SAISIE_IMMUN_ENFANT_2026 = 73;
+
+// ═══ ALLOCATIONS FAMILIALES PAR RÉGION ═══
+export const AF_REGIONS = {
+  BXL: { cutoff: 2020, base: [{ age: 0, to: 11, amt: 171.08 }, { age: 12, to: 17, amt: 171.08 + 29.64 }, { age: 18, to: 24, amt: 171.08 + 29.64 }], ancien: { rang1: 97.73 }, ancienReduction: 0 },
+  WAL: { cutoff: 2020, base: [{ age: 0, to: 5, amt: 181.61 }, { age: 6, to: 11, amt: 181.61 }, { age: 12, to: 17, amt: 181.61 + 22.53 }, { age: 18, to: 24, amt: 181.61 + 30.88 }], ancien: { rang1: 97.73 } },
+  VL: { cutoff: 2019, base: [{ age: 0, to: 11, amt: 173.20 }, { age: 12, to: 17, amt: 173.20 + 6.32 }, { age: 18, to: 24, amt: 173.20 + 10.44 }], ancien: { rang1: 97.73 } },
 };
-
-// Applique la timeline: merge toutes les entrées dont la date <= targetDate
-function applyTimeline(targetDate) {
-  var td = targetDate || new Date().toISOString().slice(0, 10);
-  var state = {};
-  var lastDate = '';
-  var appliedCount = 0;
-  for (var i = 0; i < LOIS_BELGES_TIMELINE.length; i++) {
-    var entry = LOIS_BELGES_TIMELINE[i];
-    if (entry.date <= td) {
-      // Deep merge: chaque clé de l'entrée override la valeur correspondante
-      var keys = Object.keys(entry);
-      for (var k = 0; k < keys.length; k++) {
-        var key = keys[k];
-        if (key === 'date' || key === 'source') continue;
-        if (!state[key]) state[key] = {};
-        var subKeys = Object.keys(entry[key]);
-        for (var s = 0; s < subKeys.length; s++) {
-          state[key][subKeys[s]] = entry[key][subKeys[s]];
-        }
-      }
-      lastDate = entry.date;
-      appliedCount++;
-    }
-  }
-  state._lastApplied = lastDate;
-  state._appliedEntries = appliedCount;
-  return state;
-}
-
-// Applique l'état à LOIS_BELGES et LOIS_BELGES_CURRENT
-function syncLoisBelges(state) {
-  if (!state || !state.chequesRepas) return;
-  // Copie vers CURRENT
-  Object.keys(state).forEach(function(k) { if (k[0] !== '_') LOIS_BELGES_CURRENT[k] = state[k]; });
-  LOIS_BELGES_CURRENT._lastApplied = state._lastApplied;
-  // Sync vers LOIS_BELGES (objet principal utilisé partout)
-  if (state.chequesRepas) {
-    LOIS_BELGES.chequesRepas.valeurFaciale.max = state.chequesRepas.valeurMax;
-    LOIS_BELGES.chequesRepas.partPatronale.max = state.chequesRepas.partPatronaleMax;
-    if (state.chequesRepas.partTravailleurMin) LOIS_BELGES.chequesRepas.partTravailleur.min = state.chequesRepas.partTravailleurMin;
-  }
-  if (state.teletravail) {
-    LOIS_BELGES.fraisPropres.forfaitBureau.max = state.teletravail.forfaitBureau;
-    LOIS_BELGES.fraisPropres.teletravail.max = state.teletravail.forfaitBureau;
-  }
-  if (state.seuils) {
-    LOIS_BELGES.contrats.clauseNonConcurrence.brut_min = state.seuils.nonConcurrenceBas;
-    LOIS_BELGES.contrats.clauseNonConcurrence.brut_mid = state.seuils.nonConcurrenceHaut;
-    LOIS_BELGES.contrats.ecolecholage.brut_min = state.seuils.ecolage;
-  }
-  if (state.rmmmg) LOIS_BELGES.remuneration.RMMMG.montant18ans = state.rmmmg.montant18;
-  if (state.pp) {
-    LOIS_BELGES.pp.fraisPro.salarie.max = state.pp.fraisProMax;
-    LOIS_BELGES.pp.quotiteExemptee.bareme1 = state.pp.quotiteExemptee1;
-    LOIS_BELGES.pp.quotiteExemptee.bareme2 = state.pp.quotiteExemptee1 * 2;
-  }
-  LOIS_BELGES._meta.dateMAJ = new Date().toISOString().slice(0, 10);
-  LOIS_BELGES._meta.version = state._lastApplied.slice(0, 4) + '.auto';
-  LOIS_BELGES._meta.annee = parseInt(state._lastApplied.slice(0, 4));
-}
-
-// Détecte si des entrées futures existent (= on sait déjà ce qui va changer)
-function checkLoisBelgesOutdated() {
-  var today = new Date().toISOString().slice(0, 10);
-  var applied = LOIS_BELGES_CURRENT._lastApplied || '';
-  var future = LOIS_BELGES_TIMELINE.filter(function(e) { return e.date > today; });
-  var pending = LOIS_BELGES_TIMELINE.filter(function(e) { return e.date <= today && e.date > applied; });
-  var lastEntry = LOIS_BELGES_TIMELINE[LOIS_BELGES_TIMELINE.length - 1];
-  var lastYear = lastEntry ? parseInt(lastEntry.date.slice(0, 4)) : 0;
-  var currentYear = new Date().getFullYear();
-  return {
-    outdated: pending.length > 0 || lastYear < currentYear,
-    pendingCount: pending.length,
-    futureCount: future.length,
-    futureEntries: future.map(function(e) { return { date: e.date, source: e.source }; }),
-    lastApplied: applied,
-    missingYear: lastYear < currentYear,
-    warnings: pending.length > 0 ? ['Il y a ' + pending.length + ' mise(s) a jour en attente.'] :
-              lastYear < currentYear ? ['Aucune entree pour ' + currentYear + '. Verifiez les publications officielles.'] : [],
-  };
-}
-
-// Snapshot par année (pour VeilleLegale comparaison)
-var LOIS_BELGES_HISTORIQUE = {};
-(function buildYearlySnapshots() {
-  [2024, 2025, 2026, 2027, 2028].forEach(function(y) {
-    var state = applyTimeline(y + '-12-31');
-    if (state._appliedEntries > 0) LOIS_BELGES_HISTORIQUE[y] = state;
-  });
-})();
-
-// Auto-apply au chargement
-(function autoApplyLoisBelges() {
-  var state = applyTimeline();
-  syncLoisBelges(state);
-})();
-
-
-// Aliases courts pour accès rapide dans tout le code
-var LB=LOIS_BELGES;
-var TX_ONSS_W=LB.onss.travailleur; // 0.1307
-var TX_ONSS_E=LB.onss.employeur.total; // 0.2507
-var TX_OUV108=LB.onss.ouvrier108; // 1.08
-var TX_AT=LB.assurances.accidentTravail.taux; // 0.01
-var COUT_MED=LB.assurances.medecineTravail.cout; // COUT_MED
-var CR_TRAV=LB.chequesRepas.partTravailleur.min; // CR_TRAV
-var PP_EST=0.22; // PP estimation moyenne (~22% de l'imposable)
-var NET_FACTOR=(1-TX_ONSS_W)*(1-PP_EST); // facteur net approx = ~0.5645
-var quickNetEst=(b)=>Math.round(b*NET_FACTOR*100)/100; // estimation rapide net
-var CR_MAX=LB.chequesRepas.valeurFaciale.max; // 8.00
-var CR_PAT=LB.chequesRepas.partPatronale.max; // 6.91
-var FORF_BUREAU=LB.fraisPropres.forfaitBureau.max; // FORF_BUREAU
-var FORF_KM=LB.fraisPropres.forfaitDeplacement.voiture; // 0.4415
-var PV_SIMPLE=LB.remuneration.peculeVacances.simple.pct; // PV_SIMPLE
-var PV_DOUBLE=LB.remuneration.peculeVacances.double.pct; // 0.92
-var RMMMG=LB.remuneration.RMMMG.montant18ans; // RMMMG
-var BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 194.03
-var SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
-var SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
-var HEURES_HEBDO=LB.tempsTravail.dureeHebdoLegale; // 38
-var JOURS_FERIES=LB.tempsTravail.jourFerie.nombre; // 10
-
-
-// Fonction centralisée: obtenir une valeur légale
-function getLoi(path, fallback) {
-  const parts = path.split('.');
-  let val = LOIS_BELGES;
-  for (const p of parts) { val = val?.[p]; if (val === undefined) return fallback; }
-  return val;
-}
-
-
-// Aliases courts pour calculs — connectés à LOIS_BELGES
-// (voir bloc RACCOURCIS CENTRALISÉS plus bas)
-var _PVP = LOIS_BELGES.remuneration.peculeVacances.patronal.pct;
-var _HLEG = LOIS_BELGES.tempsTravail.dureeHebdoLegale;
-
-// Fonction centralisée: calculer PP via LOIS_BELGES
-function calcPPFromLois(brut, opts) {
-  const L = LOIS_BELGES;
-  const onss = Math.round(brut * L.onss.travailleur * 100) / 100;
-  const imposable = brut - onss;
-  const annuel = imposable * 12;
-  const dirigeant = opts?.dirigeant || false;
-  const fp = dirigeant ? L.pp.fraisPro.dirigeant : L.pp.fraisPro.salarie;
-  const forfait = Math.min(annuel * fp.pct, fp.max);
-  const base = Math.max(0, annuel - forfait);
-  const isB2 = opts?.bareme2 || false;
-  let qc = 0, baseNet = base;
-  if (isB2) { qc = Math.min(base * L.pp.quotientConjugal.pct, L.pp.quotientConjugal.max); baseNet = base - qc; }
-  const calcTr = (b) => { let imp = 0, prev = 0; for (const t of L.pp.tranches) { const slice = Math.min(b, t.max) - Math.max(prev, t.min); if (slice > 0) imp += slice * t.taux; prev = t.max; } return imp; };
-  let impot = calcTr(baseNet);
-  if (isB2 && qc > 0) impot += calcTr(qc);
-  const qe = isB2 ? L.pp.quotiteExemptee.bareme2 : L.pp.quotiteExemptee.bareme1;
-  const enf = +(opts?.enfants || 0);
-  const enfH = +(opts?.enfantsHandicapes || 0);
-  const enfFisc = enf + enfH;
-  let redEnf = 0;
-  if (enfFisc > 0) { redEnf = enfFisc <= 8 ? L.pp.reductionsEnfants[enfFisc] : L.pp.reductionsEnfants[8] + (enfFisc - 8) * L.pp.reductionEnfantSupp; }
-  let totalRed = qe + redEnf;
-  if (opts?.parentIsole && enf > 0) totalRed += L.pp.reductionParentIsole;
-  if (opts?.handicape) totalRed += L.pp.reductionHandicape;
-  const taxeCom = (opts?.taxeCom || 7) / 100;
-  const ppAn = Math.max(0, impot - totalRed) * (1 + taxeCom);
-  return Math.round(ppAn / 12 * 100) / 100;
-}
-
-
-// ═══ RACCOURCIS CENTRALISÉS — Toute modif dans LOIS_BELGES se propage ICI ═══
-var _OW = LOIS_BELGES.onss.travailleur; // 0.1307
-var _OE = LOIS_BELGES.onss.employeur.total; // 0.2507
-var _OUV108 = LOIS_BELGES.onss.ouvrier108; // 1.08
-var _AT = LOIS_BELGES.assurances.accidentTravail.taux; // 0.01
-var _MED = LOIS_BELGES.assurances.medecineTravail.cout; // _MED
-var _CR_W = LOIS_BELGES.chequesRepas.partTravailleur.min; // _CR_W
-var _CR_VF = LOIS_BELGES.chequesRepas.valeurFaciale.max; // 8.00
-var _CR_E = LOIS_BELGES.chequesRepas.partPatronale.max; // 6.91
-var _PVS = LOIS_BELGES.remuneration.peculeVacances.simple.pct; // PV_SIMPLE
-var _PVD = LOIS_BELGES.remuneration.peculeVacances.double.pct; // 0.92
-var _PVE = LOIS_BELGES.remuneration.peculeVacances.patronal.pct; // _PVP()
-var _KM = LOIS_BELGES.fraisPropres.forfaitDeplacement.voiture; // _KM
-var _BUREAU = LOIS_BELGES.fraisPropres.forfaitBureau.max; // 157.83
-var _RMMMG = LOIS_BELGES.remuneration.RMMMG.montant18ans; // 2070.48
-var _IDX = LOIS_BELGES.remuneration.indexSante.coeff; // 2.0399
-
-
-// ═══════════════════════════════════════════════════════════════
-//  AUREUS SOCIAL PRO — Logiciel de Paie Belge Professionnel
-//  Modules: ONSS (Dimona/DMFA), Belcotax 281.xx, Formule-clé
-//  SPF Finances, Documents sociaux (C4, attestations)
-//  🌐 Multilingue: FR / NL
-// ═══════════════════════════════════════════════════════════════
-
-// ═══ EXPORTS ═══
-export { LOIS_BELGES, LOIS_BELGES_TIMELINE, LOIS_BELGES_CURRENT, LOIS_BELGES_HISTORIQUE,
-  applyTimeline, syncLoisBelges, getLoi, calcPPFromLois,
-  LB, TX_ONSS_W, TX_ONSS_E, TX_OUV108, TX_AT,
-  PP_EST, NET_FACTOR, quickNetEst,
-  CR_MAX, CR_PAT, FORF_BUREAU, FORF_KM,
-  PV_SIMPLE, PV_DOUBLE, RMMMG, BONUS_MAX,
-  SEUIL_CPPT, SEUIL_CE, HEURES_HEBDO, JOURS_FERIES,
-  _OW, _OE, _PVP, _HLEG };

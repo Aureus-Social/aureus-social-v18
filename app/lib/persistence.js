@@ -1,8 +1,40 @@
 // ═══ AUREUS SOCIAL PRO — Module: Persistence (Supabase + localStorage) ═══
-import { getCryptoKey, encryptState, decryptState, initCryptoKey } from './crypto.js';
+import { getCryptoKey, encryptState, decryptState, initCryptoKey, encryptField, decryptField } from './crypto.js';
 
 const STORE_KEY = 'aureus-social-pro';
 const MAX_RETRIES = 3;
+
+// ═══ CHIFFREMENT localStorage (RGPD — données sensibles ne doivent pas être en clair) ═══
+async function encryptForLocalStorage(data) {
+  try {
+    const key = getCryptoKey();
+    if (!key) return JSON.stringify(data);
+    const json = JSON.stringify(data);
+    const encrypted = await encryptField(json, key);
+    return encrypted || json;
+  } catch (e) {
+    console.warn('[Persistence] Chiffrement localStorage échoué, sauvegarde en clair');
+    return JSON.stringify(data);
+  }
+}
+
+async function decryptFromLocalStorage(stored) {
+  try {
+    if (!stored) return null;
+    // Si les données commencent par ENC:, elles sont chiffrées
+    if (stored.startsWith('ENC:')) {
+      const key = getCryptoKey();
+      if (!key) return null;
+      const decrypted = await decryptField(stored, key);
+      if (decrypted && decrypted !== stored) return JSON.parse(decrypted);
+      return null;
+    }
+    // Données legacy en clair (JSON)
+    return JSON.parse(stored);
+  } catch (e) {
+    return null;
+  }
+}
 
 let _supabaseRef = null;
 let _userIdRef = null;
@@ -66,12 +98,12 @@ async function _executeSave() {
   _saveQueue = null;
   _notifyStatus('saving');
   try {
-    const json = JSON.stringify(data);
-    localStorage.setItem(STORE_KEY, json);
-    localStorage.setItem(STORE_KEY + '_backup', json);
+    const encrypted = await encryptForLocalStorage(data);
+    localStorage.setItem(STORE_KEY, encrypted);
+    localStorage.setItem(STORE_KEY + '_backup', encrypted);
     localStorage.setItem(STORE_KEY + '_ts', new Date().toISOString());
   } catch (e) {
-    try { localStorage.removeItem(STORE_KEY + '_backup'); localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e2) {}
+    try { localStorage.removeItem(STORE_KEY + '_backup'); localStorage.setItem(STORE_KEY, await encryptForLocalStorage(data)); } catch (e2) {}
   }
   if (_supabaseRef && _userIdRef) {
     let success = false;
@@ -92,17 +124,25 @@ async function _executeSave() {
 export async function forceSave(data) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    const encrypted = await encryptForLocalStorage(data);
+    localStorage.setItem(STORE_KEY, encrypted);
+    localStorage.setItem(STORE_KEY + '_backup', encrypted);
     if (_supabaseRef && _userIdRef) {
       await saveToSupabase(_supabaseRef, _userIdRef, data);
     }
   } catch(e) {}
 }
 
-export function loadFromLocalStorage() {
+export async function loadFromLocalStorage() {
   try {
-    const json = localStorage.getItem(STORE_KEY);
-    return json ? JSON.parse(json) : null;
+    const stored = localStorage.getItem(STORE_KEY);
+    if (!stored) return null;
+    const data = await decryptFromLocalStorage(stored);
+    if (data) return data;
+    // Essayer le backup
+    const backup = localStorage.getItem(STORE_KEY + '_backup');
+    if (backup) return await decryptFromLocalStorage(backup);
+    return null;
   } catch(e) { return null; }
 }
 
