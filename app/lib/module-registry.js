@@ -48,6 +48,7 @@ const MODULE_MANIFEST = {
   'admin.rbac': { path: './modules/AutoAdminV3', export: 'RBACAdminV2', weight: 'medium', label: 'Gestion rôles' },
   'admin.baremes': { path: './modules/AdminBaremes', weight: 'heavy', label: 'Admin barèmes' },
   'admin.security': { path: './modules/SecurityDashboard', export: 'SecurityDashboard', weight: 'medium', label: 'Sécurité' },
+  'admin.audit-securite': { path: './modules/AuditSecuriteCode', export: 'AuditSecuriteCode', weight: 'light', label: 'Audit Sécurité Code' },
   
   // ── MARKETPLACE ──
   'marketplace.bob': { path: './modules/MarketplaceConnectors', export: 'BOBConnector', weight: 'light', label: 'BOB50' },

@@ -106,6 +106,7 @@ const SimCoutModLazy = dynamic(() => import("./modules/ModsBatch2").then(m => ({
 const RCCModLazy = dynamic(() => import("./modules/ModsBatch2").then(m => ({ default: m.RCCMod })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const AidesEmploiModLazy = dynamic(() => import("./modules/ModsBatch2").then(m => ({ default: m.AidesEmploiMod })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const AuditModLazy = dynamic(() => import("./modules/ModsBatch2").then(m => ({ default: m.AuditMod })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
+const AuditSecuriteCodeLazy = dynamic(() => import("./modules/AuditSecuriteCode").then(m => ({ default: m.AuditSecuriteCode })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const SelfServiceModLazy = dynamic(() => import("./modules/ModsBatch2").then(m => ({ default: m.SelfServiceMod })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const GEDModLazy = dynamic(() => import("./modules/ModsBatch2").then(m => ({ default: m.GEDMod })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 
@@ -5320,6 +5321,7 @@ function AppInner({ supabase, user, onLogout }) {
     {id:"portalmanager",l:t("nav.portalmanager"),i:'🏢',g:4},
     {id:"team",l:t('nav.team'),i:'👥',g:4},
     {id:"authroles",l:"Roles & Permissions",i:'🔐',g:4},
+    {id:"auditsecuritecode",l:"Audit Securite Code",i:'🛡',g:4},
     {id:"securitedata",l:"Securite Donnees",i:'🔒',g:4},
     {id:"rgpd",l:"RGPD Compliance",i:'🔒',g:4},
     {id:"monitoring",l:"Monitoring",i:'🖥',g:4},
@@ -18846,6 +18848,7 @@ const pg=()=>{
       case'smartalerts':return <SmartAlertsLazy s={s} d={d}/>;
       case'batchdecl':return <EnvoiModLazy s={s} d={d}/>;
       case'compliance':return <AuditModLazy s={s} d={d}/>;
+      case'auditsecuritecode':return <AuditSecuriteCodeLazy s={s} d={d}/>;
       case'autoindex':return <AutoIndexationLazy s={s} d={d}/>;
       case'historique':return <HistoriquePiloteLazy s={s} d={d} supabase={supabase}/>;
       case'piloteauto':return <PiloteAutoLazy s={s} d={d} supabase={supabase} user={user}/>;

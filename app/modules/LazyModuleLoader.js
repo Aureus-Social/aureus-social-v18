@@ -78,6 +78,7 @@ const MODULE_MAP = {
   'formations':        () => import('./AutoAdminV3').then(m => m.FormationsV2),
   'hub-fiduciaire':    () => import('./AutoAdminV3').then(m => m.HubFiduciaireV2),
   'security':          () => import('./SecurityDashboard').then(m => m.SecurityDashboard),
+  'audit-securite-code': () => import('./AuditSecuriteCode').then(m => m.AuditSecuriteCode),
   
   // ── New v20.3 modules ──
   'dashboard-charts':  () => import('./DashboardCharts').then(m => m.DashboardChartsV2),
