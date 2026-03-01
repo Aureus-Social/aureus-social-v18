@@ -5377,9 +5377,9 @@ function AppInner({ supabase, user, onLogout }) {
   const spotIndex=useMemo(()=>{
     const items=[];
     nav.filter(it=>!it.grp).forEach(it=>{
-      items.push({id:it.id,sub:it.sub?.[0]?.id||null,label:it.l,icon:it.i,parent:null});
+      items.push({id:it.id,sub:it.sub?.[0]?.id||null,label:it.l,icon:it.i,parent:null,g:it.g});
       if(it.sub)it.sub.forEach(sb=>{
-        items.push({id:it.id,sub:sb.id,label:sb.l,icon:it.i,parent:it.l});
+        items.push({id:it.id,sub:sb.id,label:sb.l,icon:it.i,parent:it.l,g:it.g});
       });
     });
     return items;
@@ -22097,9 +22097,23 @@ const COMPTA=[{id:"bob",n:'BOB Software',fmt:'CSV/XML'},{id:"winbooks",n:'Winboo
 const CR_PROV=[{id:"pluxee",n:'Pluxee (ex-Sodexo)',ic:'🟠'},{id:"edenred",n:'Edenred',ic:'🔴'},{id:"monizze",n:'Monizze',ic:'🟢'},{id:"got",n:'G.O.T. CONNECTION',ic:'🔵'}];
 
 // ═══════════════════════════════════════════════════════════════
+//  SOUS-NAVIGATION — Breadcrumb + bouton retour + onglets
+// ═══════════════════════════════════════════════════════════════
+function SubNav({parentId,parentLabel,subs,activeSub,d}){
+  return <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14,padding:'8px 12px',background:'rgba(198,163,78,.03)',border:'1px solid rgba(198,163,78,.08)',borderRadius:10,flexWrap:'wrap'}}>
+    <button onClick={()=>d({type:"NAV",page:parentId,sub:subs[0]?.id||null})} style={{display:'flex',alignItems:'center',gap:4,padding:'5px 10px',borderRadius:6,border:'none',background:'rgba(198,163,78,.1)',color:'#c6a34e',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}} title="Retour">
+      ← {parentLabel}
+    </button>
+    <span style={{color:'#5e5c56',fontSize:11}}>›</span>
+    {subs.map(sb=><button key={sb.id} onClick={()=>d({type:"NAV",page:parentId,sub:sb.id})} style={{padding:'5px 12px',borderRadius:6,border:'none',cursor:'pointer',fontSize:11,fontWeight:activeSub===sb.id?600:400,fontFamily:'inherit',background:activeSub===sb.id?'rgba(198,163,78,.12)':'transparent',color:activeSub===sb.id?'#c6a34e':'#9e9b93',transition:'all .1s'}}>{sb.l}</button>)}
+  </div>;
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  CATEGORY ROUTER PAGES
 // ═══════════════════════════════════════════════════════════════
-function SalairesPage({s,d}){const sub=s.sub||'od';return <div>
+function SalairesPage({s,d}){const sub=s.sub||'od';const _subs=[{id:"simcout",l:"Simulation coût"},{id:"netbrut",l:"Net → Brut"},{id:"provisions",l:"Provisions"},{id:"cumuls",l:"Cumuls"},{id:"indexauto",l:"Indexation"},{id:"treizieme",l:"13ème mois"},{id:"bonusemploi",l:"Bonus emploi"}];return <div>
+  <SubNav parentId="salaires" parentLabel="Salaires" subs={_subs} activeSub={sub} d={d}/>
   <PH title="Salaires & Calculs" sub={`Module: ${{'od':'O.D. Comptables',"provisions":'Provisions',"cumuls":'Cumuls annuels',"netbrut":'Net → Brut',"simcout":'Simulation coût salarial',"saisies":'Saisies-Cessions',"indexauto":'Index automatique',"horsforfait":'Heures supplémentaires',"totalreward":'Total Reward Statement',"transport":'Transport domicile-travail',"treizieme":'13ème mois',"css":'Cotisation spéciale SS',"bonusemploi":'Bonus à l\'emploi'}[sub]||sub}`}/>
     <div style={{marginBottom:14,padding:'10px 14px',background:'linear-gradient(135deg,rgba(198,163,78,.06),rgba(198,163,78,.02))',border:'1px solid rgba(198,163,78,.1)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
       <div style={{fontSize:11,color:'#888'}}>⚡ SEPA + Fiches auto-générés le jour de paie</div>
@@ -22119,7 +22133,8 @@ function SalairesPage({s,d}){const sub=s.sub||'od';return <div>
   {sub==='bonusemploi'&&<BonusEmploiModLazy s={s} d={d}/>}
 </div>;}
 
-function AvantagesPage({s,d}){const sub=s.sub||'cheques';return <div>
+function AvantagesPage({s,d}){const sub=s.sub||'cheques';const _subs=[{id:"cheques",l:"Chèques-repas"},{id:"ecochequesv2",l:"Eco-chèques"},{id:"plancafeteria",l:"Plan Cafeteria"},{id:"cct90bonus",l:"Bonus CCT 90"},{id:"notefraisv2",l:"Notes de frais"},{id:"warrants",l:"Warrants"},{id:"budgetmob",l:"Budget mobilité"}];return <div>
+  <SubNav parentId="avantages" parentLabel="Avantages" subs={_subs} activeSub={sub} d={d}/>
   {sub==='cheques'&&<CRModLazy s={s} d={d}/>}
   {sub==='cafeteria'&&<CafeteriaModLazy s={s} d={d}/>}
   {sub==='plancafeteria'&&<CafeteriaModLazy s={s} d={d}/>}
@@ -22131,14 +22146,16 @@ function AvantagesPage({s,d}){const sub=s.sub||'cheques';return <div>
   {sub==='notefraisv2'&&<NoteFraisModLazy s={s} d={d}/>}
 </div>;}
 
-function ContratsMenuPage({s,d}){const sub=s.sub||'contrats';return <div>
+function ContratsMenuPage({s,d}){const sub=s.sub||'contrats';const _subs=[{id:"contrats",l:"Contrats"},{id:"reglement",l:"Règlement"},{id:"preavis",l:"Préavis"},{id:"pecsortie",l:"Pécule sortie"}];return <div>
+  <SubNav parentId="contratsmenu" parentLabel="Contrats" subs={_subs} activeSub={sub} d={d}/>
   {sub==='contrats'&&<ContratsTravailModLazy s={s} d={d}/>}
   {sub==='reglement'&&<ReglementTravailModLazy s={s} d={d}/>}
   {sub==='preavis'&&<PreavisModLazy s={s} d={d}/>}
   {sub==='pecsortie'&&<PeculeSortieModLazy s={s} d={d}/>}
 </div>;}
 
-function RHPage({s,d}){const sub=s.sub||'absences';return <div>
+function RHPage({s,d}){const sub=s.sub||'absences';const _subs=[{id:"wf_embauche",l:"Embauche"},{id:"wf_licenciement",l:"Licenciement"},{id:"wf_maladie",l:"Maladie"},{id:"absences",l:"Absences"},{id:"credittemps",l:"Crédit-temps"},{id:"pointage",l:"Pointage"},{id:"medtravail",l:"Médecine"}];return <div>
+  <SubNav parentId="rh" parentLabel="RH & Workflows" subs={_subs} activeSub={sub} d={d}/>
   <PH title="RH & Personnel" sub={`Module: ${{'wf_embauche':'⚡ Workflow Embauche','wf_licenciement':'⚡ Workflow Licenciement','wf_maladie':'⚡ Workflow Maladie','absences':'Gestion absences',"absenteisme":'Analyse absentéisme',"credittemps":'Crédit-temps',"chomtemp":'Chômage temporaire',"congeduc":'Congé-éducation payé',"rcc":'RCC / Prépension',"outplacement":'Outplacement',"pointage":'Pointage & Portail Employeur',"planform":'Plan de formation',"medtravail":'Médecine du travail',"selfservice":'Portail travailleur',"promesseembauche":'📄 Promesse d\'Embauche'}[sub]||sub}`}/>
   {sub==='wf_embauche'&&<WorkflowEmbaucheModLazy s={s} d={d}/>}{sub==='wf_licenciement'&&<WorkflowLicenciementModLazy s={s} d={d}/>}{sub==='wf_maladie'&&<WorkflowMaladieModLazy s={s} d={d}/>}
   {sub==='absences'&&<AbsencesModLazy s={s} d={d}/>}{sub==='absenteisme'&&<AbsenteismeModLazy s={s} d={d}/>}
@@ -22154,7 +22171,8 @@ function RHPage({s,d}){const sub=s.sub||'absences';return <div>
   {sub==='promesseembauche'&&<PromesseEmbaucheLazy s={s} d={d}/>}
 </div>;}
 
-function SocialPage({s,d}){const sub=s.sub||'assloi';return <div>
+function SocialPage({s,d}){const sub=s.sub||'assloi';const _subs=[{id:"assloi",l:"Ass. Loi"},{id:"assgroupe",l:"Ass. Groupe"},{id:"syndicales",l:"Syndicales"},{id:"allocfam",l:"Alloc. Fam."},{id:"aidesemploi",l:"Aides emploi"}];return <div>
+  <SubNav parentId="social" parentLabel="Social" subs={_subs} activeSub={sub} d={d}/>
   {sub==='assloi'&&<AssLoiModLazy s={s} d={d}/>}
   {sub==='assgroupe'&&<AssGroupeModLazy s={s} d={d}/>}
   {sub==='syndicales'&&<SyndicalesModLazy s={s} d={d}/>}
@@ -22162,7 +22180,8 @@ function SocialPage({s,d}){const sub=s.sub||'assloi';return <div>
   {sub==='aidesemploi'&&<AidesEmploiModLazy s={s} d={d}/>}
 </div>;}
 
-function ReportingPage({s,d}){const sub=s.sub||'accounting';return <div>
+function ReportingPage({s,d}){const sub=s.sub||'accounting';const _subs=[{id:"accounting",l:"Comptabilité"},{id:"bilanbnb",l:"Bilan BNB"},{id:"sepa",l:"SEPA"},{id:"envoi",l:"Envoi docs"},{id:"ged",l:"GED"}];return <div>
+  <SubNav parentId="reporting" parentLabel="Reporting" subs={_subs} activeSub={sub} d={d}/>
   <PH title="Reporting & Export" sub={`Module: ${{'accounting':'Accounting Output',"bilanbnb":'Bilan Social BNB',"bilan":'Bilan Social',"statsins":'Statistiques INS',"sepa":'SEPA / Virements',"peppol":'PEPPOL e-Invoicing',"envoi":'Envoi documents',"exportimport":'Export / Import',"ged":'GED / Archivage'}[sub]||sub}`}/>
     <div style={{marginBottom:14,padding:'10px 14px',background:'linear-gradient(135deg,rgba(168,85,247,.06),rgba(168,85,247,.02))',border:'1px solid rgba(168,85,247,.1)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
       <div style={{fontSize:11,color:'#888'}}>⚡ Exports auto: DmfA + SEPA + Belcotax en 1 clic</div>
@@ -22177,7 +22196,8 @@ function ReportingPage({s,d}){const sub=s.sub||'accounting';return <div>
   {sub==='exportimport'&&<ExportImportModLazy s={s} d={d}/>}{sub==='ged'&&<GEDModLazy s={s} d={d}/>}
 </div>;}
 
-function LegalPage({s,d}){const sub=s.sub||"docsjuridiques";return <div>
+function LegalPage({s,d}){const sub=s.sub||"docsjuridiques";const _subs=[{id:"docsjuridiques",l:"Documents"},{id:"alertes",l:"Alertes"},{id:"secteurs",l:"Secteurs"},{id:"moteurlois",l:"Moteur Lois"}];return <div>
+  <SubNav parentId="legal" parentLabel="Legal" subs={_subs} activeSub={sub} d={d}/>
   {sub==="docsjuridiques"&&<MoteurLoisBelges s={s} d={d}/>}
   {sub==="alertes"&&<AlertesLegalesModLazy s={s} d={d}/>}
   {sub==="secteurs"&&<SecteursModLazy s={s} d={d}/>}
