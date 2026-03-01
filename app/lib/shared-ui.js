@@ -74,6 +74,25 @@ export const PH = ({ title, sub, actions }) => {
   );
 };
 
+// ── Table ──
+export function Tbl({cols,data,onRow}){return(
+  <div style={{overflowX:'auto'}}>
+    <table style={{width:'100%',borderCollapse:'collapse'}}>
+      <thead><tr style={{borderBottom:'1px solid rgba(139,115,60,.15)'}}>
+        {cols.map(c=><th key={c.k} style={{textAlign:c.a||'left',padding:'11px 14px',fontSize:10,color:'#5e5c56',textTransform:'uppercase',letterSpacing:'1px',fontWeight:600}}>{c.l}</th>)}
+      </tr></thead>
+      <tbody>{(data||[]).map((row,i)=>(
+        <tr key={i} onClick={()=>onRow?.(row)} style={{borderBottom:'1px solid rgba(255,255,255,.03)',cursor:onRow?'pointer':'default'}}
+          onMouseEnter={e=>e.currentTarget.style.background='rgba(198,163,78,.03)'}
+          onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+          {cols.map(c=><td key={c.k} style={{padding:'10px 14px',fontSize:12.5,color:c.c||'#d4d0c8',fontWeight:c.b?600:400,textAlign:c.a||'left'}}>{c.r?c.r(row):row[c.k]}</td>)}
+        </tr>
+      ))}</tbody>
+    </table>
+    {(!data||data.length===0)&&<div style={{textAlign:'center',padding:36,color:'#5e5c56',fontSize:13}}>Aucune donnée</div>}
+  </div>
+);}
+
 // ── Currency formatter ──
 export const fmt = n => new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR' }).format(n || 0);
 export const fmtNum = v => new Intl.NumberFormat('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);

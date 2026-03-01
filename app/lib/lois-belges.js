@@ -260,7 +260,7 @@ export const NET_FACTOR=(1-TX_ONSS_W)*(1-PP_EST); // facteur net approx = ~0.564
 export const quickNetEst=(b)=>Math.round(b*NET_FACTOR*100)/100; // estimation rapide net
 
 // ═══ SPRINT 41: EXPORTS COMPTABLES RÉELS ═══
-function generateExportCompta(format,ops,periode,company){
+export function generateExportCompta(format,ops,periode,company){
   const co=company||{};const coName=co.name||'Aureus IA SPRL';const coVAT=(co.vat||'BE1028230781').replace(/[^A-Z0-9]/g,'');
   const f2=v=>(Math.round(v*100)/100).toFixed(2);
   const fBE=v=>f2(v).replace('.',',');
@@ -327,7 +327,7 @@ function generateExportCompta(format,ops,periode,company){
 }
 
 // ═══ SPRINT 41: CSV EXPORT TRAVAILLEURS ═══
-function exportTravailleurs(emps,company){
+export function exportTravailleurs(emps,company){
   const co=company||{};const coName=co.name||'';
   const headers=['NISS','Nom','Prenom','DateNaissance','Genre','Email','Telephone','Adresse','CodePostal','Ville','IBAN','BIC','Statut','TypeContrat','DateEntree','DateSortie','Fonction','Regime','BrutMensuel','CP','Matricule'];
   const rows=emps.map(e=>[
@@ -364,7 +364,7 @@ function exportTravailleurs(emps,company){
 }
 
 // ═══ SPRINT 41: CSV IMPORT TRAVAILLEURS ═══
-function importTravailleurs(csvText){
+export function importTravailleurs(csvText){
   const lines=csvText.split(/\r?\n/).filter(l=>l.trim());
   if(lines.length<2)return {error:'Fichier vide ou sans données',imported:[]};
   const headers=lines[0].split(';').map(h=>h.trim().toLowerCase());
