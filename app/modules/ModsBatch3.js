@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { C, ST, PH, Tbl, I } from '@/app/lib/shared-ui';
-import { LOIS_BELGES, TX_ONSS_W, TX_ONSS_E, PV_SIMPLE, PV_DOUBLE } from '@/app/lib/lois-belges';
+import { LOIS_BELGES, TX_ONSS_W, TX_ONSS_E, PV_SIMPLE, PV_DOUBLE, obf } from '@/app/lib/lois-belges';
 import { quickPP, quickNet, calcPayroll, calcPeculeDouble, calc13eMois, calcQuotiteSaisissable } from '@/app/lib/payroll-engine';
 import { sendSimulationPDF, generateSEPAXML, generateC4PDF, generateAttestationEmploi, generateAttestationSalaire, generateSoldeCompte } from '@/app/lib/doc-generators';
 
