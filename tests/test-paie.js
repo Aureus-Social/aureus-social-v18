@@ -109,7 +109,26 @@ const middleWhitelist = [
   'var LB',
   'var TX_ONSS_W',
   'var TX_ONSS_E',
+  'var TX_OUV108',
+  'var TX_AT',
+  'var COUT_MED',
+  'var CR_TRAV',
+  'var PP_EST',
+  'var NET_FACTOR',
+  'var CR_MAX',
+  'var CR_PAT',
+  'var FORF_BUREAU',
+  'var FORF_KM',
+  'var PV_SIMPLE',
+  'var PV_DOUBLE',
+  'var RMMMG',
+  'var BONUS_MAX',
+  'var SEUIL_CPPT',
+  'var SEUIL_CE',
+  'var HEURES_HEBDO',
+  'var JOURS_FERIES',
   'function calcPPFromLois',
+  'function getLoi',
   'var _OW',
   'var _OE',
   'var _BM',
@@ -119,7 +138,9 @@ const middleWhitelist = [
 for (const pat of middleWhitelist) {
   const idx = _findTopLevel(pat);
   if (idx >= 0 && idx < legalIdx) {
-    if (lines[idx].trim().endsWith(';')) {
+    // Check if it's a single-line statement (may have trailing comment after ;)
+    const stripped = lines[idx].replace(/\/\/.*$/, '').trim();
+    if (stripped.endsWith(';') && !stripped.includes('{')) {
       parts.push(lines[idx]);
       console.log(`  ✓ ${pat}: ligne ${idx+1} (1 ligne)`);
     } else {
@@ -634,11 +655,11 @@ try {
       assert(annuel > 16310, 'Annuel devrait dépasser 1ère tranche');
     });
 
-    test('Frais pro salarié: 30% plafonné 5930€/an', () => {
+    test('Frais pro salarié: 30% plafonné 6070€/an (2026)', () => {
       const r1 = calcPrecompteExact(3000, { situation: 'isole' });
       const r2 = calcPrecompteExact(8000, { situation: 'isole' });
-      // Pour 8000€: annuel imposable = ~83k → forfait = min(83k×30%, 5930) = 5930 annuel
-      assert(r2.detail.forfaitAn <= 5930 + 1, `Forfait annuel ${r2.detail.forfaitAn} > plafond 5930`);
+      // Pour 8000€: annuel imposable = ~83k → forfait = min(83k×30%, 6070) = 6070 annuel (indexé 2026)
+      assert(r2.detail.forfaitAn <= 6070 + 1, `Forfait annuel ${r2.detail.forfaitAn} > plafond 6070`);
     });
 
     test('Quotient conjugal marié 1 rev: 30% max 12520€', () => {
@@ -692,7 +713,7 @@ try {
   test('ONSS exact: 4567.89€ × 13.07%', () => {
     const brut = 4567.89;
     const expected = Math.round(brut * 0.1307 * 100) / 100;
-    eq(expected, 596.82, 'ONSS 4567.89€', 0.01);
+    eq(expected, 597.02, 'ONSS 4567.89€', 0.01);
   });
 
   test('Bonus emploi seuil 2999€ > 0, 3100€ encore > 0 ou = 0', () => {

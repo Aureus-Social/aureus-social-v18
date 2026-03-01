@@ -6277,7 +6277,7 @@ const CalcInstant=({s,d})=>{
       return {id,name:(e.first||e.fn||'')+' '+(e.last||e.ln||''),email:e.email,brut,brutEffectif,p,onssW,imposable,pp,net,onssE,cout};
     });
     setCalcResults(results);
-  },[prestations,selClient,autoCalc]);
+  },[prestations,selClient,autoCalc,emps]);
 
   const updatePrest=(empId,field,val)=>{
     setPrestations(prev=>({...prev,[empId]:{...(prev[empId]||{days:22,overtime:0,sunday:0,night:0,sick:0,bonus:0}),[field]:+val}}));
