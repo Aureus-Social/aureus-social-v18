@@ -247,634 +247,79 @@ var LOIS_BELGES = {
 var LB=LOIS_BELGES;
 
 var TX_ONSS_W=LB.onss.travailleur; // 0.1307
+
 var TX_ONSS_E=LB.onss.employeur.total; // 0.2507
+
 var TX_OUV108=LB.onss.ouvrier108; // 1.08
+
 var TX_AT=LB.assurances.accidentTravail.taux; // 0.01
+
 var COUT_MED=LB.assurances.medecineTravail.cout; // COUT_MED
+
 var CR_TRAV=LB.chequesRepas.partTravailleur.min; // CR_TRAV
+
 var PP_EST=0.22; // PP estimation moyenne (~22% de l'imposable)
+
 var NET_FACTOR=(1-TX_ONSS_W)*(1-PP_EST); // facteur net approx = ~0.5645
-var quickNetEst=(b)=>Math.round(b*NET_FACTOR*100)/100; // estimation rapide net
 
-// ═══ SPRINT 41: EXPORTS COMPTABLES RÉELS ═══
-function generateExportCompta(format,ops,periode,company){
-  const co=company||{};const coName=co.name||'Aureus IA SPRL';const coVAT=(co.vat||'BE1028230781').replace(/[^A-Z0-9]/g,'');
-  const f2=v=>(Math.round(v*100)/100).toFixed(2);
-  const fBE=v=>f2(v).replace('.',',');
-  const now=new Date();const dateStr=now.toISOString().slice(0,10);const periodeStr=periode||dateStr.slice(0,7);
-  const journal='OD';const piece='SAL'+periodeStr.replace(/-/g,'');
-  let output='';let filename='';let mime='text/plain';
-  // ——— BOB50 ———
-  if(format==='bob50'||format==='bob'){
-    // BOB50 format: journal|date|piece|compte|libelle|montant_debit|montant_credit
-    output=ops.map(o=>[journal,dateStr.replace(/-/g,''),piece,o.compte,'"'+o.desc.replace(/"/g,"'")+'"',o.sens==='D'?fBE(o.montant):'0,00',o.sens==='C'?fBE(o.montant):'0,00'].join('\t')).join('\n');
-    output='Journal\tDate\tPiece\tCompte\tLibelle\tDebit\tCredit\n'+output;
-    filename='BOB50_OD_'+periodeStr+'.txt';
-  }
-  // ——— WINBOOKS ———
-  else if(format==='winbooks'){
-    // Winbooks TXT: DBK|BOOKYEAR|PERIOD|DOCNUMBER|ACCOUNTGL|AMOUNTEUR|DTEFROM|COMMENT
-    const year=now.getFullYear();const month=now.getMonth()+1;
-    output=ops.map((o,i)=>['OD',year,month.toString().padStart(2,'0'),piece,(o.compte||'').padEnd(10,' '),o.sens==='D'?f2(o.montant):'-'+f2(o.montant),dateStr.replace(/-/g,''),o.desc.slice(0,40)].join('\t')).join('\n');
-    output='DBK\tBOOKYEAR\tPERIOD\tDOCNUMBER\tACCOUNTGL\tAMOUNTEUR\tDTEFROM\tCOMMENT\n'+output;
-    filename='Winbooks_OD_'+periodeStr+'.txt';
-  }
-  // ——— EXACT ONLINE ———
-  else if(format==='exact'){
-    // Exact CSV: Journal;Boekjaar;Periode;Dagboek;Rekeningnr;Omschrijving;Debet;Credit;Datum
-    output=ops.map(o=>['OD',now.getFullYear(),now.getMonth()+1,'OD',o.compte,'"'+o.desc+'"',o.sens==='D'?fBE(o.montant):'',o.sens==='C'?fBE(o.montant):'',dateStr.split('-').reverse().join('/')].join(';')).join('\n');
-    output='Journal;Boekjaar;Periode;Dagboek;Rekeningnr;Omschrijving;Debet;Credit;Datum\n'+output;
-    filename='Exact_OD_'+periodeStr+'.csv';mime='text/csv';
-  }
-  // ——— HORUS ———
-  else if(format==='horus'){
-    // Horus XML format
-// [removed]
-// [removed]
-    filename='Horus_OD_'+periodeStr+'.xml';mime='application/xml';
-  }
-  // ——— OCTOPUS ———
-  else if(format==='octopus'){
-    // Octopus CSV: Dagboek,Datum,Stuk,Rekening,Omschrijving,Debet,Credit
-    output=ops.map(o=>['OD',dateStr.split('-').reverse().join('/'),piece,o.compte,'"'+o.desc+'"',o.sens==='D'?fBE(o.montant):'',o.sens==='C'?fBE(o.montant):''].join(',')).join('\n');
-    output='Dagboek,Datum,Stuk,Rekening,Omschrijving,Debet,Credit\n'+output;
-    filename='Octopus_OD_'+periodeStr+'.csv';mime='text/csv';
-  }
-  // ——— YUKI ———
-  else if(format==='yuki'){
-    // Yuki XML
-// [removed]
-// [removed]
-    filename='Yuki_OD_'+periodeStr+'.xml';mime='application/xml';
-  }
-  // ——— KLUWER ———
-  else if(format==='kluwer'){
-    output=ops.map(o=>['OD',dateStr.replace(/-/g,''),piece,o.compte,o.desc.slice(0,40).padEnd(40,' '),o.sens==='D'?fBE(o.montant).padStart(15,' '):''.padStart(15,' '),o.sens==='C'?fBE(o.montant).padStart(15,' '):''.padStart(15,' ')].join('|')).join('\n');
-    filename='Kluwer_OD_'+periodeStr+'.txt';
-  }
-  // ——— POPSY ———
-  else if(format==='popsy'){
-    output=ops.map((o,i)=>[piece,dateStr.replace(/-/g,''),o.compte,o.desc.slice(0,30),o.sens==='D'?fBE(o.montant):'0,00',o.sens==='C'?fBE(o.montant):'0,00'].join(';')).join('\n');
-    output='Piece;Date;Compte;Libelle;Debit;Credit\n'+output;
-    filename='Popsy_OD_'+periodeStr+'.txt';
-  }
-  // Download
-  var blob=new Blob([output],{type:mime+';charset=utf-8'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);
-  return {filename,size:output.length,lines:output.split('\n').length};
-}
-
-// ═══ SPRINT 41: CSV EXPORT TRAVAILLEURS ═══
-function exportTravailleurs(emps,company){
-  const co=company||{};const coName=co.name||'';
-  const headers=['NISS','Nom','Prenom','DateNaissance','Genre','Email','Telephone','Adresse','CodePostal','Ville','IBAN','BIC','Statut','TypeContrat','DateEntree','DateSortie','Fonction','Regime','BrutMensuel','CP','Matricule'];
-  const rows=emps.map(e=>[
-    (e.niss||''),
-    (e.last||e.ln||'').replace(/;/g,','),
-    (e.first||e.fn||'').replace(/;/g,','),
-    (e.birthDate||''),
-    (e.gender||''),
-    (e.email||''),
-    (e.phone||''),
-    (e.address||''),
-    (e.zip||''),
-    (e.city||''),
-    (e.iban||''),
-    (e.bic||''),
-    (e.statut||'Employé'),
-    (e.contractType||'CDI'),
-    (e.startDate||''),
-    (e.endDate||''),
-    (e.fonction||e.jobTitle||''),
-    (+e.regime||100)+'%',
-    (+(e.monthlySalary||e.gross||0)).toFixed(2),
-    (e.cp||''),
-    (e.matricule||e.id||'')
-  ].join(';'));
-  const csv='\uFEFF'+headers.join(';')+'\n'+rows.join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download='Travailleurs_'+coName.replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv';
-  document.body.appendChild(a);a.click();
-  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);
-  return rows.length;
-}
-
-// ═══ SPRINT 41: CSV IMPORT TRAVAILLEURS ═══
-function importTravailleurs(csvText){
-  const lines=csvText.split(/\r?\n/).filter(l=>l.trim());
-  if(lines.length<2)return {error:'Fichier vide ou sans données',imported:[]};
-  const headers=lines[0].split(';').map(h=>h.trim().toLowerCase());
-  const fieldMap={
-    'niss':'niss','nom':'last','prenom':'first','datenaissance':'birthDate',
-    'genre':'gender','email':'email','telephone':'phone','adresse':'address',
-    'codepostal':'zip','ville':'city','iban':'iban','bic':'bic',
-    'statut':'statut','typecontrat':'contractType','dateentree':'startDate',
-    'datesortie':'endDate','fonction':'fonction','regime':'regime',
-    'brutmensuel':'gross','cp':'cp','matricule':'matricule',
-    'last':'last','first':'first','fn':'first','ln':'last',
-    'name':'last','firstname':'first','lastname':'last',
-    'salary':'gross','brut':'gross','gross':'gross',
-    'contract':'contractType','type':'contractType',
-    'start':'startDate','end':'endDate','birth':'birthDate'
-  };
-  const colMap=headers.map(h=>{
-    const clean=h.replace(/[^a-z]/g,'');
-    return fieldMap[clean]||null;
-  });
-  const imported=[];
-  for(let i=1;i<lines.length;i++){
-    const vals=lines[i].split(';');
-    if(vals.length<3)continue;
-    const emp={id:'imp_'+Date.now()+'_'+i,status:'active'};
-    colMap.forEach((field,j)=>{
-      if(field&&vals[j]!==undefined){
-        let v=vals[j].trim().replace(/^"|"$/g,'');
-        if(field==='gross')v=parseFloat(v.replace(',','.'))||0;
-        else if(field==='regime')v=parseInt(v)||100;
-        emp[field]=v;
-      }
-    });
-    if(emp.first||emp.last||emp.niss)imported.push(emp);
-  }
-  return {imported,count:imported.length,headers:headers};
-}
-
-// ═══ SPRINT 41: TEST SUITE CALCULS PAIE ═══
-function runPayrollTests(){
-  const tests=[];
-  const assert=(name,actual,expected,tolerance)=>{
-    const tol=tolerance||0.01;
-    const pass=Math.abs(actual-expected)<=tol;
-    tests.push({name,actual:Math.round(actual*100)/100,expected,pass,diff:Math.round((actual-expected)*100)/100});
-  };
-  // ══ ONSS TRAVAILLEUR ══
-  assert('ONSS 3500 brut',3500*TX_ONSS_W,457.45);
-  assert('ONSS 2000 brut',2000*TX_ONSS_W,261.40);
-  assert('ONSS 5000 brut',5000*TX_ONSS_W,653.50);
-  // ══ PRECOMPTE PROFESSIONNEL (formule-clé SPF) ══
-  const pp1=calcPrecompteExact(3500,{situation:'isole',enfants:0});
-  assert('PP 3500 isolé 0enf',pp1.pp,660.63,1.0);
-  const pp2=calcPrecompteExact(3500,{situation:'marie_1r',enfants:0});
-  assert('PP 3500 marié1r 0enf',pp2.pp,470,15);
-  const pp3=calcPrecompteExact(2000,{situation:'isole',enfants:0});
-  assert('PP 2000 isolé 0enf',pp3.pp,218,10);
-  const pp4=calcPrecompteExact(5000,{situation:'isole',enfants:0});
-  assert('PP 5000 isolé 0enf',pp4.pp,1230,20);
-  const pp5=calcPrecompteExact(3500,{situation:'isole',enfants:2});
-  assert('PP 3500 isolé 2enf < PP sans enf',pp5.pp<pp1.pp?1:0,1);
-  // ══ CSSS ══
-  const csss1=calcCSSS(3500,'isole');
-  assert('CSSS 3500 isolé',csss1,14.93,2);
-  // ══ BONUS EMPLOI ══
-  const be1=calcBonusEmploi(2000);
-  assert('Bonus emploi 2000 > 0',be1>0?1:0,1);
-  const be2=calcBonusEmploi(5000);
-  assert('Bonus emploi 5000 = 0',be2,0);
-  // ══ NET COMPLET ══
-  const net1=quickNet(3500);
-  assert('Net 3500 > 2200',net1>2200?1:0,1);
-  assert('Net 3500 < 2800',net1<2800?1:0,1);
-  // ══ PECULE VACANCES ══
-  assert('PV simple 7.67%',PV_SIMPLE,0.0767);
-  assert('PV double 92%',PV_DOUBLE,0.92);
-  assert('PV ouvrier 8.58%',LOIS_BELGES.rémunération.peculeVacances.ouvrierDouble.pct,0.0858);
-  // ══ RMMMG ══
-  assert('RMMMG 2026',RMMMG,2070.48,5);
-  // ══ CONSTANTES CENTRALISEES ══
-  assert('TX_ONSS_W',TX_ONSS_W,0.1307);
-  assert('TX_ONSS_E',TX_ONSS_E,0.2507,0.001);
-  assert('CR_PAT',CR_PAT,6.91);
-  // ══ RATIOS ══
-  const brut=3500;const onss=brut*TX_ONSS_W;const pp=quickPP(brut);const net=brut-onss-pp;
-  assert('Ratio net/brut 3500',net/brut*100,67,3);
-  assert('Cout employeur',brut*(1+TX_ONSS_E),4377.45,5);
-  // RESULTS
-  const passed=tests.filter(t=>t.pass).length;
-  const failed=tests.filter(t=>!t.pass).length;
-  return {tests,passed,failed,total:tests.length,score:Math.round(passed/tests.length*100)};
-}
-
-
-
-// ═══ SPRINT 43: OBFUSCATION NISS/IBAN ═══
-var obf={
-  encode:(v)=>{if(!v)return '';try{return btoa(unescape(encodeURIComponent(String(v).split('').reverse().join(''))));}catch(e){return v;}},
-  decode:(v)=>{if(!v)return '';try{return decodeURIComponent(escape(atob(v))).split('').reverse().join('');}catch(e){return v;}},
-  maskNISS:(n)=>{if(!n||n.length<6)return n;return n.slice(0,2)+'.***.***'+n.slice(-2);},
-  maskIBAN:(i)=>{if(!i||i.length<8)return i;return i.slice(0,4)+' **** **** '+i.slice(-4);}
-};
-var safeLS={get:(k)=>{try{if(typeof window==='undefined')return null;return window.localStorage.getItem(k);}catch(e){return null;}},set:(k,v)=>{try{if(typeof window==='undefined')return;window.localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}},remove:(k)=>{try{if(typeof window==='undefined')return;window.localStorage.removeItem(k);}catch(e){}}};
 var CR_MAX=LB.chequesRepas.valeurFaciale.max; // 8.00
+
 var CR_PAT=LB.chequesRepas.partPatronale.max; // 6.91
+
 var FORF_BUREAU=LB.fraisPropres.forfaitBureau.max; // FORF_BUREAU
+
 var FORF_KM=LB.fraisPropres.forfaitDeplacement.voiture; // 0.4415
+
 var PV_SIMPLE=LB.rémunération.peculeVacances.simple.pct; // PV_SIMPLE
+
 var PV_DOUBLE=LB.rémunération.peculeVacances.double.pct; // 0.92
+
 var RMMMG=LB.rémunération.RMMMG.montant18ans; // RMMMG
+
 var BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 194.03
+
 var SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
+
 var SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
+
 var HEURES_HEBDO=LB.tempsTravail.dureeHebdoLegale; // 38
+
 var JOURS_FERIES=LB.tempsTravail.jourFerie.nombre; // 10
 
+function calcPPFromLois(brut, opts) {
+  const L = LOIS_BELGES;
+  const onss = Math.round(brut * L.onss.travailleur * 100) / 100;
+  const imposable = brut - onss;
+  const annuel = imposable * 12;
+  const dirigeant = opts?.dirigeant || false;
+  const fp = dirigeant ? L.pp.fraisPro.dirigeant : L.pp.fraisPro.salarie;
+  const forfait = Math.min(annuel * fp.pct, fp.max);
+  const base = Math.max(0, annuel - forfait);
+  const isB2 = opts?.bareme2 || false;
+  let qc = 0, baseNet = base;
+  if (isB2) { qc = Math.min(base * L.pp.quotientConjugal.pct, L.pp.quotientConjugal.max); baseNet = base - qc; }
+  const calcTr = (b) => { let imp = 0, prev = 0; for (const t of L.pp.tranches) { const slice = Math.min(b, t.max) - Math.max(prev, t.min); if (slice > 0) imp += slice * t.taux; prev = t.max; } return imp; };
+  let impot = calcTr(baseNet);
+  if (isB2 && qc > 0) impot += calcTr(qc);
+  const qe = isB2 ? L.pp.quotiteExemptee.bareme2 : L.pp.quotiteExemptee.bareme1;
+  const enf = +(opts?.enfants || 0);
+  const enfH = +(opts?.enfantsHandicapes || 0);
+  const enfFisc = enf + enfH;
+  let redEnf = 0;
+  if (enfFisc > 0) { redEnf = enfFisc <= 8 ? L.pp.reductionsEnfants[enfFisc] : L.pp.reductionsEnfants[8] + (enfFisc - 8) * L.pp.reductionEnfantSupp; }
+  let totalRed = qe + redEnf;
+  if (opts?.parentIsole && enf > 0) totalRed += L.pp.reductionParentIsole;
+  if (opts?.handicape) totalRed += L.pp.reductionHandicape;
+  const taxeCom = (opts?.taxeCom || 7) / 100;
+  const ppAn = Math.max(0, impot - totalRed) * (1 + taxeCom);
+  return Math.round(ppAn / 12 * 100) / 100;
+}
 
-// Fonction centralisée: obtenir une valeur légale
 function getLoi(path, fallback) {
   const parts = path.split('.');
   let val = LOIS_BELGES;
   for (const p of parts) { val = val?.[p]; if (val === undefined) return fallback; }
   return val;
-}
-
-
-// Aliases courts pour calculs — connectés à LOIS_BELGES
-// (voir bloc RACCOURCIS CENTRALISÉS plus bas)
-var _PVP = LOIS_BELGES.rémunération.peculeVacances.patronal.pct;
-var _HLEG = LOIS_BELGES.tempsTravail.dureeHebdoLegale;
-
-// Fonction centralisée: calculer PP via LOIS_BELGES
-function calcPPFromLois(brut, opts) {
-  const L = LOIS_BELGES;
-  const onss = Math.round(brut * L.onss.travailleur * 100) / 100;
-  const imposable = brut - onss;
-  const annuel = imposable * 12;
-  const dirigeant = opts?.dirigeant || false;
-  const fp = dirigeant ? L.pp.fraisPro.dirigeant : L.pp.fraisPro.salarie;
-  const forfait = Math.min(annuel * fp.pct, fp.max);
-  const base = Math.max(0, annuel - forfait);
-  const isB2 = opts?.bareme2 || false;
-  let qc = 0, baseNet = base;
-  if (isB2) { qc = Math.min(base * L.pp.quotientConjugal.pct, L.pp.quotientConjugal.max); baseNet = base - qc; }
-  const calcTr = (b) => { let imp = 0, prev = 0; for (const t of L.pp.tranches) { const slice = Math.min(b, t.max) - Math.max(prev, t.min); if (slice > 0) imp += slice * t.taux; prev = t.max; } return imp; };
-  let impot = calcTr(baseNet);
-  if (isB2 && qc > 0) impot += calcTr(qc);
-  const qe = isB2 ? L.pp.quotiteExemptee.bareme2 : L.pp.quotiteExemptee.bareme1;
-  const enf = +(opts?.enfants || 0);
-  const enfH = +(opts?.enfantsHandicapes || 0);
-  const enfFisc = enf + enfH;
-  let redEnf = 0;
-  if (enfFisc > 0) { redEnf = enfFisc <= 8 ? L.pp.reductionsEnfants[enfFisc] : L.pp.reductionsEnfants[8] + (enfFisc - 8) * L.pp.reductionEnfantSupp; }
-  let totalRed = qe + redEnf;
-  if (opts?.parentIsole && enf > 0) totalRed += L.pp.reductionParentIsole;
-  if (opts?.handicape) totalRed += L.pp.reductionHandicape;
-  const taxeCom = (opts?.taxeCom || 7) / 100;
-  const ppAn = Math.max(0, impot - totalRed) * (1 + taxeCom);
-  return Math.round(ppAn / 12 * 100) / 100;
-}
-
-
-// ═══ RACCOURCIS CENTRALISÉS — Toute modif dans LOIS_BELGES se propage ICI ═══
-var _RMMMG = LOIS_BELGES.rémunération.RMMMG.montant18ans; // 2070.48
-var _IDX = LOIS_BELGES.rémunération.indexSante.coeff; // 2.0399
-
-
-// ═══════════════════════════════════════════════════════════════
-//  AUREUS SOCIAL PRO — Logiciel de Paie Belge Professionnel
-//  Modules: ONSS (Dimona/DMFA), Belcotax 281.xx, Formule-clé
-//  SPF Finances, Documents sociaux (C4, attestations)
-//  🌐 Multilingue: FR / NL
-// ═══════════════════════════════════════════════════════════════
-
-// ── I18N — Dictionnaire FR / NL / EN / DE ──
-// [removed]
-// [removed]
-
-
-// i18n provider wrapper
-// [removed]
-// [removed]
-  const t = (key) => {
-    const entry = I18N[key];
-
-var TX_ONSS_E=LB.onss.employeur.total; // 0.2507
-var TX_OUV108=LB.onss.ouvrier108; // 1.08
-var TX_AT=LB.assurances.accidentTravail.taux; // 0.01
-var COUT_MED=LB.assurances.medecineTravail.cout; // COUT_MED
-var CR_TRAV=LB.chequesRepas.partTravailleur.min; // CR_TRAV
-var PP_EST=0.22; // PP estimation moyenne (~22% de l'imposable)
-var NET_FACTOR=(1-TX_ONSS_W)*(1-PP_EST); // facteur net approx = ~0.5645
-var quickNetEst=(b)=>Math.round(b*NET_FACTOR*100)/100; // estimation rapide net
-
-// ═══ SPRINT 41: EXPORTS COMPTABLES RÉELS ═══
-function generateExportCompta(format,ops,periode,company){
-  const co=company||{};const coName=co.name||'Aureus IA SPRL';const coVAT=(co.vat||'BE1028230781').replace(/[^A-Z0-9]/g,'');
-  const f2=v=>(Math.round(v*100)/100).toFixed(2);
-  const fBE=v=>f2(v).replace('.',',');
-  const now=new Date();const dateStr=now.toISOString().slice(0,10);const periodeStr=periode||dateStr.slice(0,7);
-  const journal='OD';const piece='SAL'+periodeStr.replace(/-/g,'');
-  let output='';let filename='';let mime='text/plain';
-  // ——— BOB50 ———
-  if(format==='bob50'||format==='bob'){
-    // BOB50 format: journal|date|piece|compte|libelle|montant_debit|montant_credit
-    output=ops.map(o=>[journal,dateStr.replace(/-/g,''),piece,o.compte,'"'+o.desc.replace(/"/g,"'")+'"',o.sens==='D'?fBE(o.montant):'0,00',o.sens==='C'?fBE(o.montant):'0,00'].join('\t')).join('\n');
-    output='Journal\tDate\tPiece\tCompte\tLibelle\tDebit\tCredit\n'+output;
-    filename='BOB50_OD_'+periodeStr+'.txt';
-  }
-  // ——— WINBOOKS ———
-  else if(format==='winbooks'){
-    // Winbooks TXT: DBK|BOOKYEAR|PERIOD|DOCNUMBER|ACCOUNTGL|AMOUNTEUR|DTEFROM|COMMENT
-    const year=now.getFullYear();const month=now.getMonth()+1;
-    output=ops.map((o,i)=>['OD',year,month.toString().padStart(2,'0'),piece,(o.compte||'').padEnd(10,' '),o.sens==='D'?f2(o.montant):'-'+f2(o.montant),dateStr.replace(/-/g,''),o.desc.slice(0,40)].join('\t')).join('\n');
-    output='DBK\tBOOKYEAR\tPERIOD\tDOCNUMBER\tACCOUNTGL\tAMOUNTEUR\tDTEFROM\tCOMMENT\n'+output;
-    filename='Winbooks_OD_'+periodeStr+'.txt';
-  }
-  // ——— EXACT ONLINE ———
-  else if(format==='exact'){
-    // Exact CSV: Journal;Boekjaar;Periode;Dagboek;Rekeningnr;Omschrijving;Debet;Credit;Datum
-    output=ops.map(o=>['OD',now.getFullYear(),now.getMonth()+1,'OD',o.compte,'"'+o.desc+'"',o.sens==='D'?fBE(o.montant):'',o.sens==='C'?fBE(o.montant):'',dateStr.split('-').reverse().join('/')].join(';')).join('\n');
-    output='Journal;Boekjaar;Periode;Dagboek;Rekeningnr;Omschrijving;Debet;Credit;Datum\n'+output;
-    filename='Exact_OD_'+periodeStr+'.csv';mime='text/csv';
-  }
-  // ——— HORUS ———
-  else if(format==='horus'){
-    // Horus XML format
-// [removed]
-// [removed]
-    filename='Horus_OD_'+periodeStr+'.xml';mime='application/xml';
-  }
-  // ——— OCTOPUS ———
-  else if(format==='octopus'){
-    // Octopus CSV: Dagboek,Datum,Stuk,Rekening,Omschrijving,Debet,Credit
-    output=ops.map(o=>['OD',dateStr.split('-').reverse().join('/'),piece,o.compte,'"'+o.desc+'"',o.sens==='D'?fBE(o.montant):'',o.sens==='C'?fBE(o.montant):''].join(',')).join('\n');
-    output='Dagboek,Datum,Stuk,Rekening,Omschrijving,Debet,Credit\n'+output;
-    filename='Octopus_OD_'+periodeStr+'.csv';mime='text/csv';
-  }
-  // ——— YUKI ———
-  else if(format==='yuki'){
-    // Yuki XML
-// [removed]
-// [removed]
-    filename='Yuki_OD_'+periodeStr+'.xml';mime='application/xml';
-  }
-  // ——— KLUWER ———
-  else if(format==='kluwer'){
-    output=ops.map(o=>['OD',dateStr.replace(/-/g,''),piece,o.compte,o.desc.slice(0,40).padEnd(40,' '),o.sens==='D'?fBE(o.montant).padStart(15,' '):''.padStart(15,' '),o.sens==='C'?fBE(o.montant).padStart(15,' '):''.padStart(15,' ')].join('|')).join('\n');
-    filename='Kluwer_OD_'+periodeStr+'.txt';
-  }
-  // ——— POPSY ———
-  else if(format==='popsy'){
-    output=ops.map((o,i)=>[piece,dateStr.replace(/-/g,''),o.compte,o.desc.slice(0,30),o.sens==='D'?fBE(o.montant):'0,00',o.sens==='C'?fBE(o.montant):'0,00'].join(';')).join('\n');
-    output='Piece;Date;Compte;Libelle;Debit;Credit\n'+output;
-    filename='Popsy_OD_'+periodeStr+'.txt';
-  }
-  // Download
-  var blob=new Blob([output],{type:mime+';charset=utf-8'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);
-  return {filename,size:output.length,lines:output.split('\n').length};
-}
-
-// ═══ SPRINT 41: CSV EXPORT TRAVAILLEURS ═══
-function exportTravailleurs(emps,company){
-  const co=company||{};const coName=co.name||'';
-  const headers=['NISS','Nom','Prenom','DateNaissance','Genre','Email','Telephone','Adresse','CodePostal','Ville','IBAN','BIC','Statut','TypeContrat','DateEntree','DateSortie','Fonction','Regime','BrutMensuel','CP','Matricule'];
-  const rows=emps.map(e=>[
-    (e.niss||''),
-    (e.last||e.ln||'').replace(/;/g,','),
-    (e.first||e.fn||'').replace(/;/g,','),
-    (e.birthDate||''),
-    (e.gender||''),
-    (e.email||''),
-    (e.phone||''),
-    (e.address||''),
-    (e.zip||''),
-    (e.city||''),
-    (e.iban||''),
-    (e.bic||''),
-    (e.statut||'Employé'),
-    (e.contractType||'CDI'),
-    (e.startDate||''),
-    (e.endDate||''),
-    (e.fonction||e.jobTitle||''),
-    (+e.regime||100)+'%',
-    (+(e.monthlySalary||e.gross||0)).toFixed(2),
-    (e.cp||''),
-    (e.matricule||e.id||'')
-  ].join(';'));
-  const csv='\uFEFF'+headers.join(';')+'\n'+rows.join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download='Travailleurs_'+coName.replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv';
-  document.body.appendChild(a);a.click();
-  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},3000);
-  return rows.length;
-}
-
-// ═══ SPRINT 41: CSV IMPORT TRAVAILLEURS ═══
-function importTravailleurs(csvText){
-  const lines=csvText.split(/\r?\n/).filter(l=>l.trim());
-  if(lines.length<2)return {error:'Fichier vide ou sans données',imported:[]};
-  const headers=lines[0].split(';').map(h=>h.trim().toLowerCase());
-  const fieldMap={
-    'niss':'niss','nom':'last','prenom':'first','datenaissance':'birthDate',
-    'genre':'gender','email':'email','telephone':'phone','adresse':'address',
-    'codepostal':'zip','ville':'city','iban':'iban','bic':'bic',
-    'statut':'statut','typecontrat':'contractType','dateentree':'startDate',
-    'datesortie':'endDate','fonction':'fonction','regime':'regime',
-    'brutmensuel':'gross','cp':'cp','matricule':'matricule',
-    'last':'last','first':'first','fn':'first','ln':'last',
-    'name':'last','firstname':'first','lastname':'last',
-    'salary':'gross','brut':'gross','gross':'gross',
-    'contract':'contractType','type':'contractType',
-    'start':'startDate','end':'endDate','birth':'birthDate'
-  };
-  const colMap=headers.map(h=>{
-    const clean=h.replace(/[^a-z]/g,'');
-    return fieldMap[clean]||null;
-  });
-  const imported=[];
-  for(let i=1;i<lines.length;i++){
-    const vals=lines[i].split(';');
-    if(vals.length<3)continue;
-    const emp={id:'imp_'+Date.now()+'_'+i,status:'active'};
-    colMap.forEach((field,j)=>{
-      if(field&&vals[j]!==undefined){
-        let v=vals[j].trim().replace(/^"|"$/g,'');
-        if(field==='gross')v=parseFloat(v.replace(',','.'))||0;
-        else if(field==='regime')v=parseInt(v)||100;
-        emp[field]=v;
-      }
-    });
-    if(emp.first||emp.last||emp.niss)imported.push(emp);
-  }
-  return {imported,count:imported.length,headers:headers};
-}
-
-// ═══ SPRINT 41: TEST SUITE CALCULS PAIE ═══
-function runPayrollTests(){
-  const tests=[];
-  const assert=(name,actual,expected,tolerance)=>{
-    const tol=tolerance||0.01;
-    const pass=Math.abs(actual-expected)<=tol;
-    tests.push({name,actual:Math.round(actual*100)/100,expected,pass,diff:Math.round((actual-expected)*100)/100});
-  };
-  // ══ ONSS TRAVAILLEUR ══
-  assert('ONSS 3500 brut',3500*TX_ONSS_W,457.45);
-  assert('ONSS 2000 brut',2000*TX_ONSS_W,261.40);
-  assert('ONSS 5000 brut',5000*TX_ONSS_W,653.50);
-  // ══ PRECOMPTE PROFESSIONNEL (formule-clé SPF) ══
-  const pp1=calcPrecompteExact(3500,{situation:'isole',enfants:0});
-  assert('PP 3500 isolé 0enf',pp1.pp,660.63,1.0);
-  const pp2=calcPrecompteExact(3500,{situation:'marie_1r',enfants:0});
-  assert('PP 3500 marié1r 0enf',pp2.pp,470,15);
-  const pp3=calcPrecompteExact(2000,{situation:'isole',enfants:0});
-  assert('PP 2000 isolé 0enf',pp3.pp,218,10);
-  const pp4=calcPrecompteExact(5000,{situation:'isole',enfants:0});
-  assert('PP 5000 isolé 0enf',pp4.pp,1230,20);
-  const pp5=calcPrecompteExact(3500,{situation:'isole',enfants:2});
-  assert('PP 3500 isolé 2enf < PP sans enf',pp5.pp<pp1.pp?1:0,1);
-  // ══ CSSS ══
-  const csss1=calcCSSS(3500,'isole');
-  assert('CSSS 3500 isolé',csss1,14.93,2);
-  // ══ BONUS EMPLOI ══
-  const be1=calcBonusEmploi(2000);
-  assert('Bonus emploi 2000 > 0',be1>0?1:0,1);
-  const be2=calcBonusEmploi(5000);
-  assert('Bonus emploi 5000 = 0',be2,0);
-  // ══ NET COMPLET ══
-  const net1=quickNet(3500);
-  assert('Net 3500 > 2200',net1>2200?1:0,1);
-  assert('Net 3500 < 2800',net1<2800?1:0,1);
-  // ══ PECULE VACANCES ══
-  assert('PV simple 7.67%',PV_SIMPLE,0.0767);
-  assert('PV double 92%',PV_DOUBLE,0.92);
-  assert('PV ouvrier 8.58%',LOIS_BELGES.rémunération.peculeVacances.ouvrierDouble.pct,0.0858);
-  // ══ RMMMG ══
-  assert('RMMMG 2026',RMMMG,2070.48,5);
-  // ══ CONSTANTES CENTRALISEES ══
-  assert('TX_ONSS_W',TX_ONSS_W,0.1307);
-  assert('TX_ONSS_E',TX_ONSS_E,0.2507,0.001);
-  assert('CR_PAT',CR_PAT,6.91);
-  // ══ RATIOS ══
-  const brut=3500;const onss=brut*TX_ONSS_W;const pp=quickPP(brut);const net=brut-onss-pp;
-  assert('Ratio net/brut 3500',net/brut*100,67,3);
-  assert('Cout employeur',brut*(1+TX_ONSS_E),4377.45,5);
-  // RESULTS
-  const passed=tests.filter(t=>t.pass).length;
-  const failed=tests.filter(t=>!t.pass).length;
-  return {tests,passed,failed,total:tests.length,score:Math.round(passed/tests.length*100)};
-}
-
-
-
-// ═══ SPRINT 43: OBFUSCATION NISS/IBAN ═══
-var obf={
-  encode:(v)=>{if(!v)return '';try{return btoa(unescape(encodeURIComponent(String(v).split('').reverse().join(''))));}catch(e){return v;}},
-  decode:(v)=>{if(!v)return '';try{return decodeURIComponent(escape(atob(v))).split('').reverse().join('');}catch(e){return v;}},
-  maskNISS:(n)=>{if(!n||n.length<6)return n;return n.slice(0,2)+'.***.***'+n.slice(-2);},
-  maskIBAN:(i)=>{if(!i||i.length<8)return i;return i.slice(0,4)+' **** **** '+i.slice(-4);}
-};
-var safeLS={get:(k)=>{try{if(typeof window==='undefined')return null;return window.localStorage.getItem(k);}catch(e){return null;}},set:(k,v)=>{try{if(typeof window==='undefined')return;window.localStorage.setItem(k,typeof v==='string'?v:JSON.stringify(v));}catch(e){}},remove:(k)=>{try{if(typeof window==='undefined')return;window.localStorage.removeItem(k);}catch(e){}}};
-var CR_MAX=LB.chequesRepas.valeurFaciale.max; // 8.00
-var CR_PAT=LB.chequesRepas.partPatronale.max; // 6.91
-var FORF_BUREAU=LB.fraisPropres.forfaitBureau.max; // FORF_BUREAU
-var FORF_KM=LB.fraisPropres.forfaitDeplacement.voiture; // 0.4415
-var PV_SIMPLE=LB.rémunération.peculeVacances.simple.pct; // PV_SIMPLE
-var PV_DOUBLE=LB.rémunération.peculeVacances.double.pct; // 0.92
-var RMMMG=LB.rémunération.RMMMG.montant18ans; // RMMMG
-var BONUS_MAX=LB.pp.bonusEmploi.maxMensuel; // 194.03
-var SEUIL_CPPT=LB.seuils.electionsSociales.cppt; // 50
-var SEUIL_CE=LB.seuils.electionsSociales.ce; // 100
-var HEURES_HEBDO=LB.tempsTravail.dureeHebdoLegale; // 38
-var JOURS_FERIES=LB.tempsTravail.jourFerie.nombre; // 10
-
-
-// Fonction centralisée: obtenir une valeur légale
-function getLoi(path, fallback) {
-  const parts = path.split('.');
-  let val = LOIS_BELGES;
-  for (const p of parts) { val = val?.[p]; if (val === undefined) return fallback; }
-  return val;
-}
-
-
-// Aliases courts pour calculs — connectés à LOIS_BELGES
-// (voir bloc RACCOURCIS CENTRALISÉS plus bas)
-var _PVP = LOIS_BELGES.rémunération.peculeVacances.patronal.pct;
-var _HLEG = LOIS_BELGES.tempsTravail.dureeHebdoLegale;
-
-// Fonction centralisée: calculer PP via LOIS_BELGES
-function calcPPFromLois(brut, opts) {
-  const L = LOIS_BELGES;
-  const onss = Math.round(brut * L.onss.travailleur * 100) / 100;
-  const imposable = brut - onss;
-  const annuel = imposable * 12;
-  const dirigeant = opts?.dirigeant || false;
-  const fp = dirigeant ? L.pp.fraisPro.dirigeant : L.pp.fraisPro.salarie;
-  const forfait = Math.min(annuel * fp.pct, fp.max);
-  const base = Math.max(0, annuel - forfait);
-  const isB2 = opts?.bareme2 || false;
-  let qc = 0, baseNet = base;
-  if (isB2) { qc = Math.min(base * L.pp.quotientConjugal.pct, L.pp.quotientConjugal.max); baseNet = base - qc; }
-  const calcTr = (b) => { let imp = 0, prev = 0; for (const t of L.pp.tranches) { const slice = Math.min(b, t.max) - Math.max(prev, t.min); if (slice > 0) imp += slice * t.taux; prev = t.max; } return imp; };
-  let impot = calcTr(baseNet);
-  if (isB2 && qc > 0) impot += calcTr(qc);
-  const qe = isB2 ? L.pp.quotiteExemptee.bareme2 : L.pp.quotiteExemptee.bareme1;
-  const enf = +(opts?.enfants || 0);
-  const enfH = +(opts?.enfantsHandicapes || 0);
-  const enfFisc = enf + enfH;
-  let redEnf = 0;
-  if (enfFisc > 0) { redEnf = enfFisc <= 8 ? L.pp.reductionsEnfants[enfFisc] : L.pp.reductionsEnfants[8] + (enfFisc - 8) * L.pp.reductionEnfantSupp; }
-  let totalRed = qe + redEnf;
-  if (opts?.parentIsole && enf > 0) totalRed += L.pp.reductionParentIsole;
-  if (opts?.handicape) totalRed += L.pp.reductionHandicape;
-  const taxeCom = (opts?.taxeCom || 7) / 100;
-  const ppAn = Math.max(0, impot - totalRed) * (1 + taxeCom);
-  return Math.round(ppAn / 12 * 100) / 100;
-}
-
-
-// ═══ RACCOURCIS CENTRALISÉS — Toute modif dans LOIS_BELGES se propage ICI ═══
-var _RMMMG = LOIS_BELGES.rémunération.RMMMG.montant18ans; // 2070.48
-var _IDX = LOIS_BELGES.rémunération.indexSante.coeff; // 2.0399
-
-
-// ═══════════════════════════════════════════════════════════════
-//  AUREUS SOCIAL PRO — Logiciel de Paie Belge Professionnel
-//  Modules: ONSS (Dimona/DMFA), Belcotax 281.xx, Formule-clé
-//  SPF Finances, Documents sociaux (C4, attestations)
-//  🌐 Multilingue: FR / NL
-// ═══════════════════════════════════════════════════════════════
-
-// ── I18N — Dictionnaire FR / NL / EN / DE ──
-// [removed]
-// [removed]
-
-
-// i18n provider wrapper
-// [removed]
-// [removed]
-  const t = (key) => {
-    const entry = I18N[key];
-    if (!entry) return key;
-
-function calcPPFromLois(brut, opts) {
-  const L = LOIS_BELGES;
-  const onss = Math.round(brut * L.onss.travailleur * 100) / 100;
-  const imposable = brut - onss;
-  const annuel = imposable * 12;
-  const dirigeant = opts?.dirigeant || false;
-  const fp = dirigeant ? L.pp.fraisPro.dirigeant : L.pp.fraisPro.salarie;
-  const forfait = Math.min(annuel * fp.pct, fp.max);
-  const base = Math.max(0, annuel - forfait);
-  const isB2 = opts?.bareme2 || false;
-  let qc = 0, baseNet = base;
-  if (isB2) { qc = Math.min(base * L.pp.quotientConjugal.pct, L.pp.quotientConjugal.max); baseNet = base - qc; }
-  const calcTr = (b) => { let imp = 0, prev = 0; for (const t of L.pp.tranches) { const slice = Math.min(b, t.max) - Math.max(prev, t.min); if (slice > 0) imp += slice * t.taux; prev = t.max; } return imp; };
-  let impot = calcTr(baseNet);
-  if (isB2 && qc > 0) impot += calcTr(qc);
-  const qe = isB2 ? L.pp.quotiteExemptee.bareme2 : L.pp.quotiteExemptee.bareme1;
-  const enf = +(opts?.enfants || 0);
-  const enfH = +(opts?.enfantsHandicapes || 0);
-  const enfFisc = enf + enfH;
-  let redEnf = 0;
-  if (enfFisc > 0) { redEnf = enfFisc <= 8 ? L.pp.reductionsEnfants[enfFisc] : L.pp.reductionsEnfants[8] + (enfFisc - 8) * L.pp.reductionEnfantSupp; }
-  let totalRed = qe + redEnf;
-  if (opts?.parentIsole && enf > 0) totalRed += L.pp.reductionParentIsole;
-  if (opts?.handicape) totalRed += L.pp.reductionHandicape;
-  const taxeCom = (opts?.taxeCom || 7) / 100;
-  const ppAn = Math.max(0, impot - totalRed) * (1 + taxeCom);
-  return Math.round(ppAn / 12 * 100) / 100;
 }
 
 var LEGAL={ONSS_W:TX_ONSS_W,ONSS_E:TX_ONSS_E,BONUS_2026:{
