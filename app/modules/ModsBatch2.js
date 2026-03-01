@@ -6,7 +6,7 @@ import { useState } from "react";
 import { C, B, I, ST, PH, fmt } from "@/app/lib/shared-ui";
 import { LOIS_BELGES, RMMMG, TX_ONSS_E, TX_ONSS_W, NET_FACTOR, quickNetEst,
   PV_DOUBLE, PV_SIMPLE, CR_PAT, CR_MAX, HEURES_HEBDO, BONUS_MAX,
-  TX_OUV108, TX_AT } from "@/app/lib/lois-belges";
+  TX_OUV108, TX_AT, obf } from "@/app/lib/lois-belges";
 import { quickPP, quickNet, calcCSSS, calcBonusEmploi } from "@/app/lib/payroll-engine";
 import { aureuspdf } from "@/app/lib/pdf-aureus";
 
