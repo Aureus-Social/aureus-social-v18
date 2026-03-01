@@ -172,7 +172,7 @@ const SmartAutomationLazy = dynamic(() => import("./modules/SprintComponents").t
 const SmartAutopilotLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.SmartAutopilot })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const TestSuiteDashLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.TestSuiteDash })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 const ValidationEngineLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.ValidationEngine })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
-const RegularisationPPLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.RegularisationPP })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
+const RegularisationPPLazy = dynamic(() => import("./modules/SprintComponents").then(m => ({ default: m.RegulPPAnnuelle })), { ssr: false, loading: () => <div style={{padding:40,textAlign:"center",color:"#5e5c56"}}>Chargement...</div> });
 
 // ═══ SPRINT 37: MOTEUR CENTRAL LOIS BELGES — AUTO-UPDATE 1 CLIC  ═══
 // ══════════════════════════════════════════════════════════════════════
@@ -18756,13 +18756,13 @@ const pg=()=>{
       case'employees':return <Employees s={s} d={d}/>;
       case'payslip':return <Payslips s={s} d={d}/>;
       case'onss':return s.sub==='dmfa'?<DMFAPage s={s} d={d}/>:s.sub==='drs'?<DRSModLazy s={s} d={d}/>:s.sub==='onssapl'?<ONSSAPLModLazy s={s} d={d}/>:s.sub==='onss_dash'?<ONSSDashModLazy s={s} d={d}/>:s.sub==='guide_portail'?<GuidePortailModLazy s={s} d={d}/>:s.sub==='portail_employeur'?<PortailEmployeurModLazy s={s} d={d}/>:<DimonaPage s={s} d={d}/>;
-      case'fiscal':return s.sub==='precompte'?<PrecomptePage s={s} d={d}/>:s.sub==='fiches_ext'?<FichesModLazy s={s} d={d}/>:s.sub==='co2'?<CO2ModLazy s={s} d={d}/>:s.sub==='atn'?<ATNModLazy s={s} d={d}/>:<BelcotaxPage s={s} d={d}/>;
+      case'fiscal':return s.sub==='precompte'?<PrecomptePage s={s} d={d}/>:s.sub==='baremespp'?<PrecomptePage s={s} d={d}/>:s.sub==='fiches_ext'?<FichesModLazy s={s} d={d}/>:s.sub==='co2'?<CO2ModLazy s={s} d={d}/>:s.sub==='atn'?<ATNModLazy s={s} d={d}/>:<BelcotaxPage s={s} d={d}/>;
       case'salaires':return <SalairesPage s={s} d={d}/>;
       case'avantages':return <AvantagesPage s={s} d={d}/>;
       case'contratsmenu':return <ContratsMenuPage s={s} d={d}/>;
       case'rh':return <RHPage s={s} d={d}/>;
       case'social':return <SocialPage s={s} d={d}/>;
-      case'bienetre':return <BienetrePage s={s} d={d}/>;
+      case'bienetre':return <Dashboard s={s} d={d} userRole={userRole}/>;
       case'reporting':return <ReportingPage s={s} d={d}/>;
       case'legal':return <LegalPage s={s} d={d}/>;
       case'aureussuite':case'ia_turnover':case'ia_salaire':case'ia_anomalies':case'what_if':case'kpi_dashboard':return <AureusSuitePageLazy s={s} d={d}/>;
@@ -22128,7 +22128,7 @@ function AvantagesPage({s,d}){const sub=s.sub||'cheques';return <div>
   {sub==='warrants'&&<WarrantsModLazy s={s} d={d}/>}
   {sub==='budgetmob'&&<BudgetMobiliteModLazy s={s} d={d}/>}
   {sub==='ecochequesv2'&&<CRModLazy s={s} d={d}/>}
-  {sub==='notefraisv2'&&<CRModLazy s={s} d={d}/>}
+  {sub==='notefraisv2'&&<NoteFraisModLazy s={s} d={d}/>}
 </div>;}
 
 function ContratsMenuPage({s,d}){const sub=s.sub||'contrats';return <div>
