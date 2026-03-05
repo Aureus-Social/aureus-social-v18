@@ -381,6 +381,7 @@ export const AUTRES_CP={
 // COMPOSANT UI — BAREMES CP V2
 // ════════════════════════════════════════════════════════════
 export function BaremesCPV2({s}){
+  s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const clients=s.clients||[];
   const allEmps=clients.flatMap(c=>(c.emps||[]).map(e=>({...e,_co:c.company?.name||'',_cp:c.company?.cp||'200'})));
   const [selCP,setSelCP]=useState('200');

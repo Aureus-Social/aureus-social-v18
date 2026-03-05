@@ -22,6 +22,7 @@ const timeAgo=(t)=>{const d=Math.floor((Date.now()-new Date(t))/60000);if(d<1)re
 // 1. SMART ALERTS ENGINE — Moteur d'alertes intelligentes
 // ═══════════════════════════════════════════════════════════
 export function SmartAlertsEngine({s,d}){
+  s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const clients=s.clients||[];
   const now=new Date();
   const day=now.getDate();const month=now.getMonth();const yr=now.getFullYear();

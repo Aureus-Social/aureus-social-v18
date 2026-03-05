@@ -610,6 +610,7 @@ export function EmployeeTimesheet({s, d, employee}) {
 // COMPOSANT : Portail Employé — Mes Formations
 // ═══════════════════════════════════════════════════════════════════
 export function EmployeeTraining({s, d}) {
+  s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const cs = {padding:'20px',borderRadius:'14px',border:'1px solid rgba(59,130,246,.06)',background:'rgba(255,255,255,.01)'};
   
   const formations = [

@@ -14,6 +14,7 @@ const quickPP=br=>{const imp=br*(1-TX_ONSS_W);if(imp<=1170)return 0;if(imp<=2350
 // 1. DASHBOARD RH — Vrais indicateurs calcules
 // ═══════════════════════════════════════════════════════════
 export function DashboardRHV2({s,d}){
+  s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const clients=s.clients||[];const now=new Date();const yr=now.getFullYear();
   const allEmps=clients.flatMap(c=>(c.emps||[]).map(e=>({...e,_co:c.company?.name||c.id})));
   const n=allEmps.length;const [tab,setTab]=useState('overview');

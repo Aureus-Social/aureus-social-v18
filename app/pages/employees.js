@@ -36,6 +36,7 @@ function quickNet(brut) { return Math.round((brut||0) * NET_FACTOR * 100) / 100;
 function escapeHtml(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function Employees({s,d}) {
+  s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const [form,setF]=useState(null);
   const [ed,setEd]=useState(false);
   const [search,setSearch]=useState('');

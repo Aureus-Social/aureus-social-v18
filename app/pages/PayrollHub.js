@@ -15,6 +15,7 @@ const moisN=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août',
 // 1. VALIDATION PRE-PAIE — Vrais controles automatiques
 // ═══════════════════════════════════════════════════════════
 export function ValidationPrePaieV2({s,d}){
+  s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const clients=s.clients||[];const now=new Date();
   const allEmps=clients.flatMap(c=>(c.emps||[]).map(e=>({...e,_co:c.company?.name||c.id,_cp:c.company?.cp||'200'})));
   const n=allEmps.length;const [showDetail,setShowDetail]=useState(null);

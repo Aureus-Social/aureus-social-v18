@@ -36,6 +36,7 @@ function quickNet(brut) { return Math.round((brut||0) * NET_FACTOR * 100) / 100;
 function escapeHtml(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function SettingsPage({s,d}) {
+  s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const [f,setF]=useState({...s.co});
   return <div>
     <PH title="Paramètres" sub="Configuration société"/>

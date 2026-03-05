@@ -380,6 +380,7 @@ const CAT_COLORS={remvar:'#c6a34e',exonere:'#22c55e',frais:'#3b82f6',atn:'#f8717
 // COMPOSANT 1: PRIME CALCULATOR V2 — Simulateur comparatif
 // ════════════════════════════════════════════════════════════
 export function PrimeCalculatorV2({s,d}){
+  s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const emps=(s.clients||[]).flatMap(c=>c.emps||[]);
   const [selPrime,setSelPrime]=useState('prime_fin_annee');
   const [montant,setMontant]=useState(2000);

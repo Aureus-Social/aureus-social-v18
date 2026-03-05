@@ -17,7 +17,8 @@ function calc(emp,per,co){
   return {gross:b,net:b*0.56,tax:b*0.22,onssNet:b*0.1307,onssE:b*0.2507,css:0,costTotal:b*1.2507,bonus:0,peculeV:0,y13:0,totalBrut:b,netAPayer:b*0.56};
 }
 
-export function GuidePortailMod({s,d}){const loisRef=LOIS_BELGES;
+export function GuidePortailMod({s,d}){
+  s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};const loisRef=LOIS_BELGES;
   const [tab,setTab]=useState('intro');
   const tabs=[
     {id:'intro',l:"Vue d'ensemble",i:'📋'},

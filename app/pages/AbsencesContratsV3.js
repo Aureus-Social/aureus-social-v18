@@ -13,6 +13,7 @@ const TX_ONSS_W=0.1307,TX_ONSS_E=0.2507;
 // 1. PLANNING CONGÉS V3 — Chevauchements + règles min présence
 // ════════════════════════════════════════════════════════════
 export function PlanningCongesV3({s}){
+  s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const emps=(s.clients||[]).flatMap(c=>(c.emps||[]).map(e=>({...e,_cl:c.company?.name||'Client'})));
   const [month,setMonth]=useState(new Date().getMonth());
   const [year]=useState(2026);
