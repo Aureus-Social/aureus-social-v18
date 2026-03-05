@@ -1,10 +1,27 @@
 'use client';
-import { useState, useReducer, useMemo, Suspense } from 'react';
+import React, { useState, useReducer, useMemo, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { MENU, GROUPS, getGroupItems } from '../lib/menu-config';
 import { supabase } from '../lib/supabase';
 
 const Loading = () => <div style={{padding:40,textAlign:'center',color:'#5e5c56'}}>Chargement...</div>;
+
+
+// ErrorBoundary pour catch les crashes de modules
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  render() {
+    if (this.state.hasError) {
+      return <div style={{padding:40,textAlign:'center'}}>
+        <div style={{fontSize:16,fontWeight:700,color:'#c6a34e',marginBottom:8}}>Module en cours de chargement</div>
+        <div style={{fontSize:11,color:'#5e5c56',marginBottom:16}}>Ce module sera disponible prochainement.</div>
+        <button onClick={()=>this.setState({hasError:false,error:null})} style={{padding:'8px 20px',borderRadius:8,border:'1px solid rgba(198,163,78,.2)',background:'transparent',color:'#c6a34e',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Réessayer</button>
+      </div>;
+    }
+    return this.props.children;
+  }
+}
 
 // Pages migrées (import dynamique = code splitting)
 const DashboardPage = dynamic(() => import('../pages/dashboard'), { ssr: false, loading: Loading });
@@ -360,7 +377,7 @@ export default function DashboardLayout({ user }) {
 
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-          {renderPage()}
+          <ErrorBoundary>{renderPage()}</ErrorBoundary>
         </div>
       </div>
     </div>
