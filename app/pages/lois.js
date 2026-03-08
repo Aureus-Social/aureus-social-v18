@@ -1,44 +1,20 @@
 'use client';
+import { C, CR_PAT, LB, LOIS_BELGES, NET_FACTOR, PH, PP_EST, PV_DOUBLE, PV_SIMPLE, RMMMG, ST, TX_ONSS_E, TX_ONSS_W, Tbl, f0, f2, fmt, quickPP, safeLS } from '@/app/lib/helpers';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { LOIS_BELGES, LB, RMMMG, TX_ONSS_W, TX_ONSS_E, NET_FACTOR, PV_DOUBLE, PV_SIMPLE, PP_EST } from '@/app/lib/lois-belges';
 
-const fmt = n => new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR' }).format(n || 0);
 const fmtP = n => `${((n||0)*100).toFixed(2)}%`;
 const uid = () => `${Date.now()}-${Math.random().toString(36).substr(2,5)}`;
-const AUREUS_INFO = { name: 'Aureus IA SPRL', vat: 'BE 1028.230.781', version: 'v38', sprint: 'Sprint 38' };
-const LEGAL = { WD: 21.67, WHD: 7.6 };
-const DPER = { month: new Date().getMonth()+1, year: new Date().getFullYear(), days: 21.67 };
 const MN_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
-function PH({title,sub}){return <div style={{marginBottom:16}}><div style={{fontSize:18,fontWeight:800,color:'#c6a34e',letterSpacing:'.3px'}}>{title}</div>{sub&&<div style={{fontSize:11,color:'#9e9b93',marginTop:2}}>{sub}</div>}</div>;}
-function C({children,style}){return <div style={{padding:'16px 20px',background:'rgba(198,163,78,.03)',borderRadius:12,border:'1px solid rgba(198,163,78,.06)',marginBottom:14,...style}}>{children}</div>;}
-function ST({children}){return <div style={{fontSize:13,fontWeight:700,color:'#c6a34e',marginBottom:10,paddingBottom:6,borderBottom:'1px solid rgba(198,163,78,.1)'}}>{children}</div>;}
 
-function calc(emp, per, co) {
-  var brut = +(emp&&(emp.monthlySalary||emp.gross)||0);
-  var onssW = Math.round(brut * TX_ONSS_W * 100) / 100;
-  var imposable = brut - onssW;
-  var pp = Math.round(imposable * PP_EST * 100) / 100;
-  var net = Math.round((imposable - pp) * 100) / 100;
-  var onssE = Math.round(brut * TX_ONSS_E * 100) / 100;
-  return {base:brut,gross:brut,onssNet:onssW,imposable:imposable,tax:pp,pp:pp,css:0,net:net,onssE:onssE,costTotal:Math.round((brut+onssE)*100)/100,bonus:0,overtime:0,sunday:0,night:0,y13:0,sickPay:0,atnCar:0,cotCO2:0,hsBrutNetTotal:0};
-}
 
-function quickPP(brut) {
-  const imposable = brut - brut * TX_ONSS_W;
-  if (imposable <= 1110) return 0;
-  if (imposable <= 1560) return Math.round((imposable - 1110) * 0.2668 * 100) / 100;
-  if (imposable <= 2700) return Math.round((120.06 + (imposable - 1560) * 0.4280) * 100) / 100;
-  return Math.round((607.98 + (imposable - 2700) * 0.4816) * 100) / 100;
-}
 
-function quickNet(brut) { return Math.round((brut||0) * NET_FACTOR * 100) / 100; }
 function escapeHtml(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function MoteurLoisBelges({s,d}){
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
-const ae=s.emps||[];
-const [tab,setTab]=useState("dashboard");
+const ae= s?.emps||[];
+const [tab,setTab]=useState(defaultTab||"dashboard");
 const [editMode,setEditMode]=useState(false);
 const [customLois,setCustomLois]=useState(()=>{try{return (()=>{try{return JSON.parse(safeLS.get('aureus_lois_custom'))}catch(e){return null}})()||{};}catch(e){return {};}});
 const [updateHistory,setUpdateHistory]=useState(()=>{try{return (()=>{try{return JSON.parse(safeLS.get('aureus_lois_history'))}catch(e){return null}})()||[];}catch(e){return [];}});
@@ -133,10 +109,10 @@ const categories=[
   {k:'csss.isole.4.montantFixe',l:'Plafond isole',v:fmt(L.csss.isole[4].montantFixe)+' EUR/trim',t:'num'},
 ]},
 {id:'rem',nom:'Remuneration',icon:'💶',color:'#22c55e',params:[
-  {k:'rémunération.RMMMG.montant18ans',l:'RMMMG (18 ans)',v:fmt(L.rémunération.RMMMG.montant18ans)+' EUR/mois',t:'num'},
-  {k:'rémunération.indexSante.coeff',l:'Coefficient index sante',v:L.rémunération.indexSante.coeff,t:'num'},
-  {k:'rémunération.peculeVacances.simple.pct',l:'Pecule vacances simple',v:pct(L.rémunération.peculeVacances.simple.pct),t:'pct'},
-  {k:'rémunération.peculeVacances.double.pct',l:'Pecule vacances double',v:pct(L.rémunération.peculeVacances.double.pct),t:'pct'},
+  {k:'rémunération.RMMMG.montant18ans',l:'RMMMG (18 ans)',v:fmt(L.remuneration.RMMMG.montant18ans)+' EUR/mois',t:'num'},
+  {k:'rémunération.indexSante.coeff',l:'Coefficient index sante',v:L.remuneration.indexSante.coeff,t:'num'},
+  {k:'rémunération.peculeVacances.simple.pct',l:'Pecule vacances simple',v:pct(L.remuneration.peculeVacances.simple.pct),t:'pct'},
+  {k:'rémunération.peculeVacances.double.pct',l:'Pecule vacances double',v:pct(L.remuneration.peculeVacances.double.pct),t:'pct'},
   {k:'chequesRepas.partTravailleur.min',l:'Cheques-repas part travailleur min',v:fmt(L.chequesRepas.partTravailleur.min)+' EUR',t:'num'},
   {k:'chequesRepas.valeurFaciale.max',l:'Cheques-repas valeur faciale max',v:fmt(L.chequesRepas.valeurFaciale.max)+' EUR',t:'num'},
   {k:'fraisPropres.forfaitBureau.max',l:'Forfait bureau/teletravail',v:fmt(L.fraisPropres.forfaitBureau.max)+' EUR/mois',t:'num'},
@@ -514,4 +490,44 @@ updateHistory.map((h,i)=><div key={i} style={{display:"flex",gap:10,padding:"10p
 
 
 
-export default MoteurLoisBelges;
+export default function LoisWrapped({ s, d, tab }) {
+  // Mapper nos tabs menu vers les onglets internes du moteur lois
+  const TAB_MAP = {
+    seuilssociaux:       'parametres',
+    ccts:                'parametres',
+    delegations:         'parametres',
+    delegationsyndicale: 'parametres',
+    egalitehf:           'parametres',
+    electionsociales:    'parametres',
+    formationsec:        'parametres',
+    lanceursalerte:      'parametres',
+    plandiversite:       'parametres',
+    social:              'dashboard',
+  };
+  const TAB_LABELS = {
+    seuilssociaux:       '📐 Seuils Sociaux 2026',
+    ccts:                '📜 Conventions CCT',
+    delegations:         '🏛 Délégations',
+    delegationsyndicale: '🏛 Délégation Syndicale',
+    egalitehf:           '⚖️ Égalité H/F',
+    electionsociales:    '🗳 Élections Sociales',
+    formationsec:        '🎓 Formation & Sécurité',
+    lanceursalerte:      '🚨 Lanceurs d\'Alerte',
+    plandiversite:       '🌍 Plan Diversité',
+    social:              '◆ Social & Assurances',
+  };
+  const mappedTab = TAB_MAP[tab] || 'dashboard';
+  const label = TAB_LABELS[tab];
+  return (
+    <div>
+      {label && (
+        <div style={{marginBottom:12,padding:'10px 16px',background:'rgba(198,163,78,.03)',
+          borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <h2 style={{color:'#c6a34e',margin:0,fontSize:16}}>{label}</h2>
+        </div>
+      )}
+      <MoteurLoisBelges s={s} d={d} defaultTab={mappedTab} />
+    </div>
+  );
+}
+

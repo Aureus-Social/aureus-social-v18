@@ -900,15 +900,35 @@ function calc(emp, per, co) {
     if (carFuel === 'electrique') {
       r.atnPct = 4;
       r.atnCar = Math.max(1600/12, (carCatVal * (6/7) * 0.04) / 12);
-      r.cotCO2 = 31.34; // minimum
+      r.cotCO2 = LOIS_BELGES.vehicules.cotCO2Min; // minimum légal (source: lois-belges)
     } else {
       const refCO2 = (carFuel === 'diesel') ? 84 : 102;
       const delta = carCO2 - refCO2;
       r.atnPct = Math.max(4, Math.min(18, 5.5 + (delta * 0.1)));
       r.atnCar = Math.max(1600/12, (carCatVal * (6/7) * (r.atnPct/100)) / 12);
       // Cotisation CO2 patronale (solidarité ONSS)
-      if (carFuel === 'diesel') r.cotCO2 = Math.max(31.34, (carCO2 * 0.00714 * 71.4644) + 31.34);
-      else r.cotCO2 = Math.max(31.34, (carCO2 * 0.00714 * 83.6644) + 31.34);
+      const _co2min = LOIS_BELGES.vehicules.cotCO2Min;
+      if (carFuel === 'diesel') r.cotCO2 = Math.max(_co2min, (carCO2 * 0.00714 * 71.4644) + _co2min);
+      else r.cotCO2 = Math.max(_co2min, (carCO2 * 0.00714 * 83.6644) + _co2min);
+    }
+  }
+
+  // ── MOTO DE SOCIÉTÉ (Art. 36 CIR 92 — même régime que voiture) ──
+  r.atnMoto = 0; r.atnPctMoto = 0; r.cotCO2Moto = 0;
+  const motoFuel = emp.motoFuel || 'essence';
+  const motoCO2 = parseInt(emp.motoCO2) || 0;
+  const motoCatVal = parseFloat(emp.motoCatVal) || 0;
+  if (emp.motoSociete && motoCatVal > 0) {
+    if (motoFuel === 'electrique') {
+      r.atnPctMoto = 4;
+      r.atnMoto = Math.max(1600/12, (motoCatVal * (6/7) * 0.04) / 12);
+      r.cotCO2Moto = LOIS_BELGES.vehicules.cotCO2Min;
+    } else {
+      const refCO2Moto = motoFuel === 'diesel' ? 84 : 102;
+      const deltaMoto = motoCO2 - refCO2Moto;
+      r.atnPctMoto = Math.max(4, Math.min(18, 5.5 + (deltaMoto * 0.1)));
+      r.atnMoto = Math.max(1600/12, (motoCatVal * (6/7) * (r.atnPctMoto/100)) / 12);
+      r.cotCO2Moto = Math.max(LOIS_BELGES.vehicules.cotCO2Min, (motoCO2 * 0.00714 * 83.6644) + LOIS_BELGES.vehicules.cotCO2Min);
     }
   }
 
@@ -938,8 +958,8 @@ function calc(emp, per, co) {
       r.atnLogement = (rcIndex * 100 / 60) / 12;
     }
   }
-  r.atnAutresTot = r.atnGSM + r.atnPC + r.atnInternet + r.atnChauffage + r.atnElec + r.atnLogement;
-  r.atnTotal = r.atnCar + r.atnAutresTot;
+  r.atnAutresTot = r.atnGSM + r.atnPC + r.atnInternet + r.atnChauffage + r.atnElec + r.atnLogement + r.atnMoto;
+  r.atnTotal = r.atnCar + r.atnMoto + r.atnAutresTot;
 
   // ── VÉLO DE SOCIÉTÉ (Loi 25/11/2021 + Art. 38§1er 14°a CIR 92) ──
   // Depuis 01/01/2024: l'ATN vélo de société = 0€ (exonéré IPP et ONSS)
@@ -981,7 +1001,7 @@ function calc(emp, per, co) {
 
   // Ajouter aux ATN autres si applicable
   r.atnAutresTot += r.atnCarteCarburant + r.atnBorne;
-  r.atnTotal = r.atnCar + r.atnAutresTot;
+  r.atnTotal = r.atnCar + r.atnMoto + r.atnAutresTot;
 
   // ── ONSS Travailleur ──
   const isOuvrier = (emp.statut === 'ouvrier');

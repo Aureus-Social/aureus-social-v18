@@ -1,4 +1,5 @@
 'use client';
+import { C, CR_PAT, DPER, LB, LEGAL, LOIS_BELGES, NET_FACTOR, PH, PP_EST, PV_DOUBLE, PV_SIMPLE, RMMMG, ST, TX_ONSS_E, TX_ONSS_W, Tbl, calc, f0, f2, fmt, obf, quickNet, quickPP } from '@/app/lib/helpers';
 import{useState,useEffect,useMemo,useCallback,useRef}from'react';
 
 // ═══════════════════════════════════════════════════════════
@@ -6,13 +7,10 @@ import{useState,useEffect,useMemo,useCallback,useRef}from'react';
 // Aureus Social Pro — Sprint 37
 // ═══════════════════════════════════════════════════════════
 
-const TX_ONSS_E=0.2507,TX_ONSS_W=0.1307;
-const fmt=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
 const fi=v=>new Intl.NumberFormat('fr-BE',{maximumFractionDigits:0}).format(v||0);
 const mois=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
 // ═══ HELPERS ═══
-const C=({children,title:t,sub})=><div style={{background:'rgba(198,163,78,.03)',borderRadius:12,padding:16,border:'1px solid rgba(198,163,78,.08)',marginBottom:14}}>{t&&<div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:sub?2:12}}>{t}</div>}{sub&&<div style={{fontSize:10,color:'#888',marginBottom:12}}>{sub}</div>}{children}</div>;
 const KPI=({l,v,c,sub,onClick})=><div onClick={onClick} style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+(c||'#c6a34e')+'20',borderRadius:12,textAlign:'center',flex:1,minWidth:110,cursor:onClick?'pointer':'default'}}><div style={{fontSize:20,fontWeight:800,color:c||'#c6a34e'}}>{v}</div><div style={{fontSize:9,color:'#888',marginTop:3}}>{l}</div>{sub&&<div style={{fontSize:8,color:'#5e5c56',marginTop:2}}>{sub}</div>}</div>;
 const Row=({l,v,c})=><div style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{color:'#e8e6e0',fontSize:11.5}}>{l}</span><span style={{color:c||'#c6a34e',fontWeight:600,fontSize:12}}>{v}</span></div>;
 const Badge=({text,color})=><span style={{padding:'2px 7px',borderRadius:5,fontSize:8,fontWeight:600,background:(color||'#888')+'15',color:color||'#888',textTransform:'uppercase',letterSpacing:'.3px'}}>{text}</span>;
@@ -23,7 +21,7 @@ const timeAgo=(t)=>{const d=Math.floor((Date.now()-new Date(t))/60000);if(d<1)re
 // ═══════════════════════════════════════════════════════════
 export function SmartAlertsEngine({s,d}){
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
-  const clients=s.clients||[];
+  const clients= s?.clients||[];
   const now=new Date();
   const day=now.getDate();const month=now.getMonth();const yr=now.getFullYear();
   const quarter=Math.ceil((month+1)/3);
@@ -266,7 +264,7 @@ export function SmartAlertsEngine({s,d}){
 // 2. NOTIFICATION CENTER — Hub unifie avec preferences
 // ═══════════════════════════════════════════════════════════
 export function NotificationCenterV2({s,d}){
-  const clients=s.clients||[];
+  const clients= s?.clients||[];
   const now=new Date();
   const day=now.getDate();const month=now.getMonth();const yr=now.getFullYear();
   const ncValidTabs=['inbox','prefs'];
@@ -420,7 +418,7 @@ export function NotificationCenterV2({s,d}){
 // 3. JOURNAL ACTIVITE — Audit trail complet qui/quoi/quand
 // ═══════════════════════════════════════════════════════════
 export function JournalActiviteV2({s,d}){
-  const clients=s.clients||[];
+  const clients= s?.clients||[];
   const now=new Date();
   const jaValidTabs=['timeline','bytype','byuser'];
   const [tab,setTab]=useState(s.sub&&jaValidTabs.includes(s.sub)?s.sub:'timeline');
@@ -623,4 +621,15 @@ export function JournalActiviteV2({s,d}){
 }
 
 
-export default SmartAlertsEngine;
+export default function SmartOpsWrapped({ s, d, tab }) {
+  const tabMap = {
+    commandcenter:  'dashboard',
+    actionsrapides: 'calendar',
+    autopilot:      'rules',
+    piloteauto:     'categories',
+  };
+  const mappedTab = tabMap[tab] || 'dashboard';
+  const stateWithSub = { ...(s||{}), sub: mappedTab };
+  return <SmartAlertsEngine state={stateWithSub} dispatch={d || (() => {})} defaultTab={mappedTab} />;
+}
+

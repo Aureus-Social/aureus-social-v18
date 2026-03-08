@@ -1,10 +1,11 @@
 'use client';
 import{useState,useMemo}from'react';
 import{TransversalCPView}from'./TransversalCP';
+import{TX_ONSS_E,TX_ONSS_W,CR_PAT,CR_MAX,FORF_BUREAU,RMMMG}from'@/app/lib/helpers';
 
 const fmt=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
 const fi=v=>new Intl.NumberFormat('fr-BE',{maximumFractionDigits:0}).format(v||0);
-const TX_ONSS_E=0.2507,TX_ONSS_W=0.1307;
+// TX_ONSS_E, TX_ONSS_W importés depuis helpers → lois-belges (auto-mis à jour par cron)
 
 // ════════════════════════════════════════════════════════════
 // BAREMES SALARIAUX BELGES — INDEX JANVIER 2026
@@ -380,14 +381,15 @@ export const AUTRES_CP={
 // ════════════════════════════════════════════════════════════
 // COMPOSANT UI — BAREMES CP V2
 // ════════════════════════════════════════════════════════════
-export function BaremesCPV2({s}){
+export function BaremesCPV2({s,props_tab}){
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
-  const clients=s.clients||[];
+  const clients= s?.clients||[];
   const allEmps=clients.flatMap(c=>(c.emps||[]).map(e=>({...e,_co:c.company?.name||'',_cp:c.company?.cp||'200'})));
   const [selCP,setSelCP]=useState('200');
   const [selClasse,setSelClasse]=useState(null);
   const [search,setSearch]=useState('');
-  const [tab,setTab]=useState('grille'); // grille|primes|compare|alertes
+  const TAB_MAP_BCP = { baremespp:'grille', fiscal:'obligations' };
+  const [tab,setTab]=useState(TAB_MAP_BCP[props_tab]||'grille'); // grille|primes|compare|alertes
 
   const détailledCPs=Object.keys(BAREMES_DATA);
   const allCPKeys=[...détailledCPs,...Object.keys(AUTRES_CP)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
@@ -589,4 +591,6 @@ export function BaremesCPV2({s}){
 }
 
 
-export default BaremesCPV2;
+export default function BaremesCPWrapped({ s, d, tab }) {
+  return <BaremesCPV2 s={s||{}} d={d||(()=>{})} props_tab={tab} />;
+}

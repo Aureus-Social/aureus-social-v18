@@ -1,49 +1,33 @@
 'use client';
+import { B, BAREMES_CP_MIN, BONUS_MAX, BONUS_SEUIL1, BONUS_SEUIL2, C, CO2MIN, CR_MAX, CR_PAT, DPER, ECO_MAX, FORF_BUREAU, FORF_KM, I, LB, LEGAL, LOIS_BELGES, NET_FACTOR, PH, PP_EST, PV_DOUBLE, PV_SIMPLE, RMMMG, AF_REGIONS, SAISIE_2026_TRAVAIL, SAISIE_IMMUN_ENFANT_2026, ST, TX_ONSS_E, TX_ONSS_W, TX_OUV108, Tbl, calc, f0, f2, fmt, generatePayslipPDF } from '@/app/lib/helpers';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { LOIS_BELGES, LB, RMMMG, TX_ONSS_W, TX_ONSS_E, NET_FACTOR, PV_DOUBLE, PV_SIMPLE, PP_EST } from '@/app/lib/lois-belges';
 
-const fmt = n => new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR' }).format(n || 0);
 const fmtP = n => `${((n||0)*100).toFixed(2)}%`;
 const uid = () => `${Date.now()}-${Math.random().toString(36).substr(2,5)}`;
-const AUREUS_INFO = { name: 'Aureus IA SPRL', vat: 'BE 1028.230.781', version: 'v38', sprint: 'Sprint 38' };
-const LEGAL = { WD: 21.67, WHD: 7.6 };
-const DPER = { month: new Date().getMonth()+1, year: new Date().getFullYear(), days: 21.67 };
 const MN_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MN = MN_FR;
 
-function PH({title,sub}){return <div style={{marginBottom:16}}><div style={{fontSize:18,fontWeight:800,color:'#c6a34e',letterSpacing:'.3px'}}>{title}</div>{sub&&<div style={{fontSize:11,color:'#9e9b93',marginTop:2}}>{sub}</div>}</div>;}
-function C({children,style}){return <div style={{padding:'16px 20px',background:'rgba(198,163,78,.03)',borderRadius:12,border:'1px solid rgba(198,163,78,.06)',marginBottom:14,...style}}>{children}</div>;}
-function ST({children}){return <div style={{fontSize:13,fontWeight:700,color:'#c6a34e',marginBottom:10,paddingBottom:6,borderBottom:'1px solid rgba(198,163,78,.1)'}}>{children}</div>;}
 
-function calc(emp, per, co) {
-  var brut = +(emp&&(emp.monthlySalary||emp.gross)||0);
-  var onssW = Math.round(brut * TX_ONSS_W * 100) / 100;
-  var imposable = brut - onssW;
-  var pp = Math.round(imposable * PP_EST * 100) / 100;
-  var net = Math.round((imposable - pp) * 100) / 100;
-  var onssE = Math.round(brut * TX_ONSS_E * 100) / 100;
-  return {base:brut,gross:brut,onssNet:onssW,imposable:imposable,tax:pp,pp:pp,css:0,net:net,onssE:onssE,costTotal:Math.round((brut+onssE)*100)/100,bonus:0,overtime:0,sunday:0,night:0,y13:0,sickPay:0,atnCar:0,cotCO2:0,hsBrutNetTotal:0};
-}
 
-function quickPP(brut) {
-  const imposable = brut - brut * TX_ONSS_W;
-  if (imposable <= 1110) return 0;
-  if (imposable <= 1560) return Math.round((imposable - 1110) * 0.2668 * 100) / 100;
-  if (imposable <= 2700) return Math.round((120.06 + (imposable - 1560) * 0.4280) * 100) / 100;
-  return Math.round((607.98 + (imposable - 2700) * 0.4816) * 100) / 100;
-}
 
-function quickNet(brut) { return Math.round((brut||0) * NET_FACTOR * 100) / 100; }
 function escapeHtml(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function Payslips({s,d}) {
+function Payslips({s,d,scrollAnchor,onAnchorHandled}) {
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
-  const [eid,setEid]=useState(s.selectedEmpIdForPayslip||(s.emps||[])[0]?.id||'');
+  const [eid,setEid]=useState(s.selectedEmpIdForPayslip||(s?.emps||[])[0]?.id||'');
   const [per,setPer]=useState({...DPER});
   const [res,setRes]=useState(null);
   const [batchMode,setBatchMode]=useState(false);
   const [batchResults,setBatchResults]=useState([]);
   const [batchRunning,setBatchRunning]=useState(false);
-  const emp=(s.emps||[]).find(e=>e.id===eid);
+  const emp=(s?.emps||[]).find(e=>e.id===eid);
+  // Scroll vers une section quand scrollAnchor est défini
+  useEffect(()=>{
+    if(!scrollAnchor) return;
+    const el=document.getElementById(scrollAnchor);
+    if(el){el.scrollIntoView({behavior:'smooth',block:'start'});}
+    if(onAnchorHandled) setTimeout(onAnchorHandled,500);
+  },[scrollAnchor]);
   // Préremplir Activation ONEM depuis la fiche employé quand on change d'employé
   useEffect(()=>{
     if(emp&&(emp.allocTravailType||'none')!=='none')
@@ -53,7 +37,7 @@ function Payslips({s,d}) {
   // ── BATCH PROCESSING ──
   const runBatch=()=>{
     setBatchRunning(true);
-    const ae=(s.emps||[]).filter(e=>e.status==='active'||!e.status);
+    const ae=(s?.emps||[]).filter(e=>e.status==='active'||!e.status);
     const results=[];
     for(const emp of ae){
       try{
@@ -87,7 +71,7 @@ function Payslips({s,d}) {
     </div>}/>
     <div style={{marginBottom:14,padding:'10px 14px',background:'linear-gradient(135deg,rgba(198,163,78,.06),rgba(198,163,78,.02))',border:'1px solid rgba(198,163,78,.1)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
       <div style={{fontSize:11,color:'#888'}}>⚡ Auto-génération disponible</div>
-      <button onClick={()=>{if(confirm('Générer les fiches de paie pour tous les employés ?')){(s.emps||[]).forEach(e=>generatePayslipPDF(e,s.co));alert('✅ Fiches générées')}}} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#c6a34e',color:'#fff',fontSize:11,cursor:'pointer',fontWeight:600}}>⚡ Générer tout</button>
+      <button onClick={()=>{if(confirm('Générer les fiches de paie pour tous les employés ?')){(s?.emps||[]).forEach(e=>generatePayslipPDF(e,s.co));alert('✅ Fiches générées')}}} style={{padding:'6px 14px',borderRadius:8,border:'none',background:'#c6a34e',color:'#fff',fontSize:11,cursor:'pointer',fontWeight:600}}>⚡ Générer tout</button>
     </div>
     {/* Batch Mode */}
     {batchMode&&<C style={{marginBottom:18,border:'1px solid rgba(198,163,78,.25)'}}>
@@ -97,7 +81,7 @@ function Payslips({s,d}) {
           <div style={{fontSize:11,color:'#5e5c56',marginTop:2}}>Calcule toutes les fiches de paie des travailleurs actifs en 1 clic</div>
         </div>
         <B onClick={runBatch} disabled={batchRunning} style={{fontSize:13,padding:'12px 24px'}}>
-          {batchRunning?'⏳ Calcul en cours...':'⚡ Lancer le batch ('+(s.emps||[]).filter(e=>e.status==='active'||!e.status).length+' fiches)'}
+          {batchRunning?'⏳ Calcul en cours...':'⚡ Lancer le batch ('+(s?.emps||[]).filter(e=>e.status==='active'||!e.status).length+' fiches)'}
         </B>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:12}}>
@@ -105,7 +89,7 @@ function Payslips({s,d}) {
         <I label="Année" type="number" value={per.year} onChange={v=>setPer({...per,year:v})}/>
         <div style={{padding:12,background:'rgba(198,163,78,.06)',borderRadius:8,textAlign:'center'}}>
           <div style={{fontSize:10,color:'#9e9b93'}}>Travailleurs actifs</div>
-          <div style={{fontSize:22,fontWeight:700,color:'#c6a34e'}}>{(s.emps||[]).filter(e=>e.status==='active'||!e.status).length}</div>
+          <div style={{fontSize:22,fontWeight:700,color:'#c6a34e'}}>{(s?.emps||[]).filter(e=>e.status==='active'||!e.status).length}</div>
         </div>
       </div>
       {batchResults.length>0&&<div>
@@ -127,7 +111,7 @@ function Payslips({s,d}) {
       <C>
         <ST>Paramètres</ST>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9}}>
-          <I label="Employé" value={eid} onChange={setEid} options={(s.emps||[]).map(e=>({v:e.id,l:`${e.first||e.fn||'Emp'} ${e.last||''}`}))} span={2}/>
+          <I label="Employé" value={eid} onChange={setEid} options={(s?.emps||[]).map(e=>({v:e.id,l:`${e.first||e.fn||'Emp'} ${e.last||''}`}))} span={2}/>
           <I label="Mois" value={per.month} onChange={v=>setPer({...per,month:parseInt(v)})} options={MN.map((m,i)=>({v:i+1,l:m}))}/>
           <I label="Année" type="number" value={per.year} onChange={v=>setPer({...per,year:v})}/>
           <I label="Jours prestés" type="number" value={per.days} onChange={v=>setPer({...per,days:v})}/>
@@ -238,6 +222,7 @@ function Payslips({s,d}) {
             {res.atnLogement>0&&<PR l="ATN Logement gratuit (RC × coeff.)" a={res.atnLogement}/>}
             {res.atnChauffage>0&&<PR l="ATN Chauffage gratuit (2.130€/an)" a={res.atnChauffage}/>}
             {res.atnElec>0&&<PR l="ATN Électricité gratuite (1.060€/an)" a={res.atnElec}/>}
+            {res.atnMoto>0&&<PR l={`ATN moto de société (${emp.motoBrand||''} ${emp.motoModel||''} — ${emp.motoCO2||0}g CO2)`} rate={`${(res.atnPctMoto||0).toFixed(1)}%`} a={res.atnMoto}/>}
             {res.veloSociete&&<PR l={`🚲 Vélo de société (${res.veloType}) — ATN = 0€ (Art.38§1er 14°a — exonéré)`} a={0}/>}
             {res.atnCarteCarburant>0&&<PR l="ATN Carte carburant (sans voiture soc. — imposable)" a={res.atnCarteCarburant}/>}
             {res.atnBorne>0&&<PR l="ATN Borne recharge domicile (sans voiture soc.)" a={res.atnBorne}/>}
@@ -273,6 +258,7 @@ function Payslips({s,d}) {
             {res.retSyndicale>0&&<PR l="Cotisation syndicale" a={-res.retSyndicale} neg/>}
             {res.otherDed>0&&<PR l="Autres retenues" a={-res.otherDed} neg/>}
             {res.atnCar>0&&<PR l="ATN voiture (déduit du net)" a={-res.atnCar} neg/>}
+            {res.atnMoto>0&&<PR l="ATN moto (déduit du net)" a={-res.atnMoto} neg/>}
             {res.atnAutresTot>0&&<PR l="ATN autres (déduit du net)" a={-res.atnAutresTot} neg/>}
             {(res.doublePecule>0||res.peculeDepart>0||res.primeAnciennete>0||res.primeNaissance>0||res.primeInnovation>0)&&<PS t="Éléments exceptionnels"/>}
             {res.doublePecule>0&&<><PR l="Double pécule vacances (92% brut)" a={res.doublePecule} pos/>
@@ -385,7 +371,7 @@ function Payslips({s,d}) {
         </div>
         <div style={{marginTop:10,fontSize:10.5,color:'#bbb'}}>Versement: {emp.iban}</div>
         {/* CONDITIONS GÉNÉRALES INSTITUTIONNELLES */}
-        <div className="no-print" style={{marginTop:18,paddingTop:14,borderTop:'1px solid #e0dfda'}}>
+        <div  style={{marginTop:18,paddingTop:14,borderTop:'1px solid #e0dfda'}}>
           <div style={{fontSize:8.5,color:'#bbb',textTransform:'uppercase',letterSpacing:'1.5px',fontWeight:600,marginBottom:8}}>Conditions générales</div>
           <div style={{fontSize:8,color:'#aaa',lineHeight:1.7,columnCount:2,columnGap:20}}>
             <p style={{margin:'0 0 4px'}}><b style={{color:'#999'}}>1. Confidentialité</b> — La présente fiche de paie est un document strictement confidentiel destiné exclusivement au travailleur mentionné ci-dessus. Toute reproduction, diffusion ou communication à des tiers est interdite sauf accord écrit de l'employeur.</p>
@@ -404,7 +390,7 @@ function Payslips({s,d}) {
         </div>
 
         {/* TABLEAU RÉCAPITULATIF SOUMISSION ONSS / PP PAR ÉLÉMENT */}
-        <div className="no-print" style={{marginTop:18,padding:14,background:"#f0efea",borderRadius:8}}>
+        <div  style={{marginTop:18,padding:14,background:"#f0efea",borderRadius:8}}>
           <div style={{fontSize:9.5,color:'#999',textTransform:'uppercase',letterSpacing:'1px',fontWeight:600,marginBottom:10}}>Récapitulatif soumission ONSS & Précompte professionnel</div>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:10.5}}>
             <thead><tr style={{borderBottom:'2px solid #c6a34e'}}>
@@ -439,6 +425,7 @@ function Payslips({s,d}) {
                 ...(res.atnLogement>0?[{l:"ATN Logement",m:res.atnLogement,onss:'❌ Non',pp:'✅ Oui',ref:"Art. 18 AR/CIR 92"}]:[]),
                 ...(res.atnChauffage>0?[{l:"ATN Chauffage",m:res.atnChauffage,onss:'❌ Non',pp:'✅ Oui',ref:"Art. 18 AR/CIR 92"}]:[]),
                 ...(res.atnElec>0?[{l:"ATN Électricité",m:res.atnElec,onss:'❌ Non',pp:'✅ Oui',ref:"Art. 18 AR/CIR 92"}]:[]),
+                ...(res.atnMoto>0?[{l:`🏍 ATN moto (${emp.motoBrand||''} ${emp.motoModel||''})`,m:res.atnMoto,onss:'❌ Non',pp:'✅ Oui',ref:"Art. 36 CIR 92"}]:[]),
                 ...(res.veloSociete?[{l:"🚲 Vélo de société",m:0,onss:'❌ Exonéré',pp:'❌ Exonéré',ref:"Art. 38§1er 14°a CIR",hl:"green"}]:[]),
                 ...(res.atnCarteCarburant>0?[{l:"Carte carburant (sans voit. soc.)",m:res.atnCarteCarburant,onss:'✅ Oui',pp:'✅ Oui',ref:"Art. 36§2 CIR 92"}]:[]),
                 ...(res.transport>0?[{l:"Transport domicile-travail",m:res.transport,onss:'❌ Exonéré',pp:'❌ Exonéré',ref:"CCT 19/9 + Art. 38§1er 9° CIR",hl:"green"}]:[]),
@@ -471,19 +458,321 @@ function Payslips({s,d}) {
           </table>
         </div>
 
+
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* CHARGES & AVANTAGES EMPLOYEUR — Détail complet                 */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {(res.atnCar>0||res.atnMoto>0||res.veloSociete||res.atnGSM>0||res.atnPC>0||res.atnInternet>0||res.atnChauffage>0||res.atnElec>0||res.atnLogement>0||res.carteCarburant||res.borneRecharge)&&<div style={{marginTop:14,padding:14,background:"#f5f4ef",borderRadius:10,border:'1px solid rgba(198,163,78,.12)'}}>
+          <div style={{fontSize:9.5,color:'#c6a34e',textTransform:'uppercase',letterSpacing:'1px',fontWeight:600,marginBottom:10}}>
+            Charges & Avantages Employeur — Détail
+          </div>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:10.5}}>
+            <thead><tr style={{borderBottom:'2px solid #c6a34e'}}>
+              <th style={{textAlign:'left',padding:'6px 8px',color:'#999',fontSize:9,textTransform:'uppercase'}}>Avantage</th>
+              <th style={{textAlign:'right',padding:'6px 8px',color:'#999',fontSize:9}}>ATN / Charge</th>
+              <th style={{textAlign:'center',padding:'6px 8px',color:'#999',fontSize:9}}>ONSS empl.</th>
+              <th style={{textAlign:'center',padding:'6px 8px',color:'#999',fontSize:9}}>PP trav.</th>
+              <th style={{textAlign:'right',padding:'6px 8px',color:'#999',fontSize:9}}>Coût empl./mois</th>
+              <th style={{textAlign:'left',padding:'6px 8px',color:'#999',fontSize:9}}>Référence</th>
+            </tr></thead>
+            <tbody>
+              {[
+                // Voiture de société
+                ...(res.atnCar>0?[{
+                  l:`🚗 Voiture société (${emp.carBrand||''} ${emp.carModel||''} — ${emp.carFuel||''} ${emp.carCO2||0}g)`,
+                  atn:res.atnCar, onssEmpl:'❌ Non soumis', ppTrav:'✅ Imposable',
+                  cout:res.cotCO2, coutLabel:`Cot. CO2: ${fmt(res.cotCO2)}/mois`,
+                  ref:'Art. 36 CIR 92 + cotis. solidarité ONSS'
+                }]:[]),
+                // Moto de société
+                ...(res.atnMoto>0?[{
+                  l:`🏍 Moto société (${emp.motoBrand||''} ${emp.motoModel||''} — ${emp.motoFuel||''} ${emp.motoCO2||0}g)`,
+                  atn:res.atnMoto, onssEmpl:'❌ Non soumis', ppTrav:'✅ Imposable',
+                  cout:res.cotCO2Moto||0, coutLabel:`Cot. CO2: ${fmt(res.cotCO2Moto||0)}/mois`,
+                  ref:'Art. 36 CIR 92'
+                }]:[]),
+                // Vélo de société
+                ...(res.veloSociete?[{
+                  l:`🚲 Vélo société (${res.veloType||''})${res.veloLeasingMois>0?' — Leasing: '+fmt(res.veloLeasingMois)+'/mois':''}`,
+                  atn:0, onssEmpl:'❌ Exonéré', ppTrav:'❌ Exonéré (ATN=0)',
+                  cout:res.veloLeasingMois||0, coutLabel:`Leasing: ${fmt(res.veloLeasingMois||0)}/mois (déduc. 100%)`,
+                  ref:'Art. 38§1er 14°a CIR — exo depuis 01/01/2024', green:true
+                }]:[]),
+                // PC / Tablette
+                ...(res.atnPC>0?[{
+                  l:'💻 PC / Tablette de société', atn:res.atnPC,
+                  onssEmpl:'❌ Non soumis', ppTrav:'✅ Imposable (6€/mois)',
+                  cout:res.atnPC, coutLabel:`ATN: ${fmt(res.atnPC)}/mois`,
+                  ref:'AR 18/12/2024 — forfait 72€/an'
+                }]:[]),
+                // Abonnement GSM
+                ...(res.atnGSM>0?[{
+                  l:'📱 Abonnement GSM / Téléphone', atn:res.atnGSM,
+                  onssEmpl:'❌ Non soumis', ppTrav:'✅ Imposable (3€/mois)',
+                  cout:res.atnGSM, coutLabel:`ATN: ${fmt(res.atnGSM)}/mois`,
+                  ref:'AR 18/12/2024 — forfait 36€/an'
+                }]:[]),
+                // Internet privé
+                ...(res.atnInternet>0?[{
+                  l:'🌐 Connexion internet privée', atn:res.atnInternet,
+                  onssEmpl:'❌ Non soumis', ppTrav:'✅ Imposable (5€/mois)',
+                  cout:res.atnInternet, coutLabel:`ATN: ${fmt(res.atnInternet)}/mois`,
+                  ref:'AR 18/12/2024 — forfait 60€/an'
+                }]:[]),
+                // Carte carburant
+                ...(res.carteCarburant?[{
+                  l:`⛽ Carte carburant / recharge (${fmt(res.carteCarburantMois)}/mois)`,
+                  atn:res.atnCarteCarburant>0?res.atnCarteCarburant:0,
+                  onssEmpl:res.atnCar>0?'Inclus ATN voiture':'✅ Soumis ONSS',
+                  ppTrav:res.atnCar>0?'Inclus ATN voiture':'✅ Imposable',
+                  cout:res.carteCarburantMois||0, coutLabel:`Budget: ${fmt(res.carteCarburantMois||0)}/mois`,
+                  ref:res.atnCar>0?'Art. 36§2 CIR — inclus ATN voiture':'Art. 36§2 CIR — ATN imposable si sans voiture soc.'
+                }]:[]),
+                // Borne de recharge
+                ...(res.borneRecharge?[{
+                  l:`🔌 Borne de recharge domicile (${fmt(res.borneRechargeCoût||0)}/mois)`,
+                  atn:res.atnBorne>0?res.atnBorne:0,
+                  onssEmpl:res.atnCar>0?'❌ Exonéré':'✅ Soumis si sans voit.',
+                  ppTrav:res.atnCar>0?'❌ Exonéré':'✅ Imposable si sans voit.',
+                  cout:res.borneRechargeCoût||0, coutLabel:`Coût: ${fmt(res.borneRechargeCoût||0)}/mois`,
+                  ref:res.atnCar>0?'Art. 14536 CIR — exo si voiture soc.':'Art. 14536 CIR — ATN si sans voiture soc.',
+                  green:res.atnCar>0
+                }]:[]),
+                // Chauffage gratuit
+                ...(res.atnChauffage>0?[{
+                  l:'🔥 Chauffage gratuit (forfait 2.130€/an)',
+                  atn:res.atnChauffage, onssEmpl:'❌ Non soumis', ppTrav:'✅ Imposable',
+                  cout:res.atnChauffage, coutLabel:`Forfait: ${fmt(res.atnChauffage)}/mois`,
+                  ref:'Art. 18 §3 4° AR/CIR 92'
+                }]:[]),
+                // Électricité gratuite
+                ...(res.atnElec>0?[{
+                  l:'⚡ Électricité gratuite (forfait 1.060€/an)',
+                  atn:res.atnElec, onssEmpl:'❌ Non soumis', ppTrav:'✅ Imposable',
+                  cout:res.atnElec, coutLabel:`Forfait: ${fmt(res.atnElec)}/mois`,
+                  ref:'Art. 18 §3 3° AR/CIR 92'
+                }]:[]),
+                // Logement gratuit
+                ...(res.atnLogement>0?[{
+                  l:'🏠 Logement gratuit (RC indexé × coeff.)',
+                  atn:res.atnLogement, onssEmpl:'❌ Non soumis', ppTrav:'✅ Imposable',
+                  cout:res.atnLogement, coutLabel:`ATN: ${fmt(res.atnLogement)}/mois`,
+                  ref:'Art. 18 §1er AR/CIR 92 — RC × 2,1763 / 12'
+                }]:[]),
+              ].map((x,i)=><tr key={i} style={{borderBottom:'1px solid #e5e4df',background:x.green?'rgba(74,222,128,.03)':'transparent'}}>
+                <td style={{padding:'6px 8px',fontSize:10.5,color:x.green?'#4ade80':'#555',fontWeight:500}}>{x.l}</td>
+                <td style={{padding:'6px 8px',textAlign:'right',fontWeight:600,color:x.atn>0?'#fb923c':'#4ade80',fontSize:10.5}}>{x.atn>0?fmt(x.atn):'0€ exonéré'}</td>
+                <td style={{padding:'6px 8px',textAlign:'center',color:x.onssEmpl?.includes('❌')?'#4ade80':'#fb923c',fontSize:10}}>{x.onssEmpl}</td>
+                <td style={{padding:'6px 8px',textAlign:'center',color:x.ppTrav?.includes('❌')?'#4ade80':'#fb923c',fontSize:10}}>{x.ppTrav}</td>
+                <td style={{padding:'6px 8px',textAlign:'right',fontSize:10,color:'#888'}}>{x.coutLabel}</td>
+                <td style={{padding:'6px 8px',fontSize:9,color:'#999'}}>{x.ref}</td>
+              </tr>)}
+              <tr style={{borderTop:'2px solid #c6a34e',background:'rgba(198,163,78,.05)'}}>
+                <td style={{padding:'8px',fontWeight:700,fontSize:11,color:'#c6a34e'}}>TOTAL ATN imposable (ajouté revenu PP)</td>
+                <td style={{padding:'8px',textAlign:'right',fontWeight:800,fontSize:12,color:'#fb923c'}}>{fmt(res.atnTotal||0)}</td>
+                <td colSpan={2} style={{padding:'8px',textAlign:'center',fontSize:10,color:'#888'}}>Soumis PP uniquement</td>
+                <td style={{padding:'8px',textAlign:'right',fontWeight:700,fontSize:11,color:'#c6a34e'}}>{fmt((res.cotCO2||0)+(res.cotCO2Moto||0)+(res.veloLeasingMois||0))}/mois charges</td>
+                <td style={{padding:'8px',fontSize:9,color:'#999'}}>Art. 36 + 38 CIR 92</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style={{marginTop:8,fontSize:8.5,color:'#aaa',lineHeight:1.6}}>
+            ⚠ Les ATN augmentent le revenu imposable du travailleur (base PP) mais ne sont <b>pas soumis à l'ONSS</b> (sauf exception). 
+            Les cotisations CO2 sont des charges patronales ONSS. Les coûts de leasing vélo sont déductibles à 100% pour l'employeur.
+          </div>
+        </div>}
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* PARAMÈTRES LÉGAUX APPLICABLES — Source: crons auto-update      */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        <div style={{marginTop:18,padding:16,background:'linear-gradient(135deg,rgba(198,163,78,.05),rgba(198,163,78,.02))',borderRadius:10,border:'1px solid rgba(198,163,78,.15)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <div>
+              <div style={{fontSize:10,fontWeight:700,color:'#c6a34e',textTransform:'uppercase',letterSpacing:'1.5px'}}>⚡ Paramètres légaux applicables</div>
+              <div style={{fontSize:8.5,color:'#888',marginTop:2}}>Valeurs utilisées pour ce calcul — mise à jour automatique quotidienne (crons 06h00–06h10)</div>
+            </div>
+            <div style={{textAlign:'right'}}>
+              <div style={{fontSize:8,color:'#aaa'}}>Source: {LOIS_BELGES._meta?.source||'SPF Finances / ONSS / CNT'}</div>
+              <div style={{fontSize:8,color:'#aaa'}}>Dernière MAJ: {LOIS_BELGES._meta?.dateMAJ||'—'} · v{LOIS_BELGES._meta?.version||'2026'}</div>
+              {(()=>{const cp=emp.cp||s.co?.cp||'200';const bcp=BAREMES_CP_MIN?.[cp];return bcp?<div style={{fontSize:8,color:'#4ade80',marginTop:1}}>Barème CP {cp} MAJ: {BAREMES_CP_MIN?.dateMAJ||'—'}</div>:null;})()}
+            </div>
+          </div>
+
+          {/* Ligne 1 — ONSS */}
+          <div style={{marginBottom:8}}>
+            <div id='section-onss-cotisations' style={{fontSize:8.5,color:'#c6a34e',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',marginBottom:5,paddingBottom:3,borderBottom:'1px solid rgba(198,163,78,.1)'}}>ONSS & Cotisations</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:6}}>
+              {[
+                {l:'ONSS travailleur',v:`${(TX_ONSS_W*100).toFixed(2)}%`,ref:'Loi 29/06/1981',ok:true},
+                {l:'ONSS patronal',v:`${(TX_ONSS_E*100).toFixed(2)}%`,ref:'Loi 29/06/1981',ok:true},
+                ...(emp.statut==='ouvrier'?[{l:'Majoration ouvrier',v:'× 108%',ref:'AR 28/11/1969 Art.23',ok:true}]:[]),
+                {l:'RMMMG (CCT 43)',v:`${fmt(RMMMG)}`,ref:'CNT CCT 43/15',ok:!!(res.gross>=RMMMG),warn:res.gross<RMMMG},
+                {l:'Cot. CO2 min',v:`${fmt(CO2MIN)}`,ref:'AR ATN voiture',ok:true},
+              ].map((x,i)=><div key={i} style={{background:x.warn?'rgba(239,68,68,.08)':'rgba(198,163,78,.04)',borderRadius:6,padding:'6px 8px',border:`1px solid ${x.warn?'rgba(239,68,68,.2)':'rgba(198,163,78,.08)'}`}}>
+                <div style={{fontSize:7.5,color:x.warn?'#f87171':'#888'}}>{x.l}</div>
+                <div style={{fontSize:11,fontWeight:700,color:x.warn?'#f87171':'#e8e6e0',marginTop:1}}>{x.v}</div>
+                <div style={{fontSize:7,color:'#666',marginTop:1}}>{x.ref}</div>
+                {x.warn&&<div style={{fontSize:7,color:'#f87171',fontWeight:700,marginTop:2}}>⚠ Salaire sous RMMMG!</div>}
+              </div>)}
+            </div>
+          </div>
+
+          {/* Ligne 2 — Fiscalité PP */}
+          <div style={{marginBottom:8}}>
+            <div id='section-precompte' style={{fontSize:8.5,color:'#c6a34e',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',marginBottom:5,paddingBottom:3,borderBottom:'1px solid rgba(198,163,78,.1)'}}>Précompte professionnel & Bonus emploi</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:6}}>
+              {[
+                {l:'Tranche ≤ 16.710€',v:'26,75%',ref:'AR/CIR 92 ann.III',ok:true},
+                {l:'Tranche 16.710–29.500€',v:'42,80%',ref:'AR/CIR 92 ann.III',ok:true},
+                {l:'Tranche 29.500–51.050€',v:'48,15%',ref:'AR/CIR 92 ann.III',ok:true},
+                {l:'Tranche > 51.050€',v:'53,50%',ref:'AR/CIR 92 ann.III',ok:true},
+                {l:'Quotité exemptée',v:`${fmt(LOIS_BELGES.pp?.quotiteExemptee?.bareme1||2987.98)}`,ref:'Art.131 CIR 92',ok:true},
+              ].map((x,i)=><div key={i} style={{background:'rgba(198,163,78,.04)',borderRadius:6,padding:'6px 8px',border:'1px solid rgba(198,163,78,.08)'}}>
+                <div style={{fontSize:7.5,color:'#888'}}>{x.l}</div>
+                <div style={{fontSize:11,fontWeight:700,color:'#e8e6e0',marginTop:1}}>{x.v}</div>
+                <div style={{fontSize:7,color:'#666',marginTop:1}}>{x.ref}</div>
+              </div>)}
+            </div>
+            {res.gross<=BONUS_SEUIL2&&<div style={{marginTop:6,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+              {[
+                {l:`Bonus emploi — seuil brut 1`,v:`${fmt(BONUS_SEUIL1)}`,ref:'AR 21/12/2017',active:res.gross<=BONUS_SEUIL1},
+                {l:`Bonus emploi — seuil brut 2`,v:`${fmt(BONUS_SEUIL2)}`,ref:'AR 21/12/2017',active:res.gross>BONUS_SEUIL1&&res.gross<=BONUS_SEUIL2},
+                {l:`Bonus emploi max (${(LOIS_BELGES.pp?.bonusEmploi?.pctReduction*100||33.14).toFixed(2)}%)`,v:`${fmt(BONUS_MAX)}/mois`,ref:'Art. 289ter CIR',active:res.empBonus>0},
+              ].map((x,i)=><div key={i} style={{background:x.active?'rgba(74,222,128,.06)':'rgba(198,163,78,.04)',borderRadius:6,padding:'6px 8px',border:`1px solid ${x.active?'rgba(74,222,128,.15)':'rgba(198,163,78,.08)'}`}}>
+                <div style={{fontSize:7.5,color:x.active?'#4ade80':'#888'}}>{x.l} {x.active&&'✓'}</div>
+                <div style={{fontSize:11,fontWeight:700,color:x.active?'#4ade80':'#e8e6e0',marginTop:1}}>{x.v}</div>
+                <div style={{fontSize:7,color:'#666',marginTop:1}}>{x.ref}</div>
+              </div>)}
+            </div>}
+          </div>
+
+          {/* Ligne 3 — CSSS */}
+          <div style={{marginBottom:8}}>
+            <div id='section-csss' style={{fontSize:8.5,color:'#c6a34e',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',marginBottom:5,paddingBottom:3,borderBottom:'1px solid rgba(198,163,78,.1)'}}>CSSS — Cotisation spéciale sécurité sociale</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+              {(()=>{
+                const tranches=LOIS_BELGES.csss?.isole||[];
+                const annuel=(res.gross||0)*12;
+                return tranches.filter(t=>t.taux>0||t.montantFixe).map((t,i)=>{
+                  const active=annuel>=t.min&&annuel<(t.max===Infinity?999999:t.max);
+                  return <div key={i} style={{background:active?'rgba(96,165,250,.06)':'rgba(198,163,78,.04)',borderRadius:6,padding:'6px 8px',border:`1px solid ${active?'rgba(96,165,250,.15)':'rgba(198,163,78,.08)'}`}}>
+                    <div style={{fontSize:7.5,color:active?'#60a5fa':'#888'}}>Tranche {i+1} {active&&'← applicable'}</div>
+                    <div style={{fontSize:9,fontWeight:700,color:active?'#60a5fa':'#e8e6e0',marginTop:1}}>
+                      {t.montantFixe?`Fixe: ${fmt(t.montantFixe)}`:`${(t.taux*100).toFixed(1)}%`}
+                    </div>
+                    <div style={{fontSize:7,color:'#666',marginTop:1}}>{fmt(t.min)}–{t.max===Infinity?'∞':fmt(t.max)} €/an</div>
+                    {active&&<div style={{fontSize:7.5,fontWeight:700,color:'#60a5fa',marginTop:2}}>{fmt(res.css)}/mois</div>}
+                  </div>;
+                });
+              })()}
+            </div>
+          </div>
+
+          {/* Ligne 4 — Avantages & Frais */}
+          <div style={{marginBottom:8}}>
+            <div id='section-avantages' style={{fontSize:8.5,color:'#c6a34e',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',marginBottom:5,paddingBottom:3,borderBottom:'1px solid rgba(198,163,78,.1)'}}>Avantages exonérés & Frais propres</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:6}}>
+              {[
+                {l:'Chèques-repas max',v:`${fmt(CR_MAX)}/jour`,ref:'CCT nat. + AR',used:res.mvDays>0},
+                {l:'Part patronale CR max',v:`${fmt(CR_PAT)}/jour`,ref:'AR 28/11/1969 Art.19bis',used:res.mvEmployer>0},
+                {l:'Éco-chèques max',v:`${fmt(ECO_MAX)}/an`,ref:'CCT 98 — 20/02/2009',used:res.ecoCheques>0},
+                {l:'Forfait bureau/télétravail',v:`${fmt(FORF_BUREAU)}/mois`,ref:'Circ. 2021/C/20',used:res.indemTeletravail>0||res.indemBureau>0},
+                {l:'Indemnité km voiture',v:`${FORF_KM} €/km`,ref:'AR mobilité 2026',used:emp.commType==='car'||emp.commType==='own'},
+              ].map((x,i)=><div key={i} style={{background:x.used?'rgba(74,222,128,.06)':'rgba(198,163,78,.04)',borderRadius:6,padding:'6px 8px',border:`1px solid ${x.used?'rgba(74,222,128,.15)':'rgba(198,163,78,.08)'}`}}>
+                <div style={{fontSize:7.5,color:x.used?'#4ade80':'#888'}}>{x.l} {x.used&&'✓'}</div>
+                <div style={{fontSize:11,fontWeight:700,color:x.used?'#4ade80':'#e8e6e0',marginTop:1}}>{x.v}</div>
+                <div style={{fontSize:7,color:'#666',marginTop:1}}>{x.ref}</div>
+              </div>)}
+            </div>
+          </div>
+
+          {/* Ligne 5 — Saisies sur salaire */}
+          {res.garnish>0&&<div style={{marginBottom:8}}>
+            <div id='section-saisies' style={{fontSize:8.5,color:'#c6a34e',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',marginBottom:5,paddingBottom:3,borderBottom:'1px solid rgba(198,163,78,.1)'}}>Saisies sur salaire — Barèmes 2026 (Art.1409 C.jud.)</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:6}}>
+              {(SAISIE_2026_TRAVAIL||[]).map((t,i)=>{
+                const active=res.net>=t.min&&res.net<(t.max===Infinity?999999:t.max);
+                return <div key={i} style={{background:active?'rgba(251,146,60,.08)':'rgba(198,163,78,.04)',borderRadius:6,padding:'6px 8px',border:`1px solid ${active?'rgba(251,146,60,.2)':'rgba(198,163,78,.08)'}`}}>
+                  <div style={{fontSize:7.5,color:active?'#fb923c':'#888'}}>{t.label} {active&&'← applicable'}</div>
+                  <div style={{fontSize:9,fontWeight:700,color:active?'#fb923c':'#e8e6e0',marginTop:1}}>{fmt(t.min)}–{t.max===Infinity?'∞':fmt(t.max)}</div>
+                  {active&&<div style={{fontSize:7.5,fontWeight:700,color:'#fb923c',marginTop:2}}>Saisie: {fmt(res.garnish)}</div>}
+                </div>;
+              })}
+              <div style={{background:'rgba(239,68,68,.06)',borderRadius:6,padding:'6px 8px',border:'1px solid rgba(239,68,68,.1)'}}>
+                <div style={{fontSize:7.5,color:'#f87171'}}>Immunité enfant à charge</div>
+                <div style={{fontSize:11,fontWeight:700,color:'#f87171',marginTop:1}}>+{fmt(SAISIE_IMMUN_ENFANT_2026)}/enfant</div>
+                <div style={{fontSize:7,color:'#666',marginTop:1}}>Art.1409§1 bis C.jud.</div>
+              </div>
+            </div>
+          </div>}
+
+          {/* Ligne 6 — Allocations familiales région */}
+          {emp.region&&<div style={{marginBottom:8}}>
+            <div style={{fontSize:8.5,color:'#c6a34e',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',marginBottom:5,paddingBottom:3,borderBottom:'1px solid rgba(198,163,78,.1)'}} id='section-af'>Allocations familiales — {emp.region==='BXL'?'Bruxelles (Iriscare)':emp.region==='WAL'?'Wallonie (AViQ)':emp.region==='VL'?'Flandre (Groeipakket)':'Région'}</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+              {(()=>{
+                const reg=AF_REGIONS?.[emp.region];
+                if(!reg) return null;
+                return reg.base?.slice(0,3).map((t,i)=><div key={i} style={{background:'rgba(167,139,250,.06)',borderRadius:6,padding:'6px 8px',border:'1px solid rgba(167,139,250,.1)'}}>
+                  <div style={{fontSize:7.5,color:'#a78bfa'}}>{t.age||0}–{t.to||'?'} ans</div>
+                  <div style={{fontSize:11,fontWeight:700,color:'#a78bfa',marginTop:1}}>{fmt(t.amt)}/mois</div>
+                  <div style={{fontSize:7,color:'#666',marginTop:1}}>Source cron quotidien</div>
+                </div>);
+              })()}
+            </div>
+          </div>}
+
+          {/* Ligne 7 — Barème sectoriel CP */}
+          {(()=>{
+            const cp=emp.cp||s.co?.cp||'200';
+            const bcp=BAREMES_CP_MIN?.[cp];
+            if(!bcp) return null;
+            const belowMin=res.gross<bcp.cl1;
+            return <div id='section-cp' style={{marginBottom:4}}>
+              <div style={{fontSize:8.5,color:'#c6a34e',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',marginBottom:5,paddingBottom:3,borderBottom:'1px solid rgba(198,163,78,.1)'}}>Barème sectoriel CP {cp} — Minima {bcp.nom||''}</div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+                {['cl1','cl2','cl3','cl4','cl5'].filter(k=>bcp[k]).map((k,i)=>{
+                  const active=i===0&&belowMin;
+                  return <div key={k} style={{background:belowMin&&i===0?'rgba(239,68,68,.08)':'rgba(198,163,78,.04)',borderRadius:6,padding:'6px 8px',border:`1px solid ${belowMin&&i===0?'rgba(239,68,68,.2)':'rgba(198,163,78,.08)'}`}}>
+                    <div style={{fontSize:7.5,color:belowMin&&i===0?'#f87171':'#888'}}>Classe {i+1} {i===0&&belowMin&&'⚠ SOUS MIN'}</div>
+                    <div style={{fontSize:11,fontWeight:700,color:belowMin&&i===0?'#f87171':'#e8e6e0',marginTop:1}}>{fmt(bcp[k])}</div>
+                    <div style={{fontSize:7,color:'#666',marginTop:1}}>min. anc. 0 an — MAJ {BAREMES_CP_MIN?.dateMAJ||'—'}</div>
+                  </div>;
+                })}
+              </div>
+              {belowMin&&<div style={{marginTop:6,padding:'6px 10px',background:'rgba(239,68,68,.08)',borderRadius:6,border:'1px solid rgba(239,68,68,.2)',fontSize:9,color:'#f87171',fontWeight:600}}>
+                ⚠ ATTENTION — Salaire brut {fmt(res.gross)} inférieur au minimum CP {cp} classe I ({fmt(bcp.cl1)}) — Risque de sanction ONSS
+              </div>}
+            </div>;
+          })()}
+
+          <div style={{marginTop:10,paddingTop:8,borderTop:'1px solid rgba(198,163,78,.1)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div style={{fontSize:7.5,color:'#555'}}>
+              🤖 Ces paramètres sont mis à jour automatiquement chaque matin à 06h00 par les crons Aureus Social Pro
+              via scraping officiel: SPF Finances · ONSS · CNT · Iriscare · AViQ · Groeipakket · SPF Justice
+            </div>
+            <div style={{fontSize:7.5,color:'#888',textAlign:'right'}}>
+              Indice santé: {LOIS_BELGES.remuneration?.indexSante?.coeff||2.0399} (pivot {LOIS_BELGES.remuneration?.indexSante?.pivot||125.60})<br/>
+              Prochain pivot estimé: {LOIS_BELGES.remuneration?.indexSante?.prochainPivotEstime||'—'}
+            </div>
+          </div>
+        </div>
+
+
         {/* BOUTON PDF uniquement — plus de téléchargement HTML/txt */}
-        <div style={{marginTop:14,display:'flex',gap:10,justifyContent:'center'}} className="no-print">
+        <div style={{marginTop:14,display:'flex',gap:10,justifyContent:'center'}} >
           <button onClick={()=>{
             generatePayslipPDF(emp,res,per,s.co)}} style={{padding:'12px 28px',background:"#c6a34e",color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',letterSpacing:'.5px'}}>🖨 Imprimer / PDF</button>
         </div>
       </div>}
     </div>
-    {s.pays.length>0&&<C className="no-print" style={{marginTop:20,padding:0,overflow:'hidden'}}>
+    {(s.pays||[]).length>0&&<C  style={{marginTop:20,padding:0,overflow:'hidden'}}>
       <div style={{padding:'14px 18px',borderBottom:'1px solid rgba(139,115,60,.1)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div style={{fontSize:13,fontWeight:600,color:'#e8e6e0'}}>Historique ({s.pays.length} fiches)</div>
+        <div style={{fontSize:13,fontWeight:600,color:'#e8e6e0'}}>Historique ({(s.pays||[]).length} fiches)</div>
         <div style={{display:'flex',gap:8}}>
-          {s.pays.some(p=>(!p.gross||p.gross===0)&&(!p.ename||p.ename==='undefined undefined'))&&<button onClick={()=>{if(confirm('Supprimer toutes les fiches en erreur (undefined / 0€) ?')){const badIds=s.pays.filter(p=>(!p.gross||p.gross===0)&&(!p.ename||p.ename==='undefined undefined')).map(p=>p.id);d({type:'DEL_PAYS_BATCH',ids:badIds})}}} style={{padding:'6px 12px',background:'#7f1d1d',color:'#fca5a5',border:'1px solid #991b1b',borderRadius:6,fontSize:11,fontWeight:600,cursor:'pointer'}}>🗑 Supprimer les fiches en erreur ({s.pays.filter(p=>(!p.gross||p.gross===0)&&(!p.ename||p.ename==='undefined undefined')).length})</button>}
-          {s.pays.length>0&&<button onClick={()=>{if(confirm('⚠ Supprimer TOUTES les fiches de paie ? Cette action est irréversible.')){d({type:'SET_PAYS',data:[]})}}} style={{padding:'6px 12px',background:'#1e293b',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,fontSize:11,fontWeight:500,cursor:'pointer'}}>Tout effacer</button>}
+          {(s.pays||[]).some(p=>(!p.gross||p.gross===0)&&(!p.ename||p.ename==='undefined undefined'))&&<button onClick={()=>{if(confirm('Supprimer toutes les fiches en erreur (undefined / 0€) ?')){const badIds=(s.pays||[]).filter(p=>(!p.gross||p.gross===0)&&(!p.ename||p.ename==='undefined undefined')).map(p=>p.id);d({type:'DEL_PAYS_BATCH',ids:badIds})}}} style={{padding:'6px 12px',background:'#7f1d1d',color:'#fca5a5',border:'1px solid #991b1b',borderRadius:6,fontSize:11,fontWeight:600,cursor:'pointer'}}>🗑 Supprimer les fiches en erreur ({(s.pays||[]).filter(p=>(!p.gross||p.gross===0)&&(!p.ename||p.ename==='undefined undefined')).length})</button>}
+          {(s.pays||[]).length>0&&<button onClick={()=>{if(confirm('⚠ Supprimer TOUTES les fiches de paie ? Cette action est irréversible.')){d({type:'SET_PAYS',data:[]})}}} style={{padding:'6px 12px',background:'#1e293b',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,fontSize:11,fontWeight:500,cursor:'pointer'}}>Tout effacer</button>}
         </div>
       </div>
       <Tbl cols={[

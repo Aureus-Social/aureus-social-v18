@@ -4,6 +4,8 @@
 // Sources: SPF Finances 2026, ONSS Instructions T1/2026
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useMemo } from 'react';
+import { calcPayroll } from '@/app/lib/payroll-engine';
+import { LOIS_BELGES } from '@/app/lib/helpers';
 
 const R2 = v => Math.round(v * 100) / 100;
 const fmt = v => new Intl.NumberFormat('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v || 0);
@@ -114,7 +116,9 @@ export function optimizePackage(budgetMensuel, calcPayrollFn, LOIS_BELGES, opts 
 // COMPOSANT: Simulateur Avancé Brut↔Net
 // ═══════════════════════════════════════════════════════════════════
 export function PayrollSimulatorAdvanced({ calcPayroll, LOIS_BELGES }) {
-  const [tab, setTab] = useState('brut2net');
+  const TAB_MAP_PS = { couttotal:'cost2net', simulateurspro:'brut2net', simulicenciement:'net2brut',
+    simupension:'package', comparateur:'compare', optifiscale:'package' };
+  const [tab, setTab] = useState(TAB_MAP_PS[props_tab] || 'brut2net');
   const [brut, setBrut] = useState(3500);
   const [targetNet, setTargetNet] = useState(2200);
   const [targetCost, setTargetCost] = useState(5000);
@@ -410,4 +414,6 @@ export function PayrollSimulatorAdvanced({ calcPayroll, LOIS_BELGES }) {
   );
 }
 
-export default PayrollSimulatorAdvanced;
+export default function PayrollSimPage({s, d, tab}) {
+  return <PayrollSimulatorAdvanced calcPayroll={calcPayroll} LOIS_BELGES={LOIS_BELGES} props_tab={tab} />;
+}

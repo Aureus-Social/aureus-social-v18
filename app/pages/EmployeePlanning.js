@@ -173,11 +173,16 @@ function EmployeeRow({ employee, year, month, absences, joursFeries, onCellClick
 }
 
 // ── Composant principal ──
-export default function EmployeePlanning({ state, dispatch }) {
+export default function EmployeePlanningWrapped({ s, d, tab }) {
+  const viewMap = { interimaires:'interimaires', joursPrestes:'joursPrestes', registrepersonnel:'registrepersonnel' };
+  return <EmployeePlanning state={s || {}} dispatch={d || (() => {})} defaultTab={tab} initialView={viewMap[tab] || 'team'} />;
+}
+
+function EmployeePlanning({ state, dispatch, defaultTab, initialView }) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
-  const [view, setView] = useState('team') // team | individual
+  const [view, setView] = useState(initialView || 'team')
   const [selectedEmp, setSelectedEmp] = useState(null)
   const [showAddAbsence, setShowAddAbsence] = useState(false)
   const [newAbsence, setNewAbsence] = useState({ type: 'CONGE', startDate: '', endDate: '', reason: '' })

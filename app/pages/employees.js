@@ -1,38 +1,14 @@
 'use client';
+import { B, C, CR_PAT, CR_TRAV, CR_MAX, DPER, I, LB, LEGAL, LOIS_BELGES, NET_FACTOR, PH, PP_EST, PV_DOUBLE, PV_SIMPLE, RMMMG, ST, TX_ONSS_E, TX_ONSS_W, Tbl, calc, f0, f2, fmt, validateNISS } from '@/app/lib/helpers';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { LOIS_BELGES, LB, RMMMG, TX_ONSS_W, TX_ONSS_E, NET_FACTOR, PV_DOUBLE, PV_SIMPLE, PP_EST } from '@/app/lib/lois-belges';
 
-const fmt = n => new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR' }).format(n || 0);
 const fmtP = n => `${((n||0)*100).toFixed(2)}%`;
 const uid = () => `${Date.now()}-${Math.random().toString(36).substr(2,5)}`;
-const AUREUS_INFO = { name: 'Aureus IA SPRL', vat: 'BE 1028.230.781', version: 'v38', sprint: 'Sprint 38' };
-const LEGAL = { WD: 21.67, WHD: 7.6 };
-const DPER = { month: new Date().getMonth()+1, year: new Date().getFullYear(), days: 21.67 };
 const MN_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
-function PH({title,sub}){return <div style={{marginBottom:16}}><div style={{fontSize:18,fontWeight:800,color:'#c6a34e',letterSpacing:'.3px'}}>{title}</div>{sub&&<div style={{fontSize:11,color:'#9e9b93',marginTop:2}}>{sub}</div>}</div>;}
-function C({children,style}){return <div style={{padding:'16px 20px',background:'rgba(198,163,78,.03)',borderRadius:12,border:'1px solid rgba(198,163,78,.06)',marginBottom:14,...style}}>{children}</div>;}
-function ST({children}){return <div style={{fontSize:13,fontWeight:700,color:'#c6a34e',marginBottom:10,paddingBottom:6,borderBottom:'1px solid rgba(198,163,78,.1)'}}>{children}</div>;}
 
-function calc(emp, per, co) {
-  var brut = +(emp&&(emp.monthlySalary||emp.gross)||0);
-  var onssW = Math.round(brut * TX_ONSS_W * 100) / 100;
-  var imposable = brut - onssW;
-  var pp = Math.round(imposable * PP_EST * 100) / 100;
-  var net = Math.round((imposable - pp) * 100) / 100;
-  var onssE = Math.round(brut * TX_ONSS_E * 100) / 100;
-  return {base:brut,gross:brut,onssNet:onssW,imposable:imposable,tax:pp,pp:pp,css:0,net:net,onssE:onssE,costTotal:Math.round((brut+onssE)*100)/100,bonus:0,overtime:0,sunday:0,night:0,y13:0,sickPay:0,atnCar:0,cotCO2:0,hsBrutNetTotal:0};
-}
 
-function quickPP(brut) {
-  const imposable = brut - brut * TX_ONSS_W;
-  if (imposable <= 1110) return 0;
-  if (imposable <= 1560) return Math.round((imposable - 1110) * 0.2668 * 100) / 100;
-  if (imposable <= 2700) return Math.round((120.06 + (imposable - 1560) * 0.4280) * 100) / 100;
-  return Math.round((607.98 + (imposable - 2700) * 0.4816) * 100) / 100;
-}
 
-function quickNet(brut) { return Math.round((brut||0) * NET_FACTOR * 100) / 100; }
 function escapeHtml(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function Employees({s,d}) {
@@ -43,7 +19,7 @@ function Employees({s,d}) {
   const [filter,setFilter]=useState('all'); // all, active, sorti, student, ouvrier
   const [viewMode,setViewMode]=useState('list'); // list, grid
   const empty={first:'',last:'',niss:'',birth:'',addr:'',city:'',zip:'',startD:'',endD:'',fn:"",dept:'',contract:'CDI',regime:'full',whWeek:38,monthlySalary:0,civil:"single",depChildren:0,handiChildren:0,iban:'',mvT:10,mvW:CR_TRAV,mvE:8.91,expense:0,cp:'200',dmfaCode:'495',dimType:'OTH',commDist:0,commType:'none',commMonth:0,status:'active',sexe:'M',statut:'employe',niveauEtude:'sec',allocTravailType:'none',allocTravail:0,carFuel:"none",carCO2:0,carCatVal:0,carBrand:"",carModel:"",atnGSM:false,atnPC:false,atnInternet:false,atnLogement:false,atnLogementRC:0,atnChauffage:false,atnElec:false,depAscendant:0,depAscendantHandi:0,conjointHandicap:false,depAutres:0,anciennete:0,nrEngagement:0,engagementTrimestre:1,
-    veloSociete:false,veloType:'none',veloValeur:0,veloLeasingMois:0,carteCarburant:false,carteCarburantMois:0,borneRecharge:false,borneRechargeCoût:0,
+    veloSociete:false,veloType:'none',veloValeur:0,veloLeasingMois:0,motoSociete:false,motoCO2:0,motoCatVal:0,motoBrand:'',carteCarburant:false,carteCarburantMois:0,borneRecharge:false,borneRechargeCoût:0,
     frontalier:false,frontalierPays:'',frontalierConvention:'',frontalierA1:false,frontalierExoPP:false,
     pensionné:false,pensionType:'none',pensionAge:0,pensionCarriere:0,pensionCumulIllimite:false,pensionMontant:0,
   };
@@ -69,10 +45,10 @@ function Employees({s,d}) {
     if(!niss)return null;
     const clean=niss.replace(/[\s.\-]/g,'');
     // Level 1: Same dossier
-    const dupLocal=(s.emps||[]).find(e=>e.niss&&e.niss.replace(/[\s.\-]/g,'')===clean&&e.id!==currentId);
+    const dupLocal=(s?.emps||[]).find(e=>e.niss&&e.niss.replace(/[\s.\-]/g,'')===clean&&e.id!==currentId);
     if(dupLocal)return{level:'error',msg:`⛔ NISS déjà utilisé dans ce dossier: ${dupLocal.first} ${dupLocal.last}`};
     // Level 2: Platform-wide (check all clients)
-    const allClients=s.clients||[];
+    const allClients= s?.clients||[];
     for(const cl of allClients){
       if(cl.id===s.activeClient)continue;
       const dupPlatform=(cl.emps||[]).find(e=>e.niss&&e.niss.replace(/[\s.\-]/g,'')===clean);
@@ -200,7 +176,7 @@ function Employees({s,d}) {
   };
 
   // Filter and search
-  const filtered=(s.emps||[]).filter(e=>{
+  const filtered=(s?.emps||[]).filter(e=>{
     if(filter==='active'&&e.status==='sorti')return false;
     if(filter==='sorti'&&e.status!=='sorti')return false;
     if(filter==='student'&&e.contract!=='student')return false;
@@ -223,9 +199,9 @@ function Employees({s,d}) {
     setTimeout(()=>URL.revokeObjectURL(url),3000);
   };
 
-  const activeCount=(s.emps||[]).filter(e=>e.status!=='sorti').length;
-  const sortiCount=(s.emps||[]).filter(e=>e.status==='sorti').length;
-  const studentCount=(s.emps||[]).filter(e=>e.contract==='student').length;
+  const activeCount=(s?.emps||[]).filter(e=>e.status!=='sorti').length;
+  const sortiCount=(s?.emps||[]).filter(e=>e.status==='sorti').length;
+  const studentCount=(s?.emps||[]).filter(e=>e.contract==='student').length;
 
   // Exemple Activa — Nourdin MOUSSATI (attestation Activa.brussels AP 350/800/350) — fiche complète
   // CDD 3 mois : entrée 2 mars 2026, fin 1er juin 2026 ; fiche de paie pour fin mars 2026
@@ -251,7 +227,7 @@ function Employees({s,d}) {
   };
 
   return <div>
-    <PH title="Gestion des Employés" sub={`${(s.emps||[]).length} employé(s)`} actions={<div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+    <PH title="Gestion des Employés" sub={`${(s?.emps||[]).length} employé(s)`} actions={<div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
       <label style={{padding:'8px 14px',borderRadius:8,fontSize:11,cursor:'pointer',border:'1px solid rgba(198,163,78,.25)',background:'transparent',color:'#c6a34e',fontWeight:600,display:'flex',alignItems:'center',gap:4}}>
         📥 {importing?'Import...':'Import Excel'}
         <input type="file" accept=".xlsx,.xls,.csv" onChange={handleImportExcel} style={{display:'none'}}/>
@@ -274,7 +250,7 @@ function Employees({s,d}) {
       </div>
       <div style={{display:'flex',gap:4}}>
         {[
-          {id:"all",l:`Tous (${(s.emps||[]).length})`},
+          {id:"all",l:`Tous (${(s?.emps||[]).length})`},
           {id:"active",l:`Actifs (${activeCount})`},
           {id:"sorti",l:`Sortis (${sortiCount})`},
           {id:"student",l:`Étudiants (${studentCount})`},
@@ -495,6 +471,23 @@ function Employees({s,d}) {
       </div>
       {form.veloSociete&&<div style={{marginTop:8,padding:10,background:"rgba(74,222,128,.04)",borderRadius:8,fontSize:10.5,color:'#4ade80',lineHeight:1.6}}>
         🚲 <b>Vélo de société</b> — ATN = 0€ (Art. 38§1er 14°a CIR — exonéré ONSS et IPP depuis 01/01/2024). Leasing vélo déductible 100% pour l'employeur. Cumulable avec l'indemnité vélo 0,27€/km. Le speed pedelec est assimilé à un vélo.
+      </div>}
+      <ST>Moto de société (ATN)</ST>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <div><div style={{fontSize:10.5,color:'#9e9b93',marginBottom:4}}>🏍 Moto de société</div>
+          <div onClick={()=>setF({...form,motoSociete:!form.motoSociete})} style={{padding:'8px 12px',borderRadius:6,cursor:'pointer',fontSize:11,
+            background:form.motoSociete?'rgba(251,146,60,.15)':'rgba(198,163,78,.04)',color:form.motoSociete?'#fb923c':'#5e5c56',border:'1px solid '+(form.motoSociete?'rgba(251,146,60,.3)':'rgba(198,163,78,.1)'),textAlign:'center'}}>
+            {form.motoSociete?'✅ OUI — ATN calculé sur valeur catalogue':'❌ NON'}
+          </div>
+        </div>
+        {form.motoSociete&&<I label="Carburant moto" value={form.motoFuel||'essence'} onChange={v=>setF({...form,motoFuel:v})} options={[{v:'essence',l:'Essence'},{v:'electrique',l:'Électrique'},{v:'hybride',l:'Hybride'}]}/>}
+        {form.motoSociete&&<I label="CO2 g/km moto" type="number" value={form.motoCO2} onChange={v=>setF({...form,motoCO2:v})}/>}
+        {form.motoSociete&&<I label="Valeur catalogue moto (€)" type="number" value={form.motoCatVal} onChange={v=>setF({...form,motoCatVal:v})}/>}
+        {form.motoSociete&&<I label="Marque moto" value={form.motoBrand||''} onChange={v=>setF({...form,motoBrand:v})} options={[{v:'',l:'— Sélectionner —'},{v:'BMW Motorrad',l:'BMW Motorrad'},{v:'Ducati',l:'Ducati'},{v:'Harley-Davidson',l:'Harley-Davidson'},{v:'Honda',l:'Honda'},{v:'Kawasaki',l:'Kawasaki'},{v:'KTM',l:'KTM'},{v:'Piaggio',l:'Piaggio'},{v:'Suzuki',l:'Suzuki'},{v:'Triumph',l:'Triumph'},{v:'Yamaha',l:'Yamaha'},{v:'Autre',l:'Autre'}]}/>}
+        {form.motoSociete&&<I label="Modèle moto" value={form.motoModel||''} onChange={v=>setF({...form,motoModel:v})}/>}
+      </div>
+      {form.motoSociete&&<div style={{marginTop:8,padding:10,background:"rgba(251,146,60,.04)",borderRadius:8,fontSize:10.5,color:'#fb923c',lineHeight:1.6}}>
+        🏍 <b>Moto de société</b> — ATN = valeur catalogue × (6/7) × taux CO2 / 12. Même formule que la voiture (Art. 36 CIR 92). Cotisation CO2 patronale applicable. ATN imposable PP, non soumis ONSS.
       </div>}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginTop:10}}>
         <div><div style={{fontSize:10.5,color:'#9e9b93',marginBottom:4}}>⛽ Carte carburant / recharge</div>

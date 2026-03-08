@@ -1,23 +1,20 @@
 'use client';
+import { C, TX_ONSS_E, TX_ONSS_W, fmt, quickPP } from '@/app/lib/helpers';
 import{useState,useMemo}from'react';
 
-const TX_ONSS_E=0.2507,TX_ONSS_W=0.1307;
-const fmt=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
 const fi=v=>new Intl.NumberFormat('fr-BE',{maximumFractionDigits:0}).format(v||0);
-const C=({children,title:t})=><div style={{background:'rgba(198,163,78,.03)',borderRadius:12,padding:16,border:'1px solid rgba(198,163,78,.08)',marginBottom:14}}>{t&&<div style={{fontSize:13,fontWeight:600,color:'#c6a34e',marginBottom:12}}>{t}</div>}{children}</div>;
 const KPI=({l,v,c,sub})=><div style={{padding:14,background:'linear-gradient(135deg,#0d1117,#131820)',border:'1px solid '+(c||'#c6a34e')+'20',borderRadius:12,textAlign:'center',flex:1,minWidth:110}}><div style={{fontSize:20,fontWeight:800,color:c||'#c6a34e'}}>{v}</div><div style={{fontSize:9,color:'#888',marginTop:3}}>{l}</div>{sub&&<div style={{fontSize:8,color:'#5e5c56',marginTop:2}}>{sub}</div>}</div>;
 const Row=({l,v,c})=><div style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid rgba(255,255,255,.03)'}}><span style={{color:'#e8e6e0',fontSize:11.5}}>{l}</span><span style={{color:c||'#c6a34e',fontWeight:600,fontSize:12}}>{v}</span></div>;
 const Badge=({text,color})=><span style={{padding:'2px 7px',borderRadius:5,fontSize:8,fontWeight:600,background:(color||'#888')+'15',color:color||'#888'}}>{text}</span>;
-const quickPP=br=>{const imp=br*(1-TX_ONSS_W);if(imp<=1170)return 0;if(imp<=2350)return Math.round((imp-1170)*0.25*100)/100;return Math.round((1180*0.25+(imp-2350)*0.4)*100)/100;};
 
 // ═══════════════════════════════════════════════════════════
 // 1. DASHBOARD RH — Vrais indicateurs calcules
 // ═══════════════════════════════════════════════════════════
-export function DashboardRHV2({s,d}){
+export function DashboardRHV2({s,d,props_tab}){
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
-  const clients=s.clients||[];const now=new Date();const yr=now.getFullYear();
+  const clients= s?.clients||[];const now=new Date();const yr=now.getFullYear();
   const allEmps=clients.flatMap(c=>(c.emps||[]).map(e=>({...e,_co:c.company?.name||c.id})));
-  const n=allEmps.length;const [tab,setTab]=useState('overview');
+  const n=allEmps.length;const [tab,setTab]=useState((()=>{const m={dashrh:'overview',rh:'overview',team:'events'};return m[props_tab]||'overview';})());
   const mb=allEmps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0);
   const coutTotal=mb*(1+TX_ONSS_E);
 
@@ -71,7 +68,7 @@ export function DashboardRHV2({s,d}){
       <KPI l="Alertes" v={noNISS+noIBAN+noSalary} c={noNISS+noIBAN+noSalary>0?'#ef4444':'#4ade80'} sub={noNISS+' NISS, '+noIBAN+' IBAN'}/>
     </div>
 
-    <div style={{display:'flex',gap:4,marginBottom:16}}>{[{v:'overview',l:'Vue globale'},{v:'events',l:'Evenements'},{v:'alerts',l:'Alertes donnees'},{v:'costs',l:'Analyse couts'}].map(t=>
+    <div style={{display:'flex',gap:4,marginBottom:16}}>{[{v:'overview',l:'Vue globale'},{v:'events',l:'Evenements'},{v:'alerts',l:'Alertes donnees'},{v:'costs',l:'Analyse couts'},{v:'egalite',l:'⚖ Égalité & Handicap'}].map(t=>
       <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:11,fontWeight:tab===t.v?600:400,fontFamily:'inherit',background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>)}</div>
 
     {tab==='overview'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
@@ -95,6 +92,69 @@ export function DashboardRHV2({s,d}){
       {noNISS+noIBAN+noSalary===0&&<div style={{textAlign:'center',padding:20,color:'#4ade80'}}>✅ Toutes les donnees sont completes</div>}
       {allEmps.filter(e=>!e.niss&&!e.NISS).slice(0,10).map((e,i)=><div key={i} style={{fontSize:10,color:'#888',padding:'3px 0'}}>🆔 {e.first||'?'} {e.last||'?'} — {e._co}</div>)}
     </C>}
+    {tab==='egalite'&&(()=>{
+      const emps=allEmps;
+      const hommes=emps.filter(e=>(e.gender||e.sexe||'').toLowerCase()==='m'||(e.gender||e.sexe||'').toLowerCase()==='homme');
+      const femmes=emps.filter(e=>(e.gender||e.sexe||'').toLowerCase()==='f'||(e.gender||e.sexe||'').toLowerCase()==='femme');
+      const handicap=emps.filter(e=>e.handicap||e.disabled||e.travailleurHandicape);
+      const mH=hommes.length>0?hommes.reduce((a,e)=>a+(e.monthlySalary||e.gross||0),0)/hommes.length:0;
+      const mF=femmes.length>0?femmes.reduce((a,e)=>a+(e.monthlySalary||e.gross||0),0)/femmes.length:0;
+      const ecart=mH>0&&mF>0?Math.round((mH-mF)/mH*10000)/100:0;
+      const quota1pct=Math.ceil(emps.length*0.01);
+      const pctHandicap=emps.length>0?Math.round(handicap.length/emps.length*10000)/100:0;
+      const fi=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:0}).format(v);
+      const f2=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2}).format(v);
+      return <div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:14}}>
+          {[
+            {l:'Travailleurs H',v:hommes.length,sub:'Salaire moy: '+f2(mH)+' €',c:'#60a5fa'},
+            {l:'Travailleurs F',v:femmes.length,sub:'Salaire moy: '+f2(mF)+' €',c:'#f472b6'},
+            {l:'Travailleur·s handicapé·s',v:handicap.length,sub:'Quota légal: '+quota1pct+' (1%)',c:pctHandicap>=1?'#22c55e':'#f87171'},
+          ].map((k,i)=><div key={i} style={{padding:14,background:'rgba(255,255,255,.03)',borderRadius:10,border:`1px solid ${k.c}30`}}>
+            <div style={{fontSize:10,color:'#888'}}>{k.l}</div>
+            <div style={{fontSize:24,fontWeight:700,color:k.c,margin:'4px 0'}}>{k.v}</div>
+            <div style={{fontSize:10,color:'#666'}}>{k.sub}</div>
+          </div>)}
+        </div>
+        <C title="Écart salarial H/F — Art. 12 Loi 22/04/2012">
+          <div style={{marginBottom:10,padding:10,background:Math.abs(ecart)<5?'rgba(34,197,94,.06)':'rgba(239,68,68,.06)',borderRadius:8,border:`1px solid ${Math.abs(ecart)<5?'rgba(34,197,94,.2)':'rgba(239,68,68,.2)'}`}}>
+            <div style={{fontSize:11,fontWeight:700,color:Math.abs(ecart)<5?'#22c55e':'#ef4444'}}>
+              {mH>0&&mF>0?`Écart salarial H/F : ${ecart > 0 ? '+' : ''}${ecart}% (${ecart>0?'H gagne plus':'F gagne plus'})`
+              :'⚠️ Données insuffisantes — renseignez le genre dans les profils employés'}
+            </div>
+            {mH>0&&mF>0&&<div style={{fontSize:10,color:'#888',marginTop:3}}>
+              {Math.abs(ecart)<5?'✅ Conforme à la norme belge (tolérance <5%)':`❌ Écart supérieur au seuil — plan d'action requis dans les 6 mois (Loi 22/04/2012)`}
+            </div>}
+          </div>
+          <Row l="Salaire moyen Hommes" v={f2(mH)+' €/mois'} c="#60a5fa"/>
+          <Row l="Salaire moyen Femmes" v={f2(mF)+' €/mois'} c="#f472b6"/>
+          <Row l="Écart absolu" v={f2(Math.abs(mH-mF))+' €/mois'} c={Math.abs(ecart)<5?'#22c55e':'#ef4444'}/>
+          <Row l="Écart relatif" v={Math.abs(ecart)+'%'} c={Math.abs(ecart)<5?'#22c55e':'#ef4444'}/>
+          <div style={{marginTop:10,padding:8,background:'rgba(255,255,255,.02)',borderRadius:6,fontSize:10,color:'#666',lineHeight:1.6}}>
+            Base légale: Loi du 22 avril 2012 visant à lutter contre l'écart salarial entre hommes et femmes · AR 25/04/2014 (analyse, plan d'action) · CCT n°25 (égalité de rémunération)
+          </div>
+        </C>
+        <C title="Travailleurs handicapés — Quota légal 1%">
+          <div style={{marginBottom:10,padding:10,background:pctHandicap>=1?'rgba(34,197,94,.06)':'rgba(249,115,22,.06)',borderRadius:8,border:`1px solid ${pctHandicap>=1?'rgba(34,197,94,.2)':'rgba(249,115,22,.2)'}`}}>
+            <div style={{fontSize:11,fontWeight:700,color:pctHandicap>=1?'#22c55e':'#f97316'}}>
+              {pctHandicap>=1?`✅ Quota atteint — ${handicap.length}/${emps.length} (${pctHandicap}%)`
+              :`⚠️ ${handicap.length}/${emps.length} (${pctHandicap}%) — quota 1% non atteint (${quota1pct-handicap.length} poste(s) à pourvoir)`}
+            </div>
+          </div>
+          <Row l="Quota légal (Arr.R. 06/03/2014)" v="1% de l'effectif" c="#888"/>
+          <Row l="Travailleurs TH actuels" v={handicap.length} c={pctHandicap>=1?'#22c55e':'#f97316'}/>
+          <Row l="Quota à atteindre" v={quota1pct} c="#c6a34e"/>
+          <Row l="Avantage fiscal employeur" v="Réduction ONSS patronal + Activa TH" c="#a78bfa"/>
+          <div style={{marginTop:10,padding:8,background:'rgba(255,255,255,.02)',borderRadius:6,fontSize:10,color:'#666',lineHeight:1.6}}>
+            Avantages employeur TH: Réduction groupe-cible ONSS (1.000–1.600 €/trim) · Activa.brussels TH (350 €/mois) · Fonds Social Emploi (FSE) subvention équipement · Inclusion ASBL coaching gratuit
+          </div>
+        </C>
+        {emps.filter(e=>!e.gender&&!e.sexe).length>0&&<div style={{padding:10,background:'rgba(249,115,22,.06)',borderRadius:8,border:'1px solid rgba(249,115,22,.2)',fontSize:11,color:'#f97316'}}>
+          ⚠️ {emps.filter(e=>!e.gender&&!e.sexe).length} travailleur(s) sans genre renseigné — compléter les profils pour un rapport complet
+        </div>}
+      </div>;
+    })()}
+
     {tab==='costs'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
       <C title="Structure cout mensuel"><Row l="Salaires bruts" v={fmt(mb)+' €'}/><Row l={'ONSS patronal ('+(TX_ONSS_E*100).toFixed(1)+'%)'} v={'+'+fmt(mb*TX_ONSS_E)+' €'} c="#f87171"/><Row l="Precompte pro estime" v={fmt(allEmps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0))+' €'} c="#fb923c"/><Row l="Net total employes" v={fmt(mb*(1-TX_ONSS_W)-allEmps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0))+' €'} c="#4ade80"/><div style={{borderTop:'2px solid rgba(198,163,78,.2)',paddingTop:8,marginTop:4}}><Row l="COUT TOTAL" v={fmt(coutTotal)+' €/mois'}/></div></C>
       <C title="Ratio & benchmarks"><Row l="Cout moyen/employe" v={fi(n>0?coutTotal/n:0)+' €'}/><Row l="Ratio net/cout" v={(coutTotal>0?Math.round((mb*(1-TX_ONSS_W)-allEmps.reduce((a,e)=>a+quickPP(+(e.monthlySalary||e.gross||0)),0))/coutTotal*10000)/100:0)+'%'} c="#4ade80"/><Row l="Taux de charge" v={(mb>0?Math.round((coutTotal-mb)/mb*10000)/100:0)+'%'} c="#f87171"/><Row l="Benchmark CP 200" v="~30-35%" c="#888"/></C>
@@ -106,7 +166,7 @@ export function DashboardRHV2({s,d}){
 // 2. REGISTRE PERSONNEL — Format legal + export PDF
 // ═══════════════════════════════════════════════════════════
 export function RegistrePersonnelV2({s}){
-  const clients=s.clients||[];const [sel,setSel]=useState(0);const now=new Date();
+  const clients= s?.clients||[];const [sel,setSel]=useState(0);const now=new Date();
   const cl=clients[sel];const co=cl?.company||{};const emps=cl?.emps||[];
 
   const generateRegistre=()=>{
@@ -203,7 +263,7 @@ td{padding:4px;border:1px solid #ddd;font-size:8.5px}
 // 3. PORTAIL EMPLOYE — Fiches paie + demandes fonctionnelles
 // ═══════════════════════════════════════════════════════════
 export function PortailEmployeV2({s,d}){
-  const clients=s.clients||[];const [selC,setSelC]=useState(0);const [selE,setSelE]=useState(0);
+  const clients= s?.clients||[];const [selC,setSelC]=useState(0);const [selE,setSelE]=useState(0);
   const [tab,setTab]=useState('accueil');const [demandes,setDemandes]=useState([]);
   const [newDem,setNewDem]=useState({type:'conge',dateDebut:'',dateFin:'',motif:''});
   const mois=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
@@ -309,7 +369,7 @@ export function PortailEmployeV2({s,d}){
 // 4. GESTION INTERIMAIRES — Contrats + DIMONA + Couts
 // ═══════════════════════════════════════════════════════════
 export function GestionInterimairesV2({s,d}){
-  const clients=s.clients||[];const [sel,setSel]=useState(0);
+  const clients= s?.clients||[];const [sel,setSel]=useState(0);
   const [ints,setInts]=useState([]);const [showAdd,setShowAdd]=useState(false);const [tab,setTab]=useState('liste');
   const agences=[{id:'randstad',n:'Randstad',c:'#0066cc'},{id:'adecco',n:'Adecco',c:'#ef4444'},{id:'manpower',n:'Manpower',c:'#3b82f6'},{id:'tempo',n:'Tempo-Team',c:'#22c55e'},{id:'start',n:'Start People',c:'#eab308'},{id:'unique',n:'Unique',c:'#a855f7'},{id:'robert',n:'Robert Half',c:'#06b6d4'}];
   const [ni,setNi]=useState({first:'',last:'',niss:'',agence:'randstad',brutH:15.50,heures:152,coeff:2.0,motif:'remplacement',debut:'',fin:'',client:''});
@@ -387,4 +447,6 @@ export function GestionInterimairesV2({s,d}){
 }
 
 
-export default DashboardRHV2;
+export default function EmployeeHubWrapped({ s, d, tab }) {
+  return <DashboardRHV2 s={s||{}} d={d||(()=>{})} props_tab={tab} />;
+}

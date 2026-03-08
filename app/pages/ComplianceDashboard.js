@@ -334,7 +334,7 @@ function ScoreGauge({ score, size, color }) {
 }
 
 // ── Composant principal ──
-export default function ComplianceDashboard({ state }) {
+function ComplianceDashboardInner({ state, initialFilter }) {
   const [expandedFramework, setExpandedFramework] = useState(null)
 
   const checklist = useMemo(() => generateChecklist(state), [state])
@@ -523,6 +523,12 @@ export default function ComplianceDashboard({ state }) {
       </div>
     </div>
   )
+}
+
+
+export default function ComplianceDashboard({ state, s, d, tab }) {
+  const actualState = state || s || {};
+  return <ComplianceDashboardInner state={actualState} initialFilter={tab === 'rgpd' ? 'rgpd' : null} />;
 }
 
 export { FRAMEWORKS, generateChecklist, calculateScore }

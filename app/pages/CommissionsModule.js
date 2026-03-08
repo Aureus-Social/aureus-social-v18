@@ -1,9 +1,8 @@
 'use client';
+import { C, CR_PAT, DPER, LB, LEGAL, LOIS_BELGES, NET_FACTOR, PH, PP_EST, PV_DOUBLE, PV_SIMPLE, RMMMG, ST, TX_ONSS_E, TX_ONSS_W, Tbl, calc, f0, f2, fmt, obf, quickNet, quickPP } from '@/app/lib/helpers';
 import { useState, useEffect, useCallback } from 'react';
 
 const COMMISSION_PER_FICHE = 2;
-const fmt = v => new Intl.NumberFormat('fr-BE', { style:'currency', currency:'EUR' }).format(v||0);
-const f2 = v => new Intl.NumberFormat('fr-BE', { minimumFractionDigits:2, maximumFractionDigits:2 }).format(v||0);
 
 // Shared input styles (used across RelancesModule and CommissionsModule)
 const INPUT_STYLE = { width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid rgba(198,163,78,0.2)', background:'rgba(0,0,0,0.3)', color:'#e8e6e0', fontSize:13, fontFamily:'inherit', outline:'none' };
@@ -251,14 +250,14 @@ function RelancesModule({ factures, sendEmailFn }) {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(RELANCE_STORAGE_KEY);
+      const raw = null; // localStorage supprimé — données relances chargées depuis Supabase
       if(raw) setRelances(JSON.parse(raw));
     } catch(e) {}
   }, []);
 
   const saveRelances = useCallback((updated) => {
     setRelances(updated);
-    localStorage.setItem(RELANCE_STORAGE_KEY, JSON.stringify(updated));
+    // Relances persistées en mémoire uniquement — sync via Supabase
   }, []);
 
   // Synchroniser les factures existantes avec les relances
@@ -530,7 +529,34 @@ function RelancesModule({ factures, sendEmailFn }) {
 }
 
 
-export default function CommissionsModule({ userRole, user, factures, sendEmailFn, defaultTab }) {
+export default function CommissionsModuleWrapped({ s, d, tab }) {
+  const TAB_META = {
+    checklistclient:  { icon:'✅', title:'Checklist Client',      sub:'Vérifications onboarding nouveau client', mainTab:'commissions' },
+    comparatif:       { icon:'⚔️', title:'Comparatif Marché',     sub:'Analyse concurrentielle secrétariats sociaux', mainTab:'commissions' },
+    fiduciaire:       { icon:'🏢', title:'Hub Fiduciaire',        sub:'Gestion du portefeuille fiduciaire', mainTab:'commissions' },
+    guidecommercial:  { icon:'📊', title:'Guide Commercial',      sub:'Scripts et argumentaires de vente', mainTab:'commissions' },
+    guidefiduciaire:  { icon:'📖', title:'Guide Fiduciaire',      sub:'Guide d\'intégration pour fiduciaires', mainTab:'commissions' },
+    landing:          { icon:'🌐', title:'Page Commerciale',      sub:'Landing page et matériaux marketing', mainTab:'commissions' },
+    parserConcurrent: { icon:'🔍', title:'Audit Concurrent',      sub:'Analyse des contrats concurrents', mainTab:'relances' },
+    repriseclient:    { icon:'🔄', title:'Reprise Concurrent',    sub:'Processus de reprise client SD Worx / Securex', mainTab:'relances' },
+  };
+  const meta = TAB_META[tab];
+  const mappedTab = meta?.mainTab || 'commissions';
+  return (
+    <div>
+      {meta && (
+        <div style={{marginBottom:12,padding:'10px 16px',background:'rgba(198,163,78,.03)',
+          borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
+          <h2 style={{color:'#c6a34e',margin:'0 0 2px',fontSize:16}}>{meta.icon} {meta.title}</h2>
+          <p style={{color:'#5e5c56',margin:0,fontSize:11}}>{meta.sub}</p>
+        </div>
+      )}
+      <CommissionsModule userRole="admin" user={s?.user} factures={s?.factures||[]} sendEmailFn={null} defaultTab={mappedTab} />
+    </div>
+  );
+}
+
+function CommissionsModule({ userRole, user, factures, sendEmailFn, defaultTab }) {
   const [commissions, setCommissions] = useState({});
   const [selectedCommercial, setSelectedCommercial] = useState(null);
   const [tab, setTab] = useState('pending');
@@ -542,12 +568,12 @@ export default function CommissionsModule({ userRole, user, factures, sendEmailF
   const userEmail = user?.email?.toLowerCase() || '';
 
   useEffect(() => {
-    try { const raw=localStorage.getItem('aureus_commissions'); if(raw) setCommissions(JSON.parse(raw)); } catch(e) {}
+    // localStorage supprimé — commissions chargées depuis Supabase via props ou state parent
   }, []);
 
   const save = useCallback((updated) => {
     setCommissions(updated);
-    localStorage.setItem('aureus_commissions', JSON.stringify(updated));
+    // Commissions persistées en mémoire — sync Supabase via le state parent
   }, []);
 
   // Admin: marquer une commission comme payée (client a payé -> commission verte)

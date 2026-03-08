@@ -1,9 +1,8 @@
 'use client';
+import { B, C, TX_ONSS_E, TX_ONSS_W, fmt, quickPP, LOIS_BELGES, FORF_KM, ECO_MAX } from '@/app/lib/helpers';
 import{useState,useMemo}from'react';
 
-const fmt=v=>new Intl.NumberFormat('fr-BE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v||0);
 const fi=v=>new Intl.NumberFormat('fr-BE',{maximumFractionDigits:0}).format(v||0);
-const C=({children,title:t,sub,color})=><div style={{background:'rgba(198,163,78,.03)',borderRadius:12,padding:16,border:'1px solid '+(color||'rgba(198,163,78,.08)'),marginBottom:14}}>{t&&<div style={{fontSize:13,fontWeight:600,color:color||'#c6a34e',marginBottom:sub?2:10}}>{t}</div>}{sub&&<div style={{fontSize:10,color:'#888',marginBottom:10}}>{sub}</div>}{children}</div>;
 const Row=({l,v,c,b,sub})=><div style={{display:'flex',justifyContent:'space-between',padding:b?'8px 0':'5px 0',borderBottom:b?'2px solid rgba(198,163,78,.2)':'1px solid rgba(255,255,255,.03)',fontWeight:b?700:400}}><span style={{color:sub?'#888':'#e8e6e0',fontSize:sub?10:11.5,fontStyle:sub?'italic':'normal'}}>{l}</span><span style={{color:c||'#c6a34e',fontWeight:600,fontSize:12}}>{v}</span></div>;
 const I=({label,type,value,onChange,style:st,options})=>{
   return <div style={st}><div style={{fontSize:10,color:'#5e5c56',marginBottom:3}}>{label}</div>
@@ -14,8 +13,6 @@ const I=({label,type,value,onChange,style:st,options})=>{
 const Badge=({text,color})=><span style={{padding:'2px 7px',borderRadius:5,fontSize:8,fontWeight:600,background:(color||'#888')+'15',color:color||'#888'}}>{text}</span>;
 const Bar=({pct,color})=><div style={{width:'100%',height:6,background:'rgba(255,255,255,.05)',borderRadius:3,overflow:'hidden'}}><div style={{width:Math.min(pct,100)+'%',height:'100%',background:color||'#c6a34e',borderRadius:3}}/></div>;
 
-const TX_ONSS_W=0.1307,TX_ONSS_E=0.2507;
-const quickPP=(brut,anc)=>{const imp=brut*(1-TX_ONSS_W);if(imp<=1170)return 0;if(imp<=2050)return imp*0.2615;if(imp<=3600)return imp*0.3218;return imp*0.3500;};
 
 // ════════════════════════════════════════════════════════════
 // 56 PRIMES BELGES — DONNÉES COMPLÈTES
@@ -323,7 +320,7 @@ const PRIMES_DB=[
     desc:'0.4415 EUR/km (2026) — max 24.000 km/an exonéré',
     base_legale:'AR fixant les indemnités km — indexé annuellement',
     conditions:['Utilisation véhicule privé pour déplacements professionnels','0.4415 EUR/km (montant 2026, indexé juillet)','Max 24.000 km/an exonéré','Ne couvre PAS le domicile-travail (sauf si itinérant)','Justification: agenda, carnet de route'],
-    calcul:(brut,km)=>{const k=km||15000;const ind=Math.min(k,24000)*0.4415;return{brut:0,onssW:0,onssE:0,pp:0,coutEmployeur:ind,avantageNet:ind,desc:`${fi(k)} km × 0.4415 EUR = ${fmt(ind)} EUR/an. 100% exonéré.`}},
+    calcul:(brut,km)=>{const k=km||15000;const ind=Math.min(k,24000)*FORF_KM;return{brut:0,onssW:0,onssE:0,pp:0,coutEmployeur:ind,avantageNet:ind,desc:`${fi(k)} km × ${FORF_KM} EUR = ${fmt(ind)} EUR/an. 100% exonéré.`}},
     plafond:24000,fiscal:'100% exonéré ONSS + IPP dans la limite de 24.000 km/an'},
   {id:'assurance_revenu',cat:'assurance',icon:'🛡',nom:'Assurance revenu garanti',taxable:false,onss:false,
     desc:'Compense la perte de revenus en cas de maladie/invalidité longue',
@@ -379,12 +376,13 @@ const CAT_COLORS={remvar:'#c6a34e',exonere:'#22c55e',frais:'#3b82f6',atn:'#f8717
 // ════════════════════════════════════════════════════════════
 // COMPOSANT 1: PRIME CALCULATOR V2 — Simulateur comparatif
 // ════════════════════════════════════════════════════════════
-export function PrimeCalculatorV2({s,d}){
+export function PrimeCalculatorV2({s,d,props_tab}){
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
-  const emps=(s.clients||[]).flatMap(c=>c.emps||[]);
+  const emps=(s?.clients||[]).flatMap(c=>c.emps||[]);
   const [selPrime,setSelPrime]=useState('prime_fin_annee');
   const [montant,setMontant]=useState(2000);
-  const [tab,setTab]=useState('simu');
+  const TAB_MAP_PV = { gestionprimes:'catalogue', avantages:'simu' };
+  const [tab,setTab]=useState(TAB_MAP_PV[props_tab]||'simu');
   const [expanded,setExpanded]=useState({});
   const [searchP,setSearchP]=useState('');
   const [selCat,setSelCat]=useState('all');
@@ -696,10 +694,11 @@ export function VehiculesATNV2({s}){
   const atnMois=atnAn/12;
 
   // Cotisation CO2 employeur
+  const _co2min = LOIS_BELGES.vehicules.cotCO2Min;
   const cotCO2=carburant==='diesel'?
-    (co2<=0?31.34:((co2*9)/100)*12*6.5):
-    carburant==='electrique'?31.34*12:
-    (co2<=0?31.34:((co2*9)/100)*12*6.5);
+    (co2<=0?_co2min:((co2*9)/100)*12*6.5):
+    carburant==='electrique'?_co2min*12:
+    (co2<=0?_co2min:((co2*9)/100)*12*6.5);
 
   // TCO (Total Cost of Ownership)
   const leasing=valCat*0.018*12;// ~1.8%/mois
@@ -772,7 +771,7 @@ export function VehiculesATNV2({s}){
             if(v.type==='Électrique')p=4;
             const atn=Math.max(1600,valCat*6/7*p/100);
             const fuel=km*v.prix;
-            const cot=v.cotMin?31.34*12:((co2*9)/100)*12*6.5;
+            const cot=v.cotMin?LOIS_BELGES.vehicules.cotCO2Min*12:((co2*9)/100)*12*6.5;
             const dna=v.type==='Électrique'?0:tcoAn*(dnaTable.find(d=>co2>=d.min&&co2<=d.max)?.pct||100)/100;
             const tot=leasing+fuel+assurance+km*0.04+cot;
             return <div key={v.type} style={{padding:14,background:'rgba(198,163,78,.03)',borderRadius:10,border:'1px solid rgba(198,163,78,.08)'}}>
@@ -910,7 +909,7 @@ export function FlexiJobsV2({s,d}){
 // COMPOSANT 5: 13ÈME MOIS V2 — Prorata + spécificités sectorielles
 // ════════════════════════════════════════════════════════════
 export function TreiziemeMoisV2({s}){
-  const emps=(s.clients||[]).flatMap(c=>c.emps||[]);
+  const emps=(s?.clients||[]).flatMap(c=>c.emps||[]);
   const [moisPrestes,setMoisPrestes]=useState(12);
   const [salaire,setSalaire]=useState(3000);
   const [cp,setCp]=useState('200');
@@ -974,7 +973,7 @@ export {PRIMES_DB,CATS,CAT_COLORS};
 // COMPOSANT 6: ÉCO-CHÈQUES V2 — Prorata + plafond sectoriel
 // ════════════════════════════════════════════════════════════
 export function EcoChequesV2({s}){
-  const emps=(s.clients||[]).flatMap(c=>c.emps||[]);
+  const emps=(s?.clients||[]).flatMap(c=>c.emps||[]);
   const [montant,setMontant]=useState(250);
   const [moisPrestes,setMoisPrestes]=useState(12);
   const [regime,setRegime]=useState(100);
@@ -1138,7 +1137,7 @@ export function PlanCafeteriaV2({s}){
 // COMPOSANT 8: CCT 90 BONUS V2 — Plan bonus + dépôt SPF
 // ════════════════════════════════════════════════════════════
 export function CCT90BonusV2({s}){
-  const emps=(s.clients||[]).flatMap(c=>c.emps||[]);const n=emps.length||1;
+  const emps=(s?.clients||[]).flatMap(c=>c.emps||[]);const n=emps.length||1;
   const [montant,setMontant]=useState(3000);
   const [periodeRef,setPeriodeRef]=useState(12);
   const [tab,setTab]=useState('simu');
@@ -1414,7 +1413,7 @@ export function NoteFraisV2({s}){
 // COMPOSANT 10: CHÈQUES-REPAS V2
 // ════════════════════════════════════════════════════════════
 export function CheqRepasV2({s}){
-  const emps=(s.clients||[]).flatMap(c=>c.emps||[]);
+  const emps=(s?.clients||[]).flatMap(c=>c.emps||[]);
   const [valFaciale,setValFaciale]=useState(8);
   const [partPatron,setPartPatron]=useState(6.91);
   const [joursPrestes,setJoursPrestes]=useState(220);
@@ -1539,4 +1538,4 @@ export function CheqRepasV2({s}){
 }
 
 
-export default PrimeCalculatorV2;
+export default function PrimesAvantagesTabbed({ s, d, tab }) { return <PrimeCalculatorV2 s={s||{}} d={d||(()=>{})} props_tab={tab}/> }

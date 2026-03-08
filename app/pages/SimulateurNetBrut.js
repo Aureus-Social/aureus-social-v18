@@ -5,11 +5,12 @@
 // Or reverse: net → brut calculation
 // ═══════════════════════════════════════════════════════════
 import React, { useState, useMemo } from 'react';
+import { TX_ONSS_W, TX_ONSS_E, RMMMG, BONUS_MAX } from '@/app/lib/helpers';
 
 const GOLD='#c6a34e',GREEN='#22c55e';
 
-export function SimulateurNetBrut({ calcPaie, baremes }) {
-  const [mode, setMode] = useState('brut'); // 'brut' or 'net'
+export function SimulateurNetBrut({ calcPaie, baremes, props_tab }) {
+  const [mode, setMode] = useState(props_tab === 'simutp' ? 'net' : 'brut'); // 'brut' or 'net'
   const [brutInput, setBrutInput] = useState(3500);
   const [netInput, setNetInput] = useState(2200);
   const [situation, setSituation] = useState('isole');
@@ -18,7 +19,7 @@ export function SimulateurNetBrut({ calcPaie, baremes }) {
 
   const result = useMemo(() => {
     const brut = mode === 'brut' ? brutInput : brutInput;
-    const onss = Math.round(brut * 0.1307 * 100) / 100;
+    const onss = Math.round(brut * TX_ONSS_W * 100) / 100;
     const imposable = brut - onss;
     // Simplified PP calculation
     const annuel = imposable * 12;
@@ -119,4 +120,6 @@ export function SimulateurNetBrut({ calcPaie, baremes }) {
   );
 }
 
-export default SimulateurNetBrut;
+export default function SimulateurNetBrutWrapped({ s, d, tab }) {
+  return <SimulateurNetBrut props_tab={tab} />;
+}

@@ -8,6 +8,7 @@
 
 import { useState, useMemo } from 'react'
 import dynamic from 'next/dynamic'
+import { TX_ONSS_W, TX_ONSS_E, RMMMG } from '@/app/lib/helpers'
 
 // Recharts — chargement dynamique pour éviter SSR
 const RechartsComponents = dynamic(() =>
@@ -69,15 +70,34 @@ function ChartCard({ title, children, height }) {
   return (
     <div style={{ background: DARK, borderRadius: 8, border: `1px solid ${BORDER}`, padding: 16, marginBottom: 16 }}>
       <h3 style={{ margin: '0 0 16px 0', fontSize: 14, fontWeight: 600, color: GOLD }}>{title}</h3>
-      <div style={{ height: height || 300 }}>
+      <div style={{ height: height || 300, minHeight: height || 300, width: '100%', position: 'relative' }}>
         {children}
       </div>
     </div>
   )
 }
 
-export default function AnalyticsDashboard({ state }) {
+export default function AnalyticsDashboardWrapped({ s, d, tab }) {
+  // analytics et tbdirection → dashboard complet avec graphiques
+  // autres tabs → vue dédiée avec titre contextuel + dashboard intégré
+  const meta = TAB_META[tab] || TAB_META['analytics'];
+  if (tab && tab !== 'analytics') {
+    return (
+      <div>
+        <div style={{marginBottom:16,padding:'14px 18px',background:'rgba(198,163,78,.03)',borderRadius:12,border:'1px solid rgba(198,163,78,.08)'}}>
+          <h2 style={{color:'#c6a34e',margin:'0 0 4px',fontSize:18}}>{meta.icon} {meta.title}</h2>
+          <p style={{color:'#5e5c56',margin:0,fontSize:12}}>{meta.sub}</p>
+        </div>
+        <AnalyticsDashboard state={s || {}} defaultTab={tab} />
+      </div>
+    );
+  }
+  return <AnalyticsDashboard state={s || {}} defaultTab={tab} />;
+}
+
+function AnalyticsDashboard({ state, defaultTab }) {
   const [period, setPeriod] = useState('12m')
+  const [activeTab, setActiveTab] = useState(defaultTab || 'analytics')
   const employees = state?.employees || []
   const company = state?.co || state?.company || {}
 
@@ -110,7 +130,7 @@ export default function AnalyticsDashboard({ state }) {
     return MONTHS_FR.map((month, i) => {
       const variation = 1 + (Math.sin(i * 0.5) * 0.05) // +/- 5%
       const gross = Math.round(base * variation)
-      const onssW = Math.round(gross * 0.1307)
+      const onssW = Math.round(gross * TX_ONSS_W)
       const onssE = Math.round(gross * 0.2738)
       const pp = Math.round((gross - onssW) * 0.25) // estimation
       const net = gross - onssW - pp
@@ -135,7 +155,7 @@ export default function AnalyticsDashboard({ state }) {
     const gross = kpis.totalGross
     return [
       { name: 'Net', value: Math.round(gross * 0.55), color: '#22c55e' },
-      { name: 'ONSS travailleur', value: Math.round(gross * 0.1307), color: '#3b82f6' },
+      { name: 'ONSS travailleur', value: Math.round(gross * TX_ONSS_W), color: '#3b82f6' },
       { name: 'Précompte prof.', value: Math.round(gross * 0.20), color: '#f59e0b' },
       { name: 'ONSS employeur', value: Math.round(gross * 0.2738), color: '#ef4444' },
       { name: 'Cotisation spéc.', value: Math.round(gross * 0.02), color: '#8b5cf6' },
@@ -177,7 +197,7 @@ export default function AnalyticsDashboard({ state }) {
         <ChartCard title="Évolution de la masse salariale">
           <RechartsComponents>
             {({ AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer }) => (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={BORDER} />
                   <XAxis dataKey="month" stroke={MUTED} fontSize={11} />
@@ -199,7 +219,7 @@ export default function AnalyticsDashboard({ state }) {
         <ChartCard title="Répartition du coût salarial">
           <RechartsComponents>
             {({ PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend }) => (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
                     data={costBreakdown}
@@ -230,7 +250,7 @@ export default function AnalyticsDashboard({ state }) {
         <ChartCard title="Décomposition mensuelle">
           <RechartsComponents>
             {({ BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend }) => (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={BORDER} />
                   <XAxis dataKey="month" stroke={MUTED} fontSize={11} />
@@ -254,7 +274,7 @@ export default function AnalyticsDashboard({ state }) {
         <ChartCard title="Répartition par statut" height={250}>
           <RechartsComponents>
             {({ PieChart, Pie, Cell, Tooltip, ResponsiveContainer }) => (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
                     data={statutData}
@@ -282,7 +302,7 @@ export default function AnalyticsDashboard({ state }) {
           <ChartCard title="Répartition par Commission Paritaire" height={250}>
             <RechartsComponents>
               {({ BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer }) => (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={cpData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke={BORDER} />
                     <XAxis type="number" stroke={MUTED} fontSize={11} />
@@ -300,7 +320,7 @@ export default function AnalyticsDashboard({ state }) {
         <ChartCard title="Coût employeur vs Net à payer">
           <RechartsComponents>
             {({ LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend }) => (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={BORDER} />
                   <XAxis dataKey="month" stroke={MUTED} fontSize={11} />
@@ -322,4 +342,16 @@ export default function AnalyticsDashboard({ state }) {
       </div>
     </div>
   )
+}
+
+// ── Pages dédiées par tab ──────────────────────────────────────
+const TAB_META = {
+  analytics:    { icon:'📈', title:'Analytics',           sub:'Tableau analytique paie & RH' },
+  tbdirection:  { icon:'📊', title:'Tableau de Direction',sub:'KPIs direction — masse salariale, coûts, tendances' },
+  bilansocial:  { icon:'📋', title:'Bilan Social',        sub:'Rapport annuel obligations légales (>50 ETP)' },
+  rapportce:    { icon:'🏛', title:'Rapport CE',          sub:'Rapport annuel Conseil d\'Entreprise' },
+  rapports:     { icon:'📊', title:'Rapports Mensuels',   sub:'Rapports périodiques paie & déclarations' },
+  rapportsrole: { icon:'📈', title:'Rapports par Rôle',   sub:'Rapports personnalisés selon le profil utilisateur' },
+  reporting:    { icon:'▤',  title:'Reporting & Export',  sub:'Centre d\'export reporting multi-format' },
+  reportingpro: { icon:'📊', title:'Reporting Pro',       sub:'Reporting avancé avec filtres personnalisés' },
 }

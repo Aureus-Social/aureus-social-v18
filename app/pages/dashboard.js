@@ -1,45 +1,24 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { LOIS_BELGES, LB, RMMMG, TX_ONSS_W, TX_ONSS_E, NET_FACTOR, PV_DOUBLE, PV_SIMPLE, PP_EST } from '@/app/lib/lois-belges';
-
-const fmt = n => new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR' }).format(n || 0);
-const fmtP = n => `${((n||0)*100).toFixed(2)}%`;
-const uid = () => `${Date.now()}-${Math.random().toString(36).substr(2,5)}`;
+import { B, C, DPER, I, LB, LEGAL, LOIS_BELGES, NET_FACTOR, PH, PP_EST, PV_DOUBLE, PV_SIMPLE, RMMMG, ST, TX_ONSS_E, TX_ONSS_W, Tbl, calc, f0, f2, fmt, generatePayslipPDF, getAlertes, quickNet, quickPP, generateSEPAXML, generateDmfAXML } from '@/app/lib/helpers';
 const AUREUS_INFO = { name: 'Aureus IA SPRL', vat: 'BE 1028.230.781', version: 'v38', sprint: 'Sprint 38' };
-const LEGAL = { WD: 21.67, WHD: 7.6 };
-const DPER = { month: new Date().getMonth()+1, year: new Date().getFullYear(), days: 21.67 };
 const MN_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
-function PH({title,sub}){return <div style={{marginBottom:16}}><div style={{fontSize:18,fontWeight:800,color:'#c6a34e',letterSpacing:'.3px'}}>{title}</div>{sub&&<div style={{fontSize:11,color:'#9e9b93',marginTop:2}}>{sub}</div>}</div>;}
-function C({children,style}){return <div style={{padding:'16px 20px',background:'rgba(198,163,78,.03)',borderRadius:12,border:'1px solid rgba(198,163,78,.06)',marginBottom:14,...style}}>{children}</div>;}
-function ST({children}){return <div style={{fontSize:13,fontWeight:700,color:'#c6a34e',marginBottom:10,paddingBottom:6,borderBottom:'1px solid rgba(198,163,78,.1)'}}>{children}</div>;}
+const fmtP = n => `${((n||0)*100).toFixed(2)}%`;
+const uid = () => `${Date.now()}-${Math.random().toString(36).substr(2,5)}`;
+const MN = MN_FR;
 
-function calc(emp, per, co) {
-  var brut = +(emp&&(emp.monthlySalary||emp.gross)||0);
-  var onssW = Math.round(brut * TX_ONSS_W * 100) / 100;
-  var imposable = brut - onssW;
-  var pp = Math.round(imposable * PP_EST * 100) / 100;
-  var net = Math.round((imposable - pp) * 100) / 100;
-  var onssE = Math.round(brut * TX_ONSS_E * 100) / 100;
-  return {base:brut,gross:brut,onssNet:onssW,imposable:imposable,tax:pp,pp:pp,css:0,net:net,onssE:onssE,costTotal:Math.round((brut+onssE)*100)/100,bonus:0,overtime:0,sunday:0,night:0,y13:0,sickPay:0,atnCar:0,cotCO2:0,hsBrutNetTotal:0};
-}
 
-function quickPP(brut) {
-  const imposable = brut - brut * TX_ONSS_W;
-  if (imposable <= 1110) return 0;
-  if (imposable <= 1560) return Math.round((imposable - 1110) * 0.2668 * 100) / 100;
-  if (imposable <= 2700) return Math.round((120.06 + (imposable - 1560) * 0.4280) * 100) / 100;
-  return Math.round((607.98 + (imposable - 2700) * 0.4816) * 100) / 100;
-}
 
-function quickNet(brut) { return Math.round((brut||0) * NET_FACTOR * 100) / 100; }
+
+
 function escapeHtml(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function Dashboard({s,d}) {
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
-  const ae=(s.emps||[]).filter(e=>e.status==='active'||!e.status||e.status===undefined);
-  const sortie=(s.emps||[]).filter(e=>e.status==='sorti');
-  const etudiants=(s.emps||[]).filter(e=>e.contract==='student');
+  const ae=(s?.emps||[]).filter(e=>e.status==='active'||!e.status||e.status===undefined);
+  const sortie=(s?.emps||[]).filter(e=>e.status==='sorti');
+  const etudiants=(s?.emps||[]).filter(e=>e.contract==='student');
   const tm=ae.reduce((a,e)=>a+(e.monthlySalary||0),0);
   const calcs=ae.map(e=>({e,c:calc(e,DPER,s.co)}));
   const tc=calcs.reduce((a,x)=>a+x.c.costTotal,0);
@@ -52,7 +31,7 @@ function Dashboard({s,d}) {
   const months12=Array.from({length:12},(_,i)=>{
     const mi=(curMonth-11+i+12)%12;
     const yi=curYear-(curMonth-11+i<0?1:0);
-    const found=s.pays.filter(p=>p.month===mi+1&&p.year===yi);
+    const found=( s.pays||[]).filter(p=>p.month===mi+1&&p.year===yi);
     const mass=found.length>0?found.reduce((a,p)=>a+(p.gross||0),0):tm;
     const cost=found.length>0?found.reduce((a,p)=>a+(p.costTotal||0),0):tc;
     return {m:MN[mi]?.substring(0,3)||'',mass,cost,net:found.length>0?found.reduce((a,p)=>a+(p.net||0),0):tn};
@@ -143,9 +122,52 @@ function Dashboard({s,d}) {
         <div><div style={{fontSize:13,fontWeight:600,color:'#c6a34e'}}>Automatisation</div><div style={{fontSize:10,color:'#888'}}>Actions rapides</div></div>
       </div>
       <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-        <button onClick={()=>{if(confirm('Générer toutes les fiches de paie ?')){(s.emps||[]).forEach(e=>generatePayslipPDF(e,s.co));addToast(s.emps.length+' fiches de paie générées')}}} style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(198,163,78,.15)',color:'#c6a34e',fontSize:11,cursor:'pointer',fontWeight:600}}>📄 Fiches</button>
-        <button onClick={()=>{if(confirm('Générer SEPA ?')){generateSEPAXML(s.emps||[],s.co);addToast('Fichier SEPA pain.001 généré')}}} style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(34,197,94,.12)',color:'#22c55e',fontSize:11,cursor:'pointer',fontWeight:600}}>💸 SEPA</button>
-        <button onClick={()=>{if(confirm('Générer DmfA ?')){generateDmfAXML(s.emps||[],Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),s.co);addToast('DmfA trimestrielle générée')}}} style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(168,85,247,.12)',color:'#a855f7',fontSize:11,cursor:'pointer',fontWeight:600}}>📊 DmfA</button>
+        <button onClick={()=>{if(confirm('Générer toutes les fiches de paie ?')){(s?.emps||[]).forEach(e=>generatePayslipPDF(e,s.co));alert(s.emps.length+' fiches de paie générées')}}} style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(198,163,78,.15)',color:'#c6a34e',fontSize:11,cursor:'pointer',fontWeight:600}}>📄 Fiches</button>
+        <button onClick={()=>{if(confirm('Générer SEPA ?')){generateSEPAXML(s.emps||[],s.co);alert('Fichier SEPA pain.001 généré')}}} style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(34,197,94,.12)',color:'#22c55e',fontSize:11,cursor:'pointer',fontWeight:600}}>💸 SEPA</button>
+        <button onClick={()=>{if(confirm('Générer DmfA ?')){generateDmfAXML(s.emps||[],Math.ceil((new Date().getMonth()+1)/3),new Date().getFullYear(),s.co);alert('DmfA trimestrielle générée')}}} style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(168,85,247,.12)',color:'#a855f7',fontSize:11,cursor:'pointer',fontWeight:600}}>📊 DmfA</button>
+        <button onClick={async()=>{
+          const email = prompt('Email de réception du backup ?','info@aureus-ia.com');
+          if(!email) return;
+          const btn = document.getElementById('backup-btn');
+          if(btn){btn.textContent='⏳ En cours...';btn.disabled=true;}
+          try {
+            const res = await fetch('/api/backup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'both',email,userEmail:s?.user?.email||'',userRole:s?.user?.user_metadata?.role||''})});
+            if(!res.ok) throw new Error('Erreur serveur');
+            const blob = await res.blob();
+            const emailSent = res.headers.get('X-Backup-Email-Sent');
+            const records = res.headers.get('X-Backup-Records');
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            a.href = url; a.download = `aureus-backup-${dateStr}.json`; a.click();
+            URL.revokeObjectURL(url);
+            const role = res.headers.get('X-Backup-Role')||'admin'; const tables = res.headers.get('X-Backup-Tables')||'?'; alert(`✅ Backup OK !\n👤 Rôle: ${role}\n📊 ${records} enregistrements (${tables} tables)\n📥 Fichier téléchargé\n📧 Email envoyé à ${email}`);
+          } catch(e) {
+            alert('❌ Erreur backup : '+e.message);
+          } finally {
+            if(btn){btn.textContent='💾 Backup';btn.disabled=false;}
+          }
+        }} id="backup-btn" style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(34,197,94,.12)',color:'#22c55e',fontSize:11,cursor:'pointer',fontWeight:600}}>💾 Backup</button>
+        <button onClick={async()=>{
+          const btn = document.getElementById('monitor-btn');
+          if(btn){btn.textContent='⏳...';btn.disabled=true;}
+          try {
+            const res = await fetch('/api/monitoring');
+            const data = await res.json();
+            if(!data.ok) throw new Error(data.error);
+            const {summary, alerts, checks} = data;
+            const dbOk = checks.every(c=>c.ok);
+            const msg = `📊 Monitoring Aureus Social Pro\n` +
+              `═══════════════════════════\n` +
+              `🔴 Critiques: ${summary.criticals}\n` +
+              `🟡 Warnings: ${summary.warnings}\n` +
+              `✅ DB: ${dbOk?'OK':'ERREUR'}\n` +
+              (alerts.length>0 ? `\n⚠️ Alertes:\n${alerts.slice(0,5).map(a=>'• '+a.msg).join('\n')}` : '\n✅ Aucune anomalie détectée');
+            alert(msg);
+          } catch(e){alert('❌ Erreur monitoring: '+e.message);}
+          finally{if(btn){btn.textContent='📡 Monitor';btn.disabled=false;}}
+        }} id="monitor-btn" style={{padding:'7px 14px',borderRadius:8,border:'none',background:'rgba(96,165,250,.12)',color:'#60a5fa',fontSize:11,cursor:'pointer',fontWeight:600}}>📡 Monitor</button>
         <button onClick={()=>d({type:'NAV',page:'automatisation'})} style={{padding:'7px 14px',borderRadius:8,border:'1px solid rgba(198,163,78,.2)',background:'transparent',color:'#c6a34e',fontSize:11,cursor:'pointer',fontWeight:500}}>Voir tout →</button>
       </div>
     </div>
@@ -158,7 +180,7 @@ function Dashboard({s,d}) {
         {label:"Masse salariale brute",value:fmt(tm),sub:`Moy: ${fmt(avgGross)}/emp`,color:'#4ade80',icon:'◈'},
         {label:"Net total",value:fmt(tn),sub:`${ae.length?Math.round(tn/tm*100):0}% du brut`,color:'#60a5fa',icon:'▤'},
         {label:"Coût employeur total",value:fmt(tc),sub:`Ratio: ${ae.length?((tc/tm)*100).toFixed(0):0}% du brut`,color:'#a78bfa',icon:'◆'},
-        {label:"Déclarations",value:`${s.pays.length}`,sub:`${s.dims.length} Dimona · ${s.dmfas.length} DmfA`,color:'#fb923c',icon:'◇'},
+        {label:"Déclarations",value:`${(s.pays||[]).length}`,sub:`${(s.dims||[]).length} Dimona · ${(s.dmfas||[]).length} DmfA`,color:'#fb923c',icon:'◇'},
       ].map((kpi,i)=>
         <div key={i} style={{background:"linear-gradient(145deg,#0e1220,#131829)",border:'1px solid rgba(139,115,60,.12)',borderRadius:14,padding:'20px 18px',position:'relative',overflow:'hidden',animation:`fadeIn .4s ease ${i*0.08}s both`}}>
           <div style={{position:'absolute',top:12,right:14,fontSize:22,opacity:.08,color:kpi.color}}>{kpi.icon}</div>
