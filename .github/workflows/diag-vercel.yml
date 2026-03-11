@@ -1,0 +1,40 @@
+name: 🔍 Diagnostic Vercel v18
+on:
+  workflow_dispatch:
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check and redeploy aureus-social-v18
+        run: |
+          TOKEN="${{ secrets.VERCEL_TOKEN }}"
+          
+          # Récupérer l'ID du projet aureus-social-v18
+          PROJECTS=$(curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects?limit=20")
+          V18_ID=$(echo "$PROJECTS" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          for p in d.get('projects',[]):
+              if p['name']=='aureus-social-v18': print(p['id'])
+          ")
+          echo "Project ID: $V18_ID"
+          
+          # Lister les env vars
+          VARS=$(curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$V18_ID/env")
+          echo "Variables configurées:"
+          echo "$VARS" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          for e in d.get('envs',[]):
+              print(f'  {e["key"]}')
+          "
+          
+          # Récupérer le dernier déploiement échoué et voir l'erreur
+          DEPLOYS=$(curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v6/deployments?projectId=$V18_ID&limit=3&state=ERROR")
+          echo "Dernier déploiement en erreur:"
+          echo "$DEPLOYS" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          for dep in d.get('deployments',[])[:2]:
+              print(dep.get('uid'), dep.get('state'), dep.get('errorMessage',''))
+          "
