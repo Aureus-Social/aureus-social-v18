@@ -1,27 +1,12 @@
-UID: dpl_94f7NCPPUcbnSyavpjTrSb14rbkt | State: ERROR | Error: Command "npm run build" exited with 1 | Created: 1773271421963
-  [stderr] Vercel CLI 50.28.0
-  [stderr]  ⨯ ESLint must be installed in order to run during builds: npm install --save-dev eslint
-  [stderr] Error: Invalid supabaseUrl: Must be a valid HTTP or HTTPS URL.
-  [stderr]     at <unknown> (.next/server/chunks/742.js:37:47016)
-  [stderr]     at new cf (.next/server/chunks/742.js:37:47198)
-  [stderr]     at cg (.next/server/chunks/742.js:37:51145)
-  [stderr]     at 6466 (.next/server/app/api/backup/route.js:1:4608)
-  [stderr]     at c (.next/server/webpack-runtime.js:1:127)
-  [stderr]     at <unknown> (.next/server/app/api/backup/route.js:14:5840)
-  [stderr]     at c.X (.next/server/webpack-runtime.js:1:1191)
-  [stderr]     at <unknown> (.next/server/app/api/backup/route.js:14:5822)
-  [stderr]     at Object.<anonymous> (.next/server/app/api/backup/route.js:14:5871)
-  [stderr] Error: Invalid supabaseUrl: Must be a valid HTTP or HTTPS URL.
-  [stderr]     at <unknown> (.next/server/chunks/742.js:37:47016)
-  [stderr]     at new cf (.next/server/chunks/742.js:37:47198)
-  [stderr]     at cg (.next/server/chunks/742.js:37:51145)
-  [stderr]     at 6181 (.next/server/app/api/restore/route.js:1:5790)
-  [stderr]     at c (.next/server/webpack-runtime.js:1:127)
-  [stderr]     at <unknown> (.next/server/app/api/restore/route.js:1:17885)
-  [stderr]     at c.X (.next/server/webpack-runtime.js:1:1191)
-  [stderr]     at <unknown> (.next/server/app/api/restore/route.js:1:17867)
-  [stderr]     at Object.<anonymous> (.next/server/app/api/restore/route.js:1:17916)
-  [stderr] 
-  [stderr] > Build error occurred
-  [stderr] [Error: Failed to collect page data for /api/backup] { type: 'Error' }
-  [stderr] Error: Command "npm run build" exited with 1
+Total vars: 11
+  ANTHROPIC_API_KEY
+  CRON_SECRET
+  ENCRYPTION_KEY
+  MAIL_PASSWORD
+  MAIL_USER
+  NEXT_PUBLIC_CRYPTO_SALT
+  NEXT_PUBLIC_SUPABASE_ANON_KEY
+  NEXT_PUBLIC_SUPABASE_URL
+  ONSS_CLIENT_ID
+  ONSS_PRIVATE_KEY
+  SUPABASE_SERVICE_ROLE_KEY
