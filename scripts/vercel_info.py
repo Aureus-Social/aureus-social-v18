@@ -1,4 +1,4 @@
-import urllib.request, json, os, base64, traceback
+import urllib.request, json, os, base64
 
 TOKEN = os.environ["VERCEL_TOKEN"]
 GH = os.environ["GH_TOKEN"]
@@ -31,37 +31,12 @@ def gh_put(path, content):
     with urllib.request.urlopen(req) as r:
         return r.status
 
-try:
-    V18_ID = "prj_NQtBRskGLbkBAiBTb5BFY6OQccWv"
-    deps = get(f"/v6/deployments?projectId={V18_ID}&limit=10")["deployments"]
-    
-    # Trouver le deploy ERROR
-    error_dep = next((d for d in deps if d.get("state")=="ERROR"), None)
-    if not error_dep:
-        gh_put("VERCEL_ERR.txt", "No ERROR deploy found. All states: " + str([d.get("state") for d in deps]))
-        exit(0)
-    
-    dep_id = error_dep["uid"]
-    
-    # Logs du build
-    try:
-        logs = get(f"/v2/deployments/{dep_id}/events?limit=50")
-        if isinstance(logs, list):
-            events = logs
-        else:
-            events = logs.get("events", [])
-        
-        lines = [f"deploy: {dep_id}"]
-        for e in events:
-            t = e.get("type","")
-            p = e.get("payload","")
-            text = p.get("text","") if isinstance(p, dict) else str(p)
-            lines.append(f"[{t}] {text[:150]}")
-        
-        gh_put("VERCEL_ERR.txt", "\n".join(lines[:60]))
-    except Exception as e2:
-        gh_put("VERCEL_ERR.txt", f"Events error: {e2}\ndep_id={dep_id}")
-        
-except Exception as e:
-    gh_put("VERCEL_ERR.txt", f"ERROR: {traceback.format_exc()}")
-    raise
+V18_ID = "prj_NQtBRskGLbkBAiBTb5BFY6OQccWv"
+deps = get(f"/v6/deployments?projectId={V18_ID}&limit=5")["deployments"]
+lines = []
+for d in deps:
+    lines.append(f"state:{d.get('state')} | commit:{d.get('meta',{}).get('githubCommitSha','')[:7]} | {d.get('url','')}")
+
+result = "\n".join(lines)
+print(result)
+gh_put("VERCEL_RESULT.txt", result)
