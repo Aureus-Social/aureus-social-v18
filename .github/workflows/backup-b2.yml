@@ -1,0 +1,131 @@
+name: 🔒 Aureus Social — Nightly Supabase Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 02:00 UTC = 03:00 CET chaque nuit
+  workflow_dispatch:        # Lancement manuel possible depuis GitHub Actions UI
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ─── 1. Checkout (pour accès aux scripts si besoin)
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ─── 2. Installer les outils
+      - name: Setup Python + b2sdk
+        run: |
+          pip install b2sdk==2.5.0 --quiet
+
+      # ─── 3. Dump Supabase PostgreSQL
+      - name: Dump Supabase DB
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          # SUPABASE_DB_URL format:
+          # postgresql://postgres:[PASSWORD]@db.qcunxnadjxggizdksvay.supabase.co:5432/postgres
+          
+          DATE=$(date +%Y-%m-%d)
+          FILENAME="aureus-backup-${DATE}.sql.gz"
+          
+          echo "📦 Dumping Supabase database..."
+          pg_dump "$SUPABASE_DB_URL" \
+            --no-owner \
+            --no-acl \
+            --format=plain \
+            --schema=public \
+            | gzip > "/tmp/${FILENAME}"
+          
+          echo "FILENAME=${FILENAME}" >> $GITHUB_ENV
+          echo "✅ Dump complete: $(du -sh /tmp/${FILENAME} | cut -f1)"
+
+      # ─── 4. Upload vers Backblaze B2
+      - name: Upload to Backblaze B2
+        env:
+          B2_APPLICATION_KEY_ID: ${{ secrets.B2_APPLICATION_KEY_ID }}
+          B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+          B2_BUCKET_NAME: aureus-backups
+        run: |
+          python3 << 'EOF'
+          import os
+          import sys
+          from b2sdk.v2 import InMemoryAccountInfo, B2Api
+
+          key_id = os.environ['B2_APPLICATION_KEY_ID']
+          app_key = os.environ['B2_APPLICATION_KEY']
+          bucket_name = os.environ['B2_BUCKET_NAME']
+          filename = os.environ['FILENAME']
+          local_path = f"/tmp/{filename}"
+
+          print(f"🔑 Authenticating with Backblaze B2...")
+          info = InMemoryAccountInfo()
+          api = B2Api(info)
+          
+          try:
+              api.authorize_account("production", key_id, app_key)
+          except Exception as e:
+              print(f"❌ Auth failed: {e}")
+              print("💡 Tip: Generate a new Application Key in Backblaze console")
+              print("   → backblaze.com → App Keys → Add a New Application Key")
+              print("   → Bucket: aureus-backups | Access: Read & Write")
+              print("   → Update GitHub Secrets: B2_APPLICATION_KEY_ID + B2_APPLICATION_KEY")
+              sys.exit(1)
+
+          bucket = api.get_bucket_by_name(bucket_name)
+          
+          # Chemin dans B2: backups/YYYY/MM/filename
+          from datetime import datetime
+          now = datetime.now()
+          b2_path = f"backups/{now.year}/{now.month:02d}/{filename}"
+          
+          print(f"📤 Uploading {filename} → {b2_path}...")
+          bucket.upload_local_file(
+              local_file=local_path,
+              file_name=b2_path,
+              content_type='application/gzip',
+          )
+          print(f"✅ Upload successful: {b2_path}")
+          EOF
+
+      # ─── 5. Purger les vieux backups (> 90 jours)
+      - name: Purge old backups (>90 days)
+        env:
+          B2_APPLICATION_KEY_ID: ${{ secrets.B2_APPLICATION_KEY_ID }}
+          B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+          B2_BUCKET_NAME: aureus-backups
+        run: |
+          python3 << 'EOF'
+          import os
+          from datetime import datetime, timedelta
+          from b2sdk.v2 import InMemoryAccountInfo, B2Api
+
+          info = InMemoryAccountInfo()
+          api = B2Api(info)
+          api.authorize_account("production", os.environ['B2_APPLICATION_KEY_ID'], os.environ['B2_APPLICATION_KEY'])
+          bucket = api.get_bucket_by_name(os.environ['B2_BUCKET_NAME'])
+
+          cutoff = datetime.now() - timedelta(days=90)
+          cutoff_ms = int(cutoff.timestamp() * 1000)
+
+          deleted = 0
+          for file_version, _ in bucket.ls(folder_to_list='backups/', recursive=True):
+              if file_version.upload_timestamp < cutoff_ms:
+                  bucket.delete_file_version(file_version.id_, file_version.file_name)
+                  deleted += 1
+                  print(f"🗑️ Deleted: {file_version.file_name}")
+
+          print(f"✅ Purge complete: {deleted} files deleted")
+          EOF
+
+      # ─── 6. Notification Slack/email en cas d'échec
+      - name: Notify on failure
+        if: failure()
+        env:
+          NOTIFY_EMAIL: info@aureus-ia.com
+        run: |
+          echo "⚠️ BACKUP FAILED on $(date)"
+          echo "Check GitHub Actions logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          # Optionnel: curl webhook Slack ici
