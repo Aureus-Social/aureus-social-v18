@@ -1,15 +1,16 @@
-name: 🔍 Diagnostic Vercel v18
+name: 🔧 Fix Vercel v18 deployment
 on:
   workflow_dispatch:
 jobs:
-  diag:
+  fix:
     runs-on: ubuntu-latest
     steps:
-      - name: Check and redeploy aureus-social-v18
+      - name: Diagnose and fix aureus-social-v18
         run: |
+          set -e
           TOKEN="${{ secrets.VERCEL_TOKEN }}"
           
-          # Récupérer l'ID du projet aureus-social-v18
+          # ID du projet
           PROJECTS=$(curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects?limit=20")
           V18_ID=$(echo "$PROJECTS" | python3 -c "
           import json,sys
@@ -17,24 +18,49 @@ jobs:
           for p in d.get('projects',[]):
               if p['name']=='aureus-social-v18': print(p['id'])
           ")
-          echo "Project ID: $V18_ID"
+          echo "=== Project ID: $V18_ID ==="
           
-          # Lister les env vars
-          VARS=$(curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$V18_ID/env")
-          echo "Variables configurées:"
-          echo "$VARS" | python3 -c "
+          # Env vars présentes
+          echo "=== ENV VARS ==="
+          curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$V18_ID/env" | python3 -c "
           import json,sys
           d=json.load(sys.stdin)
-          for e in d.get('envs',[]):
+          for e in sorted(d.get('envs',[]), key=lambda x:x['key']):
               print(f'  {e["key"]}')
           "
           
-          # Récupérer le dernier déploiement échoué et voir l'erreur
-          DEPLOYS=$(curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v6/deployments?projectId=$V18_ID&limit=3&state=ERROR")
-          echo "Dernier déploiement en erreur:"
-          echo "$DEPLOYS" | python3 -c "
+          # Dernier déploiement et son erreur
+          echo "=== DEPLOYMENTS ==="
+          curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v6/deployments?projectId=$V18_ID&limit=5" | python3 -c "
           import json,sys
           d=json.load(sys.stdin)
-          for dep in d.get('deployments',[])[:2]:
-              print(dep.get('uid'), dep.get('state'), dep.get('errorMessage',''))
+          for dep in d.get('deployments',[])[:3]:
+              uid=dep.get("uid","")
+              state=dep.get("state","")
+              err=dep.get("errorMessage","") or dep.get("errorCode","")
+              created=dep.get("createdAt","")
+              print(f"  {uid} | {state} | {err} | {created}")
           "
+          
+          # Récupérer les logs du dernier build en erreur
+          LAST_UID=$(curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v6/deployments?projectId=$V18_ID&limit=1&state=ERROR" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          deps=d.get('deployments',[])
+          if deps: print(deps[0]['uid'])
+          ")
+          
+          if [ -n "$LAST_UID" ]; then
+            echo "=== BUILD LOGS pour $LAST_UID ==="
+            curl -sf -H "Authorization: Bearer $TOKEN"               "https://api.vercel.com/v2/deployments/$LAST_UID/events?builds=1&limit=50" | python3 -c "
+          import json,sys
+          for line in sys.stdin:
+              try:
+                  d=json.loads(line.strip())
+                  if d.get('type') in ['stderr','error','build-error']:
+                      print(d.get('payload',{}).get('text','') or str(d.get('payload','')))
+              except: pass
+          " 2>/dev/null || echo "Logs non disponibles"
+          fi
+          
+          echo "=== DONE ==="
