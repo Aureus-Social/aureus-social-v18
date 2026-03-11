@@ -5,16 +5,17 @@ jobs:
   fix:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Diagnose and fix aureus-social-v18
         env:
           TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # Récupérer ID projet v18
           PROJECTS=$(curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects?limit=20")
           V18_ID=$(echo "$PROJECTS" | python3 -c "
           import json,sys
           d=json.load(sys.stdin)
-          for p in d.get('projects',[]):
+          for p in d.get('projects',[]): 
               if p['name']=='aureus-social-v18': print(p['id'])
           ")
           PRO_ID=$(echo "$PROJECTS" | python3 -c "
@@ -23,68 +24,41 @@ jobs:
           for p in d.get('projects',[]):
               if p['name']=='aureus-social-pro': print(p['id'])
           ")
-          echo "V18: $V18_ID | PRO: $PRO_ID"
           
-          # Comparer les settings des 2 projets
-          echo "=== Settings aureus-social-v18 ==="
-          V18_CFG=$(curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$V18_ID")
-          echo "$V18_CFG" | python3 -c "
+          {
+            echo "# Diagnostic Vercel $(date)"
+            echo ""
+            echo "## aureus-social-v18 Settings"
+            curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$V18_ID" | python3 -c "
           import json,sys
           d=json.load(sys.stdin)
-          print('framework:', d.get('framework'))
-          print('buildCommand:', d.get('buildCommand'))
-          print('outputDirectory:', d.get('outputDirectory'))
-          print('installCommand:', d.get('installCommand'))
-          print('nodeVersion:', d.get('nodeVersion'))
-          print('rootDirectory:', d.get('rootDirectory'))
+          for k in ['framework','buildCommand','outputDirectory','installCommand','nodeVersion','rootDirectory']:
+              print(f'{k}: {d.get(k)}')
           "
-          
-          echo "=== Settings aureus-social-pro ==="
-          PRO_CFG=$(curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$PRO_ID")
-          echo "$PRO_CFG" | python3 -c "
+            echo ""
+            echo "## aureus-social-pro Settings"
+            curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$PRO_ID" | python3 -c "
           import json,sys
           d=json.load(sys.stdin)
-          print('framework:', d.get('framework'))
-          print('buildCommand:', d.get('buildCommand'))
-          print('outputDirectory:', d.get('outputDirectory'))
-          print('installCommand:', d.get('installCommand'))
-          print('nodeVersion:', d.get('nodeVersion'))
-          print('rootDirectory:', d.get('rootDirectory'))
+          for k in ['framework','buildCommand','outputDirectory','installCommand','nodeVersion','rootDirectory']:
+              print(f'{k}: {d.get(k)}')
           "
-          
-          # Dernier déploiement v18 en erreur
-          echo "=== LAST ERROR DEPLOYMENT ==="
-          DEPLOYS=$(curl -s -H "Authorization: Bearer $TOKEN"             "https://api.vercel.com/v6/deployments?projectId=$V18_ID&limit=3")
-          LAST_UID=$(echo "$DEPLOYS" | python3 -c "
+            echo ""
+            echo "## Last deployments v18"
+            curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v6/deployments?projectId=$V18_ID&limit=3" | python3 -c "
           import json,sys
           d=json.load(sys.stdin)
-          deps=d.get('deployments',[])
-          if deps: print(deps[0]['uid'])
-          ")
-          echo "Last UID: $LAST_UID"
-          
-          echo "$DEPLOYS" | python3 -c "
-          import json,sys
-          d=json.load(sys.stdin)
-          for dep in d.get('deployments',[])[:2]:
-              print(dep.get('uid'), dep.get('state'), dep.get('errorMessage','') or dep.get('errorCode',''))
+          for dep in d.get('deployments',[]):
+              print(dep.get('uid'), dep.get('state'), dep.get('errorMessage','') or dep.get('errorCode','no error'))
           "
+          } > /tmp/diag_result.txt
           
-          # Logs du dernier build
-          if [ -n "$LAST_UID" ]; then
-            echo "=== BUILD EVENTS ==="
-            curl -s -H "Authorization: Bearer $TOKEN"               "https://api.vercel.com/v2/deployments/$LAST_UID/events?limit=100&follow=0" 2>/dev/null |               python3 -c "
-          import json,sys
-          for line in sys.stdin.read().splitlines():
-              try:
-                  d=json.loads(line)
-                  t=d.get("type","")
-                  p=d.get("payload",{})
-                  text=p.get("text","") if isinstance(p,dict) else str(p)
-                  if t in ["stderr","error"] or "error" in text.lower() or "Error" in text:
-                      print(f"[{t}] {text[:200]}")
-              except: pass
-          " 2>/dev/null || echo "Pas de logs disponibles"
-          fi
+          cat /tmp/diag_result.txt
           
-          echo "=== FIN DIAGNOSTIC ==="
+          # Écrire dans le repo
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          cp /tmp/diag_result.txt VERCEL_DIAG.txt
+          git add VERCEL_DIAG.txt
+          git commit -m "📊 Diagnostic Vercel" || true
+          git push
