@@ -1,0 +1,20 @@
+=== PROJECTS ===
+aureus-social-v18-ze1c | prj_G8IkmoZzAemZIKl1T3rpyzL3MxKU | fw:nextjs | root:None | node:24.x
+aureus-social-pro | prj_t4fe1t6TA5r4noz09KObd4oe0rly | fw:nextjs | root:None | node:24.x
+aureus-social-v18 | prj_NQtBRskGLbkBAiBTb5BFY6OQccWv | fw:nextjs | root:None | node:24.x
+aureus-social-v18-r9gv | prj_6dZKvOA9HAYwNKDVGMB8lMgt8hVs | fw:nextjs | root:None | node:24.x
+fadjr | prj_hAeL5JwbGaU5P7niKDjpWiVA3CSV | fw:None | root:None | node:24.x
+aureus-social-pp1u | prj_FktkQTAGDKDFKTdI2sBJ1Z95tCN9 | fw:nextjs | root:None | node:24.x
+aureus-social | prj_PutgEgSzU8fSrJLN9XrZBlwbhZZn | fw:nextjs | root:None | node:24.x
+aureus-social-thyl | prj_ONQEeSeHeCrW8NY9DF1nIcOI4XBz | fw:nextjs | root:None | node:24.x
+aureus-ia | prj_XEiNqfsq3cj158wP5JF0KcdCgAmV | fw:nextjs | root:None | node:24.x
+
+=== DEPLOYS aureus-social-v18 ===
+state:BUILDING | aureus-social-v18-nzi1nki17-nourdins-projects-9664e760.vercel.app |  | ok
+state:BUILDING | aureus-social-v18-khiyv5n68-nourdins-projects-9664e760.vercel.app |  | ok
+state:ERROR | aureus-social-v18-d3uxdetia-nourdins-projects-9664e760.vercel.app | BUILD_UTILS_SPAWN_1 | Command "npm run build" exited with 1
+
+=== DEPLOYS aureus-social-pro ===
+state:BUILDING | aureus-social-ai10bcwl5-nourdins-projects-9664e760.vercel.app |  | ok
+state:BUILDING | aureus-social-8wqf95p8a-nourdins-projects-9664e760.vercel.app |  | ok
+state:READY | aureus-social-35t51aexh-nourdins-projects-9664e760.vercel.app |  | ok
