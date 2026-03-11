@@ -8,56 +8,71 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Get error details
+      - name: Fix env vars + ESLint
         env:
           TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects?limit=20" > /tmp/projects.json
           V18_ID=$(python3 -c "import json; [print(p['id']) for p in json.load(open('/tmp/projects.json')).get('projects',[]) if p['name']=='aureus-social-v18']")
+          PRO_ID=$(python3 -c "import json; [print(p['id']) for p in json.load(open('/tmp/projects.json')).get('projects',[]) if p['name']=='aureus-social-pro']")
           
-          echo "=== Deployments en erreur ==="
+          echo "V18=$V18_ID PRO=$PRO_ID"
+          
+          # Lire toutes les vars de aureus-social-pro avec valeurs déchiffrées
           curl -s -H "Authorization: Bearer $TOKEN" \
-            "https://api.vercel.com/v6/deployments?projectId=$V18_ID&limit=5&state=ERROR" > /tmp/deps.json
+            "https://api.vercel.com/v9/projects/$PRO_ID/env?decrypt=true" > /tmp/pro_vars.json
           
-          python3 - /tmp/deps.json << 'PY'
+          # Lire vars existantes de v18
+          curl -s -H "Authorization: Bearer $TOKEN" \
+            "https://api.vercel.com/v9/projects/$V18_ID/env" > /tmp/v18_vars.json
+          
+          # Comparer et ajouter les manquantes
+          python3 - /tmp/pro_vars.json /tmp/v18_vars.json /tmp/projects.json << 'PY'
           import json, sys, urllib.request, os
-          deps = json.load(open(sys.argv[1]))
-          token = os.environ['TOKEN']
-          result = []
-          for dep in deps.get('deployments', [])[:3]:
-              uid = dep.get('uid', '')
-              state = dep.get('state', '')
-              err = dep.get('errorMessage', '') or dep.get('errorCode', '')
-              created = dep.get('createdAt', '')
-              result.append(f"UID: {uid} | State: {state} | Error: {err} | Created: {created}")
-              
-              # Récupérer les build events
-              if uid:
-                  req = urllib.request.Request(
-                      f"https://api.vercel.com/v2/deployments/{uid}/events?limit=50",
-                      headers={"Authorization": f"Bearer {token}"}
-                  )
-                  try:
-                      with urllib.request.urlopen(req, timeout=10) as r:
-                          for line in r.read().decode().splitlines():
-                              try:
-                                  d = json.loads(line)
-                                  t = d.get('type', '')
-                                  p = d.get('payload', {})
-                                  text = p.get('text', '') if isinstance(p, dict) else str(p)
-                                  if 'error' in text.lower() or 'Error' in text or t == 'stderr':
-                                      result.append(f"  [{t}] {text[:300]}")
-                              except: pass
-                  except Exception as e:
-                      result.append(f"  Events non dispo: {e}")
-                  break  # Juste le premier
           
-          output = "\n".join(result)
-          print(output)
-          open("VERCEL_DIAG.txt", "w").write(output)
+          token = os.environ['TOKEN']
+          pro_vars = {e['key']: e.get('value','') for e in json.load(open(sys.argv[1])).get('envs',[])}
+          v18_vars = {e['key']: e['id'] for e in json.load(open(sys.argv[2])).get('envs',[])}
+          projects = json.load(open(sys.argv[3]))
+          v18_id = next(p['id'] for p in projects.get('projects',[]) if p['name']=='aureus-social-v18')
+          
+          to_add = []
+          for key, value in pro_vars.items():
+              if key not in v18_vars and value:
+                  to_add.append((key, value))
+          
+          print(f"Variables manquantes sur v18: {[k for k,v in to_add]}")
+          
+          for key, value in to_add:
+              payload = json.dumps({
+                  "key": key, "value": value,
+                  "type": "encrypted",
+                  "target": ["production","preview","development"]
+              }).encode()
+              req = urllib.request.Request(
+                  f"https://api.vercel.com/v9/projects/{v18_id}/env",
+                  data=payload,
+                  headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                  method="POST"
+              )
+              with urllib.request.urlopen(req) as r:
+                  print(f"  ADDED: {key} → HTTP {r.status}")
+          
+          print("Done ✅")
           PY
+          
+          echo "=== Vérification finale ==="
+          curl -s -H "Authorization: Bearer $TOKEN" \
+            "https://api.vercel.com/v9/projects/$V18_ID/env" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          keys=[e['key'] for e in d.get('envs',[])]
+          print(f'Total vars: {len(keys)}')
+          for k in sorted(keys): print(f'  {k}')
+          " > VERCEL_DIAG.txt
+          cat VERCEL_DIAG.txt
           
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add VERCEL_DIAG.txt
-          git diff --staged --quiet || (git commit -m "📊 Error details" && git push)
+          git diff --staged --quiet || (git commit -m "📊 Vars v18 après fix" && git push)
