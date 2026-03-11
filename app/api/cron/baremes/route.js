@@ -172,7 +172,7 @@ async function pushGitHub(patches, msg) {
 
 export async function GET(req) {
   const auth=req.headers.get('authorization');
-  if(process.env.CRON_SECRET&&auth!==`Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({error:'Unauthorized'},{status:401});
+  if(!process.env.CRON_SECRET||auth!==`Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({error:'Unauthorized'},{status:401});
 
   const log=[`🕐 ${new Date().toISOString()} — Cron 35 Params Légaux`];
   const t0=Date.now(), changes=[], patches=[];

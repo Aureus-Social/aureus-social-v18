@@ -133,6 +133,6 @@ export async function POST(request) {
 
   } catch (error) {
     logError('API', 'Backup error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }

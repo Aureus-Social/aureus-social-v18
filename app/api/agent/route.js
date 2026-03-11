@@ -38,6 +38,18 @@ export async function POST(request) {
     if (!message?.trim()) {
       return NextResponse.json({ error: 'Message requis' }, { status: 400 });
     }
+    // ─── Limites anti-abus et anti-prompt-injection
+    if (typeof message !== 'string' || message.length > 4000) {
+      return NextResponse.json({ error: 'Message trop long (max 4000 caractères)' }, { status: 400 });
+    }
+    if (typeof context !== 'string' || context.length > 1000) {
+      return NextResponse.json({ error: 'Contexte trop long (max 1000 caractères)' }, { status: 400 });
+    }
+    if (!Array.isArray(history) || history.length > 20) {
+      return NextResponse.json({ error: 'Historique invalide (max 20 messages)' }, { status: 400 });
+    }
+    // Sanitize: retirer les instructions système injectées dans le message
+    const safeMessage = message.replace(/system:|<\|im_start\|>|<\|im_end\|>|\[INST\]|\[\/INST\]/gi, '').trim();
 
     // Vérifier la clé API Anthropic
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -58,7 +70,7 @@ export async function POST(request) {
       // Historique de la conversation
       ...history.slice(-10), // Max 10 derniers messages pour limiter les tokens
       // Message actuel
-      { role: 'user', content: message },
+      { role: 'user', content: safeMessage },
     ];
 
     const response = await client.messages.create({

@@ -30,12 +30,12 @@ export async function POST(request) {
 
     if (error) {
       logError('API', '[Audit] Erreur insertion:', error.message);
-      return Response.json({ error: error.message }, { status: 500 });
+      return Response.json({ error: 'Erreur interne du serveur' }, { status: 500 });
     }
 
     return Response.json({ success: true });
   } catch (e) {
-    return Response.json({ error: e.message }, { status: 500 });
+    return Response.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }
 
@@ -56,10 +56,10 @@ export async function GET(request) {
     if (userId) query = query.eq('user_id', userId);
 
     const { data, error } = await query;
-    if (error) return Response.json({ error: error.message }, { status: 500 });
+    if (error) return Response.json({ error: 'Erreur interne du serveur' }, { status: 500 });
 
     return Response.json({ logs: data, count: data.length });
   } catch (e) {
-    return Response.json({ error: e.message }, { status: 500 });
+    return Response.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }

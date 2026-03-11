@@ -1,0 +1,89 @@
+# ═══════════════════════════════════════════════════════
+# AUREUS SOCIAL PRO — Scan Sécurité Automatique
+# npm audit + détection secrets hardcodés
+# Lancé sur chaque push + chaque semaine
+# ═══════════════════════════════════════════════════════
+
+name: 🔒 Security Scan
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 5 * * 3'  # Mercredi 05:00 UTC
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci --legacy-peer-deps
+
+      - name: 🔍 npm audit (High + Critical seulement)
+        run: |
+          npm audit --audit-level=high --json > audit-report.json 2>/dev/null || true
+          python3 << 'PYEOF'
+          import json, sys
+          try:
+              with open('audit-report.json') as f: d = json.load(f)
+              meta = d.get('metadata', {}).get('vulnerabilities', {})
+              critical = meta.get('critical', 0)
+              high = meta.get('high', 0)
+              print(f"## 🔒 npm audit", flush=True)
+              print(f"- Critical: {critical}")
+              print(f"- High: {high}")
+              print(f"- Moderate: {meta.get('moderate', 0)}")
+              if critical > 0 or high > 0:
+                  print(f"\n⚠️ ATTENTION: {critical} critique(s), {high} haute(s)")
+                  sys.exit(1)
+              else:
+                  print("\n✅ Aucune vulnérabilité critique")
+          except Exception as e:
+              print(f"Parse error: {e}")
+          PYEOF
+        continue-on-error: true
+
+      - name: 📊 Rapport dans Summary
+        if: always()
+        run: |
+          echo "## 🔒 Security Scan Report" >> $GITHUB_STEP_SUMMARY
+          echo "Date: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          npm audit --audit-level=high 2>/dev/null >> $GITHUB_STEP_SUMMARY || echo "Voir logs ci-dessus" >> $GITHUB_STEP_SUMMARY
+
+  secrets-check:
+    name: 🔑 Détection secrets hardcodés
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Scanner les secrets avec grep
+        run: |
+          echo "## 🔑 Secrets Scan" >> $GITHUB_STEP_SUMMARY
+          FOUND=0
+          # Patterns de secrets courants
+          patterns=(
+            "sk-ant-api[0-9]"
+            "ghp_[a-zA-Z0-9]{36}"
+            "AKIA[0-9A-Z]{16}"
+            "eyJhbGciOiJIUzI1NiJ9\."
+            "-----BEGIN (RSA|EC|PRIVATE) KEY-----"
+          )
+          for pattern in "${patterns[@]}"; do
+            matches=$(grep -rn "$pattern" app/ --include="*.js" 2>/dev/null | grep -v "node_modules\|\.disabled" | wc -l)
+            if [ "$matches" -gt 0 ]; then
+              echo "⚠️ Pattern trouvé ($matches fois): $pattern" >> $GITHUB_STEP_SUMMARY
+              FOUND=1
+            fi
+          done
+          if [ "$FOUND" -eq 0 ]; then
+            echo "✅ Aucun secret hardcodé détecté" >> $GITHUB_STEP_SUMMARY
+          fi
+          exit $FOUND
+        continue-on-error: true

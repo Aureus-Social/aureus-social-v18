@@ -42,22 +42,50 @@ const TEMPLATES = {
 };
 
 
-// ── SÉCURITÉ: sanitize HTML — prévention XSS ──────────────────────────────
+// ── SÉCURITÉ: sanitize HTML renforcé — prévention XSS ─────────────────────
 function sanitizeHtml(html) {
-  const ALLOWED_TAGS = ['p','strong','em','br','ul','ol','li','span','div','h1','h2','h3','b','i'];
+  if (!html || typeof html !== 'string') return '';
+  // Limiter la taille (prévenir les DoS via HTML massif)
+  if (html.length > 50000) return '';
+  
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
-  // Supprimer les balises dangereuses et attributs event handlers
-  const dangerous = tmp.querySelectorAll('script,iframe,object,embed,form,input,button,link,style,meta,base,applet');
-  dangerous.forEach(el => el.remove());
-  // Supprimer les attributs on* (onclick, onerror...) et href javascript:
+  
+  // Supprimer TOUTES les balises dangereuses (liste exhaustive)
+  const DANGEROUS_TAGS = 'script,iframe,object,embed,form,input,button,link,style,meta,base,applet,svg,math,template,slot,canvas,video,audio,source,track,picture';
+  tmp.querySelectorAll(DANGEROUS_TAGS).forEach(el => el.remove());
+  
+  // Supprimer les balises non autorisées explicitement
+  const ALLOWED_TAGS = new Set(['p','strong','em','br','ul','ol','li','span','div','h1','h2','h3','h4','b','i','u','blockquote','pre','code','table','thead','tbody','tr','th','td','hr']);
   tmp.querySelectorAll('*').forEach(el => {
+    if (!ALLOWED_TAGS.has(el.tagName.toLowerCase())) {
+      el.replaceWith(...el.childNodes);
+      return;
+    }
+    // Supprimer tous les attributs sauf quelques-uns sûrs
+    const SAFE_ATTRS = new Set(['class', 'id', 'style']);
     Array.from(el.attributes).forEach(attr => {
-      if (attr.name.startsWith('on') || (attr.name === 'href' && attr.value.toLowerCase().startsWith('javascript'))) {
+      const name = attr.name.toLowerCase();
+      const val  = attr.value.toLowerCase();
+      // Bloquer: event handlers, javascript:, data:, vbscript:, expressions CSS
+      if (
+        name.startsWith('on') ||
+        val.includes('javascript:') ||
+        val.includes('vbscript:') ||
+        val.includes('data:') ||
+        val.includes('expression(') ||
+        !SAFE_ATTRS.has(name)
+      ) {
         el.removeAttribute(attr.name);
       }
     });
+    // Nettoyer les styles inline dangereux
+    if (el.style) {
+      const DANGEROUS_CSS = ['behavior','expression','-moz-binding','background-image'];
+      DANGEROUS_CSS.forEach(prop => { try { el.style.removeProperty(prop); } catch { /* handled */ } });
+    }
   });
+  
   return tmp.innerHTML;
 }
 // ─────────────────────────────────────────────────────────────────────────────

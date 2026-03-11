@@ -29,6 +29,16 @@ export async function POST(request) {
     if (!backupData || !backupData.metadata || !backupData.data) {
       return Response.json({ error: 'Fichier backup invalide — format incorrect' }, { status: 400 });
     }
+    // Limiter la taille du backup pour éviter les attaques DoS
+    const backupSize = JSON.stringify(backupData).length;
+    if (backupSize > 50 * 1024 * 1024) { // 50 MB max
+      return Response.json({ error: 'Fichier backup trop volumineux (max 50 MB)' }, { status: 413 });
+    }
+    // Valider la version du format
+    const validVersions = ['1.0', '1.1', '2.0', '2.1'];
+    if (backupData.metadata.version && !validVersions.includes(String(backupData.metadata.version))) {
+      return Response.json({ error: 'Version de backup incompatible' }, { status: 400 });
+    }
 
     const role = userRole || 'readonly';
     const allowedTables = ROLE_RESTORE[role] || [];
@@ -132,6 +142,6 @@ export async function POST(request) {
 
   } catch (e) {
     logError('API', '[Restore] Erreur:', e.message);
-    return Response.json({ error: e.message }, { status: 500 });
+    return Response.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }
