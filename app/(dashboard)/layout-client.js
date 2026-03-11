@@ -57,6 +57,7 @@ const AureusIAPage = dynamic(() => import('../pages/AureusSuitePage'), { ssr: fa
 const EmployeeHubPage = dynamic(() => import('../pages/EmployeeHub'), { ssr: false, loading: Loading });
 const SmartOpsPage = dynamic(() => import('../pages/SmartOpsCenter'), { ssr: false, loading: Loading });
 const PrimesPage = dynamic(() => import('../pages/PrimesAvantagesV2'), { ssr: false, loading: Loading });
+const FloatingLegalAgentComp = dynamic(() => import('../pages/FloatingLegalAgent'), { ssr: false, loading: Loading });
 
 const AbsencesContratsV3Pg = dynamic(() => import('../pages/AbsencesContratsV3'), { ssr: false, loading: Loading });
 const CommissionsModulePg = dynamic(() => import('../pages/CommissionsModule'), { ssr: false, loading: Loading });

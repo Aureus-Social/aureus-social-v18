@@ -270,6 +270,6 @@ export async function GET(request) {
   } catch (e) {
     logError('API', '[Monitoring] Erreur fatale:', e.message);
     await sendAlertEmail('Erreur fatale du système de monitoring', `<p>Le cron de monitoring a rencontré une erreur fatale:</p><pre>${e.message}</pre>`, 'critical');
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
   }
 }

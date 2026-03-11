@@ -1,7 +1,13 @@
 'use client'
 import { logWarn } from '../lib/security/logger.js';
 import { useState, useRef, useEffect } from 'react';
-import { detectAgentLang } from './SprintComponents';
+// ─── detectAgentLang inline (SprintComponents non disponible)
+const detectAgentLang = (text) => {
+  if (!text) return 'fr';
+  const nlWords = ['de','het','een','en','van','is','zijn','worden','hebben'];
+  const nlCount = nlWords.filter(w => text.toLowerCase().split(/\s+/).includes(w)).length;
+  return nlCount >= 2 ? 'nl' : 'fr';
+};
 
 // ═══════════════════════════════════════════════════════════════
 //  AGENT IA JURIDIQUE — BOUTON FLOTTANT
