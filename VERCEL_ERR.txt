@@ -1,0 +1,4 @@
+Error: Invalid supabaseUrl: Must be a valid HTTP or HTTPS URL.
+> Build error occurred
+[Error: Failed to collect page data for /api/audit] { type: 'Error' }
+Error: Command "npm run build" exited with 1
