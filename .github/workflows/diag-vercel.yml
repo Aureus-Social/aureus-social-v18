@@ -8,37 +8,56 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Diagnose and fix
+      - name: Get error details
         env:
           TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          # Récupérer settings des 2 projets
           curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects?limit=20" > /tmp/projects.json
-          
           V18_ID=$(python3 -c "import json; [print(p['id']) for p in json.load(open('/tmp/projects.json')).get('projects',[]) if p['name']=='aureus-social-v18']")
-          PRO_ID=$(python3 -c "import json; [print(p['id']) for p in json.load(open('/tmp/projects.json')).get('projects',[]) if p['name']=='aureus-social-pro']")
           
-          echo "V18=$V18_ID PRO=$PRO_ID"
+          echo "=== Deployments en erreur ==="
+          curl -s -H "Authorization: Bearer $TOKEN" \
+            "https://api.vercel.com/v6/deployments?projectId=$V18_ID&limit=5&state=ERROR" > /tmp/deps.json
           
-          curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$V18_ID" > /tmp/v18.json
-          curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$PRO_ID" > /tmp/pro.json
+          python3 - /tmp/deps.json << 'PY'
+          import json, sys, urllib.request, os
+          deps = json.load(open(sys.argv[1]))
+          token = os.environ['TOKEN']
+          result = []
+          for dep in deps.get('deployments', [])[:3]:
+              uid = dep.get('uid', '')
+              state = dep.get('state', '')
+              err = dep.get('errorMessage', '') or dep.get('errorCode', '')
+              created = dep.get('createdAt', '')
+              result.append(f"UID: {uid} | State: {state} | Error: {err} | Created: {created}")
+              
+              # Récupérer les build events
+              if uid:
+                  req = urllib.request.Request(
+                      f"https://api.vercel.com/v2/deployments/{uid}/events?limit=50",
+                      headers={"Authorization": f"Bearer {token}"}
+                  )
+                  try:
+                      with urllib.request.urlopen(req, timeout=10) as r:
+                          for line in r.read().decode().splitlines():
+                              try:
+                                  d = json.loads(line)
+                                  t = d.get('type', '')
+                                  p = d.get('payload', {})
+                                  text = p.get('text', '') if isinstance(p, dict) else str(p)
+                                  if 'error' in text.lower() or 'Error' in text or t == 'stderr':
+                                      result.append(f"  [{t}] {text[:300]}")
+                              except: pass
+                  except Exception as e:
+                      result.append(f"  Events non dispo: {e}")
+                  break  # Juste le premier
           
-          python3 - /tmp/v18.json /tmp/pro.json << 'PYEOF2'
-          import json, sys
-          v18 = json.load(open(sys.argv[1]))
-          pro = json.load(open(sys.argv[2]))
-          keys = ['framework','buildCommand','outputDirectory','installCommand','nodeVersion','rootDirectory']
-          result = ["## aureus-social-v18"]
-          for k in keys: result.append(f"  {k}: {v18.get(k)}")
-          result.append("\n## aureus-social-pro")
-          for k in keys: result.append(f"  {k}: {pro.get(k)}")
-          text = "\n".join(result)
-          print(text)
-          open("VERCEL_DIAG.txt","w").write(text)
-          PYEOF2
+          output = "\n".join(result)
+          print(output)
+          open("VERCEL_DIAG.txt", "w").write(output)
+          PY
           
-          cat VERCEL_DIAG.txt
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add VERCEL_DIAG.txt
-          git diff --staged --quiet || git commit -m "📊 Diag Vercel" && git push
+          git diff --staged --quiet || (git commit -m "📊 Error details" && git push)
