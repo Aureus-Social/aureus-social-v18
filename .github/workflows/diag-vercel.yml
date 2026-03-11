@@ -8,43 +8,37 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Diagnose and fix
         env:
           TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          PROJECTS=$(curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects?limit=20" 2>/dev/null || echo "{}")
+          # Récupérer settings des 2 projets
+          curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects?limit=20" > /tmp/projects.json
           
-          V18_ID=$(echo "$PROJECTS" | python3 -c "import json,sys; [print(p['id']) for p in json.load(sys.stdin).get('projects',[]) if p['name']=='aureus-social-v18']" 2>/dev/null || echo "")
-          PRO_ID=$(echo "$PROJECTS" | python3 -c "import json,sys; [print(p['id']) for p in json.load(sys.stdin).get('projects',[]) if p['name']=='aureus-social-pro']" 2>/dev/null || echo "")
+          V18_ID=$(python3 -c "import json; [print(p['id']) for p in json.load(open('/tmp/projects.json')).get('projects',[]) if p['name']=='aureus-social-v18']")
+          PRO_ID=$(python3 -c "import json; [print(p['id']) for p in json.load(open('/tmp/projects.json')).get('projects',[]) if p['name']=='aureus-social-pro']")
           
-          echo "V18_ID=$V18_ID PRO_ID=$PRO_ID"
+          echo "V18=$V18_ID PRO=$PRO_ID"
           
-          if [ -z "$V18_ID" ]; then
-            echo "ERREUR: token Vercel invalide ou projets non trouvés"
-            echo "TOKEN_LENGTH=${#TOKEN}"
-            exit 0
-          fi
+          curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$V18_ID" > /tmp/v18.json
+          curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$PRO_ID" > /tmp/pro.json
           
-          V18=$(curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$V18_ID" 2>/dev/null || echo "{}")
-          PRO=$(curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects/$PRO_ID" 2>/dev/null || echo "{}")
-          
-          python3 << EOF > VERCEL_DIAG.txt
-          import json
-          v18=json.loads("""$V18""".replace('\n',''))
-          pro=json.loads("""$PRO""".replace('\n',''))
-          keys=['framework','buildCommand','outputDirectory','installCommand','nodeVersion','rootDirectory']
-          print("## aureus-social-v18")
-          for k in keys: print(f"  {k}: {v18.get(k)}")
-          print()
-          print("## aureus-social-pro")
-          for k in keys: print(f"  {k}: {pro.get(k)}")
-          EOF
+          python3 - /tmp/v18.json /tmp/pro.json << 'PYEOF2'
+          import json, sys
+          v18 = json.load(open(sys.argv[1]))
+          pro = json.load(open(sys.argv[2]))
+          keys = ['framework','buildCommand','outputDirectory','installCommand','nodeVersion','rootDirectory']
+          result = ["## aureus-social-v18"]
+          for k in keys: result.append(f"  {k}: {v18.get(k)}")
+          result.append("\n## aureus-social-pro")
+          for k in keys: result.append(f"  {k}: {pro.get(k)}")
+          text = "\n".join(result)
+          print(text)
+          open("VERCEL_DIAG.txt","w").write(text)
+          PYEOF2
           
           cat VERCEL_DIAG.txt
-          
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add VERCEL_DIAG.txt
-          git commit -m "📊 Diag Vercel settings" && git push || echo "Pas de changements"
+          git diff --staged --quiet || git commit -m "📊 Diag Vercel" && git push
