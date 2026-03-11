@@ -17,23 +17,37 @@ const ROLE_TABLES = {
 };
 
 function detectRole(user) {
+  // ─── Rôle UNIQUEMENT depuis user_metadata — jamais depuis l'email ──────────
   if (!user) return 'readonly';
-  const email = (user.email || '').toLowerCase();
   const meta = user.user_metadata || {};
   const role = (meta.role || meta.rôle || '').toLowerCase();
-  if (role === 'admin' || email.includes('admin') || email.includes('nourdin') || email.includes('aureus-ia')) return 'admin';
-  if (role === 'comptable' || email.includes('comptable') || email.includes('fiduciaire')) return 'comptable';
-  if (role === 'rh' || email.includes('rh') || email.includes('hr')) return 'rh';
-  if (role === 'commercial' || email.includes('commercial') || email.includes('sales')) return 'commercial';
-  return 'readonly';
+  const VALID_ROLES = ['admin', 'comptable', 'rh', 'commercial', 'readonly'];
+  return VALID_ROLES.includes(role) ? role : 'readonly';
+  // ─────────────────────────────────────────────────────────────────────────────
 }
 
 export async function POST(request) {
   try {
-    const { action, email, userEmail, userRole } = await request.json();
+    // ─── CRITIQUE: Auth obligatoire — rôle depuis TOKEN uniquement ────────────
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return Response.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+    const anonClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+    const { data: { user: caller }, error: authErr } = await anonClient.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    if (authErr || !caller) {
+      return Response.json({ error: 'Session invalide' }, { status: 401 });
+    }
+    // Rôle depuis les métadonnées du TOKEN — jamais depuis le body
+    const role = (caller.user_metadata?.role || 'readonly').toLowerCase();
+    // ─────────────────────────────────────────────────────────────────────────
 
-    // Déterminer le rôle
-    const role = userRole || detectRole({ email: userEmail });
+    const { action } = await request.json(); // userRole et userEmail retirés du body
     const tables = ROLE_TABLES[role] || [];
 
     if (tables.length === 0) {
@@ -46,6 +60,7 @@ export async function POST(request) {
 
     for (const table of tables) {
       try {
+        // SELECT * intentionnel pour backup complet — tables restreintes par ROLE_TABLES (whitelist par rôle)
         const { data, error } = await supabase.from(table).select('*');
         if (error) errors.push(`${table}: ${error.message}`);
         else backupData[table] = data || [];
@@ -94,12 +109,13 @@ export async function POST(request) {
     // Envoyer email
     if (action === 'email' || action === 'both') {
       const roleLabel = { admin:'Administrateur', comptable:'Comptable', rh:'Ressources Humaines', commercial:'Commercial', readonly:'Lecture seule' }[role] || role;
+      const userEmail = caller.email || '';
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: 'Aureus Social Pro <noreply@aureussocial.be>',
-          to: [email || 'info@aureus-ia.com'],
+          to: [caller?.email || 'info@aureus-ia.com'],
           subject: `🔒 Backup Aureus [${roleLabel}] — ${dateStr}`,
           html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;">

@@ -95,8 +95,11 @@ async function pushToGitHub(newVal, oldVal) {
 
   if (updated === content) throw new Error('Aucun remplacement effectué — pattern introuvable');
 
+  const putCtrl = new AbortController();
+  const putTimer = setTimeout(() => putCtrl.abort(), 12000);
   const putRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${PATH}`, {
     method: 'PUT',
+    signal: putCtrl.signal,
     headers: { 'Authorization': `token ${TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       message: `auto(cron): RMMMG ${oldVal} → ${newVal} EUR — CNT ${new Date().toLocaleDateString('fr-BE')}`,
@@ -105,7 +108,8 @@ async function pushToGitHub(newVal, oldVal) {
       branch: 'main',
     }),
   });
-  if (!putRes.ok) { const e = await putRes.json(); throw new Error(`GitHub PUT ${putRes.status}: ${e.message}`); }
+  clearTimeout(putTimer);
+  if (!putRes.ok) { const e = await putRes.json(); throw new Error(`GitHub PUT ${putRes.status}: ${JSON.stringify(e).substring(0,100)}`); }
   return (await putRes.json()).commit?.sha?.substring(0,7);
 }
 

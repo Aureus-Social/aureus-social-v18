@@ -76,10 +76,10 @@ function AdminDashboard_Main({s,d}){
       const {supabase}=await import('@/app/lib/supabase');
       if(!supabase){setLoading(false);return;}
       const [uRes,cRes,tRes,fRes]=await Promise.all([
-        supabase.from('users').select('*').limit(200),
-        supabase.from('clients').select('*').limit(500),
-        supabase.from('travailleurs').select('*').limit(2000),
-        supabase.from('fiches_paie').select('*').limit(5000),
+        supabase.from('users').select('id,email,active,created_at,user_metadata,role').limit(200),
+        supabase.from('clients').select('id,active,company,vat,created_at').limit(500),
+        supabase.from('travailleurs').select('id,actif,first,last,fn,ln,status,created_at,client_id').limit(2000),
+        supabase.from('fiches_paie').select('id,annee,mois,statut,created_at,client_id').limit(1000),
       ]);
       if(uRes.data)setUsers(uRes.data);
       if(cRes.data)setClients(cRes.data);

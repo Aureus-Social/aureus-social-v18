@@ -109,7 +109,10 @@ async function checkEcheances() {
 async function checkEmployees() {
   const alerts = [];
   try {
-    const { data: emps, error } = await supabase.from('employees').select('*').limit(500);
+    const { data: emps, error } = await supabase
+      .from('employees')
+      .select('id, first, fn, last, ln, status, niss, iban, contractEnd, end_date, actif, active')
+      .limit(500);
     if (error || !emps) return alerts;
 
     const now = new Date();

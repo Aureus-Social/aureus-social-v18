@@ -19,10 +19,25 @@ const ROLE_RESTORE = {
 
 export async function POST(request) {
   try {
-    const { backupData, userRole, dryRun } = await request.json();
+    // ─── Auth : récupérer le rôle depuis le TOKEN (pas depuis le body!)
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return Response.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+    const anonSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+    const { data: { user: caller } } = await anonSupabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (!caller) return Response.json({ error: 'Session invalide' }, { status: 401 });
+
+    // Rôle depuis le TOKEN — jamais depuis le body (privilege escalation)
+    const userRole = caller.user_metadata?.role || 'readonly';
+
+    const { backupData, dryRun } = await request.json(); // userRole retiré du body
 
     // Vérifier permission
-    if (!hasPermission(userRole || 'readonly', 'exporter_donnees')) {
+    if (!hasPermission(userRole, 'exporter_donnees')) {
       return Response.json({ error: 'Permission refusée — exporter_donnees requis' }, { status: 403 });
     }
 

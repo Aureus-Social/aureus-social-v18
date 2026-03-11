@@ -32,6 +32,23 @@ Règles :
 
 export async function POST(request) {
   try {
+    // ─── Auth obligatoire — éviter consommation non autorisée de l'API Claude
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    if (authErr || !user) {
+      return NextResponse.json({ error: 'Session invalide' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { message, history = [], context = '' } = body;
 

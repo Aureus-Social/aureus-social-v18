@@ -17,7 +17,16 @@ export async function GET() {
     checks.push({ label: 'Base de données', ok: !dbError, detail: dbError?.message || 'Connexion OK' });
 
     // 2. Compter employés actifs
-    const { data: emps, error: empError } = await supabase.from('employees').select('id, niss, iban, contractEnd, end_date, first, fn, last, ln').limit(500);
+    const { data: empsRaw, error: empError } = await supabase
+      .from('employees')
+      .select('id, contractEnd, end_date, first, fn, last, ln, niss_exists:niss, iban_exists:iban')
+      .limit(500);
+    // Masquer NISS/IBAN — on n'a besoin que de savoir s'ils existent
+    const emps = (empsRaw || []).map(e => ({
+      ...e,
+      niss: e.niss_exists ? '***' : null,
+      iban: e.iban_exists ? '***' : null,
+    }));
     checks.push({ label: 'Table employees', ok: !empError, detail: empError?.message || `${(emps||[]).length} enregistrements` });
 
     // 3. Analyser les employés

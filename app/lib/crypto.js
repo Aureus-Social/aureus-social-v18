@@ -1,6 +1,8 @@
 import { logWarn, logError } from './security/logger.js';
 // ═══ AUREUS SOCIAL PRO — Module: Chiffrement AES-256-GCM (RGPD Art. 32) ═══
-const CRYPTO_SALT = 'AureusSocialPro-2026-RGPD';
+// ─── Sel chargé depuis l'env — jamais hardcodé en prod
+const CRYPTO_SALT = process.env.NEXT_PUBLIC_CRYPTO_SALT || 'AureusSocialPro-2026-RGPD-fallback';
+// ⚠️  Configurer NEXT_PUBLIC_CRYPTO_SALT dans Vercel pour le sel de production
 const SENSITIVE_FIELDS = ['niss', 'NISS', 'iban', 'IBAN', 'bankAccount', 'compteBancaire'];
 let _cryptoKey = null;
 let _encryptionWarned = false;
@@ -18,7 +20,7 @@ export async function deriveKey(userId) {
     const userSalt = enc.encode(CRYPTO_SALT + ':' + userId.slice(0, 8));
     const km = await crypto.subtle.importKey('raw', enc.encode(userId + CRYPTO_SALT), 'PBKDF2', false, ['deriveKey']);
     return crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt: userSalt, iterations: 310000, hash: 'SHA-256' },
+      { name: 'PBKDF2', salt: userSalt, iterations: 600000, hash: 'SHA-256' },
       km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
     );
   } catch (e) {
