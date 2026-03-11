@@ -9,21 +9,53 @@ jobs:
         env:
           TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          echo "Token défini: $([ -n "$TOKEN" ] && echo OUI || echo NON)"
-          echo "Token length: ${#TOKEN}"
+          echo "=== TEST TOKEN ==="
+          RESP=$(curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v2/user" || echo "CURL_FAILED")
+          echo "$RESP" | python3 -c "import json,sys; d=json.load(sys.stdin); print('User:', d.get('user',{}).get('email','?'))" 2>/dev/null || echo "Token invalide ou expiré: $RESP"
           
-          # Test API
-          RESP=$(curl -s -w "\nHTTP:%{http_code}" -H "Authorization: Bearer $TOKEN"             "https://api.vercel.com/v2/user")
-          echo "API response: $(echo $RESP | tail -c 100)"
-          
-          # Si OK, récupérer les projets
-          HTTP=$(echo "$RESP" | grep "HTTP:" | cut -d: -f2)
-          if [ "$HTTP" = "200" ]; then
-            echo "=== API OK ==="
-            curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects?limit=20" | python3 -c "
+          echo "=== PROJETS ==="
+          PROJECTS=$(curl -s -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects?limit=20" || echo "{}")
+          echo "$PROJECTS" | python3 -c "
           import json,sys
           d=json.load(sys.stdin)
-          for p in d.get("projects",[]):
-              print(p["name"], p["id"])
-          "
+          for p in d.get('projects',[]):
+              print(p['name'], '→', p['id'])
+          " 2>/dev/null || echo "Erreur projets: $PROJECTS"
+          
+          V18_ID=$(echo "$PROJECTS" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          for p in d.get('projects',[]):
+              if p['name']=='aureus-social-v18': print(p['id'])
+          " 2>/dev/null || echo "")
+          
+          if [ -z "$V18_ID" ]; then
+            echo "Projet v18 non trouvé"
+            exit 1
           fi
+          
+          echo "=== LAST DEPLOYMENTS ==="
+          curl -s -H "Authorization: Bearer $TOKEN"             "https://api.vercel.com/v6/deployments?projectId=$V18_ID&limit=3" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          for dep in d.get('deployments',[]):
+              print(dep.get('uid'), dep.get('state'), dep.get('errorMessage','') or dep.get('errorCode',''))
+          " 2>/dev/null || echo "Erreur déploiements"
+          
+          echo "=== REDEPLOY ==="
+          LAST_SHA=$(curl -s -H "Authorization: Bearer $TOKEN"             "https://api.vercel.com/v6/deployments?projectId=$V18_ID&limit=1" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          deps=d.get('deployments',[])
+          if deps: print(deps[0].get('meta',{}).get('githubCommitSha',''))
+          " 2>/dev/null || echo "")
+          
+          echo "Last SHA: $LAST_SHA"
+          
+          # Forcer un redeploy
+          REDEPLOY=$(curl -s -X POST             -H "Authorization: Bearer $TOKEN"             -H "Content-Type: application/json"             -d "{"name":"aureus-social-v18","project":"$V18_ID","target":"production","gitSource":{"type":"github","repoId":"Aureus-Social/aureus-social-v18","ref":"main"}}"             "https://api.vercel.com/v13/deployments" || echo "{}")
+          echo "$REDEPLOY" | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          print('Redeploy:', d.get('id',''), d.get('url',''), d.get('error',{}).get('message',''))
+          " 2>/dev/null || echo "Redeploy réponse: $REDEPLOY"
