@@ -1,5 +1,0 @@
-state:BUILDING | commit:7d77e51 | aureus-social-v18-cd2dvx3k1-nourdins-projects-9664e760.vercel.app
-state:ERROR | commit:6797f1c | aureus-social-v18-d1czfy913-nourdins-projects-9664e760.vercel.app
-state:ERROR | commit:8728ef5 | aureus-social-v18-5uyo24650-nourdins-projects-9664e760.vercel.app
-state:ERROR | commit:848112a | aureus-social-v18-5e85j76pv-nourdins-projects-9664e760.vercel.app
-state:ERROR | commit:df414f8 | aureus-social-v18-8xa8rhhnq-nourdins-projects-9664e760.vercel.app
