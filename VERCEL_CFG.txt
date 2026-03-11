@@ -1,0 +1,17 @@
+## V18 Config
+  framework: nextjs
+  buildCommand: None
+  outputDirectory: None
+  installCommand: None
+  nodeVersion: 24.x
+  rootDirectory: None
+  gitSource: None
+  deploy: None None 
+  deploy: None None 
+
+## Build errors
+  Error: Invalid supabaseUrl: Must be a valid HTTP or HTTPS URL.
+  > Build error occurred
+  [Error: Failed to collect page data for /api/monitoring] {
+    type: 'Error'
+  Error: Command "npm run build" exited with 1
