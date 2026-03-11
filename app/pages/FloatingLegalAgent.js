@@ -578,7 +578,7 @@ function FloatingLegalAgent({onAction}){
       const{supabase}=await import('@/app/lib/supabase');
       if(!supabase)return;
       await supabase.from('audit_log').insert({action,table_name:'agent_ia',details:{...details,timestamp:new Date().toISOString()}});
-    }catch(e){}
+    }catch(e){ /* handled */ }
   };
 
   // ── LOCAL KB SEARCH (no API needed) ──

@@ -1,6 +1,12 @@
 'use client';
 import { LEGAL, RMMMG } from '@/app/lib/helpers';
 
+// ─── localStorage sécurisé (SSR-safe)
+const _ls = {
+  get: (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } },
+};
+
 // ═══════════════════════════════════════════════════════
 //  AUREUS SOCIAL PRO — Module: Centre de Notifications
 //  Notifications in-app + Push + Historique
@@ -327,7 +333,7 @@ export default function NotificationCenterWrapped({ s, d, tab }) {
 function NotificationCenter({ state, dispatch, defaultTab }) {
   const [filter, setFilter] = useState('all')
   const [readIds, setReadIds] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('aureus_notif_read') || '[]')) }
+    try { return new Set(_ls.get('aureus_notif_read', [])) }
     catch { return new Set() }
   })
   const [pushStatus, setPushStatus] = useState(null)
@@ -355,7 +361,7 @@ function NotificationCenter({ state, dispatch, defaultTab }) {
     setReadIds(prev => {
       const next = new Set(prev)
       next.add(id)
-      localStorage.setItem('aureus_notif_read', JSON.stringify([...next]))
+      _ls.set('aureus_notif_read', [...next])
       return next
     })
   }, [])
@@ -364,7 +370,7 @@ function NotificationCenter({ state, dispatch, defaultTab }) {
     setReadIds(prev => {
       const next = new Set(prev)
       notifications.forEach(n => next.add(n.id))
-      localStorage.setItem('aureus_notif_read', JSON.stringify([...next]))
+      _ls.set('aureus_notif_read', [...next])
       return next
     })
   }, [notifications])

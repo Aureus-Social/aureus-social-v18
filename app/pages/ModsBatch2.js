@@ -6,6 +6,12 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { B, BONUS_MAX, C, CR_MAX, CR_PAT, CR_TRAV, DPER, HEURES_HEBDO, I, LOIS_BELGES, NET_FACTOR, PH, PP_EST, PV_DOUBLE, PV_SIMPLE, RMMMG, SC, ST, TX_AT, TX_ONSS_E, TX_ONSS_W, TX_OUV108, TX_OUV_SPECIAL, Tbl, calc, f2, fmt, obf, quickNet, quickNetEst, quickPP } from "@/app/lib/helpers";
 import { calcCSSS, calcBonusEmploi, calcPrecompteExact } from "@/app/lib/payroll-engine";
 import { aureuspdf } from "@/app/lib/pdf-aureus";
+
+// ─── localStorage sécurisé (SSR-safe)
+const _ls = {
+  get: (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } },
+};
 const uid = () => `${Date.now()}-${Math.random().toString(36).substr(2,5)}`;
 const MN_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const MN = MN_FR;
@@ -1855,10 +1861,10 @@ export function APIDocMod({s,d}){const loisRef=LOIS_BELGES;
 
 export function MarketplaceMod({s,d}){const loisRef=LOIS_BELGES;
   const [cat,setCat]=useState('all');
-  const [activatedMods,setActivatedMods]=useState(()=>{try{return JSON.parse(localStorage.getItem('aureus_marketplace_active')||'[]');}catch(e){return[];}});
-  const [notifiedMods,setNotifiedMods]=useState(()=>{try{return JSON.parse(localStorage.getItem('aureus_marketplace_notify')||'[]');}catch(e){return[];}});
-  const toggleMod=(modId,modName,price)=>{if(activatedMods.includes(modId)){const next=activatedMods.filter(m=>m!==modId);setActivatedMods(next);try{localStorage.setItem('aureus_marketplace_active',JSON.stringify(next));}catch(e){}}else{const next=[...activatedMods,modId];setActivatedMods(next);try{localStorage.setItem('aureus_marketplace_active',JSON.stringify(next));}catch(e){}alert('✅ Module "'+modName+'" activé ! ('+price+'€/mois)');}};
-  const toggleNotify=(modId,modName)=>{if(notifiedMods.includes(modId)){const next=notifiedMods.filter(m=>m!==modId);setNotifiedMods(next);try{localStorage.setItem('aureus_marketplace_notify',JSON.stringify(next));}catch(e){}}else{const next=[...notifiedMods,modId];setNotifiedMods(next);try{localStorage.setItem('aureus_marketplace_notify',JSON.stringify(next));}catch(e){}alert('🔔 Vous serez notifié quand "'+modName+'" sera disponible !');}};
+  const [activatedMods,setActivatedMods]=useState(()=>{try{return _ls.get('aureus_marketplace_active', []);}catch(e){return[];}});
+  const [notifiedMods,setNotifiedMods]=useState(()=>{try{return _ls.get('aureus_marketplace_notify', []);}catch(e){return[];}});
+  const toggleMod=(modId,modName,price)=>{if(activatedMods.includes(modId)){const next=activatedMods.filter(m=>m!==modId);setActivatedMods(next);try{_ls.set('aureus_marketplace_active', next);}catch(e){}}else{const next=[...activatedMods,modId];setActivatedMods(next);try{_ls.set('aureus_marketplace_active', next);}catch(e){}alert('✅ Module "'+modName+'" activé ! ('+price+'€/mois)');}};
+  const toggleNotify=(modId,modName)=>{if(notifiedMods.includes(modId)){const next=notifiedMods.filter(m=>m!==modId);setNotifiedMods(next);try{_ls.set('aureus_marketplace_notify', next);}catch(e){}}else{const next=[...notifiedMods,modId];setNotifiedMods(next);try{_ls.set('aureus_marketplace_notify', next);}catch(e){}alert('🔔 Vous serez notifié quand "'+modName+'" sera disponible !');}};
   const modules=[
     {id:'mod_fleet',name:'Fleet Management',desc:'Gestion de flotte véhicules de société. Budget mobilité, cartes carburant, TCO, avantage de toute nature auto.',icon:'🚗',price:49,cat:'mobilite',status:'available',rating:4.8,installs:342},
     {id:'mod_expense',name:'Expense Management',desc:'Notes de frais automatisées avec OCR. Scan ticket → remboursement. Politique de dépenses configurable.',icon:'🧾',price:29,cat:'finance',status:'available',rating:4.6,installs:567},

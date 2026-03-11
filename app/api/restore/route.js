@@ -1,3 +1,4 @@
+import { logInfo, logError, logWarn } from '../../lib/security/logger.js';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
@@ -130,7 +131,7 @@ export async function POST(request) {
     });
 
   } catch (e) {
-    console.error('[Restore] Erreur:', e.message);
+    logError('API', '[Restore] Erreur:', e.message);
     return Response.json({ error: e.message }, { status: 500 });
   }
 }

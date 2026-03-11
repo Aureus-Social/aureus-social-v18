@@ -2,6 +2,12 @@
 import { useState, useEffect } from 'react';
 import { RMMMG } from '../lib/lois-belges';
 
+// ─── localStorage sécurisé (SSR-safe)
+const _ls = {
+  get: (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } },
+};
+
 // RMMMG importé depuis lois-belges.js — source unique de vérité
 // Pour mettre à jour : modifier lois-belges.js → remuneration.RMMMG.montant18ans
 const RMMMG_HORAIRE = (RMMMG / (52 * 38 / 12)).toFixed(2);  // mensuel → horaire 38h
@@ -150,8 +156,8 @@ export default function ConnexionsHub({ s, d, tab }) {
   const [viewMode, setViewMode]   = useState('grid'); // 'grid' | 'list'
 
   useEffect(() => {
-    try { setVisits(JSON.parse(localStorage.getItem(LS_KEY) || '{}')); } catch {}
-    try { setFavs(JSON.parse(localStorage.getItem(FAV_KEY) || '{}')); } catch {}
+    try { setVisits(JSON.parse(localStorage.getItem(LS_KEY) || '{}')); } catch{ /* handled */ }
+    try { setFavs(JSON.parse(localStorage.getItem(FAV_KEY) || '{}')); } catch{ /* handled */ }
   }, []);
 
   const open = (p) => {
@@ -159,7 +165,7 @@ export default function ConnexionsHub({ s, d, tab }) {
     const now = new Date().toISOString();
     setVisits(prev => {
       const u = { ...prev, [p.id]: now };
-      try { localStorage.setItem(LS_KEY, JSON.stringify(u)); } catch {}
+      try { localStorage.setItem(LS_KEY, JSON.stringify(u)); } catch{ /* handled */ }
       return u;
     });
   };
@@ -168,7 +174,7 @@ export default function ConnexionsHub({ s, d, tab }) {
     e.stopPropagation();
     setFavs(prev => {
       const u = { ...prev, [id]: !prev[id] };
-      try { localStorage.setItem(FAV_KEY, JSON.stringify(u)); } catch {}
+      try { localStorage.setItem(FAV_KEY, JSON.stringify(u)); } catch{ /* handled */ }
       return u;
     });
   };

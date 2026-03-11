@@ -2,6 +2,12 @@
 import { supabase } from '@/app/lib/supabase';
 import { useState, useEffect, useCallback } from 'react';
 
+// ─── localStorage sécurisé (SSR-safe)
+const _ls = {
+  get: (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } },
+};
+
 const fmt = v => new Intl.NumberFormat('fr-BE', { style:'currency', currency:'EUR' }).format(v||0);
 const fmtDate = d => d ? new Date(d).toLocaleDateString('fr-BE') : '—';
 const daysSince = d => d ? Math.floor((Date.now() - new Date(d).getTime()) / 86400000) : 0;
@@ -75,12 +81,12 @@ export default function RelancesFacturation({ supabase, user, clients = [] }) {
   // Chargement initial
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('aureus_relances');
+      const raw = _ls.get('aureus_relances', null);
       if (raw) {
         setFactures(JSON.parse(raw));
       } else {
         // Premier lancement : données de test
-        localStorage.setItem('aureus_relances', JSON.stringify(DEMO_FACTURES));
+        _ls.set('aureus_relances', DEMO_FACTURES);
         setFactures(DEMO_FACTURES);
       }
     } catch (e) { setFactures(DEMO_FACTURES); }
@@ -88,7 +94,7 @@ export default function RelancesFacturation({ supabase, user, clients = [] }) {
 
   const save = useCallback((updated) => {
     setFactures(updated);
-    localStorage.setItem('aureus_relances', JSON.stringify(updated));
+    _ls.set('aureus_relances', updated);
   }, []);
 
   // Envoyer une relance individuelle

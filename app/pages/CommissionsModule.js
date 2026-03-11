@@ -252,7 +252,7 @@ function RelancesModule({ factures, sendEmailFn }) {
     try {
       const raw = null; // localStorage supprimé — données relances chargées depuis Supabase
       if(raw) setRelances(JSON.parse(raw));
-    } catch(e) {}
+    } catch(e){ /* handled */ }
   }, []);
 
   const saveRelances = useCallback((updated) => {
@@ -297,7 +297,7 @@ function RelancesModule({ factures, sendEmailFn }) {
       if (sendEmailFn && facture.clientEmail) {
         await sendEmailFn(facture.clientEmail, emailData.subject, emailData.html, []);
       }
-    } catch(e) {}
+    } catch(e){ /* handled */ }
 
     const updated = { ...relances };
     updated[facture.factureId] = {

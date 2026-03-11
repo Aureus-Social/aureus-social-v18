@@ -1,3 +1,4 @@
+import { logInfo, logError, logWarn } from '../../lib/security/logger.js';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
@@ -28,7 +29,7 @@ export async function POST(request) {
     });
 
     if (error) {
-      console.error('[Audit] Erreur insertion:', error.message);
+      logError('API', '[Audit] Erreur insertion:', error.message);
       return Response.json({ error: error.message }, { status: 500 });
     }
 

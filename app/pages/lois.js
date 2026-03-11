@@ -64,7 +64,7 @@ const loadSupabaseHistory=async()=>{
     const resp=await fetch('/api/lois-update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list'})});
     const result=await resp.json();
     setImportState(p=>({...p,history:result.updates||[]}));
-  }catch(e){}
+  }catch(e){ /* handled */ }
 };
 const handleRollback=async(id)=>{
   if(!confirm('Annuler cet update et revenir aux valeurs par defaut?'))return;
@@ -73,7 +73,7 @@ const handleRollback=async(id)=>{
     setCustomLois({});
     safeLS.remove('aureus_lois_custom');
     loadSupabaseHistory();
-  }catch(e){}
+  }catch(e){ /* handled */ }
 };
 
 const L=LOIS_BELGES;

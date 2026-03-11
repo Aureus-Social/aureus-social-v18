@@ -1,3 +1,4 @@
+import { logInfo, logError, logWarn } from '../../../lib/security/logger.js';
 import { NextResponse } from 'next/server';
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -1,4 +1,5 @@
 'use client';
+import { logError } from './security/logger.js';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { I18N } from './i18n';
 

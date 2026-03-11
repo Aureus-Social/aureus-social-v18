@@ -5,6 +5,7 @@
 // → Envoie email d'alerte si anomalie détectée
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { logInfo, logError, logWarn } from '../../../lib/security/logger.js';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -267,7 +268,7 @@ export async function GET(request) {
     });
 
   } catch (e) {
-    console.error('[Monitoring] Erreur fatale:', e.message);
+    logError('API', '[Monitoring] Erreur fatale:', e.message);
     await sendAlertEmail('Erreur fatale du système de monitoring', `<p>Le cron de monitoring a rencontré une erreur fatale:</p><pre>${e.message}</pre>`, 'critical');
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

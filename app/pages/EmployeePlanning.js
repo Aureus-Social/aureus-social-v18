@@ -8,6 +8,12 @@
 
 import { useState, useMemo, useCallback } from 'react'
 
+// ─── localStorage sécurisé (SSR-safe)
+const _ls = {
+  get: (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } },
+};
+
 const GOLD = '#c6a34e'
 const DARK = '#0d1117'
 const BORDER = '#1e2633'
@@ -187,7 +193,7 @@ function EmployeePlanning({ state, dispatch, defaultTab, initialView }) {
   const [showAddAbsence, setShowAddAbsence] = useState(false)
   const [newAbsence, setNewAbsence] = useState({ type: 'CONGE', startDate: '', endDate: '', reason: '' })
   const [absences, setAbsences] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('aureus_absences') || '[]') }
+    try { return _ls.get('aureus_absences', []) }
     catch { return [] }
   })
   const [filterDept, setFilterDept] = useState('all')
@@ -235,7 +241,7 @@ function EmployeePlanning({ state, dispatch, defaultTab, initialView }) {
 
   const saveAbsences = useCallback((newList) => {
     setAbsences(newList)
-    localStorage.setItem('aureus_absences', JSON.stringify(newList))
+    _ls.set('aureus_absences', newList)
   }, [])
 
   function handleAddAbsence() {
