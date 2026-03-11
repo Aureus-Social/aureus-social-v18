@@ -6,29 +6,8 @@ jobs:
   info:
     runs-on: ubuntu-latest
     steps:
-      - name: Get info
+      - uses: actions/checkout@v4
+      - name: Run Vercel info
         env:
-          T: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          curl -sf -H "Authorization: Bearer $T" "https://api.vercel.com/v9/projects?limit=20" > /tmp/p.json
-          echo "=PROJECTS="
-          python3 -c "
-import json
-d=json.load(open('/tmp/p.json'))
-for p in d.get('projects',[]):
-  print(p['name'],'|',p['id'],'|',p.get('framework','?'),'|',p.get('rootDirectory','root'))
-"
-          V18=$(python3 -c "import json; d=json.load(open('/tmp/p.json')); [print(p['id']) for p in d['projects'] if p['name']=='aureus-social-v18']")
-          PRO=$(python3 -c "import json; d=json.load(open('/tmp/p.json')); [print(p['id']) for p in d['projects'] if p['name']=='aureus-social-pro']")
-          echo "=DEPLOYS_V18="
-          curl -sf -H "Authorization: Bearer $T" "https://api.vercel.com/v6/deployments?projectId=$V18&limit=2" | python3 -c "
-import json,sys
-for d in json.load(sys.stdin).get('deployments',[]):
-  print(d.get('state'),'|',d.get('url',''),'|',d.get('errorCode',''),'|',d.get('errorMessage','ok')[:80])
-"
-          echo "=DEPLOYS_PRO="
-          curl -sf -H "Authorization: Bearer $T" "https://api.vercel.com/v6/deployments?projectId=$PRO&limit=2" | python3 -c "
-import json,sys
-for d in json.load(sys.stdin).get('deployments',[]):
-  print(d.get('state'),'|',d.get('url',''),'|',d.get('errorCode',''),'|',d.get('errorMessage','ok')[:80])
-"
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: python3 scripts/vercel_info.py
