@@ -1,0 +1,15 @@
+## aureus-social-v18
+  framework: nextjs
+  buildCommand: None
+  outputDirectory: None
+  installCommand: None
+  nodeVersion: 24.x
+  rootDirectory: None
+
+## aureus-social-pro
+  framework: nextjs
+  buildCommand: None
+  outputDirectory: None
+  installCommand: None
+  nodeVersion: 24.x
+  rootDirectory: None
