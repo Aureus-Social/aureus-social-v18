@@ -1,14 +1,14 @@
-deploy: dpl_4UvmzegtZdEwpnknjgYRLme3v8rv
+deploy: dpl_DSG4ki7u5Pjndjyi9vo7f2j7FUP2
 [stdout] Running build in Portland, USA (West) – pdx1 (Turbo Build Machine)
 [stdout] Build machine configuration: 30 cores, 60 GB
-[stdout] Cloning github.com/Aureus-Social/aureus-social-v18 (Branch: main, Commit: a54f14b)
-[stdout] Cloning completed: 501.000ms
+[stdout] Cloning github.com/Aureus-Social/aureus-social-v18 (Branch: main, Commit: 848112a)
+[stdout] Cloning completed: 646.000ms
 [stdout] Restored build cache from previous deployment (AmVJvyPEgQxHzbUiZDyPb1Xcqt3J)
 [stdout] Running "vercel build"
 [stderr] Vercel CLI 50.28.0
 [stdout] Installing dependencies...
 [stdout] 
-[stdout] up to date in 504ms
+[stdout] up to date in 429ms
 [stdout] 
 [stdout] 10 packages are looking for funding
 [stdout]   run `npm fund` for details
@@ -21,7 +21,7 @@ deploy: dpl_4UvmzegtZdEwpnknjgYRLme3v8rv
 [stdout]    ▲ Next.js 15.5.12
 [stdout] 
 [stdout]    Creating an optimized production build ...
-[stdout]  ✓ Compiled successfully in 9.1s
+[stdout]  ✓ Compiled successfully in 8.9s
 [stdout]    Skipping validation of types
 [stdout]    Skipping linting
 [stdout]    Collecting page data ...
@@ -29,13 +29,15 @@ deploy: dpl_4UvmzegtZdEwpnknjgYRLme3v8rv
 [stderr]     at <unknown> (.next/server/chunks/742.js:37:47016)
 [stderr]     at new cf (.next/server/chunks/742.js:37:47198)
 [stderr]     at cg (.next/server/chunks/742.js:37:51145)
-[stderr]     at 6181 (.next/server/app/api/restore/route.js:1:5790)
+[stderr]     at 6973 (.next/server/app/api/cron/monitoring/route.js:1:3996)
 [stderr]     at c (.next/server/webpack-runtime.js:1:127)
-[stderr]     at <unknown> (.next/server/app/api/restore/route.js:1:17889)
+[stderr]     at <unknown> (.next/server/app/api/cron/monitoring/route.js:49:6204)
 [stderr]     at c.X (.next/server/webpack-runtime.js:1:1191)
-[stderr]     at <unknown> (.next/server/app/api/restore/route.js:1:17871)
-[stderr]     at Object.<anonymous> (.next/server/app/api/restore/route.js:1:17920)
+[stderr]     at <unknown> (.next/server/app/api/cron/monitoring/route.js:49:6182)
+[stderr]     at Object.<anonymous> (.next/server/app/api/cron/monitoring/route.js:49:6235)
 [stderr] 
 [stderr] > Build error occurred
-[stderr] [Error: Failed to collect page data for /api/restore] { type: 'Error' }
+[stderr] [Error: Failed to collect page data for /api/cron/monitoring] {
+[stderr]   type: 'Error'
+[stderr] }
 [stderr] Error: Command "npm run build" exited with 1
