@@ -1,0 +1,41 @@
+name: 🔍 Vercel Config Check
+on:
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Vercel project config
+        env:
+          TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          PROJECTS=$(curl -sf -H "Authorization: Bearer $TOKEN" "https://api.vercel.com/v9/projects?limit=20")
+          
+          V18=$(echo "$PROJECTS" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for p in d.get('projects',[]):
+    if p['name']=='aureus-social-v18':
+        print(json.dumps({
+            'id': p['id'],
+            'framework': p.get('framework'),
+            'rootDirectory': p.get('rootDirectory'),
+            'nodeVersion': p.get('nodeVersion'),
+            'buildCommand': p.get('buildCommand'),
+            'outputDirectory': p.get('outputDirectory'),
+            'installCommand': p.get('installCommand'),
+            'link': p.get('link',{}).get('repoId')
+        }, indent=2))
+")
+          echo "=== aureus-social-v18 config ==="
+          echo "$V18"
+          
+          # Récupérer le dernier déploiement et son erreur
+          DEPLOYS=$(curl -sf -H "Authorization: Bearer $TOKEN" \
+            "https://api.vercel.com/v6/deployments?projectId=$(echo $PROJECTS | python3 -c "import json,sys; d=json.load(sys.stdin); [print(p['id']) for p in d['projects'] if p['name']=='aureus-social-v18']" | head -1)&limit=3")
+          echo "=== Derniers déploiements ==="
+          echo "$DEPLOYS" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for dep in d.get('deployments',[])[:3]:
+    print(f\"state:{dep.get('state')} | {dep.get('url')} | {dep.get('errorMessage','')}\")"
