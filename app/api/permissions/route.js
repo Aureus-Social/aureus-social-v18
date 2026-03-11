@@ -5,12 +5,16 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 import { hasPermission, getRoleFromUser, getPermissionsForRole, PERMISSIONS } from '@/app/lib/permissions';
 
-const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
-  ? createClient((process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'), (process.env.SUPABASE_SERVICE_ROLE_KEY || ''))
-  : null;
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 // GET — récupérer les permissions d'un utilisateur
 export async function GET(request) {
+  const supabase = getSupabase();
   try {
     const { searchParams } = new URL(request.url);
     const permission = searchParams.get('permission');
@@ -32,6 +36,7 @@ export async function GET(request) {
 
 // POST — mettre à jour le rôle d'un utilisateur (Admin seulement)
 export async function POST(request) {
+  const supabase = getSupabase();
   try {
     // ─── Vérifier que le demandeur est authentifié ET admin
     const authHeader = request.headers.get('Authorization');

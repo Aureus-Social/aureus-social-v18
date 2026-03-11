@@ -4,9 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 import { hasPermission } from '@/app/lib/permissions';
 
-const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
-  ? createClient((process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'), (process.env.SUPABASE_SERVICE_ROLE_KEY || ''))
-  : null;
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 // Tables autorisées par rôle pour la restauration
 const ROLE_RESTORE = {
@@ -18,6 +21,7 @@ const ROLE_RESTORE = {
 };
 
 export async function POST(request) {
+  const supabase = getSupabase();
   try {
     // ─── Auth : récupérer le rôle depuis le TOKEN (pas depuis le body!)
     const authHeader = request.headers.get('Authorization');

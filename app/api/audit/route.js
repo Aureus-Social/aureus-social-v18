@@ -3,11 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
-  ? createClient((process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'), (process.env.SUPABASE_SERVICE_ROLE_KEY || ''))
-  : null;
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 export async function POST(request) {
+  const supabase = getSupabase();
   try {
     // ─── Auth : seuls les utilisateurs connectés peuvent écrire dans l'audit_log
     const authHeader = request.headers.get('Authorization');
@@ -56,6 +60,7 @@ export async function POST(request) {
 }
 
 export async function GET(request) {
+  const supabase = getSupabase();
   try {
     // ─── Auth GET : seuls les admins peuvent lire l'audit_log ──────────────
     const getAuth = request.headers.get('Authorization');
