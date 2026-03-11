@@ -156,8 +156,8 @@ export default function ConnexionsHub({ s, d, tab }) {
   const [viewMode, setViewMode]   = useState('grid'); // 'grid' | 'list'
 
   useEffect(() => {
-    try { setVisits(JSON.parse(localStorage.getItem(LS_KEY) || '{}')); } catch{ /* handled */ }
-    try { setFavs(JSON.parse(localStorage.getItem(FAV_KEY) || '{}')); } catch{ /* handled */ }
+    try { setVisits(_ls.get(LS_KEY, {})); } catch{ /* handled */ }
+    try { setFavs(_ls.get(FAV_KEY, {})); } catch{ /* handled */ }
   }, []);
 
   const open = (p) => {
@@ -165,7 +165,7 @@ export default function ConnexionsHub({ s, d, tab }) {
     const now = new Date().toISOString();
     setVisits(prev => {
       const u = { ...prev, [p.id]: now };
-      try { localStorage.setItem(LS_KEY, JSON.stringify(u)); } catch{ /* handled */ }
+      try { _ls.set(LS_KEY, u); } catch{ /* handled */ }
       return u;
     });
   };
@@ -174,7 +174,7 @@ export default function ConnexionsHub({ s, d, tab }) {
     e.stopPropagation();
     setFavs(prev => {
       const u = { ...prev, [id]: !prev[id] };
-      try { localStorage.setItem(FAV_KEY, JSON.stringify(u)); } catch{ /* handled */ }
+      try { _ls.set(FAV_KEY, u); } catch{ /* handled */ }
       return u;
     });
   };

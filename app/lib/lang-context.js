@@ -9,13 +9,13 @@ export function LangProvider({ children, initialLang = 'fr' }) {
   const [lang, setLangState] = useState(initialLang);
 
   useEffect(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('aureus_lang') : null;
+    const saved = typeof window !== 'undefined' ? (() => { try { return localStorage.getItem('aureus_lang'); } catch { return null; } })() : null;
     if (saved && ['fr','nl','en','de'].includes(saved)) setLangState(saved);
   }, []);
 
   const setLang = (l) => {
     setLangState(l);
-    if (typeof window !== 'undefined') localStorage.setItem('aureus_lang', l);
+    try { if (typeof window !== 'undefined') localStorage.setItem('aureus_lang', l); } catch { /* handled */ }
   };
 
   const t = (key) => {

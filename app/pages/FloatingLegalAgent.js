@@ -1,4 +1,5 @@
 'use client'
+import { logWarn } from '../lib/security/logger.js';
 import { useState, useRef, useEffect } from 'react';
 import { detectAgentLang } from './SprintComponents';
 
@@ -567,7 +568,7 @@ function FloatingLegalAgent({onAction}){
         }
         // Return text without the action block
         return text.replace(/\|\|\|ACTION\|\|\|[\s\S]*?\|\|\|END\|\|\|/,'').trim();
-      }catch(e){console.warn('Action parse error:',e);}
+      }catch(e){logWarn('LegalAgent', 'Action parse error', e);}
     }
     return text;
   };

@@ -1,4 +1,5 @@
 'use client';
+import { logInfo, logWarn } from '../lib/security/logger.js';
 import React, { useState, useReducer, useMemo, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { MENU, GROUPS, getGroupItems, SEARCH_SUBSECTIONS } from '../lib/menu-config';
@@ -118,7 +119,7 @@ function reducer(state, action) {
           record_id: emp?.id || null,
           details: emp ? { name: (emp.first||emp.fn||'')+ ' ' +(emp.last||emp.ln||''), action_type: action.type } : null
         })
-      }).catch(() => {});
+      }).catch(() => { /* fire-and-forget */ });
     }
   }
 
@@ -305,13 +306,13 @@ function DashboardLayoutInner({ user }) {
   const [page, setPage] = useState('dashboard');
   const [cryptoKey, setCryptoKey] = useState(null);
   const { lang, setLang, t: tCtx } = useLang();
-  const [theme, setTheme] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('aureus_theme') || 'dark' : 'dark'));
+  const [theme, setTheme] = useState(() => (typeof window !== 'undefined' ? (()=>{ try { return localStorage.getItem('aureus_theme') || 'dark'; } catch { return 'dark'; } })() : 'dark'));
 
   // Traduction helper
   const t = tCtx;
 
   // Persister préférences
-  useEffect(() => { if (typeof window !== 'undefined') localStorage.setItem('aureus_theme', theme); }, [theme]);
+  useEffect(() => { try { if (typeof window !== 'undefined') localStorage.setItem('aureus_theme', theme); } catch { /* handled */ } }, [theme]);
 
   // Couleurs selon thème
   const TH = {
@@ -348,7 +349,7 @@ function DashboardLayoutInner({ user }) {
     audit.login(user?.email);
     initCryptoKey(userId).then(ok => {
       if(ok) setCryptoKey(true);
-      else console.warn('[Crypto] Chiffrement non disponible');
+      else logWarn('Layout', 'Chiffrement non disponible');
     });
 
     // Backup automatique silencieux à chaque session (4.3)
@@ -367,9 +368,9 @@ function DashboardLayoutInner({ user }) {
             if (res.ok) {
               sessionStorage.setItem(BACKUP_KEY, String(now));
               const records = res.headers.get('X-Backup-Records');
-              console.log(`[Backup auto] ${records} enregistrements sauvegardés`);
+              logInfo('Layout', `Backup auto: ${records} enregistrements sauvegardés`);
             }
-          }).catch(() => {});
+          }).catch(() => { /* fire-and-forget */ });
         }, 3000); // 3s après login pour ne pas bloquer le chargement
       }
     }

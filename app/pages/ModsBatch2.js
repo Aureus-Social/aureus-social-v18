@@ -1410,19 +1410,19 @@ export function AccountingOutputMod({s,d,supabase,user}){
   // Load PCMN mappings from Supabase
   useEffect(()=>{
     if(!supabase||!user){setPcmnLoading(false);return;}
-    (async()=>{try{const{data}=await supabase.from('export_pcmn_mappings').select('*').eq('user_id',user.id).single();if(data?.mappings)setPcmn({...defaultPcmn,...data.mappings});}catch(e){}setPcmnLoading(false);})();
+    (async()=>{try{const{data}=await supabase.from('export_pcmn_mappings').select('*').eq('user_id',user.id).single();if(data?.mappings)setPcmn({...defaultPcmn,...data.mappings});}catch(e){ /* supabase error handled */ }setPcmnLoading(false);})();
   },[supabase,user]);
 
   // Load export history from Supabase
   useEffect(()=>{
     if(!supabase||!user){setHistoryLoading(false);return;}
-    (async()=>{try{const{data}=await supabase.from('export_history').select('*').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50);if(data)setHistory(data);}catch(e){}setHistoryLoading(false);})();
+    (async()=>{try{const{data}=await supabase.from('export_history').select('*').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50);if(data)setHistory(data);}catch(e){ /* supabase error handled */ }setHistoryLoading(false);})();
   },[supabase,user]);
 
   // Save PCMN mapping
   const savePcmnMapping=async()=>{
     if(!supabase||!user)return;
-    try{const{error}=await supabase.from('export_pcmn_mappings').upsert({user_id:user.id,mappings:pcmn,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(!error)setPcmnSaved(true);}catch(e){}
+    try{const{error}=await supabase.from('export_pcmn_mappings').upsert({user_id:user.id,mappings:pcmn,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(!error)setPcmnSaved(true);}catch(e){ /* supabase error handled */ }
   };
 
   // Compute totals
@@ -1536,10 +1536,10 @@ export function AccountingOutputMod({s,d,supabase,user}){
     const totals=computeTotals();const selFormat=formats.find(f=>f.id===format);
     const content=generateContent(format,totals);
     const periodLabel=periodType==='year'?selYear+'':periodType==='quarter'?'T'+Math.floor(selMonth/3+1)+'_'+selYear:moisNames[selMonth]+'_'+selYear;
-    try{const blob=new Blob([content],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Export_'+selFormat.name+'_'+periodLabel+selFormat.ext;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}catch(e){}
+    try{const blob=new Blob([content],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Export_'+selFormat.name+'_'+periodLabel+selFormat.ext;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}catch(e){ /* supabase error handled */ }
     const exportRecord={format:selFormat.name,format_id:format,period:periodLabel,period_type:periodType,client:selClient,lines_count:totals.lines.length,total_brut:totals.totalBrut,total_net:totals.totalNet,total_onss_e:totals.totalOnssE,total_onss_w:totals.totalOnssW,total_pp:totals.totalPP,date:now.toLocaleString('fr-BE')};
     setExported(exportRecord);
-    if(supabase&&user){try{const{data}=await supabase.from('export_history').insert({user_id:user.id,...exportRecord,created_at:new Date().toISOString()}).select().single();if(data)setHistory(prev=>[data,...prev]);}catch(e){}}
+    if(supabase&&user){try{const{data}=await supabase.from('export_history').insert({user_id:user.id,...exportRecord,created_at:new Date().toISOString()}).select().single();if(data)setHistory(prev=>[data,...prev]);}catch(e){ /* supabase error handled */ }}
   };
 
   // Styles
@@ -1863,8 +1863,8 @@ export function MarketplaceMod({s,d}){const loisRef=LOIS_BELGES;
   const [cat,setCat]=useState('all');
   const [activatedMods,setActivatedMods]=useState(()=>{try{return _ls.get('aureus_marketplace_active', []);}catch(e){return[];}});
   const [notifiedMods,setNotifiedMods]=useState(()=>{try{return _ls.get('aureus_marketplace_notify', []);}catch(e){return[];}});
-  const toggleMod=(modId,modName,price)=>{if(activatedMods.includes(modId)){const next=activatedMods.filter(m=>m!==modId);setActivatedMods(next);try{_ls.set('aureus_marketplace_active', next);}catch(e){}}else{const next=[...activatedMods,modId];setActivatedMods(next);try{_ls.set('aureus_marketplace_active', next);}catch(e){}alert('✅ Module "'+modName+'" activé ! ('+price+'€/mois)');}};
-  const toggleNotify=(modId,modName)=>{if(notifiedMods.includes(modId)){const next=notifiedMods.filter(m=>m!==modId);setNotifiedMods(next);try{_ls.set('aureus_marketplace_notify', next);}catch(e){}}else{const next=[...notifiedMods,modId];setNotifiedMods(next);try{_ls.set('aureus_marketplace_notify', next);}catch(e){}alert('🔔 Vous serez notifié quand "'+modName+'" sera disponible !');}};
+  const toggleMod=(modId,modName,price)=>{if(activatedMods.includes(modId)){const next=activatedMods.filter(m=>m!==modId);setActivatedMods(next);try{_ls.set('aureus_marketplace_active', next);}catch(e){ /* supabase error handled */ }}else{const next=[...activatedMods,modId];setActivatedMods(next);try{_ls.set('aureus_marketplace_active', next);}catch(e){ /* supabase error handled */ }alert('✅ Module "'+modName+'" activé ! ('+price+'€/mois)');}};
+  const toggleNotify=(modId,modName)=>{if(notifiedMods.includes(modId)){const next=notifiedMods.filter(m=>m!==modId);setNotifiedMods(next);try{_ls.set('aureus_marketplace_notify', next);}catch(e){ /* supabase error handled */ }}else{const next=[...notifiedMods,modId];setNotifiedMods(next);try{_ls.set('aureus_marketplace_notify', next);}catch(e){ /* supabase error handled */ }alert('🔔 Vous serez notifié quand "'+modName+'" sera disponible !');}};
   const modules=[
     {id:'mod_fleet',name:'Fleet Management',desc:'Gestion de flotte véhicules de société. Budget mobilité, cartes carburant, TCO, avantage de toute nature auto.',icon:'🚗',price:49,cat:'mobilite',status:'available',rating:4.8,installs:342},
     {id:'mod_expense',name:'Expense Management',desc:'Notes de frais automatisées avec OCR. Scan ticket → remboursement. Politique de dépenses configurable.',icon:'🧾',price:29,cat:'finance',status:'available',rating:4.6,installs:567},

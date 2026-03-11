@@ -1,4 +1,5 @@
 'use client';
+import { logError } from '../lib/security/logger.js';
 import { useLang } from '../lib/lang-context';
 import { supabase } from '@/app/lib/supabase';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
@@ -84,7 +85,7 @@ function AdminDashboard_Main({s,d}){
       if(cRes.data)setClients(cRes.data);
       if(tRes.data)setTravailleurs(tRes.data);
       if(fRes.data)setFiches(fRes.data);
-    }catch(e){console.error('AdminDashboard loadData:',e);}
+    }catch(e){logError('AdminDashboard', 'loadData failed', e);}
     finally{setLoading(false);}
   }
 

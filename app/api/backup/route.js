@@ -81,7 +81,7 @@ export async function POST(request) {
         key: 'last_backup_' + (role),
         value: JSON.stringify({ timestamp: now.toISOString(), records: totalRecords, tables: Object.keys(backupData).length }),
         updated_at: now.toISOString()
-      }, { onConflict: 'key' }).catch(() => {});
+      }, { onConflict: 'key' }).catch(() => { /* fire-and-forget */ });
       return new Response(jsonContent, {
         headers: {
           'Content-Type': 'application/json',

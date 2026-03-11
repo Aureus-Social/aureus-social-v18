@@ -139,7 +139,7 @@ export default function AdminBaremes({ loisBelges, loisTimeline, loisCurrent, on
   useEffect(() => {
     fetch('/api/baremes').then(r => r.json()).then(d => {
       if (d.entries) setCustomEntries(d.entries);
-    }).catch(() => {});
+    }).catch(() => { /* fire-and-forget */ });
   }, []);
 
   const handleValueChange = useCallback((key, rawVal, mult) => {

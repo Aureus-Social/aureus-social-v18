@@ -5,6 +5,7 @@
 // → Vercel redéploie automatiquement → RMMMG à jour partout dans l'app
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { logInfo, logError, logWarn } from '../../../lib/security/logger.js';
 import { NextResponse } from 'next/server';
 
 const RMMMG_FALLBACK = 2070.48; // Valeur connue — fallback si scraping impossible

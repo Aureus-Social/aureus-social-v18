@@ -76,7 +76,7 @@ export async function POST(request) {
     });
 
   } catch (err) {
-    console.error('[/api/agent] Error:', err?.message);
+    // Error handled by response below
     
     if (err?.status === 401) {
       return NextResponse.json({ error: 'Clé API invalide' }, { status: 503 });
