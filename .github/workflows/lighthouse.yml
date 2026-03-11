@@ -1,0 +1,39 @@
+# ═══════════════════════════════════════════════════════
+# AUREUS SOCIAL PRO — Lighthouse Performance Audit
+# Lance sur chaque PR vers main
+# ═══════════════════════════════════════════════════════
+
+name: 🔦 Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    name: Lighthouse Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci --legacy-peer-deps
+      - run: npm install -g @lhci/cli --legacy-peer-deps
+
+      - name: Run Lighthouse
+        run: |
+          lhci autorun \
+            --collect.url=https://app.aureussocial.be \
+            --collect.numberOfRuns=1 \
+            --assert.preset=lighthouse:recommended \
+            --assert.assertions.categories:performance=warn \
+            --assert.assertions.categories:accessibility=warn \
+            --assert.assertions.categories:best-practices=warn \
+            --upload.target=temporary-public-storage \
+          || echo "Lighthouse terminé (non bloquant)"
+        continue-on-error: true
+
+      - name: 📊 Score Summary
+        run: echo "Lighthouse audit: voir artifacts pour le rapport complet"

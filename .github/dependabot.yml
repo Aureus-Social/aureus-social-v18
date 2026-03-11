@@ -1,0 +1,32 @@
+# ═══════════════════════════════════════════════════════
+# AUREUS SOCIAL PRO — Dependabot
+# Mises à jour auto des dépendances npm + GitHub Actions
+# ═══════════════════════════════════════════════════════
+
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Brussels"
+    open-pull-requests-limit: 5
+    groups:
+      react:
+        patterns: ["react", "react-dom", "@types/react*"]
+      next:
+        patterns: ["next", "@next/*"]
+      supabase:
+        patterns: ["@supabase/*"]
+      dev-tools:
+        patterns: ["eslint*", "playwright*", "@playwright/*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"

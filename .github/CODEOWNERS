@@ -1,0 +1,12 @@
+# Aureus Social Pro — CODEOWNERS
+# Toute PR doit être approuvée par le owner
+
+* @Aureus-Social
+
+# Fichiers critiques — double validation
+app/lib/security/        @Aureus-Social
+app/api/                 @Aureus-Social
+.github/workflows/       @Aureus-Social
+supabase/                @Aureus-Social
+next.config.js           @Aureus-Social
+middleware.js            @Aureus-Social

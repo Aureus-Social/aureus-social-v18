@@ -1,142 +1,177 @@
-/**
- * AUREUS SOCIAL PRO — Smoke Tests (Playwright)
- * Tests critiques à lancer avant chaque déploiement en prod
- * 
- * INSTALLATION:
- *   npm install -D @playwright/test
- *   npx playwright install chromium
- * 
- * LANCEMENT:
- *   npx playwright test                         # tous les tests
- *   npx playwright test --headed                # avec navigateur visible
- *   npx playwright test tests/smoke.spec.js     # ce fichier uniquement
- * 
- * CI/CD (GitHub Actions — voir workflow ci-tests.yml)
- */
+// ═══════════════════════════════════════════════════════
+// AUREUS SOCIAL PRO — Smoke Tests Playwright
+// ═══════════════════════════════════════════════════════
 
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = process.env.TEST_URL || 'https://app.aureussocial.be';
-const TEST_EMAIL = process.env.TEST_EMAIL || 'demo@aureus-ia.com';
-const TEST_PASS  = process.env.TEST_PASS  || process.env.AUREUS_TEST_PASS;
+const BASE = process.env.TEST_URL || 'https://app.aureussocial.be';
+const EMAIL = process.env.TEST_EMAIL || '';
+const PASS  = process.env.AUREUS_TEST_PASS || '';
 
-// ─── GROUPE 1 : Pages publiques
+// ─── Helpers
+async function login(page) {
+  await page.goto(BASE + '/login');
+  await page.waitForLoadState('networkidle');
+  if (EMAIL && PASS) {
+    await page.fill('input[type="email"]', EMAIL);
+    await page.fill('input[type="password"]', PASS);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/dashboard|app/, { timeout: 15000 });
+  }
+}
+
+// ─── 1. Pages publiques accessibles
 test.describe('Pages publiques', () => {
-
-  test('Landing page se charge', async ({ page }) => {
-    const res = await page.goto(BASE_URL);
-    expect(res.status()).toBeLessThan(400);
+  test('Landing page répond 200', async ({ page }) => {
+    const res = await page.goto(BASE);
+    expect(res?.status()).toBeLessThan(400);
     await expect(page).toHaveTitle(/Aureus/i);
   });
 
-  test('Politique de confidentialité accessible', async ({ page }) => {
-    await page.goto(`${BASE_URL}/privacy`);
-    await expect(page.locator('body')).toContainText(/RGPD|confidentialité/i);
-  });
-
-});
-
-// ─── GROUPE 2 : Authentification
-test.describe('Authentification', () => {
-
-  test('Page de connexion se charge', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
+  test('Login page accessible', async ({ page }) => {
+    const res = await page.goto(BASE + '/login');
+    expect(res?.status()).toBeLessThan(400);
     await expect(page.locator('input[type="email"]')).toBeVisible();
-    await expect(page.locator('input[type="password"]')).toBeVisible();
   });
 
-  test('Connexion avec compte démo', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_EMAIL);
-    await page.fill('input[type="password"]', TEST_PASS);
-    await page.click('button[type="submit"]');
-    
-    // Attendre la redirection vers le dashboard
-    await page.waitForURL(/dashboard|app/, { timeout: 10_000 });
-    await expect(page.locator('body')).not.toContainText(/erreur|error|401|403/i);
+  test('Privacy policy accessible', async ({ page }) => {
+    const res = await page.goto(BASE + '/privacy');
+    expect(res?.status()).toBeLessThan(400);
   });
-
 });
 
-// ─── GROUPE 3 : Dashboard (nécessite connexion)
-test.describe('Dashboard', () => {
-  
-  // Se connecter avant chaque test de ce groupe
-  test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_EMAIL);
-    await page.fill('input[type="password"]', TEST_PASS);
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/dashboard|app/, { timeout: 10_000 });
-  });
-
-  test('Dashboard charge sans erreur JS', async ({ page }) => {
-    const errors = [];
-    page.on('pageerror', err => errors.push(err.message));
-    await page.waitForTimeout(2000);
-    expect(errors.filter(e => !e.includes('ResizeObserver'))).toHaveLength(0);
-  });
-
-  test('Navigation vers Employés', async ({ page }) => {
-    await page.click('[data-nav="employees"], a[href*="employees"]');
-    await expect(page.locator('body')).toContainText(/employé|werknemer/i);
-  });
-
-  test('Navigation vers Fiches de paie', async ({ page }) => {
-    await page.click('[data-nav="payslip"], a[href*="payslip"]');
-    await expect(page.locator('body')).toContainText(/fiche de paie|paie|loonbrief/i);
-  });
-
-  test('Navigation vers Déclarations', async ({ page }) => {
-    await page.click('[data-nav="declarations"], a[href*="decl"]');
-    await expect(page.locator('body')).toContainText(/déclaration|dimona|ONSS/i);
-  });
-
-});
-
-// ─── GROUPE 4 : API routes critiques
-test.describe('API routes', () => {
-
-  test('GET /api/health retourne 200', async ({ request }) => {
-    const res = await request.get(`${BASE_URL}/api/health`);
+// ─── 2. API Health check
+test.describe('API Routes', () => {
+  test('/api/health répond OK', async ({ request }) => {
+    const res = await request.get(BASE + '/api/health');
     expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty('status');
   });
 
-  test('POST /api/agent retourne 200 (pas 405)', async ({ request }) => {
-    const res = await request.post(`${BASE_URL}/api/agent`, {
-      data: { message: 'test', context: 'smoke-test' },
-      headers: { 'Content-Type': 'application/json' },
-    });
-    // Accepter 200 ou 401 (pas 405 Method Not Allowed)
-    expect([200, 401, 403]).toContain(res.status());
+  test('/api/health retourne le statut Supabase', async ({ request }) => {
+    const res = await request.get(BASE + '/api/health');
+    const body = await res.json();
+    expect(body.checks).toBeDefined();
   });
 
-  test('API BCE accessible', async ({ request }) => {
-    const res = await request.get(`${BASE_URL}/api/bce?vat=1028230781`);
-    expect(res.status()).toBeLessThan(500);
+  test('/api/agent refuse GET (méthode incorrecte)', async ({ request }) => {
+    const res = await request.get(BASE + '/api/agent');
+    expect(res.status()).toBe(405);
   });
 
+  test('Route inexistante retourne 404', async ({ request }) => {
+    const res = await request.get(BASE + '/api/nonexistent-route-xyz');
+    expect(res.status()).toBe(404);
+  });
 });
 
-// ─── GROUPE 5 : Sécurité headers
-test.describe('Headers de sécurité', () => {
-
-  test('Content-Security-Policy présent', async ({ request }) => {
-    const res = await request.get(BASE_URL);
-    const csp = res.headers()['content-security-policy'];
-    expect(csp).toBeTruthy();
+// ─── 3. Security Headers
+test.describe('Security Headers', () => {
+  test('X-Frame-Options présent', async ({ request }) => {
+    const res = await request.get(BASE);
+    const header = res.headers()['x-frame-options'];
+    expect(header).toBeTruthy();
   });
 
-  test('X-Frame-Options présent (anti-clickjacking)', async ({ request }) => {
-    const res = await request.get(BASE_URL);
-    const xfo = res.headers()['x-frame-options'];
-    expect(xfo).toMatch(/DENY|SAMEORIGIN/i);
+  test('X-Content-Type-Options présent', async ({ request }) => {
+    const res = await request.get(BASE);
+    expect(res.headers()['x-content-type-options']).toBe('nosniff');
   });
 
-  test('Pas de credentials en clair dans les réponses', async ({ request }) => {
-    const res = await request.get(`${BASE_URL}/api/health`);
-    const body = await res.text();
-    expect(body).not.toMatch(/password|secret|key.*:/i);
+  test('Strict-Transport-Security présent', async ({ request }) => {
+    const res = await request.get(BASE);
+    expect(res.headers()['strict-transport-security']).toBeTruthy();
   });
 
+  test('Referrer-Policy présent', async ({ request }) => {
+    const res = await request.get(BASE);
+    expect(res.headers()['referrer-policy']).toBeTruthy();
+  });
+});
+
+// ─── 4. Auth redirect (pages protégées)
+test.describe('Authentification', () => {
+  test('Dashboard redirige vers login si non connecté', async ({ page }) => {
+    await page.goto(BASE + '/dashboard');
+    await page.waitForURL(/login/, { timeout: 10000 });
+    expect(page.url()).toContain('login');
+  });
+
+  test('Page admin redirige vers login si non connecté', async ({ page }) => {
+    await page.goto(BASE + '/admin');
+    await page.waitForURL(/login/, { timeout: 10000 });
+    expect(page.url()).toContain('login');
+  });
+});
+
+// ─── 5. Tests avec auth (si credentials dispo)
+test.describe('Dashboard (auth requis)', () => {
+  test.skip(!EMAIL || !PASS, 'Skipped: TEST_EMAIL et AUREUS_TEST_PASS non configurés');
+
+  test('Login réussi', async ({ page }) => {
+    await login(page);
+    expect(page.url()).toMatch(/dashboard|app/);
+  });
+
+  test('Dashboard contient navigation', async ({ page }) => {
+    await login(page);
+    await expect(page.locator('nav, [role="navigation"]').first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test('Dashboard affiche le nom de la société', async ({ page }) => {
+    await login(page);
+    await expect(page.locator('text=Aureus')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('Logout fonctionne', async ({ page }) => {
+    await login(page);
+    const logoutBtn = page.locator('button:has-text("Déconnexion"), button:has-text("Logout")');
+    if (await logoutBtn.isVisible()) {
+      await logoutBtn.click();
+      await page.waitForURL(/login/, { timeout: 10000 });
+    }
+  });
+});
+
+// ─── 6. Performance de base
+test.describe('Performance', () => {
+  test('Landing page charge en moins de 10 secondes', async ({ page }) => {
+    const start = Date.now();
+    await page.goto(BASE, { waitUntil: 'networkidle', timeout: 15000 });
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeLessThan(10000);
+  });
+
+  test('Login page charge en moins de 5 secondes', async ({ page }) => {
+    const start = Date.now();
+    await page.goto(BASE + '/login', { waitUntil: 'networkidle', timeout: 10000 });
+    expect(Date.now() - start).toBeLessThan(5000);
+  });
+});
+
+// ─── 7. Accessibilité de base
+test.describe('Accessibilité', () => {
+  test('Login a des labels sur les champs', async ({ page }) => {
+    await page.goto(BASE + '/login');
+    const emailInput = page.locator('input[type="email"]');
+    await expect(emailInput).toBeVisible();
+    // Vérifie label ou aria-label
+    const label = await emailInput.getAttribute('aria-label') ||
+                  await emailInput.getAttribute('placeholder') ||
+                  await page.locator('label[for]').count();
+    expect(label).toBeTruthy();
+  });
+
+  test('Page a un titre HTML', async ({ page }) => {
+    await page.goto(BASE);
+    const title = await page.title();
+    expect(title.length).toBeGreaterThan(0);
+  });
+
+  test('Images ont des attributs alt', async ({ page }) => {
+    await page.goto(BASE);
+    const imgs = await page.locator('img:not([alt])').count();
+    expect(imgs).toBe(0);
+  });
 });

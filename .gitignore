@@ -2,3 +2,10 @@ node_modules
 .next
 .env.local
 .env
+
+# ─── Aureus additions
+.env.local
+.env.production
+*.key
+playwright-report/
+test-results/
