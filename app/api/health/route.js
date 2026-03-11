@@ -16,8 +16,8 @@ export async function GET() {
   // ─── 1. Vérifier la connexion Supabase
   try {
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY  // Service role pour le health check
+      (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'),
+      (process.env.SUPABASE_SERVICE_ROLE_KEY || '')  // Service role pour le health check
     );
     const { error } = await supabase.from('app_state').select('id').limit(1);
     checks.database = error ? 'degraded' : 'ok';

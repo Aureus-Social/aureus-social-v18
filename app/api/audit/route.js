@@ -15,8 +15,8 @@ export async function POST(request) {
       return Response.json({ error: 'Non autorisé' }, { status: 401 });
     }
     const anonSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'),
+      (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
     );
     const { data: { user: caller } } = await anonSupabase.auth.getUser(authHeader.replace('Bearer ', ''));
     if (!caller) return Response.json({ error: 'Session invalide' }, { status: 401 });

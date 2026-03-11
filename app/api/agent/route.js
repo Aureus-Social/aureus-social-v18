@@ -39,8 +39,8 @@ export async function POST(request) {
     }
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'),
+      (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
     );
     const { data: { user }, error: authErr } = await supabase.auth.getUser(
       authHeader.replace('Bearer ', '')

@@ -34,8 +34,8 @@ export async function POST(request) {
       return Response.json({ error: 'Non autorisé' }, { status: 401 });
     }
     const anonClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'),
+      (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
     );
     const { data: { user: caller }, error: authErr } = await anonClient.auth.getUser(
       authHeader.replace('Bearer ', '')
