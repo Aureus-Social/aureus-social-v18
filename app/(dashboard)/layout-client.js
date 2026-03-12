@@ -605,44 +605,130 @@ function DashboardLayoutInner({ user }) {
           </div>
           {/* Dropdown résultats */}
           {(searchFocus || searchQuery) && searchQuery.length > 0 && (() => {
-            const q = searchQuery.toLowerCase();
-            // Résultats pages menu
+            const q = searchQuery.toLowerCase().trim();
+
+            // ── 1. Résultats menu principal ──────────────────────────────
             const menuResults = MENU.filter(m => !m.group && (
               m.label.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)
-            )).slice(0, 5).map(m => ({ ...m, isSubsection: false }));
-            // Résultats sous-sections (paramètres légaux fiche de paie)
+            )).map(m => ({ ...m, type: 'page' }));
+
+            // ── 2. Sous-sections fiche de paie ───────────────────────────
             const subResults = (SEARCH_SUBSECTIONS || []).filter(s =>
               s.label.toLowerCase().includes(q) ||
               s.keywords.some(k => k.includes(q) || q.includes(k))
-            ).slice(0, 4).map(s => ({ ...s, isSubsection: true }));
-            const results = [...subResults, ...menuResults].slice(0, 8);
+            ).map(s => ({ ...s, type: 'subsection' }));
+
+            // ── 3. Index étendu — tous les onglets internes ──────────────
+            const INNER_TABS = [
+              // Sécurité des Données
+              { id:'securitedata', label:'Vue d\'ensemble Sécurité', sub:'Sécurité des Données', icon:'🛡', tab:'overview', keywords:['securite','overview','score','controles'] },
+              { id:'securitedata', label:'N1 Urgent — Failles critiques', sub:'Sécurité des Données', icon:'🔴', tab:'niveau1', keywords:['urgent','failles','critique','p1'] },
+              { id:'securitedata', label:'N2 Chiffrement', sub:'Sécurité des Données', icon:'🟠', tab:'niveau2', keywords:['chiffrement','aes','crypto','encrypt'] },
+              { id:'securitedata', label:'N3 Blindage', sub:'Sécurité des Données', icon:'🟡', tab:'niveau3', keywords:['blindage','hardening','csp','cors'] },
+              { id:'securitedata', label:'N4 RGPD', sub:'Sécurité des Données', icon:'🔵', tab:'rgpd', keywords:['rgpd','gdpr','dpo','article'] },
+              { id:'securitedata', label:'Test mot de passe', sub:'Sécurité des Données', icon:'🔑', tab:'password', keywords:['password','mot de passe','force','test'] },
+              { id:'securitedata', label:'Headers HTTP', sub:'Sécurité des Données', icon:'📋', tab:'headers', keywords:['headers','http','csp','hsts','cors'] },
+              { id:'securitedata', label:'Documents RGPD', sub:'Sécurité des Données', icon:'📜', tab:'rgpddocs', keywords:['rgpd','documents','dpa','article 28','30'] },
+              { id:'securitedata', label:'IP Whitelist', sub:'Sécurité des Données', icon:'🌐', tab:'ipwhitelist', keywords:['ip','whitelist','blocklist','acces'] },
+              { id:'securitedata', label:'Backup données', sub:'Sécurité des Données', icon:'💾', tab:'backup', keywords:['backup','sauvegarde','export','restore'] },
+              { id:'securitedata', label:'Security Pro — Backups B2 & Intrusions', sub:'Sécurité des Données', icon:'🔐', tab:'secpro', keywords:['security pro','b2','backblaze','intrusion','geoip','brute force'] },
+              // Audit Sécurité Code
+              { id:'auditsecuritecode', label:'Audit Sécurité Code', sub:'Audit Code', icon:'🛡', tab:'securite', keywords:['audit','code','securite'] },
+              { id:'auditsecuritecode', label:'Audit Trail', sub:'Audit Code', icon:'🔍', tab:'trail', keywords:['audit trail','logs','historique','actions'] },
+              { id:'auditsecuritecode', label:'Test Suite', sub:'Audit Code', icon:'🧪', tab:'tests', keywords:['test','suite','jest','unit'] },
+              // Fiches de paie
+              { id:'payslip', label:'Nouvelle fiche de paie', sub:'Fiches de Paie', icon:'➕', tab:'new', keywords:['nouvelle','creer','fiche','paie'] },
+              { id:'payslip', label:'Historique fiches de paie', sub:'Fiches de Paie', icon:'📋', tab:'history', keywords:['historique','fiches','liste','archives'] },
+              { id:'payslip', label:'Paramètres légaux', sub:'Fiches de Paie', icon:'⚙️', tab:'params', keywords:['parametres','legaux','taux','baremes'] },
+              // Dashboard RH
+              { id:'dashrh', label:'Planning RH', sub:'Dashboard RH', icon:'📅', tab:'planning', keywords:['planning','calendrier','rh'] },
+              { id:'dashrh', label:'Absences RH', sub:'Dashboard RH', icon:'🏖', tab:'absences', keywords:['absences','conges','maladie'] },
+              { id:'dashrh', label:'Analytics RH', sub:'Dashboard RH', icon:'📊', tab:'analytics', keywords:['analytics','stats','rh','indicateurs'] },
+              // Declarations
+              { id:'declarations', label:'Dimona IN', sub:'Déclarations ONSS/SPF', icon:'📡', tab:'dimona-in', keywords:['dimona','in','entree','declaration'] },
+              { id:'declarations', label:'Dimona OUT', sub:'Déclarations ONSS/SPF', icon:'📡', tab:'dimona-out', keywords:['dimona','out','sortie','fin contrat'] },
+              { id:'declarations', label:'DMFA Trimestrielle', sub:'Déclarations ONSS/SPF', icon:'📊', tab:'dmfa', keywords:['dmfa','trimestrielle','onss','declaration'] },
+              { id:'declarations', label:'Belcotax XML', sub:'Déclarations ONSS/SPF', icon:'📄', tab:'belcotax', keywords:['belcotax','281','xml','fiscal'] },
+              // Export Comptable Pro
+              { id:'exportcomptapro', label:'Export WinBooks ACT', sub:'Export Comptable Pro', icon:'📤', tab:'winbooks', keywords:['winbooks','act','export','compta'] },
+              { id:'exportcomptapro', label:'Export BOB50', sub:'Export Comptable Pro', icon:'📒', tab:'bob', keywords:['bob','bob50','export','compta'] },
+              { id:'exportcomptapro', label:'Export Exact Online', sub:'Export Comptable Pro', icon:'🔵', tab:'exact', keywords:['exact','online','xml','export'] },
+              { id:'exportcomptapro', label:'Export Octopus', sub:'Export Comptable Pro', icon:'🐙', tab:'octopus', keywords:['octopus','export','compta'] },
+              { id:'exportcomptapro', label:'Export Horus/Popsy', sub:'Export Comptable Pro', icon:'📊', tab:'horus', keywords:['horus','popsy','export','compta'] },
+              // Admin
+              { id:'admin', label:'Gestion utilisateurs', sub:'Administration', icon:'👥', tab:'users', keywords:['utilisateurs','users','admin','gestion'] },
+              { id:'admin', label:'Paramètres app', sub:'Administration', icon:'⚙️', tab:'settings', keywords:['parametres','settings','config','app'] },
+              { id:'admin', label:'Logs système', sub:'Administration', icon:'📋', tab:'logs', keywords:['logs','systeme','erreurs','debug'] },
+              // Simulateurs Pro
+              { id:'simulateurspro', label:'Simulateur Net→Brut', sub:'Simulateurs Pro', icon:'🧮', tab:'netbrut', keywords:['net','brut','simulateur','calcul'] },
+              { id:'simulateurspro', label:'Simulateur Licenciement', sub:'Simulateurs Pro', icon:'⚖️', tab:'licenciement', keywords:['licenciement','preavis','indemnite','rupture'] },
+              { id:'simulateurspro', label:'Simulateur Pension', sub:'Simulateurs Pro', icon:'🏖', tab:'pension', keywords:['pension','retraite','simulateur'] },
+              { id:'simulateurspro', label:'Coût total employeur', sub:'Simulateurs Pro', icon:'💰', tab:'cout', keywords:['cout','total','employeur','charge'] },
+              // Compliance
+              { id:'compliance', label:'Veille légale', sub:'Compliance Radar', icon:'⚖️', tab:'veille', keywords:['veille','legale','loi','monitoring'] },
+              { id:'compliance', label:'Alertes conformité', sub:'Compliance Radar', icon:'🔔', tab:'alertes', keywords:['alertes','conformite','compliance','rgpd'] },
+              // GED
+              { id:'ged', label:'Documents GED', sub:'GED Documents', icon:'📁', tab:'docs', keywords:['ged','documents','fichiers','archive'] },
+              { id:'ged', label:'RGPD Docs', sub:'GED Documents', icon:'🔒', tab:'rgpddocs', keywords:['rgpd','documents','dpa','art30'] },
+              // Hub Connexions
+              { id:'connexionshub', label:'ONSS / Mahis', sub:'Hub Connexions H24', icon:'🏛', tab:'onss', keywords:['onss','mahis','connexion','portail'] },
+              { id:'connexionshub', label:'CSAM / eHealth', sub:'Hub Connexions H24', icon:'🏥', tab:'csam', keywords:['csam','ehealth','gap','designation'] },
+              { id:'connexionshub', label:'Belcotax Online', sub:'Hub Connexions H24', icon:'📄', tab:'belcotax', keywords:['belcotax','fiscal','fisc','online'] },
+              // Reporting Pro
+              { id:'reportingpro', label:'Rapports par rôle', sub:'Reporting Pro', icon:'📈', tab:'roles', keywords:['rapports','role','reporting'] },
+              { id:'reportingpro', label:'Export analytique', sub:'Reporting Pro', icon:'📊', tab:'export', keywords:['export','analytique','reporting'] },
+            ];
+
+            const tabResults = INNER_TABS.filter(t =>
+              t.label.toLowerCase().includes(q) ||
+              t.sub.toLowerCase().includes(q) ||
+              t.keywords.some(k => k.includes(q) || q.includes(k))
+            ).map(t => ({ ...t, type: 'tab' }));
+
+            // ── Fusion + déduplication ────────────────────────────────────
+            const all = [...subResults, ...tabResults, ...menuResults];
+            // Dédupliquer : garder le premier de chaque id+tab combo
+            const seen = new Set();
+            const results = all.filter(r => {
+              const key = r.id + '|' + (r.tab||'') + '|' + (r.anchor||'');
+              if (seen.has(key)) return false;
+              seen.add(key); return true;
+            }).slice(0, 12);
+
             const groupName = (g) => GROUPS.find(gr => gr.id === `_g${g}`)?.label || '';
             return results.length > 0 ? (
               <div style={{
                 position: 'absolute', left: 12, right: 12, top: '100%', zIndex: 999,
                 background: '#111009', border: '1px solid rgba(198,163,78,.2)',
                 borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,.6)', overflow: 'hidden',
+                maxHeight: 420, overflowY: 'auto',
               }}>
                 {results.map((item, idx) => (
                   <div key={idx}
                     onClick={() => {
                       setPage(item.id);
-                      if (item.isSubsection && item.anchor) {
-                        setScrollAnchor(item.anchor);
-                      }
+                      if (item.type === 'subsection' && item.anchor) setScrollAnchor(item.anchor);
+                      if (item.type === 'tab' && item.tab) setTimeout(() => {
+                        const ev = new CustomEvent('aureus:settab', { detail: { tab: item.tab } });
+                        window.dispatchEvent(ev);
+                      }, 400);
                       setSearchQuery('');
                       setSearchFocus(false);
                     }}
-                    style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,.03)', background: item.isSubsection ? 'rgba(198,163,78,.03)' : 'transparent' }}
+                    style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,.03)',
+                      background: item.type === 'subsection' ? 'rgba(198,163,78,.03)' : item.type === 'tab' ? 'rgba(100,160,255,.03)' : 'transparent' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'rgba(198,163,78,.08)'}
-                    onMouseLeave={e => e.currentTarget.style.background = item.isSubsection ? 'rgba(198,163,78,.03)' : 'transparent'}
+                    onMouseLeave={e => e.currentTarget.style.background = item.type === 'subsection' ? 'rgba(198,163,78,.03)' : item.type === 'tab' ? 'rgba(100,160,255,.03)' : 'transparent'}
                   >
                     <span style={{ fontSize: 13, width: 18, textAlign: 'center' }}>{item.icon}</span>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 11.5, color: '#e8e6e0', fontWeight: 500 }}>{item.label}</div>
-                      <div style={{ fontSize: 9.5, color: item.isSubsection ? '#c6a34e' : '#5e5c56', marginTop: 1 }}>{item.isSubsection ? item.sub : groupName(item.g)}</div>
+                      <div style={{ fontSize: 9.5, color: item.type !== 'page' ? '#c6a34e' : '#5e5c56', marginTop: 1 }}>
+                        {item.type === 'page' ? groupName(item.g) : item.sub}
+                      </div>
                     </div>
-                    {item.isSubsection && <span style={{ fontSize: 9, color: '#c6a34e', opacity: 0.7 }}>↗ section</span>}
+                    {item.type === 'subsection' && <span style={{ fontSize: 9, color: '#c6a34e', opacity: 0.7 }}>↗ section</span>}
+                    {item.type === 'tab' && <span style={{ fontSize: 9, color: '#6ab0ff', opacity: 0.7 }}>↗ onglet</span>}
                   </div>
                 ))}
               </div>
@@ -650,9 +736,9 @@ function DashboardLayoutInner({ user }) {
               <div style={{
                 position: 'absolute', left: 12, right: 12, top: '100%', zIndex: 999,
                 background: '#111009', border: '1px solid rgba(198,163,78,.2)',
-                borderRadius: 8, padding: '10px 12px', fontSize: 11, color: '#5e5c56', textAlign: 'center',
-              }}>Aucun résultat</div>
-            );
+                borderRadius: 8, padding: '12px', textAlign: 'center', color: '#5e5c56', fontSize: 11,
+              }}>Aucun résultat pour « {searchQuery} »</div>
+            )
           })()}
         </div>
 
