@@ -72,6 +72,7 @@ const PayrollHubPg = dynamic(() => import('../pages/PayrollHub'), { ssr: false, 
 const ProceduresRHHubPg = dynamic(() => import('../pages/procedures/ProceduresRHHub'), { ssr: false, loading: Loading });
 const OnboardingWizardPg = dynamic(() => import('../pages/procedures/AdminGroup').then(m => ({ default: m.OnboardingWizard })), { ssr: false, loading: Loading });
 const TableauBordEmployeurPg = dynamic(() => import('../pages/TableauBordEmployeur'), { ssr: false, loading: Loading });
+const FacturationClientsPage = dynamic(() => import('../pages/FacturationClients'), { ssr: false, loading: Loading });
 
 // Wrappers pour modules avec props non-standard
 const AnalyticsDashboardRaw = dynamic(() => import('../pages/AnalyticsDashboard'), { ssr: false, loading: Loading });
@@ -448,7 +449,7 @@ function DashboardLayoutInner({ user }) {
       case 'commandcenter': return <SmartOpsPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'compliance': return <CompliancePage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'securitedata': return <SecurityPage s={s} d={d} t={t} lang={lang} tab={page} supabase={supabase} user={user} />;
-      case 'facturation': return <RelancesPage s={s} d={d} t={t} lang={lang} />;
+      case 'facturation': return <FacturationClientsPage s={s} d={d} />;
       case 'gestionprimes': return <PrimesPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'seuilssociaux': return <LoisPage s={s} d={d} t={t} lang={lang} tab={page} />;
       // TABLEAU DE BORD
