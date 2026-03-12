@@ -275,7 +275,7 @@ const StatusDot=({ok})=><span style={{display:'inline-block',width:8,height:8,bo
 // ════════════════════════════════════════════════════════════
 // SECURITY DASHBOARD — Vue complète sécurité
 // ════════════════════════════════════════════════════════════
-export function SecurityDashboard({s,supabase,user,defaultTab,state,dispatch}){
+export function SecurityDashboard({s,d,supabase,user,defaultTab}){
   const [tab,setTab]=useState(defaultTab||'overview');
   const [pwTest,setPwTest]=useState('');
   const [ipList,setIpList]=useState([
@@ -741,7 +741,7 @@ CREATE INDEX idx_ip_whitelist_tenant ON ip_whitelist(tenant_id, active);`}
 export default function SecurityDashboardWrapped({ s, d, tab, supabase, user }) {
   const tabMap = { securitedata:'overview', archives:'niveau3', ged:'rgpddocs' };
   const mappedTab = tabMap[tab] || tab || 'overview';
-  return <SecurityDashboard state={s || {}} dispatch={d || (() => {})} defaultTab={mappedTab} supabase={supabase} user={user} />;
+  return <SecurityDashboard s={s} d={d} defaultTab={mappedTab} supabase={supabase} user={user} />;
 }
 
 // force redeploy Thu Mar 12 12:09:41 UTC 2026
