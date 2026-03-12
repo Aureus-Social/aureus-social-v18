@@ -45,15 +45,28 @@ function DimonaPage({s,d}) {
 
   const [onssStatus,setOnssStatus]=useState(null);
   const [submitting,setSubmitting]=useState(false);
+  const [dbDims,setDbDims]=useState([]);
+  const [loadingHistory,setLoadingHistory]=useState(false);
 
-  // Check ONSS connection on mount
-  useEffect(()=>{fetch('/api/onss/status').then(r=>r.json()).then(setOnssStatus).catch(()=>setOnssStatus({readiness:{oauthToken:false}}));},[]);
+  // Check ONSS connection + charger historique Supabase au mount
+  useEffect(()=>{
+    fetch('/api/onss/status').then(r=>r.json()).then(setOnssStatus).catch(()=>setOnssStatus({readiness:{oauthToken:false}}));
+    setLoadingHistory(true);
+    const uid=s?.user?.id;
+    fetch(`/api/onss/dimona${uid?`?userId=${uid}`:''}`)
+      .then(r=>r.json())
+      .then(res=>{if(res.ok&&res.declarations)setDbDims(res.declarations);})
+      .catch(()=>{})
+      .finally(()=>setLoadingHistory(false));
+  },[]);
 
   const submitToONSS=async(declaration)=>{
     setSubmitting(true);
     try{
-      const resp=await fetch('/api/onss/dimona',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(declaration)});
+      const payload={...declaration,emp,co:s.co,userId:s?.user?.id,action:f.action,wtype:f.wtype,start:f.start,end:f.end,hours:f.planHrs||f.hours,dimonaP:f.dimonaP,reason:f.reason};
+      const resp=await fetch('/api/onss/dimona',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const result=await resp.json();
+      if(result.ok&&result.dbRecord){setDbDims(prev=>[result.dbRecord,...prev]);}
       setSubmitting(false);
       return result;
     }catch(e){setSubmitting(false);return{success:false,error:e.message};}
@@ -114,10 +127,12 @@ function DimonaPage({s,d}) {
   };
 
   // Stats
-  const statsIN=( s.dims||[]).filter(x=>x.action==='IN').length;
-  const statsOUT=( s.dims||[]).filter(x=>x.action==='OUT').length;
-  const statsUPD=( s.dims||[]).filter(x=>x.action==='UPDATE').length;
-  const filtered=filter==='all'?s.dims:( s.dims||[]).filter(x=>x.action===filter);
+  // Fusionner historique local + Supabase
+  const allDims=[...dbDims,...(s.dims||[]).filter(loc=>!dbDims.some(db=>db.dimona_ref===loc.dimNr))];
+  const statsIN=allDims.filter(x=>(x.action||x.action)==='IN').length;
+  const statsOUT=allDims.filter(x=>(x.action||x.action)==='OUT').length;
+  const statsUPD=allDims.filter(x=>(x.action||x.action)==='UPDATE').length;
+  const filtered=filter==='all'?allDims:allDims.filter(x=>(x.action||x.action)===filter);
 
   return <div>
     <PH title="Déclarations Dimona" sub="Déclaration immédiate de l'emploi — ONSS REST v2 — Connecté via Chaman"/>
@@ -147,7 +162,7 @@ function DimonaPage({s,d}) {
     </div>
     {/* Tabs */}
     <div style={{display:'flex',gap:6,marginBottom:16}}>
-      {[{v:"new",l:"Nouvelle déclaration"},{v:"history",l:"Historique"},{v:"rules",l:"Règles & Délais"}].map(t=>
+      {[{v:"new",l:"Nouvelle déclaration"},{v:"history",l:`Historique (${dbDims.length||( s.dims||[]).length})`},{v:"stats",l:"Statistiques"},{v:"rules",l:"Règles & Délais"}].map(t=>
         <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',
           background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>
       )}
@@ -225,6 +240,38 @@ function DimonaPage({s,d}) {
       ]} data={filtered}/>
     </C>}
 
+    {tab==='stats'&&<div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:16}}>
+      <C><ST>Vue d'ensemble</ST>
+        {[
+          {l:'Total déclarations',v:allDims.length,c:'#c6a34e'},
+          {l:'Dimona IN',v:statsIN,c:'#4ade80'},
+          {l:'Dimona OUT',v:statsOUT,c:'#f87171'},
+          {l:'Modifications',v:statsUPD,c:'#60a5fa'},
+          {l:'Depuis Supabase',v:dbDims.length,c:'#a78bfa'},
+          {l:'Travailleurs déclarés',v:new Set(allDims.map(d=>d.employe_niss||d.niss)).size,c:'#fb923c'},
+        ].map((r,i)=><div key={i} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.04)'}}>
+          <span style={{fontSize:12,color:'#9e9b93'}}>{r.l}</span>
+          <span style={{fontSize:14,fontWeight:700,color:r.c}}>{r.v}</span>
+        </div>)}
+      </C>
+      <C><ST>Répartition par action</ST>
+        {[{l:'IN',v:statsIN,t:allDims.length,c:'#4ade80'},{l:'OUT',v:statsOUT,t:allDims.length,c:'#f87171'},{l:'UPDATE',v:statsUPD,t:allDims.length,c:'#60a5fa'},{l:'CANCEL',v:allDims.filter(x=>x.action==='CANCEL').length,t:allDims.length,c:'#9ca3af'}].map((r,i)=>{
+          const pct=r.t>0?Math.round(r.v/r.t*100):0;
+          return <div key={i} style={{marginBottom:14}}>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:5}}>
+              <span style={{color:'#e8e6e0',fontWeight:600}}>{r.l}</span>
+              <span style={{color:'#5e5c56'}}>{r.v} ({pct}%)</span>
+            </div>
+            <div style={{height:6,borderRadius:3,background:'rgba(255,255,255,.06)'}}>
+              <div style={{height:'100%',borderRadius:3,width:`${pct}%`,background:`linear-gradient(90deg,${r.c},${r.c}99)`}}/>
+            </div>
+          </div>;
+        })}
+        <div style={{marginTop:12,padding:10,background:'rgba(198,163,78,.04)',borderRadius:8,fontSize:10.5,color:'#9e9b93'}}>
+          {loadingHistory?'Chargement depuis Supabase...':dbDims.length>0?`✅ ${dbDims.length} déclarations chargées depuis Supabase`:'ℹ️ Mode local — historique non persisté'}
+        </div>
+      </C>
+    </div>}
     {tab==='rules'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
       <C><ST>Délais légaux par type</ST>
         <div style={{fontSize:11,color:'#9e9b93',lineHeight:1.8}}>
