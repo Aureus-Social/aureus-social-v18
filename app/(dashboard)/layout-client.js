@@ -70,6 +70,7 @@ const TransversalCPPg = dynamic(() => import('../pages/TransversalCP'), { ssr: f
 const ModsBatch2Pg = dynamic(() => import('../pages/ModsBatch2'), { ssr: false, loading: Loading });
 const PayrollHubPg = dynamic(() => import('../pages/PayrollHub'), { ssr: false, loading: Loading });
 const ProceduresRHHubPg = dynamic(() => import('../pages/procedures/ProceduresRHHub'), { ssr: false, loading: Loading });
+const OnboardingWizardPg = dynamic(() => import('../pages/procedures/AdminGroup').then(m => ({ default: m.OnboardingWizard })), { ssr: false, loading: Loading });
 
 // Wrappers pour modules avec props non-standard
 const AnalyticsDashboardRaw = dynamic(() => import('../pages/AnalyticsDashboard'), { ssr: false, loading: Loading });
@@ -434,6 +435,7 @@ function DashboardLayoutInner({ user }) {
       case 'diagnostic': case 'diagnosticv': return <DiagnosticPage s={s} d={d} t={t} lang={lang} />;
       case 'seuilssociaux': return <SeuilsPage s={s} d={d} t={t} lang={lang} />;
       case 'onboarding': case 'onboardwizard': return <OnboardingPage s={s} d={d} t={t} lang={lang} />;
+      case 'nouveauemployeur': return <OnboardingWizardPg s={s} d={d} />;
       case 'cloture': return <CloturePage s={s} d={d} t={t} lang={lang} />;
       case 'analytics': return <AnalyticsPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'adminbaremes': return <AdminBaremesPageW s={s} d={d} t={t} lang={lang} />;
