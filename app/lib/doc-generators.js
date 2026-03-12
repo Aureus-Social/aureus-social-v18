@@ -21,7 +21,7 @@ export function downloadFile(content, filename, mimeType) {
     return true;
   } catch(err) {
     logError('DocGenerator', 'Download error', err);
-    alert('Erreur téléchargement: ' + err.message);
+    console.error('[DocGen] Erreur telechargement', err); alert('Une erreur est survenue. Veuillez reessayer.');
     return false;
   }
 }
@@ -122,7 +122,7 @@ export async function generatePayslipPDF(emp,r,period,co){
   try{
   const _payslipHTML=[];const empName=(emp.first||emp.fn||'')+" "+(emp.last||emp.ln||'');const w={document:{write:function(h){_payslipHTML.push(h)},close:function(){try{const html=_payslipHTML.join('');if(!html||html.length<100){alert('Erreur: HTML vide');return;}
   openForPDF(html, 'Fiche_paie_'+empName);
-  }catch(err){alert('Erreur download: '+err.message);}}}};
+  }catch(err){console.error('[DocGen] Erreur download', err); alert('Une erreur est survenue lors du telechargement.');}}}};
   const coName=co?.name||'Entreprise';
   const coVAT=co?.vat||'BE XXXX.XXX.XXX';
   const coAddr=co?.address||'';
@@ -176,7 +176,7 @@ ${mealV>0?`<div style="margin-top:6px;font-size:10px;color:#666">Chèques-repas:
 <div style="text-align:center;margin-top:15px"><button onclick="window.print()" style="background:#c6a34e;color:#fff;border:none;padding:10px 30px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Imprimer / Sauvegarder PDF</button></div>
 </body></html>`);
   w.document.close();
-  }catch(err){alert('Erreur génération fiche: '+err.message);logError('DocGenerator', 'Erreur génération fiche', err);}
+  }catch(err){logError('DocGenerator', 'Erreur generation fiche', err); alert('Une erreur est survenue lors de la generation.');}
 }
 
 // ═══ ALERTES LÉGALES ═══

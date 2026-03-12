@@ -12,10 +12,22 @@ function getSupabase() {
   return createClient(url, key);
 }
 
-// GET — récupérer les permissions d'un utilisateur
+// GET — récupérer les permissions d'un utilisateur (auth obligatoire)
 export async function GET(request) {
   const supabase = getSupabase();
   try {
+    // Auth obligatoire — évite l'énumération des rôles par un attaquant
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+    if (authError || !user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const permission = searchParams.get('permission');
     const role = searchParams.get('role') || 'readonly';
@@ -27,7 +39,6 @@ export async function GET(request) {
     return Response.json({
       role,
       permissions: getPermissionsForRole(role),
-      all_permissions: Object.keys(PERMISSIONS)
     });
   } catch (e) {
     return Response.json({ error: 'Erreur interne du serveur' }, { status: 500 });

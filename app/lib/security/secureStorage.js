@@ -58,7 +58,7 @@ export const sSet = async (key, value) => {
     const encrypted = await encrypt(value);
     localStorage.setItem(`as_${key}`, encrypted);
   } catch (err) {
-    console.error('[SecureStorage] sSet error:', key, err);
+    if (process.env.NODE_ENV !== 'production') console.error('[SecureStorage] sSet error:', key, err);
   }
 };
 
@@ -109,7 +109,7 @@ export const migrateUnencrypted = async (knownKeys) => {
         const parsed = JSON.parse(raw);
         await sSet(key, parsed);
         localStorage.removeItem(key); // Supprimer l'ancienne version
-        console.info('[SecureStorage] Migrated:', key);
+        if (process.env.NODE_ENV !== 'production') console.info('[SecureStorage] Migrated:', key);
       } catch {
         // Valeur déjà string simple
         await sSet(key, raw);

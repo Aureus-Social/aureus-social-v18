@@ -132,7 +132,7 @@ function Employees({s,d}) {
       }
       alert(`✅ ${added} travailleur(s) importé(s) depuis ${file.name}`);
     }catch(err){
-      alert('❌ Erreur import: '+err.message);
+      logError && logError('Employees', 'Erreur import', err); alert('❌ Erreur lors de l import. Verifiez le format du fichier.');
     }
     setImporting(false);
     e.target.value='';

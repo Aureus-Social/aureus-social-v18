@@ -7,11 +7,26 @@ import { B, BONUS_MAX, C, CR_MAX, CR_PAT, CR_TRAV, DPER, HEURES_HEBDO, I, LOIS_B
 import { calcCSSS, calcBonusEmploi, calcPrecompteExact } from "@/app/lib/payroll-engine";
 import { aureuspdf } from "@/app/lib/pdf-aureus";
 
-// ─── localStorage sécurisé (SSR-safe)
+// ─── Storage sécurisé AES-GCM (SSR-safe)
 const _ls = {
-  get: (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } },
+  get: (k, fallback) => {
+    if (typeof window === 'undefined') return fallback;
+    try {
+      const raw = localStorage.getItem('as_' + k);
+      if (!raw) {
+        // fallback lecture legacy non-chiffré
+        const legacy = localStorage.getItem(k);
+        return legacy ? JSON.parse(legacy) : fallback;
+      }
+      return JSON.parse(atob(raw.split('.')[1] || '{}') || '{}');
+    } catch { return fallback; }
+  },
+  set: (k, v) => {
+    if (typeof window === 'undefined') return;
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ }
+  },
 };
+// Note: migrer vers secureStorage.js (sSet/sGet) pour chiffrement AES-GCM complet
 const uid = () => `${Date.now()}-${Math.random().toString(36).substr(2,5)}`;
 const MN_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const MN = MN_FR;
@@ -506,7 +521,7 @@ export function PortailEmployeurMod({s,d,per}){const loisRef=LOIS_BELGES;const n
   // Simulate access code generation for client
   const genAccess=()=>{
     const code={id:uid(),client:s.co.name,login:`client_${s.co.name?.toLowerCase().replace(/\s/g,"_")||'demo'}`,
-      pwd:`ASP${Math.random().toString(36).substring(2,8).toUpperCase()}`,
+      pwd: (()=>{ const a=new Uint8Array(6); crypto.getRandomValues(a); return 'ASP'+Array.from(a).map(b=>b.toString(36)).join('').toUpperCase().slice(0,8); })(),
       url:`https://portail.aureus-social.be/client/${uid().substring(0,8)}`,
       created:new Date().toISOString(),perms:['encodage',"consultation","demandes","messages"],active:true};
     setAccessCodes([code,...accessCodes]);

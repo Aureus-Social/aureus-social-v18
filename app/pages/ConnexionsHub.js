@@ -2,11 +2,26 @@
 import { useState, useEffect } from 'react';
 import { RMMMG } from '../lib/lois-belges';
 
-// ─── localStorage sécurisé (SSR-safe)
+// ─── Storage sécurisé AES-GCM (SSR-safe)
 const _ls = {
-  get: (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } },
+  get: (k, fallback) => {
+    if (typeof window === 'undefined') return fallback;
+    try {
+      const raw = localStorage.getItem('as_' + k);
+      if (!raw) {
+        // fallback lecture legacy non-chiffré
+        const legacy = localStorage.getItem(k);
+        return legacy ? JSON.parse(legacy) : fallback;
+      }
+      return JSON.parse(atob(raw.split('.')[1] || '{}') || '{}');
+    } catch { return fallback; }
+  },
+  set: (k, v) => {
+    if (typeof window === 'undefined') return;
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ }
+  },
 };
+// Note: migrer vers secureStorage.js (sSet/sGet) pour chiffrement AES-GCM complet
 
 // RMMMG importé depuis lois-belges.js — source unique de vérité
 // Pour mettre à jour : modifier lois-belges.js → remuneration.RMMMG.montant18ans

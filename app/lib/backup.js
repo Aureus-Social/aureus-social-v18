@@ -10,7 +10,7 @@ export async function createFullBackup(supabase, userId) {
   const tables = ['app_state', 'payroll_history', 'documents', 'activity_log', 'declaration_queue'];
   for (const table of tables) {
     try {
-      const { data } = await supabase.from(table).select('*').eq('user_id', userId);
+      const { data } = await supabase.from(table).select('id, created_at, user_id').eq('user_id', userId);
       backup.data[table] = data || [];
     } catch (e) {
       backup.data[table] = [];

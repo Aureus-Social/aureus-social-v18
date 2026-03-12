@@ -11,7 +11,12 @@ function getSupabase() {
   return createClient(url, key);
 }
 
-export async function GET() {
+export async function GET(request) {
+  // Auth Bearer obligatoire
+  const auth = request.headers.get('Authorization');
+  if (!auth?.startsWith('Bearer ')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   const supabase = getSupabase();
   try {
     const checks = [];
