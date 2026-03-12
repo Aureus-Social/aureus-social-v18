@@ -744,3 +744,4 @@ export default function SecurityDashboardWrapped({ s, d, tab, supabase, user }) 
   return <SecurityDashboard state={s || {}} dispatch={d || (() => {})} defaultTab={mappedTab} supabase={supabase} user={user} />;
 }
 
+// force redeploy Thu Mar 12 12:09:41 UTC 2026

@@ -21,7 +21,7 @@ const AureusSuitePagePage = dynamic(() => import('../pages/AureusSuitePage'), { 
 const PayrollSimulatorPage = dynamic(() => import('../pages/PayrollSimulator'), { ssr: false, loading: () => <Loading /> });
 
 // Router
-export function routePage(page, state, dispatch) {
+export function routePage(page, state, dispatch, supabase, user) {
   switch(page) {
     case 'dashboard': return <dashboardPage s={state} d={dispatch} />;
     case 'employees': return <employeesPage s={state} d={dispatch} />;
@@ -37,7 +37,7 @@ export function routePage(page, state, dispatch) {
     case 'cloture': return <ClotureMensuellePage s={state} d={dispatch} />;
     case 'analytics': return <AnalyticsDashboardPage s={state} d={dispatch} />;
     case 'compliance': return <ComplianceDashboardPage s={state} d={dispatch} />;
-    case 'securitedata': return <SecurityDashboardPage s={state} d={dispatch} />;
+    case 'securitedata': return <SecurityDashboardPage s={state} d={dispatch} supabase={supabase} user={user} />;
     case 'adminbaremes': return <AdminBaremesPage s={state} d={dispatch} />;
     case 'facturation': return <RelancesFacturationPage s={state} d={dispatch} />;
     case 'aureussuite': return <AureusSuitePagePage s={state} d={dispatch} />;
