@@ -114,7 +114,7 @@ const SecProTab=({supabase,user,C})=>{
     {/* Sous-onglets */}
     <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'center'}}>
       <STBtn v='backup' l='💾 Historique Backups B2'/>
-      <STBtn v='intrusion' l='🚨 Tentatives d\'Intrusion'/>
+      <STBtn v='intrusion' l="🚨 Tentatives d'Intrusion"/>
       <button onClick={()=>secTab==='backup'?loadBackups():loadIntrusions()} style={{marginLeft:'auto',padding:'8px 14px',borderRadius:8,border:'1px solid rgba(198,163,78,.2)',background:'transparent',color:'#c6a34e',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>
         🔄 Actualiser {lastRefresh?'· '+timeSince(lastRefresh):''}
       </button>
