@@ -738,9 +738,9 @@ CREATE INDEX idx_ip_whitelist_tenant ON ip_whitelist(tenant_id, active);`}
 }
 
 
-export default function SecurityDashboardWrapped({ s, d, tab }) {
+export default function SecurityDashboardWrapped({ s, d, tab, supabase, user }) {
   const tabMap = { securitedata:'overview', archives:'niveau3', ged:'rgpddocs' };
   const mappedTab = tabMap[tab] || tab || 'overview';
-  return <SecurityDashboard state={s || {}} dispatch={d || (() => {})} defaultTab={mappedTab} />;
+  return <SecurityDashboard state={s || {}} dispatch={d || (() => {})} defaultTab={mappedTab} supabase={supabase} user={user} />;
 }
 

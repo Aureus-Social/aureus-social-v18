@@ -443,7 +443,7 @@ function DashboardLayoutInner({ user }) {
       case 'dashrh': return <EmployeeHubPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'commandcenter': return <SmartOpsPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'compliance': return <CompliancePage s={s} d={d} t={t} lang={lang} tab={page} />;
-      case 'securitedata': return <SecurityPage s={s} d={d} t={t} lang={lang} tab={page} />;
+      case 'securitedata': return <SecurityPage s={s} d={d} t={t} lang={lang} tab={page} supabase={supabase} user={user} />;
       case 'facturation': return <RelancesPage s={s} d={d} t={t} lang={lang} />;
       case 'gestionprimes': return <PrimesPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'seuilssociaux': return <LoisPage s={s} d={d} t={t} lang={lang} tab={page} />;
