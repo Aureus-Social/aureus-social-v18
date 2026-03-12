@@ -11,6 +11,26 @@ const MN_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août
 
 function escapeHtml(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+// ── Validation NISS belge (modulo 97) ─────────────────────────
+function validateNISS(niss) {
+  const n = (niss||'').replace(/[^0-9]/g,'');
+  if(n.length!==11) return {ok:false,msg:'NISS doit comporter 11 chiffres'};
+  const base=parseInt(n.slice(0,9),10);
+  const check=parseInt(n.slice(9),10);
+  // Né avant 2000 : mod 97 direct. Né en 2000+ : préfixer 2 avant les 9 premiers chiffres
+  const mod97=(num)=>97-((num)%97);
+  if(mod97(base)===check) return {ok:true,msg:'NISS valide'};
+  if(mod97(2000000000+base)===check) return {ok:true,msg:'NISS valide (né en 2000+)'};
+  return {ok:false,msg:'NISS invalide (modulo 97 incorrect)'};
+}
+
+// ── Calcul heures STU restantes dans l'année ─────────────────
+function calcStuHours(emp, dims) {
+  const year = new Date().getFullYear();
+  const stuDims = (dims||[]).filter(d => d.wtype==='STU' && d.eid===emp.id && (d.at||d.created_at||'').startsWith(String(year)));
+  return stuDims.reduce((a,d) => a+(+(d.hours||0)), 0);
+}
+
 function DimonaPage({s,d}) {
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const [f,setF]=useState({eid:(s?.emps||[])[0]?.id||'',action:"IN",wtype:"OTH",start:new Date().toISOString().split('T')[0],end:"",hours:'',reason:'',dimonaP:'',planHrs:''});
@@ -36,6 +56,15 @@ function DimonaPage({s,d}) {
   };
   const errs=validate();
 
+  // ── NISS validation live ──
+  const nissCheck = emp?.niss ? validateNISS(emp.niss) : null;
+
+  // ── Student@Work 600h/an ──
+  const allDimsForStu = [...(s.dims||[])];
+  const stuUsed = emp ? calcStuHours(emp, allDimsForStu) : 0;
+  const stuRemaining = Math.max(0, 600 - stuUsed);
+  const stuPct = Math.min(100, Math.round(stuUsed/6));
+
   // Worker type descriptions
   const wtDescs={OTH:'Ordinaire',STU:'Étudiant (max 600h/an)',FLX:'Flexi-job',EXT:'Extra Horeca',DWD:'Travailleur occasionnel',IVT:'Stagiaire',BCW:'ALE/PWA',APP:'Apprenti',ART:'Artiste',SP1:'Travailleurs saisonniers',DIP:'Diplomate'};
 
@@ -47,6 +76,9 @@ function DimonaPage({s,d}) {
   const [submitting,setSubmitting]=useState(false);
   const [dbDims,setDbDims]=useState([]);
   const [loadingHistory,setLoadingHistory]=useState(false);
+  const [masseDimona,setMasseDimona]=useState(false);
+  const [masseProgress,setMasseProgress]=useState([]);
+  const [masseRunning,setMasseRunning]=useState(false);
 
   // Check ONSS connection + charger historique Supabase au mount
   useEffect(()=>{
@@ -129,6 +161,28 @@ function DimonaPage({s,d}) {
   // Stats
   // Fusionner historique local + Supabase
   const allDims=[...dbDims,...(s.dims||[]).filter(loc=>!dbDims.some(db=>db.dimona_ref===loc.dimNr))];
+
+  // ── Dimona en masse : déclarer tous les actifs ──
+  const genMasse=async()=>{
+    const actifs=(s?.emps||[]).filter(e=>e.status==='active'||!e.status);
+    if(!actifs.length){alert('Aucun employé actif.');return;}
+    if(!confirm(`Générer ${actifs.length} Dimona IN pour tous les employés actifs ?`)) return;
+    setMasseRunning(true);
+    setMasseProgress([]);
+    for(const e of actifs){
+      const nCheck=validateNISS(e.niss);
+      if(!e.niss||!nCheck.ok){
+        setMasseProgress(p=>[...p,{name:`${e.prenom||e.first||''} ${e.nom||e.last||''}`.trim(),status:'skip',msg:`NISS invalide: ${nCheck.msg}`}]);
+        continue;
+      }
+      const dimNr='DIM'+Date.now().toString(36).toUpperCase();
+      await new Promise(r=>setTimeout(r,200)); // throttle
+      setMasseProgress(p=>[...p,{name:`${e.prenom||e.first||''} ${e.nom||e.last||''}`.trim(),status:'ok',msg:`Dimona IN générée — Réf: ${dimNr}`}]);
+      d({type:'ADD_DIM',d:{eid:e.id,ename:`${e.prenom||e.first||''} ${e.nom||e.last||''}`.trim(),action:'IN',wtype:e.wtype||'OTH',start:new Date().toISOString().split('T')[0],at:new Date().toISOString(),status:'pending',dimNr}});
+    }
+    setMasseRunning(false);
+  };
+
   const statsIN=allDims.filter(x=>(x.action||x.action)==='IN').length;
   const statsOUT=allDims.filter(x=>(x.action||x.action)==='OUT').length;
   const statsUPD=allDims.filter(x=>(x.action||x.action)==='UPDATE').length;
@@ -161,15 +215,50 @@ function DimonaPage({s,d}) {
       )}
     </div>
     {/* Tabs */}
-    <div style={{display:'flex',gap:6,marginBottom:16}}>
-      {[{v:"new",l:"Nouvelle déclaration"},{v:"history",l:`Historique (${dbDims.length||( s.dims||[]).length})`},{v:"stats",l:"Statistiques"},{v:"rules",l:"Règles & Délais"}].map(t=>
+    <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
+      {[{v:"new",l:"Nouvelle déclaration"},{v:"history",l:`Historique (${dbDims.length||(s.dims||[]).length})`},{v:"stats",l:"Statistiques"},{v:"rules",l:"Règles & Délais"}].map(t=>
         <button key={t.v} onClick={()=>setTab(t.v)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12,fontWeight:tab===t.v?600:400,fontFamily:'inherit',
           background:tab===t.v?'rgba(198,163,78,.15)':'rgba(255,255,255,.03)',color:tab===t.v?'#c6a34e':'#9e9b93'}}>{t.l}</button>
       )}
+      <button onClick={()=>setMasseDimona(v=>!v)} style={{marginLeft:'auto',padding:'7px 14px',borderRadius:8,border:'1px solid rgba(198,163,78,.2)',background:'transparent',color:'#c6a34e',fontSize:11,cursor:'pointer',fontWeight:600,fontFamily:'inherit'}}>⚡ Dimona en masse</button>
     </div>
+
+    {masseDimona&&<div style={{marginBottom:16,padding:16,background:'rgba(198,163,78,.04)',borderRadius:12,border:'1px solid rgba(198,163,78,.12)'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <div>
+          <div style={{fontSize:13,fontWeight:700,color:'#c6a34e'}}>⚡ Dimona IN en masse</div>
+          <div style={{fontSize:10,color:'#5e5c56',marginTop:2}}>{(s?.emps||[]).filter(e=>e.status==='active'||!e.status).length} employés actifs · NISS valide requis</div>
+        </div>
+        <button onClick={genMasse} disabled={masseRunning} style={{padding:'9px 18px',borderRadius:8,border:'none',background:masseRunning?'rgba(255,255,255,.05)':'linear-gradient(135deg,#c6a34e,#a68a3c)',color:masseRunning?'#5e5c56':'#0c0b09',fontWeight:700,fontSize:12,cursor:masseRunning?'not-allowed':'pointer',fontFamily:'inherit'}}>
+          {masseRunning?'⏳ Génération...':'▶ Générer toutes les Dimona IN'}
+        </button>
+      </div>
+      {masseProgress.length>0&&<div style={{maxHeight:160,overflowY:'auto'}}>
+        {masseProgress.map((r,i)=><div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.03)',fontSize:11}}>
+          <span style={{color:r.status==='ok'?'#4ade80':'#f87171'}}>{r.status==='ok'?'✓':'✗'}</span>
+          <span style={{color:'#e8e6e0',fontWeight:500,minWidth:140}}>{r.name}</span>
+          <span style={{color:'#5e5c56'}}>{r.msg}</span>
+        </div>)}
+      </div>}
+    </div>}
 
     {tab==='new'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}>
       <C><ST>Déclaration Dimona</ST>
+        {emp&&emp.niss&&<div style={{marginBottom:10,padding:'7px 10px',borderRadius:7,border:`1px solid ${nissCheck?.ok?'rgba(74,222,128,.2)':'rgba(248,113,113,.2)'}`,background:nissCheck?.ok?'rgba(74,222,128,.04)':'rgba(248,113,113,.04)',display:'flex',gap:8,alignItems:'center',fontSize:11}}>
+          <span style={{color:nissCheck?.ok?'#4ade80':'#f87171',fontWeight:700}}>{nissCheck?.ok?'✓':'✗'}</span>
+          <span style={{color:nissCheck?.ok?'#4ade80':'#f87171'}}>NISS {emp.niss} — {nissCheck?.msg}</span>
+        </div>}
+        {emp&&!emp.niss&&<div style={{marginBottom:10,padding:'7px 10px',borderRadius:7,border:'1px solid rgba(248,113,113,.2)',background:'rgba(248,113,113,.04)',fontSize:11,color:'#f87171'}}>⚠ NISS manquant — déclaration Dimona impossible</div>}
+        {f.wtype==='STU'&&emp&&<div style={{marginBottom:10,padding:'9px 12px',borderRadius:7,border:'1px solid rgba(96,165,250,.15)',background:'rgba(96,165,250,.04)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:6}}>
+            <span style={{color:'#60a5fa',fontWeight:600}}>📋 Student@Work {new Date().getFullYear()}</span>
+            <span style={{color:stuRemaining<50?'#f87171':'#60a5fa',fontWeight:700}}>{stuUsed}h utilisées / 600h max</span>
+          </div>
+          <div style={{height:5,borderRadius:3,background:'rgba(255,255,255,.06)'}}>
+            <div style={{height:'100%',borderRadius:3,width:`${stuPct}%`,background:stuPct>=90?'#f87171':stuPct>=70?'#fb923c':'#60a5fa',transition:'width .3s'}}/>
+          </div>
+          <div style={{fontSize:10,color:'#5e5c56',marginTop:4}}>{stuRemaining}h restantes cette année</div>
+        </div>}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9}}>
           <I label="Travailleur" value={f.eid} onChange={v=>setF({...f,eid:v})} span={2} options={(s?.emps||[]).map(e=>({v:e.id,l:`${e.first||e.fn||'Emp'} ${e.last||''} ${e.niss?'':'⚠ NISS!'}`}))}/>
           <I label="Action" value={f.action} onChange={v=>setF({...f,action:v})} options={[{v:"IN",l:"IN — Entrée en service"},{v:"OUT",l:"OUT — Sortie de service"},{v:"UPDATE",l:"UPDATE — Modification"},{v:"CANCEL",l:"CANCEL — Annulation"}]}/>
