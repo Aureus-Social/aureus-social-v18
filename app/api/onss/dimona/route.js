@@ -2,10 +2,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+export const dynamic = 'force-dynamic';
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 function genDimonaXML({ action, wtype, start, end, hours, first, last, niss, birth, cp, onss, vat, dimonaP, reason }) {
   const now = new Date().toISOString();
@@ -112,7 +116,7 @@ export async function POST(req) {
       created_at: new Date().toISOString(),
     };
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await getSupabase()
       .from('dimona_declarations')
       .insert(record)
       .select()
@@ -153,7 +157,7 @@ export async function GET(req) {
     const userId = searchParams.get('userId');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    let query = supabaseAdmin
+    let query = getSupabase()
       .from('dimona_declarations')
       .select('*')
       .order('created_at', { ascending: false })
