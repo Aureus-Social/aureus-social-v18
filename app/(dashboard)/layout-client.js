@@ -73,6 +73,7 @@ const ProceduresRHHubPg = dynamic(() => import('../pages/procedures/ProceduresRH
 const OnboardingWizardPg = dynamic(() => import('../pages/procedures/AdminGroup').then(m => ({ default: m.OnboardingWizard })), { ssr: false, loading: Loading });
 const TableauBordEmployeurPg = dynamic(() => import('../pages/TableauBordEmployeur'), { ssr: false, loading: Loading });
 const FacturationClientsPage = dynamic(() => import('../pages/FacturationClients'), { ssr: false, loading: Loading });
+const AlertesLegalesPage = dynamic(() => import('../pages/AlertesLegales'), { ssr: false, loading: Loading });
 
 // Wrappers pour modules avec props non-standard
 const AnalyticsDashboardRaw = dynamic(() => import('../pages/AnalyticsDashboard'), { ssr: false, loading: Loading });
@@ -457,7 +458,8 @@ function DashboardLayoutInner({ user }) {
       case 'actionsrapides': return <SmartOpsPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'journal': return <NotificationCenterPgW s={s} d={d} tab={page} />;
       case 'tbdirection': return <AnalyticsPage s={s} d={d} t={t} lang={lang} tab={page} />;
-      case 'smartalerts': return <NotificationCenterPgW s={s} d={d} tab={page} />;
+      case 'smartalerts': return <AlertesLegalesPage s={s} d={d} />;
+      case 'alerteslegales': return <AlertesLegalesPage s={s} d={d} />;
       case 'notifications': return <NotificationCenterPgW s={s} d={d} tab={page} />;
       // GESTION RH
       case 'annexeReglement': return <DocumentGeneratorPgW s={s} d={d} tab={page} />;
