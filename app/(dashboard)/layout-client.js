@@ -104,6 +104,7 @@ const ProceduresRHHubRaw = dynamic(() => import('../pages/procedures/ProceduresR
 const MandatsAdminRaw = dynamic(() => import('../pages/MandatsAdminPage'), { ssr: false, loading: Loading });
 const MandatsAdminPg = ({ s, d, tab }) => <MandatsAdminRaw s={s} d={d} tab={tab} />;
 const ConnexionsHubRaw = dynamic(() => import('../pages/ConnexionsHub'), { ssr: false, loading: Loading });
+const EmbaucheAZPage = dynamic(() => import('../pages/EmbaucheAZ'), { loading: () => <Loading /> });
 const ConnexionsHubPg = ({ s, d }) => <ConnexionsHubRaw s={s} d={d} />;
 const ProceduresRHHubPgW = ({ s, d }) => <ProceduresRHHubRaw />;
 
@@ -609,6 +610,7 @@ function DashboardLayoutInner({ user }) {
         return <MandatsAdminPg s={s} d={d} tab={page} />;
       case 'connexionshub': case 'portailsbelges': case 'liensutiles':
         return <ConnexionsHubPg s={s} d={d} />;
+      case 'embaucheaz': return <EmbaucheAZPage s={s} d={d} />;
       case 'bilansocial': return <AnalyticsPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'chargessociales': return <ModsBatch2Pg s={s} d={d} tab={page} />;
       case 'chomagetemporaire': return <ModsBatch2Pg s={s} d={d} tab={page} />;
