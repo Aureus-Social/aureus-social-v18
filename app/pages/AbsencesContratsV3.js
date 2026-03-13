@@ -11,7 +11,16 @@ const Badge=({text,color})=><span style={{padding:'2px 7px',borderRadius:5,fontS
 // ════════════════════════════════════════════════════════════
 export function PlanningCongesV3({s, defaultTab}){
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
-  const emps=(s?.clients||[]).flatMap(c=>(c.emps||[]).map(e=>({...e,_cl:c.company?.name||'Client'})));
+  // ── Lire employés actifs depuis s.emps (source unique vérité) ──
+  const emps=(s?.emps||[]).filter(e=>e.status!=='sorti');
+
+  // ── Charger absences réelles depuis Supabase ──
+  const [absencesDB, setAbsencesDB] = require('react').useState([]);
+  require('react').useEffect(() => {
+    if (!supabase || !s?.user?.id) return;
+    supabase.from('absences').select('*').eq('user_id', s.user.id).order('date_debut', { ascending: false }).limit(200)
+      .then(({ data }) => { if (data?.length) setAbsencesDB(data); });
+  }, [s?.user?.id]);
   const [month,setMonth]=useState(new Date().getMonth());
   const [year]=useState(2026);
   const [tab,setTab]=useState(defaultTab||'calendrier');
