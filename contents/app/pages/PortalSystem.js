@@ -848,6 +848,17 @@ export function PortalSwitcher({portal, switchPortal, userRole}) {
 
 function PortalSystemPage({ s, d, tab: initialPortalTab }) {
   const { portal, switchPortal } = usePortalMode();
+
+  // ── Charger données employé connecté (portail employé) ──
+  React.useEffect(() => {
+    if (portal !== 'employee' || !supabase || !s?.user?.id) return;
+    // Charger fiches de paie de l'employé connecté
+    supabase.from('fiches_paie').select('*').eq('user_id', s.user.id).order('year', { ascending: false }).order('month', { ascending: false }).limit(24)
+      .then(({ data }) => { if (data?.length) d({ type: 'SET_PAYS', data }); });
+    // Charger absences/congés
+    supabase.from('absences').select('*').eq('user_id', s.user.id).order('created_at', { ascending: false }).limit(50)
+      .then(({ data }) => { if (data?.length) d({ type: 'SET_ABSENCES', data }); });
+  }, [portal, s?.user?.id]);
   const cfg = PORTAL_CONFIG[portal] || PORTAL_CONFIG.admin;
   const GOLD = '#c6a34e';
 
