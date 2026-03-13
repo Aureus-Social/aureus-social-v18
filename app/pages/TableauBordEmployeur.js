@@ -3,7 +3,8 @@
 // Vue synthèse par employeur : employés actifs, masse salariale, échéances ONSS
 
 import { useState, useMemo } from 'react';
-import { C, ST, PH, fmt, f2, RMMMG, TX_ONSS_E, TX_ONSS_W } from '@/app/lib/shared-ui';
+import { C, ST, PH, fmt, f2 } from '@/app/lib/shared-ui';
+import { TX_ONSS_E, TX_ONSS_W, RMMMG } from '@/app/lib/lois-belges';
 
 const GOLD = '#c6a34e';
 const fmtEur = n => new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR' }).format(n || 0);
