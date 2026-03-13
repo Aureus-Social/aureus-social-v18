@@ -104,7 +104,7 @@ const ProceduresRHHubRaw = dynamic(() => import('../pages/procedures/ProceduresR
 const MandatsAdminRaw = dynamic(() => import('../pages/MandatsAdminPage'), { ssr: false, loading: Loading });
 const MandatsAdminPg = ({ s, d, tab }) => <MandatsAdminRaw s={s} d={d} tab={tab} />;
 const ConnexionsHubRaw = dynamic(() => import('../pages/ConnexionsHub'), { ssr: false, loading: Loading });
-const EmbaucheAZPage = dynamic(() => import('../pages/EmbaucheAZ'), { loading: () => <Loading /> });
+const EmbaucheAZPage = dynamic(() => import('../pages/EmbaucheAZ'), { ssr: false, loading: () => <Loading /> });
 const ConnexionsHubPg = ({ s, d }) => <ConnexionsHubRaw s={s} d={d} />;
 const ProceduresRHHubPgW = ({ s, d }) => <ProceduresRHHubRaw />;
 
