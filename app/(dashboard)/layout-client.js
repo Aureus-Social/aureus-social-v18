@@ -133,6 +133,9 @@ function reducer(state, action) {
     case 'CLEAR_NAV': return { ...state, _nav: null, _navSub: null };
     case 'SET_CLIENTS': return { ...state, clients: action.data };
     case 'SET_EMPS': return { ...state, emps: action.data };
+    case 'SET_CO': return { ...state, co: { ...state.co, ...action.data } };
+    case 'SET_PAYS': return { ...state, pays: action.data };
+    case 'SET_DIMS': return { ...state, dims: action.data };
     case 'ADD_EMP': return { ...state, emps: [...(state.emps||[]), action.d] };
     case 'UPD_EMP': return { ...state, emps: (state.emps||[]).map(e => e.id === action.d.id ? { ...e, ...action.d } : e) };
     case 'DEL_EMP': return { ...state, emps: (state.emps||[]).filter(e => e.id !== action.id) };
@@ -346,6 +349,99 @@ function DashboardLayoutInner({ user }) {
 
   const s = state;
   const d = dispatch;
+
+  // ── Chargement initial données depuis Supabase ──────────────────
+  useEffect(() => {
+    if (!user?.id || !supabase) return;
+    const uid = user.id;
+
+    // Charger employés
+    supabase.from('employes').select('*').eq('user_id', uid)
+      .then(({ data, error }) => {
+        if (!error && data?.length) {
+          dispatch({ type: 'SET_EMPS', data });
+        }
+      });
+
+    // Charger entreprise (co)
+    supabase.from('entreprises').select('*').eq('user_id', uid).limit(1)
+      .then(({ data, error }) => {
+        if (!error && data?.[0]) {
+          const co = data[0];
+          dispatch({ type: 'SET_CO', data: {
+            name: co.nom || co.name || '',
+            vat: co.bce || co.vat || '',
+            bce: co.bce || '',
+            onss: co.matricule_onss || co.onss || '',
+            address: co.adresse || co.address || '',
+            email: co.email || '',
+            iban: co.iban || '',
+            cp: co.commission_paritaire || '',
+          }});
+        }
+      });
+
+    // Charger clients
+    supabase.from('clients').select('*').eq('user_id', uid)
+      .then(({ data, error }) => {
+        if (!error && data?.length) {
+          dispatch({ type: 'SET_CLIENTS', data });
+        }
+      });
+
+    // Charger historique paie (30 derniers)
+    supabase.from('fiches_paie').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(30)
+      .then(({ data, error }) => {
+        if (!error && data?.length) {
+          dispatch({ type: 'SET_PAYS', data });
+        }
+      });
+
+    // Charger Dimona history (50 dernières)
+    supabase.from('dimona_declarations').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(50)
+      .then(({ data, error }) => {
+        if (!error && data?.length) {
+          dispatch({ type: 'SET_DIMS', data });
+        }
+      });
+
+  }, [user?.id]);
+  // ────────────────────────────────────────────────────────────────
+
+  // ── Sync bidirectionnel employés → Supabase ─────────────────────
+  const prevEmpsRef = require('react').useRef(null);
+  useEffect(() => {
+    if (!user?.id || !supabase || !state.emps) return;
+    const uid = user.id;
+    const prev = prevEmpsRef.current;
+    if (prev === null) { prevEmpsRef.current = state.emps; return; } // skip premier render
+    // Détecter nouveaux employés (ADD_EMP)
+    const newEmps = state.emps.filter(e => !prev.find(p => p.id === e.id));
+    newEmps.forEach(emp => {
+      supabase.from('employes').insert([{ ...emp, user_id: uid }]).then(({ error }) => {
+        if (error) console.warn('[Supabase] INSERT employe:', error.message);
+      });
+    });
+    // Détecter mis à jour (UPD_EMP)
+    const updatedEmps = state.emps.filter(e => {
+      const p = prev.find(p => p.id === e.id);
+      return p && JSON.stringify(p) !== JSON.stringify(e);
+    });
+    updatedEmps.forEach(emp => {
+      supabase.from('employes').update({ ...emp }).eq('id', emp.id).eq('user_id', uid).then(({ error }) => {
+        if (error) console.warn('[Supabase] UPDATE employe:', error.message);
+      });
+    });
+    // Détecter supprimés (DEL_EMP)
+    const deletedEmps = prev.filter(e => !state.emps.find(n => n.id === e.id));
+    deletedEmps.forEach(emp => {
+      supabase.from('employes').delete().eq('id', emp.id).eq('user_id', uid).then(({ error }) => {
+        if (error) console.warn('[Supabase] DELETE employe:', error.message);
+      });
+    });
+    prevEmpsRef.current = state.emps;
+  }, [state.emps, user?.id]);
+  // ────────────────────────────────────────────────────────────────
 
   // Init chiffrement AES-256 au montage (RGPD Art. 32)
   useEffect(()=>{
