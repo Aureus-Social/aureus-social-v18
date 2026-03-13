@@ -1,4 +1,5 @@
 'use client';
+import { supabase } from '@/app/lib/supabase';
 import { useLang } from '../lib/lang-context';
 import { B, C, CR_PAT, CR_TRAV, CR_MAX, DPER, I, LB, LEGAL, LOIS_BELGES, NET_FACTOR, PH, PP_EST, PV_DOUBLE, PV_SIMPLE, RMMMG, ST, TX_ONSS_E, TX_ONSS_W, Tbl, calc, f0, f2, fmt, validateNISS } from '@/app/lib/helpers';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
@@ -126,7 +127,7 @@ function Employees({s,d}) {
           status:'active',
         };
         if(emp.first||emp.last){
-          d({type:'ADD_E',d:emp});
+          d({type:'ADD_EMP',d:emp});
           added++;
         }
       }
@@ -174,7 +175,7 @@ function Employees({s,d}) {
       const ic=validateIBAN(form.iban);
       if(ic&&!ic.valid)return alert(ic.msg);
     }
-    if(ed)d({type:"UPD_E",d:form});else d({type:"ADD_E",d:form});setF(null);setEd(false);
+    if(ed)d({type:"UPD_EMP",d:form});else d({type:"ADD_EMP",d:form});setF(null);setEd(false);
   };
 
   // Filter and search
