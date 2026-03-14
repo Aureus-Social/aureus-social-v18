@@ -237,6 +237,19 @@ const ClotureMensuelle=({s,d,supabase,user})=>{
           }),
           updated_at:new Date().toISOString()
         },{onConflict:'key'});
+        // Persister aussi dans clotures_historique
+        await supabase.from('clotures_historique').insert([{
+          user_id:user.id,
+          periode:`${prevYear}-${String(now.getMonth()===0?12:now.getMonth()).padStart(2,'0')}`,
+          annee:prevYear,
+          mois:now.getMonth()===0?12:now.getMonth(),
+          nb_employes:allEmps.length,
+          nb_fiches:progress.calculate?.count||0,
+          masse_brute:allEmps.reduce((a,e)=>a+(+(e.monthlySalary||e.gross||e.brut||0)),0),
+          closed_at:new Date().toISOString(),
+          closed_by:user.email,
+          status:'closed',
+        }]).then(({error:e2})=>{if(e2)console.warn('[Clôture] historique:',e2.message);});
         addLog('💾 Données sauvegardées dans le cloud','success');
       }catch(e){addLog('⚠️ Erreur sauvegarde: '+e.message,'warn');}
     }
