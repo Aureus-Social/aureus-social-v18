@@ -169,12 +169,35 @@ function EmpDetail({ emp, onClose }) {
 export default function TableauBordEmployeur({ s, d }) {
   const [selectedEmp, setSelectedEmp] = useState(null);
   const [filter, setFilter] = useState('tous');
+  const [kpiPayroll, setKpiPayroll] = useState(null);
 
   const now = new Date();
   const co = s?.co || {};
   const allEmps = s?.emps || [];
   const ae = allEmps.filter(e => e.status === 'active' || !e.status);
   const sortis = allEmps.filter(e => e.status === 'sorti');
+
+  // ── Charger KPIs paie du mois depuis Supabase ───────────────────
+  useEffect(() => {
+    if (!supabase || !s?.user?.id) return;
+    const now2 = new Date();
+    supabase.from('fiches_paie')
+      .select('gross, net, onss_e, pp, cost_total, emp_id')
+      .eq('user_id', s.user.id)
+      .eq('year', now2.getFullYear())
+      .eq('month', now2.getMonth() + 1)
+      .then(({ data }) => {
+        if (data?.length) {
+          setKpiPayroll({
+            masseBrute: data.reduce((a, r) => a + (+(r.gross || 0)), 0),
+            masseNette: data.reduce((a, r) => a + (+(r.net || 0)), 0),
+            coutTotal: data.reduce((a, r) => a + (+(r.cost_total || 0)), 0),
+            nbFiches: data.length,
+          });
+        }
+      });
+  }, [s?.user?.id]);
+  // ────────────────────────────────────────────────────────────────
 
   const displayed = filter === 'tous' ? ae : filter === 'sortis' ? sortis : ae.filter(e => {
     if (filter === 'sans_niss') return !e.niss;
