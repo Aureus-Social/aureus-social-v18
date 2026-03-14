@@ -1,4 +1,5 @@
 'use client';
+import { supabase } from '@/app/lib/supabase';
 import { useLang } from '../lib/lang-context';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { B, C, DPER, I, LB, LEGAL, LOIS_BELGES, NET_FACTOR, PH, PP_EST, PV_DOUBLE, PV_SIMPLE, RMMMG, ST, TX_ONSS_E, TX_ONSS_W, Tbl, calc, f0, f2, fmt, generatePayslipPDF, getAlertes, quickNet, quickPP, generateSEPAXML, generateDmfAXML } from '@/app/lib/helpers';
@@ -20,6 +21,15 @@ function Dashboard({s,d}) {
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const ae=(s?.emps||[]).filter(e=>e.status==='active'||!e.status||e.status===undefined);
   const sortie=(s?.emps||[]).filter(e=>e.status==='sorti');
+
+  // ── Stats dashboard depuis données réelles ──────────────────────
+  const totalBrut = ae.reduce((a,e) => a + (+(e.monthlySalary||e.gross||e.brut||0)), 0);
+  const totalNet = ae.reduce((a,e) => a + (+(e.monthlySalary||e.gross||e.brut||0)) * (1 - 0.1307 - 0.22), 0);
+  const coutEmployeur = totalBrut * (1 + 0.2507);
+  const dimonasPending = (s?.dimonaHistory||[]).filter(d2 => d2.status === 'pending' || d2.status === 'simulated').length;
+  const facturesImpayees = (s?.factures||[]).filter(f => f.status === 'envoyee' || f.status === 'retard').length;
+  const alertesCount = ae.filter(e => !e.niss || !e.iban).length;
+  // ────────────────────────────────────────────────────────────────
   const etudiants=(s?.emps||[]).filter(e=>e.contract==='student');
   const tm=ae.reduce((a,e)=>a+(e.monthlySalary||0),0);
   const calcs=ae.map(e=>({e,c:calc(e,DPER,s.co)}));
