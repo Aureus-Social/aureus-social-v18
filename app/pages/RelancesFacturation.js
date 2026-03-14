@@ -113,7 +113,7 @@ const DEMO_FACTURES = [
   { id: 'FAC-2026-005', client: 'Cabinet Avocat Martin', email: 'secretariat@martin-law.be', montant: 3200, dateFacture: '2025-12-01', status: 'impayee', relances: [] },
 ];
 
-export default function RelancesFacturation({ supabase, user, clients = [] }) {
+export default function RelancesFacturation({ supabase, user, clients = [], factures: factures_prop = [] }) {
   const [factures, setFactures] = useState([]);
   const [tab, setTab] = useState('retard');
   const [sending, setSending] = useState(null);
@@ -121,24 +121,47 @@ export default function RelancesFacturation({ supabase, user, clients = [] }) {
   const [filterNiveau, setFilterNiveau] = useState('all');
   const [sortBy, setSortBy] = useState('jours');
 
-  // Chargement initial
+  // Chargement initial — Supabase d'abord, localStorage fallback
   useEffect(() => {
+    // Si factures passées en props (depuis state global), les utiliser
+    if (typeof factures_prop !== 'undefined' && factures_prop?.length) {
+      setFactures(factures_prop); return;
+    }
+    // Sinon charger depuis Supabase
+    if (supabase && user?.id) {
+      supabase.from('factures').select('*').eq('user_id', user.id)
+        .order('created_at', { ascending: false }).limit(100)
+        .then(({ data, error }) => {
+          if (!error && data?.length) { setFactures(data); return; }
+          // Fallback localStorage
+          try {
+            const raw = _ls.get('aureus_relances', null);
+            setFactures(raw ? JSON.parse(raw) : DEMO_FACTURES);
+          } catch { setFactures(DEMO_FACTURES); }
+        });
+      return;
+    }
+    // Fallback localStorage sans Supabase
     try {
       const raw = _ls.get('aureus_relances', null);
-      if (raw) {
-        setFactures(JSON.parse(raw));
-      } else {
-        // Premier lancement : données de test
-        _ls.set('aureus_relances', DEMO_FACTURES);
-        setFactures(DEMO_FACTURES);
-      }
-    } catch (e) { setFactures(DEMO_FACTURES); }
-  }, []);
+      setFactures(raw ? JSON.parse(raw) : DEMO_FACTURES);
+    } catch { setFactures(DEMO_FACTURES); }
+  }, [supabase, user?.id]);
 
-  const save = useCallback((updated) => {
+  const save = useCallback(async (updated) => {
     setFactures(updated);
     _ls.set('aureus_relances', updated);
-  }, []);
+    // Sync Supabase si disponible
+    if (supabase && user?.id) {
+      // Mettre à jour les statuts modifiés
+      const toUpdate = updated.filter(f => f.id && !f.id.startsWith('demo'));
+      for (const f of toUpdate.slice(0, 10)) {
+        await supabase.from('factures').update({ status: f.status, relances: f.relances })
+          .eq('id', f.id).eq('user_id', user.id)
+          .then(({ error }) => { if (error) console.warn('[Relances] update:', error.message); });
+      }
+    }
+  }, [supabase, user?.id]);
 
   // Envoyer une relance individuelle
   const envoyerRelance = async (facture) => {
