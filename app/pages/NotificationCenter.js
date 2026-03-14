@@ -1,4 +1,5 @@
 'use client';
+import { supabase } from '@/app/lib/supabase';
 import { LEGAL, RMMMG } from '@/app/lib/helpers';
 
 // ─── Storage sécurisé AES-GCM (SSR-safe)
