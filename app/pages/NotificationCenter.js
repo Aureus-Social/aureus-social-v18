@@ -749,22 +749,33 @@ function SmartAlertsPage({ state }) {
 // ══════════════════════════════════════════════════════════════
 function JournalPage({ state }) {
   const [typeFilter, setTypeFilter] = useState('all')
-  const entries = useMemo(() => {
-    const now = new Date()
-    const ago = (h, m=0) => new Date(now - h*3600000 - m*60000).toLocaleString('fr-BE')
-    return [
-      { id:1, type:'paie',   icon:'💰', user:'info@aureus-ia.com', action:'Calcul paie Février 2026', detail:'3 travailleurs — Masse 8.400 EUR', ts:ago(1), status:'ok' },
-      { id:2, type:'dimona', icon:'📤', user:'salem@aureus-ia.com', action:'Dimona IN envoyé', detail:'NISS 85.04.23-123-45 — CDI CP200', ts:ago(2,30), status:'ok' },
-      { id:3, type:'export', icon:'📥', user:'info@aureus-ia.com', action:'Export WinBooks généré', detail:'winbooks_2026-02.txt — 18 lignes', ts:ago(4), status:'ok' },
-      { id:4, type:'auth',   icon:'🔐', user:'info@aureus-ia.com', action:'Connexion réussie', detail:'IP 87.67.45.12 — Brussels', ts:ago(6), status:'ok' },
-      { id:5, type:'doc',    icon:'📄', user:'salem@aureus-ia.com', action:'Contrat CDI généré', detail:'Salem Abdellah — CP200 — 2.800 EUR brut', ts:ago(8), status:'ok' },
-      { id:6, type:'paie',   icon:'💰', user:'info@aureus-ia.com', action:'Fiches de paie PDF', detail:'3 fiches générées — Janvier 2026', ts:ago(24), status:'ok' },
-      { id:7, type:'onss',   icon:'📋', user:'info@aureus-ia.com', action:'DmfA Q4 2025 soumise', detail:'Matricule 51357716-02 — 3 travailleurs', ts:ago(48), status:'ok' },
-      { id:8, type:'auth',   icon:'⚠️', user:'inconnu@test.com', action:'Tentative connexion échouée', detail:'Mot de passe incorrect — 3 tentatives', ts:ago(72), status:'warn' },
-      { id:9, type:'export', icon:'📥', user:'info@aureus-ia.com', action:'Export SEPA pain.001', detail:'SEPA_2026-01.xml — 2.100 EUR', ts:ago(96), status:'ok' },
-      { id:10, type:'dimona',icon:'📤', user:'salem@aureus-ia.com', action:'Dimona OUT envoyé', detail:'Fin CDD — 31/01/2026', ts:ago(120), status:'ok' },
-    ]
-  }, [])
+  const [entries, setEntries] = useState([])
+  const [loadingJournal, setLoadingJournal] = useState(true)
+  useEffect(() => {
+    if (!supabase || !state?.user?.id) { setLoadingJournal(false); return; }
+    const iconMap = { CREATE_EMPLOYEE:'💰', UPDATE_EMPLOYEE:'✏️', DELETE_EMPLOYEE:'🗑️',
+      GENERATE_PAYSLIP:'💰', SUBMIT_DIMONA:'📤', LOGIN:'🔐', AUTO_LOGOUT_INACTIVITY:'⏱',
+      BACKUP:'📥', EXPORT:'📥', IMPORT:'📥', DEFAULT:'📋' }
+    const typeMap = { CREATE_EMPLOYEE:'rh', UPDATE_EMPLOYEE:'rh', DELETE_EMPLOYEE:'rh',
+      GENERATE_PAYSLIP:'paie', SUBMIT_DIMONA:'dimona', LOGIN:'auth', EXPORT:'export',
+      BACKUP:'export', DEFAULT:'onss' }
+    supabase.from('audit_log').select('*').eq('user_id', state.user.id)
+      .order('created_at', { ascending: false }).limit(100)
+      .then(({ data, error }) => {
+        setLoadingJournal(false)
+        if (error || !data) return
+        setEntries(data.map((r, i) => ({
+          id: r.id || i,
+          type: typeMap[r.action] || 'onss',
+          icon: iconMap[r.action] || iconMap.DEFAULT,
+          user: state?.user?.email || 'admin',
+          action: r.action?.replace(/_/g, ' ') || 'Action',
+          detail: r.details ? (typeof r.details === 'object' ? JSON.stringify(r.details).slice(0,80) : String(r.details).slice(0,80)) : '',
+          ts: new Date(r.created_at).toLocaleString('fr-BE'),
+          status: 'ok',
+        })))
+      })
+  }, [state?.user?.id])
 
   const types = ['all','paie','dimona','export','auth','doc','onss','onss']
   const typeLabels = { all:'Tout', paie:'💰 Paie', dimona:'📤 Dimona', export:'📥 Exports', auth:'🔐 Auth', doc:'📄 Docs', onss:'📋 ONSS' }
