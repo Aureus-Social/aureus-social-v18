@@ -1,6 +1,6 @@
 'use client';
 import { logInfo, logWarn } from '../lib/security/logger.js';
-import React, { useState, useReducer, useMemo, useEffect, Suspense } from 'react';
+import React, { useState, useReducer, useMemo, useEffect, useRef, useCallback, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { MENU, GROUPS, getGroupItems, SEARCH_SUBSECTIONS } from '../lib/menu-config';
 import { I18N } from '../lib/i18n';
@@ -137,6 +137,8 @@ function reducer(state, action) {
     case 'SET_CO': return { ...state, co: { ...state.co, ...action.data } };
     case 'SET_PAYS': return { ...state, pays: action.data };
     case 'SET_DIMS': return { ...state, dims: action.data };
+    case 'SET_ABSENCES': return { ...state, absences: action.data };
+    case 'SET_FACTURES': return { ...state, factures: action.data };
     case 'ADD_EMP': return { ...state, emps: [...(state.emps||[]), action.d] };
     case 'UPD_EMP': return { ...state, emps: (state.emps||[]).map(e => e.id === action.d.id ? { ...e, ...action.d } : e) };
     case 'DEL_EMP': return { ...state, emps: (state.emps||[]).filter(e => e.id !== action.id) };
@@ -345,6 +347,10 @@ function DashboardLayoutInner({ user }) {
     clients: [],
     payrollHistory: [],
     dimonaHistory: [],
+    pays: [],
+    dims: [],
+    absences: [],
+    factures: [],
     co: { name: 'Aureus IA SPRL', vat: 'BE 1028.230.781' }
   });
 
@@ -406,11 +412,27 @@ function DashboardLayoutInner({ user }) {
         }
       });
 
+    // Charger factures (100 dernières)
+    supabase.from('factures').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(100)
+      .then(({ data, error }) => {
+        if (!error && data?.length) {
+          dispatch({ type: 'SET_FACTURES', data });
+        }
+      });
+
+    // Charger absences (200 dernières)
+    supabase.from('absences').select('*').eq('user_id', uid).order('date_debut', { ascending: false }).limit(200)
+      .then(({ data, error }) => {
+        if (!error && data?.length) {
+          dispatch({ type: 'SET_ABSENCES', data });
+        }
+      });
+
   }, [user?.id]);
   // ────────────────────────────────────────────────────────────────
 
   // ── Sync bidirectionnel employés → Supabase ─────────────────────
-  const prevEmpsRef = require('react').useRef(null);
+  const prevEmpsRef = useRef(null);
   useEffect(() => {
     if (!user?.id || !supabase || !state.emps) return;
     const uid = user.id;
@@ -549,8 +571,7 @@ function DashboardLayoutInner({ user }) {
       case 'securitedata': return <SecurityPage s={s} d={d} t={t} lang={lang} tab={page} supabase={supabase} user={user} />;
       case 'facturation': return <FacturationClientsPage s={s} d={d} />;
       case 'gestionprimes': return <PrimesPage s={s} d={d} t={t} lang={lang} tab={page} />;
-      case 'seuilssociaux': return <LoisPage s={s} d={d} t={t} lang={lang} tab={page} />;
-      // TABLEAU DE BORD
+            // TABLEAU DE BORD
       case 'accidentTravail': return <AbsencesContratsV3Pg s={s} d={d} tab={page} />;
       case 'actionsrapides': return <SmartOpsPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'journal': return <NotificationCenterPgW s={s} d={d} tab={page} />;
@@ -586,7 +607,6 @@ function DashboardLayoutInner({ user }) {
       case 'echeancier': return <PayrollGroupPg s={s} d={d} tab={page} />;
       case 'flexijobs': return <PayrollGroupPg s={s} d={d} tab={page} />;
       case 'formC131': return <DocumentGeneratorPgW s={s} d={d} tab={page} />;
-      case 'joursPrestes': return <EmployeePlanningPgW s={s} d={d} tab={page} />;
       case 'regulPP': return <PayrollGroupPg s={s} d={d} tab={page} />;
       case 'salaires': return <PayrollHubPg s={s} d={d} tab={page} />;
       case 'simembauche': return <SimuNetBrutPage s={s} d={d} t={t} lang={lang} tab={page} />;
