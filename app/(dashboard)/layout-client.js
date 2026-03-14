@@ -98,7 +98,7 @@ const AdminBaremesRaw = dynamic(() => import('../pages/AdminBaremes'), { ssr: fa
 const AdminBaremesPageW = ({ s, d }) => <AdminBaremesRaw loisBelges={{}} loisTimeline={[]} loisCurrent={{}} onUpdate={()=>{}} />;
 
 const RelancesRaw = dynamic(() => import('../pages/RelancesFacturation'), { ssr: false, loading: Loading });
-const RelancesPage = ({ s, d }) => <RelancesRaw supabase={null} user={s?.user} clients={s?.clients||[]} />;
+const RelancesPage = ({ s, d }) => <RelancesRaw supabase={supabase} user={s?.user} clients={s?.clients||[]} factures={s?.factures||[]} />;
 
 const ProceduresRHHubRaw = dynamic(() => import('../pages/procedures/ProceduresRHHub'), { ssr: false, loading: Loading });
 const MandatsAdminRaw = dynamic(() => import('../pages/MandatsAdminPage'), { ssr: false, loading: Loading });
