@@ -14,6 +14,16 @@ const MN_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août
 function escapeHtml(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function Employees({s,d}) {
+  // ── Charger employés depuis Supabase si state vide ──────────────
+  useEffect(()=>{
+    if(!supabase||!s?.user?.id||(s?.emps?.length>0)) return;
+    supabase.from('employes').select('*').eq('user_id',s.user.id)
+      .order('created_at',{ascending:false})
+      .then(({data,error})=>{
+        if(!error&&data?.length) d({type:'SET_EMPS',data});
+      });
+  },[s?.user?.id]);
+  // ────────────────────────────────────────────────────────────────
   const { t, lang } = useLang();
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const [form,setF]=useState(null);
@@ -175,7 +185,23 @@ function Employees({s,d}) {
       const ic=validateIBAN(form.iban);
       if(ic&&!ic.valid)return alert(ic.msg);
     }
-    if(ed)d({type:"UPD_EMP",d:form});else d({type:"ADD_EMP",d:form});setF(null);setEd(false);
+    const empData = { ...form, updated_at: new Date().toISOString() };
+    if(ed) {
+      d({type:"UPD_EMP",d:empData});
+      // Persist update → Supabase via sync dans layout
+    } else {
+      const newEmp = { ...empData, id: empData.id || `${Date.now()}-${Math.random().toString(36).substr(2,5)}`, created_at: new Date().toISOString() };
+      d({type:"ADD_EMP",d:newEmp});
+      // Persist insert → Supabase via sync dans layout
+    }
+    setF(null);setEd(false);
+  };
+
+  // Suppression employé avec persist Supabase
+  const deleteEmp = (id) => {
+    if(!window.confirm('Confirmer la suppression ?')) return;
+    d({type:"DEL_EMP",id});
+    // Supabase DELETE géré par le sync bidirectionnel dans layout
   };
 
   // Filter and search
