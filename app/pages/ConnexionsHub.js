@@ -1,4 +1,5 @@
 'use client';
+import { supabase } from '@/app/lib/supabase';
 import { useState, useEffect } from 'react';
 import { RMMMG } from '../lib/lois-belges';
 
