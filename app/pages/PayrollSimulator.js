@@ -1,4 +1,5 @@
 "use client";
+import { supabase } from '@/app/lib/supabase';
 // ═══════════════════════════════════════════════════════════════════
 // SIMULATEUR PAIE AVANCÉ — Net↔Brut, Optimisation Package, Comparaison
 // Sources: SPF Finances 2026, ONSS Instructions T1/2026
