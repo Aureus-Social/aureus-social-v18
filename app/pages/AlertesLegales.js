@@ -1,4 +1,5 @@
 'use client';
+import { supabase } from '@/app/lib/supabase';
 // ═══ AUREUS SOCIAL PRO — Alertes Légales Automatiques ═══
 // Veille légale temps réel : LOIS_BELGES, échéances, conformité
 // Sources : Moniteur Belge · SPF Finances · ONSS · CNT · SPF ETCS
@@ -170,6 +171,21 @@ export default function AlertesLegales({ s, d }) {
   const [legalWatchData, setLegalWatchData] = useState(null);
   const [legalWatchLoading, setLegalWatchLoading] = useState(false);
   const [lastCheck, setLastCheck] = useState(null);
+
+  // ── Charger dernier log legal_watch depuis Supabase ─────────────
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.from('legal_watch_log').select('*').order('checked_at', { ascending: false }).limit(1)
+      .then(({ data }) => {
+        if (data?.[0]) {
+          setLastCheck(new Date(data[0].checked_at).toLocaleString('fr-BE'));
+          if (data[0].alerts_data) {
+            try { setLegalWatchData({ calendarAlerts: JSON.parse(data[0].alerts_data), sourcesOk: data[0].sources_ok, sourcesError: data[0].sources_error }); } catch {}
+          }
+        }
+      });
+  }, []);
+  // ────────────────────────────────────────────────────────────────
   const [catFilter, setCatFilter] = useState('Toutes');
   const [levelFilter, setLevelFilter] = useState('Tous');
   const [autoRefresh, setAutoRefresh] = useState(false);
