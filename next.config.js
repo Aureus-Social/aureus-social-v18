@@ -25,7 +25,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://*.supabase.co",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://api.kbo.be",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://api.kbo.be https://ec.europa.eu https://open.fts.be https://entreprises.api.gouv.be https://cbsv.economie.fgov.be https://api.kbodata.be https://ipapi.co https://api.ipify.org https://api.github.com",
               "frame-src 'none'",
               "object-src 'none'",
               "upgrade-insecure-requests",
