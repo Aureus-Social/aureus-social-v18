@@ -3,44 +3,49 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!url || !key) {
-    return NextResponse.json({ error: 'Variables Supabase manquantes', url: !!url, key: !!key }, { status: 500 });
-  }
+  // Route protégée — accès admin seulement
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+  const isAdmin = authHeader === `Bearer ${cronSecret}`;
 
-  const supabase = createClient(url, key);
-  const tables = ['employes', 'entreprises', 'factures', 'dimona_declarations', 
-                  'fiches_paie', 'absences', 'mandats_log', 'legal_watch_log', 
-                  'clients', 'clotures_historique', 'declarations', 'app_state',
-                  'audit_log', 'error_logs', 'fiches_paie'];
-
-  const status = {};
-  
-  for (const table of tables) {
-    try {
-      const { data, error, count } = await supabase
-        .from(table)
-        .select('*', { count: 'exact', head: true });
-      
-      if (error) {
-        status[table] = { exists: false, error: error.message };
-      } else {
-        status[table] = { exists: true, rows: count };
+  // Vérifier aussi token Supabase valide
+  if (!isAdmin) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (url && key && authHeader?.startsWith('Bearer ')) {
+      const s = createClient(url, key);
+      const { data: { user }, error } = await s.auth.getUser(authHeader.slice(7));
+      // Vérifier email admin
+      const adminEmails = ['moussati.nourdin@gmail.com', 'info@aureus-ia.com'];
+      if (error || !user || !adminEmails.includes(user.email)) {
+        return NextResponse.json({ error: 'Non autorise' }, { status: 401 });
       }
-    } catch (e) {
-      status[table] = { exists: false, error: e.message };
+    } else {
+      return NextResponse.json({ error: 'Non autorise' }, { status: 401 });
     }
   }
 
-  const existing = Object.entries(status).filter(([,v]) => v.exists).map(([k]) => k);
-  const missing = Object.entries(status).filter(([,v]) => !v.exists).map(([k]) => k);
+  const u = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const k = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!u || !k) return NextResponse.json({ error: 'DB unavailable' }, { status: 503 });
+  const s = createClient(u, k);
 
-  return NextResponse.json({ 
-    ok: missing.length === 0,
-    existing,
-    missing,
-    details: status
-  });
+  const tables = ['employes', 'entreprises', 'factures', 'dimona_declarations',
+    'fiches_paie', 'absences', 'mandats_log', 'legal_watch_log',
+    'clients', 'clotures_historique', 'declarations', 'app_state',
+    'audit_log', 'error_logs'];
+
+  const status = {};
+  for (const table of tables) {
+    try {
+      const { count, error } = await s.from(table).select('*', { count: 'exact', head: true });
+      status[table] = error ? { exists: false, error: 'Access denied' } : { exists: true, rows: count };
+    } catch {
+      status[table] = { exists: false };
+    }
+  }
+
+  const existing = Object.entries(status).filter(([, v]) => v.exists).map(([k]) => k);
+  const missing = Object.entries(status).filter(([, v]) => !v.exists).map(([k]) => k);
+  return NextResponse.json({ ok: missing.length === 0, existing, missing });
 }
