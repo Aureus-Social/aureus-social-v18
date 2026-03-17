@@ -31,6 +31,13 @@ jobs:
           DATE=$(date +%Y-%m-%d)
           FILENAME="aureus-backup-${DATE}.sql.gz"
           
+          # Vérifier que l'URL pointe vers le bon projet (jwjtlpewwdjxdboxtbdf)
+          if echo "$SUPABASE_DB_URL" | grep -q "qcunxnadjxggizdksvay"; then
+            echo "⚠️  ATTENTION: SUPABASE_DB_URL pointe vers l'ANCIEN projet (qcunxnadjxggizdksvay)"
+            echo "⚠️  Le projet actif est jwjtlpewwdjxdboxtbdf"
+            echo "⚠️  Mettez à jour le secret SUPABASE_DB_URL dans GitHub Settings > Secrets"
+            # On continue quand même pour ne pas bloquer le backup
+          fi
           echo "📦 Dumping Supabase database..."
           pg_dump "$SUPABASE_DB_URL" \
             --no-owner \
