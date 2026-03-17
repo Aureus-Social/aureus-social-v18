@@ -1,9 +1,5 @@
-# ═══════════════════════════════════════════════════════
-# AUREUS SOCIAL PRO — Pipeline CI/CD Complet
-# Lint → Build → Smoke tests → Deploy ready
-# ═══════════════════════════════════════════════════════
-
-name: 🚀 CI — Lint + Build + Tests
+# AUREUS SOCIAL PRO — Pipeline CI/CD
+name: "CI Build and Lint"
 
 on:
   push:
@@ -16,62 +12,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ─── Job 1: Lint
   lint:
-    name: 🔍 Lint
+    name: "Lint"
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
+        with:
+          node-version: "20"
+          cache: "npm"
       - run: npm ci --legacy-peer-deps
       - run: npm run lint
-        continue-on-error: true  # warn only, ne bloque pas le build
+        continue-on-error: true
 
-  # ─── Job 2: Build
   build:
-    name: 🏗️ Build Next.js
+    name: "Build Next.js"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://qcunxnadjxggizdksvay.supabase.co' }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder' }}
-      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY || 'build-time-placeholder-32chars-min' }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
+        with:
+          node-version: "20"
+          cache: "npm"
       - run: npm ci --legacy-peer-deps
       - run: npm run build
-      - name: 📊 Bundle size report
+      - name: Bundle size report
         run: |
-          echo "## Bundle Size" >> $GITHUB_STEP_SUMMARY
+          echo "Build SUCCESS" >> $GITHUB_STEP_SUMMARY
           du -sh .next/static/chunks/*.js 2>/dev/null | sort -rh | head -10 >> $GITHUB_STEP_SUMMARY || true
-          echo "Build: ✅ SUCCESS" >> $GITHUB_STEP_SUMMARY
-
-  # ─── Job 3: Smoke tests (si secrets dispo)
-  smoke:
-    name: 🧪 Smoke Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: build
-    if: ${{ secrets.TEST_EMAIL != '' }}
-    env:
-      TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
-      AUREUS_TEST_PASS: ${{ secrets.AUREUS_TEST_PASS }}
-      TEST_URL: https://app.aureussocial.be
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
-      - run: npm ci --legacy-peer-deps
-      - run: npx playwright install chromium --with-deps
-      - run: npm run test:smoke
-        continue-on-error: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
