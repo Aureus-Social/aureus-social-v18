@@ -69,6 +69,68 @@ export function checkApiPermission(userEmail, userRole, permission) {
 /**
  * Hook client — liste des permissions pour un rôle
  */
+// Permissions par module (pour filtrage menu)
+export const MODULE_ROLES = {
+  // Admin seulement
+  gestionclients: ['admin'],
+  settings: ['admin'],
+  configuration_app: ['admin'],
+  portailclient: ['admin'],
+  admin: ['admin'],
+  adminbaremes: ['admin'],
+  permissions: ['admin'],
+  security: ['admin'],
+  auditsecu: ['admin'],
+  testsuite: ['admin'],
+  monitoring: ['admin'],
+
+  // Admin + Comptable
+  fiscal: ['admin', 'comptable'],
+  tvalisting: ['admin', 'comptable'],
+  exportcompta: ['admin', 'comptable'],
+  exportcomptapro: ['admin', 'comptable'],
+  exportWinbooks: ['admin', 'comptable'],
+  exportcoda: ['admin', 'comptable'],
+  sepa: ['admin', 'comptable'],
+  belcotax281: ['admin', 'comptable'],
+  regulPP: ['admin', 'comptable'],
+  cloture: ['admin', 'comptable'],
+
+  // Admin + RH
+  embaucheaz: ['admin', 'rh', 'comptable'],
+  employees: ['admin', 'rh', 'comptable'],
+  gestionabs: ['admin', 'rh'],
+  contratgen: ['admin', 'rh'],
+  formC4: ['admin', 'rh'],
+  dimona: ['admin', 'rh'],
+
+  // Admin + Comptable + RH
+  payslip: ['admin', 'comptable', 'rh'],
+  declarations: ['admin', 'comptable', 'rh'],
+
+  // Admin + Commercial
+  facturation: ['admin', 'commercial', 'comptable'],
+  checklistclient: ['admin', 'commercial'],
+  diagnostic: ['admin', 'commercial'],
+  guidefiduciaire: ['admin', 'commercial'],
+  fiduciaire: ['admin', 'commercial'],
+  repriseclient: ['admin', 'commercial'],
+
+  // Tous les rôles authentifiés
+  dashboard: ['admin', 'comptable', 'rh', 'commercial', 'readonly'],
+  commandcenter: ['admin', 'comptable', 'rh', 'commercial', 'readonly'],
+};
+
+/**
+ * Vérifier si un rôle peut accéder à un module
+ * Si le module n'est pas dans MODULE_ROLES → accès libre à tous
+ */
+export function canAccessModule(role, moduleId) {
+  const allowedRoles = MODULE_ROLES[moduleId];
+  if (!allowedRoles) return true; // Module non restreint → accessible à tous
+  return allowedRoles.includes(role);
+}
+
 export function getPermissionsForRole(role) {
   return Object.entries(PERMISSIONS)
     .filter(([, perms]) => perms[role] === true)
