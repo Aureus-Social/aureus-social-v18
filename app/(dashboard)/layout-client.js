@@ -434,37 +434,50 @@ function DashboardLayoutInner({ user }) {
   }, [user?.id]);
   // ────────────────────────────────────────────────────────────────
 
-  // ── Sync bidirectionnel employés → Supabase ─────────────────────
+  // ── Helper token JWT pour appels API sécurisés ──────────────────
+  const getAuthToken = useCallback(async () => {
+    if (!supabase) return null;
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || null;
+  }, []);
+
+  // ── Sync bidirectionnel employés → API sécurisée ─────────────────
   const prevEmpsRef = useRef(null);
   useEffect(() => {
     if (!user?.id || !supabase || !state.emps) return;
-    const uid = user.id;
     const prev = prevEmpsRef.current;
-    if (prev === null) { prevEmpsRef.current = state.emps; return; } // skip premier render
-    // Détecter nouveaux employés (ADD_EMP)
-    const newEmps = state.emps.filter(e => !prev.find(p => p.id === e.id));
-    newEmps.forEach(emp => {
-      supabase.from('employes').insert([{ ...emp, user_id: uid }]).then(({ error }) => {
-        if (error) console.warn('[Supabase] INSERT employe:', error.message);
+    if (prev === null) { prevEmpsRef.current = state.emps; return; }
+
+    const syncAPI = async () => {
+      const token = await getAuthToken();
+      if (!token) return;
+      const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+      // Nouveaux employés
+      const newEmps = state.emps.filter(e => !prev.find(p => p.id === e.id));
+      for (const emp of newEmps) {
+        fetch('/api/employes', { method: 'POST', headers, body: JSON.stringify(emp) })
+          .then(r => r.json()).then(d => { if (d.error) console.warn('[API] INSERT employe:', d.error); })
+          .catch(() => {});
+      }
+      // Mis à jour
+      const updatedEmps = state.emps.filter(e => {
+        const p = prev.find(p => p.id === e.id);
+        return p && JSON.stringify(p) !== JSON.stringify(e);
       });
-    });
-    // Détecter mis à jour (UPD_EMP)
-    const updatedEmps = state.emps.filter(e => {
-      const p = prev.find(p => p.id === e.id);
-      return p && JSON.stringify(p) !== JSON.stringify(e);
-    });
-    updatedEmps.forEach(emp => {
-      supabase.from('employes').update({ ...emp }).eq('id', emp.id).eq('user_id', uid).then(({ error }) => {
-        if (error) console.warn('[Supabase] UPDATE employe:', error.message);
-      });
-    });
-    // Détecter supprimés (DEL_EMP)
-    const deletedEmps = prev.filter(e => !state.emps.find(n => n.id === e.id));
-    deletedEmps.forEach(emp => {
-      supabase.from('employes').delete().eq('id', emp.id).eq('user_id', uid).then(({ error }) => {
-        if (error) console.warn('[Supabase] DELETE employe:', error.message);
-      });
-    });
+      for (const emp of updatedEmps) {
+        fetch('/api/employes', { method: 'PUT', headers, body: JSON.stringify(emp) })
+          .catch(() => {});
+      }
+      // Supprimés
+      const deletedEmps = prev.filter(e => !state.emps.find(n => n.id === e.id));
+      for (const emp of deletedEmps) {
+        fetch(`/api/employes?id=${emp.id}`, { method: 'DELETE', headers })
+          .catch(() => {});
+      }
+    };
+
+    syncAPI();
     prevEmpsRef.current = state.emps;
   }, [state.emps, user?.id]);
   // ────────────────────────────────────────────────────────────────
