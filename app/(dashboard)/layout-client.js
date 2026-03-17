@@ -103,6 +103,7 @@ const RelancesPage = ({ s, d }) => <RelancesRaw supabase={supabase} user={s?.use
 const ProceduresRHHubRaw = dynamic(() => import('../pages/procedures/ProceduresRHHub'), { ssr: false, loading: Loading });
 const MandatsAdminRaw = dynamic(() => import('../pages/MandatsAdminPage'), { ssr: false, loading: Loading });
 const MandatsAdminPg = ({ s, d, tab }) => <MandatsAdminRaw s={s} d={d} tab={tab} />;
+const GestionClientsPg = dynamic(() => import('../pages/GestionClients'), { ssr: false, loading: () => <Loading /> });
 const ConnexionsHubRaw = dynamic(() => import('../pages/ConnexionsHub'), { ssr: false, loading: Loading });
 const EmbaucheAZPage = dynamic(() => import('../pages/EmbaucheAZ'), { ssr: false, loading: () => <Loading /> });
 const ConnexionsHubPg = ({ s, d }) => <ConnexionsHubRaw s={s} d={d} />;
@@ -596,7 +597,9 @@ function DashboardLayoutInner({ user }) {
       case 'rh': return <EmployeeHubPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'proceduresrh': return <ProceduresRHHubPgW s={s} d={d} />;
       case 'portail': return <PortalSystemPg s={s} d={d} tab={page} />;
-      case 'portailclient': return <PortalSystemPg s={s} d={d} tab={page} />;
+      case 'portailclient': return <GestionClientsPg s={s} d={d} />;
+      case 'gestionclients': return <GestionClientsPg s={s} d={d} />;
+      case 'portailclient_old': return <PortalSystemPg s={s} d={d} tab={page} />;
       case 'portalmanager': return <PortalSystemPg s={s} d={d} tab={page} />;
       case 'formC4': return <DocumentGeneratorPgW s={s} d={d} tab={page} />;
       // PAIE & CALCULS
