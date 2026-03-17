@@ -41,6 +41,54 @@ function SettingsPage({s,d}) {
   const { t, lang } = useLang();
   s=s||{emps:[],clients:[],co:{name:"",vat:""},payrollHistory:[],dimonaHistory:[]};
   const [f,setF]=useState({...s.co});
+  const [saving, setSaving] = useState(false);
+
+  // ── Charger entreprise depuis Supabase au montage ────────────
+  useEffect(() => {
+    if (!supabase || !s?.user?.id) return;
+    supabase.from('entreprises').select('*').eq('user_id', s.user.id).limit(1)
+      .then(({ data, error }) => {
+        if (!error && data?.[0]) {
+          const co = data[0];
+          const coData = {
+            name: co.nom || co.name || s.co?.name || '',
+            vat: co.bce || co.vat || s.co?.vat || '',
+            bce: co.bce || '',
+            onss: co.matricule_onss || co.onss || '',
+            address: co.adresse || co.address || '',
+            email: co.email || '',
+            iban: co.iban || '',
+            cp: co.commission_paritaire || '',
+            secSoc: co.secretariat_social || '',
+          };
+          setF(coData);
+          d({ type: 'SET_CO', data: coData });
+        }
+      });
+  }, [s?.user?.id]);
+
+  const saveEntreprise = async () => {
+    setSaving(true);
+    d({ type: 'SET_CO', data: f });
+    if (supabase && s?.user?.id) {
+      const record = {
+        user_id: s.user.id,
+        nom: f.name || '', name: f.name || '',
+        bce: f.vat || f.bce || '', vat: f.vat || '',
+        matricule_onss: f.onss || '', onss: f.onss || '',
+        adresse: f.address || '', address: f.address || '',
+        email: f.email || '', iban: f.iban || '',
+        commission_paritaire: f.cp || '',
+        secretariat_social: f.secSoc || '',
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await supabase.from('entreprises').upsert([record], { onConflict: 'user_id' });
+      if (error) { console.warn('[Settings]', error.message); alert('Erreur: ' + error.message); }
+      else alert('Entreprise sauvegardee avec succes !');
+    } else { alert('Sauvegarde !'); }
+    setSaving(false);
+  };
+
   return <div>
     <PH title="Paramètres" sub="Configuration société"/>
     {/* Backup & Restore */}
@@ -107,7 +155,7 @@ function SettingsPage({s,d}) {
         <I label="Secrétariat social" value={f.secSoc} onChange={v=>setF({...f,secSoc:v})}/>
       </div></C>
     </div>
-    <div style={{marginTop:14,display:'flex',justifyContent:'flex-end'}}><B onClick={()=>{d({type:"UPD_CO",d:f});alert('Sauvegardé !')}}>Sauvegarder</B></div>
+    <div style={{marginTop:14,display:'flex',justifyContent:'flex-end'}}><B onClick={saveEntreprise} disabled={saving}>{saving ? 'Sauvegarde...' : 'Sauvegarder'}</B></div>
     
     {/* 2FA Security Section */}
     <C style={{marginTop:20}}>
