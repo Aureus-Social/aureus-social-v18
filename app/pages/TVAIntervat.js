@@ -246,15 +246,12 @@ export default function TVAIntervatModule({ s, d, tab }) {
       {tab2 === 'guide' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           {[
-            { n: 1, t: 'Qui est concerné ?', c: 'Tout assujetti TVA belge ayant livré des biens ou prestations à des clients TVA-assujettis en Belgique pour un montant HTVA > 250 EUR sur l'année.', ref: 'Art. 53quinquies CTVA' },
-            { n: 2, t: 'Quand soumettre ?', c: 'Avant le 31 mars de l'année suivante (ex: listing 2025 → avant 31/03/2026). Dépôt sur MyMinfin (Intervat).', ref: 'AR TVA art. 93' },
-            { n: 3, t: 'Quoi déclarer ?', c: 'Pour chaque client assujetti : numéro TVA, montant total HTVA et montant TVA facturé sur l'année civile entière.', ref: 'Art. 53quinquies §1 CTVA' },
-            { n: 4, t: 'Comment uploader ?', c: '1. Téléchargez le XML ci-dessus
-2. Allez sur eservices.minfin.fgov.be/intervat
-3. Connectez-vous avec eID ou itsme
-4. Choisissez "Listing" → "Déposer via fichier XML"', ref: 'Guide SPF Finances' },
-            { n: 5, t: 'Seuil d'exclusion', c: 'Clients avec montant HTVA annuel ≤ 250 EUR peuvent être exclus du listing. Le module les exclut automatiquement.', ref: 'Art. 53quinquies §2 CTVA' },
-            { n: 6, t: 'Sanctions', c: 'Amende administrative de 50 à 5.000 EUR par listing non déposé ou incomplet. Pénalités d'intérêt : 0,8% / mois.', ref: 'Art. 70 §4 CTVA' },
+            { n: 1, t: "Qui est concerne ?", c: "Tout assujetti TVA belge ayant livre des biens ou prestations a des clients TVA-assujettis en Belgique pour un montant HTVA > 250 EUR sur l'annee.", ref: "Art. 53quinquies CTVA" },
+            { n: 2, t: "Quand soumettre ?", c: "Avant le 31 mars de l'annee suivante (ex: listing 2025 -> avant 31/03/2026). Depot sur MyMinfin (Intervat).", ref: "AR TVA art. 93" },
+            { n: 3, t: "Quoi declarer ?", c: "Pour chaque client assujetti : numero TVA, montant total HTVA et montant TVA facture sur l'annee civile entiere.", ref: "Art. 53quinquies §1 CTVA" },
+            { n: 4, t: "Comment uploader ?", c: "1. Telechargez le XML ci-dessus\n2. Allez sur eservices.minfin.fgov.be/intervat\n3. Connectez-vous avec eID ou itsme\n4. Choisissez Listing -> Deposer via fichier XML", ref: "Guide SPF Finances" },
+            { n: 5, t: "Seuil exclusion", c: "Clients avec montant HTVA annuel <= 250 EUR peuvent etre exclus du listing. Le module les exclut automatiquement.", ref: "Art. 53quinquies §2 CTVA" },
+            { n: 6, t: "Sanctions", c: "Amende administrative de 50 a 5.000 EUR par listing non depose ou incomplet. Penalites : 0,8% / mois.", ref: "Art. 70 §4 CTVA" },
           ].map((step, i) => (
             <div key={i} style={{ padding: 16, background: 'rgba(255,255,255,.02)', borderRadius: 10, border: '1px solid rgba(255,255,255,.06)' }}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
