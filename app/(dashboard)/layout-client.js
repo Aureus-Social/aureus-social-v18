@@ -49,7 +49,6 @@ const DiagnosticPage = dynamic(() => import('../pages/DiagnosticCommercial'), { 
 const SeuilsPage = dynamic(() => import('../pages/SeuilsSociaux'), { ssr: false, loading: Loading });
 const OnboardingPage = dynamic(() => import('../pages/OnboardingHub'), { ssr: false, loading: Loading });
 const CloturePage = dynamic(() => import('../pages/ClotureMensuelle'), { ssr: false, loading: Loading });
-const AdminBaremesPageOld = dynamic(() => import('../pages/AdminBaremes'), { ssr: false, loading: Loading });
 const SecurityPage = dynamic(() => import('../pages/SecurityDashboard'), { ssr: false, loading: Loading });
 const AuditCodePage = dynamic(() => import('../pages/AuditSecuriteCode'), { ssr: false, loading: Loading });
 const PayrollSimPage = dynamic(() => import('../pages/PayrollSimulator'), { ssr: false, loading: Loading });
@@ -309,6 +308,8 @@ function DashboardHome({ state, onNavigate }) {
           ))}
         </div>
       </div>
+      {/* Agent légal flottant */}
+      <FloatingLegalAgentComp s={s} d={d} />
     </div>
   );
 }
@@ -691,6 +692,7 @@ function DashboardLayoutInner({ user }) {
       case 'support': return <NotificationCenterPgW s={s} d={d} tab={page} />;
       case 'team': return <EmployeeHubPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'testsuite': return <AuditCodePage s={s} d={d} t={t} lang={lang} tab={page} />;
+      case 'settings': return <SettingsPageComp s={s} d={d} t={t} lang={lang} />;
       default: return <PlaceholderPage id={page} label={currentItem.label} />;
     }
   };
