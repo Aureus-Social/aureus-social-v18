@@ -1,4 +1,4 @@
-name: "🗄️ Aureus — Run SQL Migrations"
+name: "Aureus Run SQL Migrations"
 
 on:
   workflow_dispatch:
@@ -17,19 +17,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
+      - name: Install psql
+        run: sudo apt-get install -y postgresql-client
 
-      - name: Install pg
-        run: npm install pg
-
-      - name: Run migrations
+      - name: Run migrations via psql
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-          SUPABASE_PROJECT_REF: "jwjtlpewwdjxdboxtbdf"
-        run: node scripts/run-migrations.js
+        run: |
+          echo "Execution des migrations SQL..."
+          psql "$SUPABASE_DB_URL" -f docs/sql_migration_complete.sql
+          echo "Migration terminee"
 
-      - name: Migration complete
-        run: echo "Migration terminee avec succes"
+      - name: Verify tables
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          echo "Tables dans public schema:"
+          psql "$SUPABASE_DB_URL" -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;"
