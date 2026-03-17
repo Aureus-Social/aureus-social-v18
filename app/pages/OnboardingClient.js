@@ -170,7 +170,7 @@ export default function OnboardingClient({ user, onComplete }) {
               </h3>
               <div style={{ display: 'grid', gap: 14 }}>
                 <div>
-                  <label style={{ fontSize: 11, color: '#9e9b93', display: 'block', marginBottom: 6 }}>Nom de l'entreprise *</label>
+                  <label style={{ fontSize: 11, color: '#9e9b93', display: 'block', marginBottom: 6 }}>Nom de l’entreprise *</label>
                   <input value={co.nom} onChange={e => setCo(c => ({ ...c, nom: e.target.value }))}
                     placeholder="Ma Societe SPRL" style={inputStyle} />
                 </div>
@@ -259,12 +259,12 @@ export default function OnboardingClient({ user, onComplete }) {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <label style={{ fontSize: 11, color: '#9e9b93', display: 'block', marginBottom: 6 }}>Date d'entree</label>
+                    <label style={{ fontSize: 11, color: '#9e9b93', display: 'block', marginBottom: 6 }}>Date entree</label>
                     <input type="date" value={emp.dateEntree} onChange={e => setEmp(m => ({ ...m, dateEntree: e.target.value }))}
                       style={inputStyle} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 11, color: '#9e9b93', display: 'block', marginBottom: 6 }}>Type de contrat</label>
+                    <label style={{ fontSize: 11, color: '#9e9b93', display: 'block', marginBottom: 6 }}>Contrat</label>
                     <select value={emp.contrat} onChange={e => setEmp(m => ({ ...m, contrat: e.target.value }))}
                       style={inputStyle}>
                       <option value="cdi">CDI</option>
