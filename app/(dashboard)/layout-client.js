@@ -3,6 +3,7 @@ import { logInfo, logWarn } from '../lib/security/logger.js';
 import React, { useState, useReducer, useMemo, useEffect, useRef, useCallback, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { MENU, GROUPS, getGroupItems, SEARCH_SUBSECTIONS } from '../lib/menu-config';
+import { getRoleFromUser, canAccessModule } from '../lib/permissions';
 import { I18N } from '../lib/i18n';
 import { LangProvider, useLang } from '../lib/lang-context';
 import { supabase } from '../lib/supabase';
@@ -317,6 +318,7 @@ function DashboardHome({ state, onNavigate }) {
 }
 
 function DashboardLayoutInner({ user }) {
+  const userRole = getRoleFromUser(user); // 'admin' | 'comptable' | 'rh' | 'commercial' | 'readonly'
   const [page, setPage] = useState('dashboard');
   const [cryptoKey, setCryptoKey] = useState(null);
   const { lang, setLang, t: tCtx } = useLang();
@@ -892,7 +894,7 @@ function DashboardLayoutInner({ user }) {
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
           {[1, 2, 3, 4, 5, 6, 7].map(gNum => {
             const group = GROUPS.find(g => g.id === `_g${gNum}`);
-            const items = getGroupItems(gNum) || [];
+            const items = (getGroupItems(gNum) || []).filter(item => canAccessModule(userRole, item.id));
             const isCollapsed = collapsed[gNum];
             return (
               <div key={gNum}>
