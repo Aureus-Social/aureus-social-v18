@@ -1,10 +1,10 @@
-name: "Aureus Run SQL Migrations"
+name: "Auto SQL Migrations"
 
 on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: "Taper YES pour confirmer"
+        description: "YES pour confirmer"
         required: true
         default: "NO"
 
@@ -12,25 +12,13 @@ jobs:
   migrate:
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.confirm == 'YES' }}
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Install psql
         run: sudo apt-get install -y postgresql-client
-
-      - name: Run migrations via psql
+      - name: Run migrations
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          echo "Execution des migrations SQL..."
-          psql "$SUPABASE_DB_URL" -f docs/sql_migration_complete.sql
-          echo "Migration terminee"
-
-      - name: Verify tables
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: |
-          echo "Tables dans public schema:"
-          psql "$SUPABASE_DB_URL" -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;"
+          psql "$SUPABASE_DB_URL" -f docs/sql_auto_migrations.sql
+          echo "Migrations done"
