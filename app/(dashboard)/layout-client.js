@@ -66,6 +66,7 @@ const NotificationCenterPg = dynamic(() => import('../pages/NotificationCenter')
 const PayrollGroupPg = dynamic(() => import('../pages/PayrollGroup'), { ssr: false, loading: Loading });
 const PortalSystemPg = dynamic(() => import('../pages/PortalSystem'), { ssr: false, loading: Loading });
 const TransversalCPPg = dynamic(() => import('../pages/TransversalCP'), { ssr: false, loading: Loading });
+const TVAIntervatPg = dynamic(() => import('../pages/TVAIntervat'), { ssr: false, loading: Loading });
 const ModsBatch2Pg = dynamic(() => import('../pages/ModsBatch2'), { ssr: false, loading: Loading });
 const PayrollHubPg = dynamic(() => import('../pages/PayrollHub'), { ssr: false, loading: Loading });
 const ProceduresRHHubPg = dynamic(() => import('../pages/procedures/ProceduresRHHub'), { ssr: false, loading: Loading });
@@ -640,7 +641,9 @@ function DashboardLayoutInner({ user }) {
       case 'exportcoda': return <ModsBatch2Pg s={s} d={d} tab={page} />;
       case 'exportcompta': return <ModsBatch2Pg s={s} d={d} tab={page} />;
       case 'exportcomptapro': return <ModsBatch2Pg s={s} d={d} tab={page} />;
-      case 'fiscal': return <TransversalCPPg s={s} d={d} tab={page} />;
+      case 'fiscal': return <TVAIntervatPg s={s} d={d} tab={page} />;
+      case 'tvalisting': return <TVAIntervatPg s={s} d={d} tab={page} />;
+      case 'baremespp': return <TransversalCPPg s={s} d={d} tab={page} />;
       case 'importcsv': return <ModsBatch2Pg s={s} d={d} tab={page} />;
       case 'rapportce': return <AnalyticsPage s={s} d={d} t={t} lang={lang} tab={page} />;
       case 'rapports': return <AnalyticsPage s={s} d={d} t={t} lang={lang} tab={page} />;
