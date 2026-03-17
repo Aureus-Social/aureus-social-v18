@@ -95,11 +95,27 @@ export async function POST(request) {
       created_at: new Date().toISOString(),
     }]);
 
+    // 5. Envoyer l'email de bienvenue branded Aureus
+    try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.aureussocial.be';
+      await fetch(`${appUrl}/api/send-welcome-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': request.headers.get('authorization'),
+        },
+        body: JSON.stringify({ email, nom, plan, loginUrl: `${appUrl}/onboarding` }),
+      });
+    } catch (emailErr) {
+      console.warn('[invite-client] Email bienvenue non envoyé:', emailErr.message);
+      // On continue même si l'email échoue — l'invitation Supabase est déjà partie
+    }
+
     return NextResponse.json({
       ok: true,
       mode: 'invited',
       userId: newUserId,
-      message: `Invitation envoyée à ${email}. Le client recevra un email pour créer son mot de passe.`,
+      message: `Invitation envoyée à ${email}. Le client recevra 2 emails : lien Supabase + email de bienvenue Aureus.`,
     });
 
   } catch (e) {
