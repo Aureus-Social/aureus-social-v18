@@ -318,7 +318,7 @@ export default function GestionClients({ s, d }) {
                 cursor: inviting ? 'not-allowed' : 'pointer',
                 fontSize: 14, fontWeight: 700, fontFamily: 'inherit',
               }}>
-                {inviting ? 'Envoi en cours...' : '✉️ Envoyer l'invitation'}
+                {inviting ? 'Envoi en cours...' : "✉️ Envoyer l'invitation"}
               </button>
             </div>
           </form>
