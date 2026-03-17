@@ -111,7 +111,7 @@ export function middleware(request) {
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `font-src 'self' https://fonts.gstatic.com data:`,
     `img-src 'self' data: blob: https://${supabaseHost}`,
-    `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://api.anthropic.com https://api.resend.com`,
+    `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://api.anthropic.com https://api.resend.com https://ec.europa.eu https://open.fts.be https://entreprises.api.gouv.be https://api.kbodata.be https://cbsv.economie.fgov.be`,
     `worker-src 'self' blob:`,
     `child-src 'self' blob:`,
     `frame-ancestors 'none'`,
