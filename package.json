@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit 2>/dev/null || echo 'No tsconfig'"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
+    "@anthropic-ai/sdk": "^0.80.0",
     "@supabase/supabase-js": "^2.39.0",
     "next": "^15.1.0",
     "react": "^19.0.0",
