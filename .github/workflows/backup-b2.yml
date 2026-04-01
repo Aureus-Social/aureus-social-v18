@@ -13,7 +13,7 @@ jobs:
     steps:
       # ─── 1. Checkout (pour accès aux scripts si besoin)
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # ─── 2. Installer les outils
       - name: Setup Python + b2sdk
